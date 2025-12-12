@@ -5,112 +5,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Hamza Express - Over 100 Years of Taste, Delivered · Est. 1918. QSR Biryani from the kitchens of Hamza Hotel. Order on WhatsApp.">
-    <meta name="keywords"
-        content="Hamza Express, Biryani, QSR, Bangalore, Fast Food, Mutton Biryani, Chicken Biryani, Est 1918">
+        content="Hamza Express - Over 100 Years of Taste, Delivered. Authentic Bangalore biryani from the heritage brand Est. 1918.">
+    <meta name="theme-color" content="#713520">
     <title>Hamza Express | Over 100 Years of Taste, Delivered · Est. 1918</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="assets/Icon.svg">
+    <link rel="apple-touch-icon" href="assets/Icon.png">
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Times New Roman fallback with similar serif fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Crimson+Text:wght@400;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
-        /* ================================================
-           CSS VARIABLES - HAMZA EXPRESS BRAND GUIDELINES
-           Per Brand Guidelines Document v1.0
-           ================================================ */
+        /* ═══════════════════════════════════════════════════════════
+           CSS CUSTOM PROPERTIES - BRAND COLORS
+           ═══════════════════════════════════════════════════════════ */
         :root {
-            /* Brand Colors - EXACT from Guidelines */
+            /* Primary Brand Colors */
             --burnt-sienna: #713520;
-            /* Primary text, strokes, borders */
-            --burnt-sienna-dark: #5a2a1a;
-            --burnt-sienna-light: #8a4530;
-
-            /* Backgrounds - Premium Cream/Gold Palette */
             --tan: #D2B48C;
-            /* Primary background */
-            --tan-light: #e5d4b8;
-            --tan-dark: #b89a6a;
             --off-white: #FAF3E3;
-            /* EXPRESS fill, highlights */
-            --gold-accent: #C5A059;
 
-            /* Neutral Colors */
-            --black: #1a1a1a;
-            --white: #ffffff;
+            /* Extended Palette */
+            --dark-sienna: #4A2315;
+            --light-tan: #E8D4B8;
+            --warm-brown: #8B4513;
+            --cream: #FFF8F0;
+            --gold-accent: #C9A050;
 
-            /* WhatsApp */
-            --whatsapp: #25D366;
-            --whatsapp-dark: #128C7E;
+            /* Functional */
+            --text-primary: var(--burnt-sienna);
+            --text-dark: var(--dark-sienna);
+            --bg-primary: var(--tan);
+            --bg-light: var(--off-white);
 
-            /* Typography - Times New Roman MT as per Brand Guidelines */
-            --font-brand: 'Times New Roman', Times, Georgia, serif;
+            /* Typography - Times New Roman with fallbacks */
+            --font-primary: 'Times New Roman', 'Playfair Display', 'Crimson Text', Georgia, serif;
+            --font-display: 'Playfair Display', 'Times New Roman', Georgia, serif;
 
             /* Spacing */
             --space-xs: 0.5rem;
             --space-sm: 1rem;
-            --space-md: 1.5rem;
-            --space-lg: 2.5rem;
-            --space-xl: 4rem;
-            --space-2xl: 6rem;
+            --space-md: 2rem;
+            --space-lg: 4rem;
+            --space-xl: 8rem;
 
-            /* Transitions */
-            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-            --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+            /* Animation */
+            --ease-elegant: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* ================================================
-           RESET & BASE
-           ================================================ */
+        /* ═══════════════════════════════════════════════════════════
+           RESET & BASE STYLES
+           ═══════════════════════════════════════════════════════════ */
         *,
         *::before,
         *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         html {
             scroll-behavior: smooth;
-            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
-            font-family: var(--font-brand);
-            font-weight: 400;
-            color: var(--burnt-sienna);
-            background-color: var(--off-white);
-            line-height: 1.6;
+            font-family: var(--font-primary);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
         }
 
-        body.loading {
-            overflow: hidden;
-        }
-
-        img {
+        img,
+        svg {
             max-width: 100%;
             height: auto;
             display: block;
         }
 
         a {
-            color: inherit;
+            color: var(--burnt-sienna);
             text-decoration: none;
+            transition: all 0.3s var(--ease-elegant);
         }
 
-        /* ================================================
+        a:hover {
+            color: var(--dark-sienna);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           HERITAGE PAPER TEXTURE
+           ═══════════════════════════════════════════════════════════ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
            LOADING SCREEN
-           ================================================ */
+           ═══════════════════════════════════════════════════════════ */
         .loader {
             position: fixed;
-            inset: 0;
-            background-color: var(--tan);
-            z-index: 10000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--tan);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            z-index: 10000;
+            transition: opacity 0.8s var(--ease-elegant), visibility 0.8s;
         }
 
         .loader.hidden {
@@ -118,63 +141,62 @@
             visibility: hidden;
         }
 
-        .loader__icon {
-            width: 100px;
-            height: 100px;
-            animation: loaderPulse 1.2s ease-in-out infinite;
+        .loader-content {
+            text-align: center;
         }
 
-        .loader__icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .loader-icon {
+            width: 140px;
+            height: 140px;
+            animation: pulseGlow 1.5s infinite var(--ease-elegant);
+            border-radius: 50%;
         }
 
-        @keyframes loaderPulse {
+        .loader-text {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.4em;
+            margin-top: var(--space-sm);
+            color: var(--burnt-sienna);
+            text-transform: uppercase;
+        }
+
+        @keyframes pulseGlow {
 
             0%,
             100% {
                 transform: scale(1);
-                opacity: 1;
+                filter: drop-shadow(0 0 10px rgba(113, 53, 32, 0.3));
             }
 
             50% {
-                transform: scale(1.05);
-                opacity: 0.8;
+                transform: scale(1.03);
+                filter: drop-shadow(0 0 20px rgba(113, 53, 32, 0.5));
             }
         }
 
-        /* ================================================
+        /* ═══════════════════════════════════════════════════════════
            NAVIGATION
-           ================================================ */
+           ═══════════════════════════════════════════════════════════ */
         .nav {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            z-index: 1000;
+            width: 100%;
             padding: var(--space-sm) var(--space-md);
-            transition: all 0.4s ease;
-            opacity: 0;
-            transform: translateY(-20px);
-            animation: navReveal 0.6s var(--ease-out-expo) forwards;
-            animation-delay: 2.5s;
+            z-index: 1000;
+            transition: all 0.4s var(--ease-elegant);
+            background: transparent;
         }
 
-        @keyframes navReveal {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .nav.scrolled {
+            background: rgba(210, 180, 140, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 30px rgba(113, 53, 32, 0.15);
         }
 
-        .nav--scrolled {
-            background-color: rgba(210, 180, 140, 0.95);
-            backdrop-filter: blur(20px);
-            box-shadow: 0 4px 30px rgba(113, 53, 32, 0.1);
-        }
-
-        .nav__container {
+        .nav-container {
             max-width: 1400px;
             margin: 0 auto;
             display: flex;
@@ -182,1520 +204,1722 @@
             justify-content: space-between;
         }
 
-        .nav__logo {
+        .nav-brand {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 12px;
+            text-decoration: none;
         }
 
-        .nav__logo-icon {
-            width: 55px;
-            /* Increased from 45px */
+        .nav-logo-icon {
             height: 55px;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+            width: auto;
+            border-radius: 50%;
+            /* Ensures circular shape if needed, good safety */
+            transition: transform 0.3s var(--ease-elegant);
         }
 
-        .nav__logo-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .nav-logo-text {
+            height: 40px;
+            /* Adjusted for visual balance with icon */
+            width: auto;
+            transition: transform 0.3s var(--ease-elegant);
         }
 
-        .nav__logo-text {
+        .nav-brand:hover .nav-logo-icon {
+            transform: rotate(15deg);
+        }
+
+        .nav-brand:hover .nav-logo-text {
+            transform: scale(1.05);
+        }
+
+        .nav-links {
             display: flex;
-            flex-direction: column;
-            line-height: 0.9;
-            justify-content: center;
+            gap: var(--space-md);
+            list-style: none;
         }
 
-        /* Brand Typography */
-        .nav__logo-hamza {
-            font-family: var(--font-brand);
-            font-size: 1.75rem;
-            /* Increased from 1.5rem */
-            font-weight: 700;
-            color: var(--burnt-sienna);
-            letter-spacing: -0.01em;
-        }
-
-        .nav__logo-express {
-            font-family: var(--font-brand);
-            font-size: 0.95rem;
+        .nav-links a {
+            font-family: var(--font-primary);
             font-weight: 600;
-            letter-spacing: 0.15em;
+            font-size: 0.9rem;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: var(--off-white);
-            -webkit-text-stroke: 1px var(--burnt-sienna);
-            paint-order: stroke fill;
-            margin-left: 2px;
-        }
-
-        .nav__links {
-            display: flex;
-            align-items: center;
-            gap: var(--space-lg);
-        }
-
-        .nav__link {
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--burnt-sienna);
             position: relative;
-            transition: color 0.3s ease;
+            padding: var(--space-xs) 0;
         }
 
-        .nav__link::after {
+        .nav-links a::after {
             content: '';
             position: absolute;
-            bottom: -4px;
+            bottom: 0;
             left: 0;
             width: 0;
             height: 2px;
-            background-color: var(--burnt-sienna);
-            transition: width 0.3s ease;
+            background: var(--burnt-sienna);
+            transition: width 0.3s var(--ease-elegant);
         }
 
-        .nav__link:hover::after {
+        .nav-links a:hover::after {
             width: 100%;
         }
 
-        .nav__cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background-color: var(--burnt-sienna);
-            color: var(--off-white);
-            font-family: var(--font-brand);
-            font-size: 0.875rem;
+        .nav-cta {
+            font-family: var(--font-primary);
             font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.9rem 1.8rem;
+            background: var(--burnt-sienna);
+            color: var(--off-white) !important;
             border: 2px solid var(--burnt-sienna);
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--ease-elegant);
         }
 
-        .nav__cta:hover {
-            background-color: transparent;
-            color: var(--burnt-sienna);
+        .nav-cta:hover {
+            background: var(--dark-sienna);
+            border-color: var(--dark-sienna);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(113, 53, 32, 0.3);
         }
 
-        .nav__cta svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
-        }
-
-        .nav__toggle {
+        /* Mobile Menu Toggle */
+        .nav-toggle {
             display: none;
             flex-direction: column;
-            gap: 5px;
-            background: none;
-            border: none;
+            gap: 6px;
             cursor: pointer;
             padding: 10px;
         }
 
-        .nav__toggle span {
-            width: 24px;
+        .nav-toggle span {
+            width: 28px;
             height: 2px;
-            background-color: var(--burnt-sienna);
-            transition: 0.3s ease;
+            background: var(--burnt-sienna);
+            transition: all 0.3s var(--ease-elegant);
         }
 
-        /* ================================================
-           HERO SECTION - PER BRAND GUIDELINES
-           ================================================ */
+        /* ═══════════════════════════════════════════════════════════
+           HERO SECTION
+           ═══════════════════════════════════════════════════════════ */
         .hero {
             min-height: 100vh;
-            background-color: var(--tan);
-            /* Strict Brand Color */
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+            padding: var(--space-xl) var(--space-md);
+            background: linear-gradient(135deg, var(--tan) 0%, var(--light-tan) 50%, var(--tan) 100%);
         }
 
-        /* Subtle Grain Texture */
-        .hero::before {
-            content: '';
+        /* Decorative Border Frame */
+        .hero-frame {
             position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0;
-            pointer-events: none;
-            animation: grainReveal 1s ease forwards;
-            animation-delay: 0.2s;
-        }
-
-        @keyframes grainReveal {
-            to {
-                opacity: 0.06;
-            }
-        }
-
-        /* Decorative Border */
-        .hero::after {
-            content: '';
-            position: absolute;
-            inset: 25px;
-            border: 1px solid var(--burnt-sienna);
-            opacity: 0;
-            animation: borderReveal 0.8s ease forwards;
-            animation-delay: 2s;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            bottom: 30px;
+            border: 1px solid rgba(113, 53, 32, 0.15);
             pointer-events: none;
         }
 
-        @keyframes borderReveal {
-            to {
-                opacity: 0.25;
-            }
-        }
-
-        .hero__content {
-            text-align: center;
-            position: relative;
-            z-index: 1;
-            padding: var(--space-md);
-        }
-
-        /* Founder Icon - Heritage Anchor per Guidelines */
-        .hero__icon {
-            width: clamp(200px, 30vw, 320px);
-            /* Significantly increased size */
-            height: auto;
-            margin: 0 auto var(--space-md);
-            /* Reduced margin from space-lg */
-            opacity: 0;
-            transform: scale(0.8) translateY(30px);
-            animation: iconReveal 1.2s var(--ease-out-expo) forwards;
-            animation-delay: 0.3s;
-            filter: drop-shadow(0 20px 50px rgba(113, 53, 32, 0.25));
-        }
-
-        @keyframes iconReveal {
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .hero__icon img {
-            width: 100%;
-            animation: iconFloat 6s ease-in-out infinite;
-            animation-delay: 1.5s;
-        }
-
-        @keyframes iconFloat {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        /* Brand Text - Per Typography Guidelines */
-        .hero__brand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: var(--space-md);
-            /* Reduced from space-lg */
-            width: 100%;
-            max-width: 1000px;
-            /* Increased max-width */
-        }
-
-        .hero__logo-part {
-            display: block;
-            height: auto;
-            opacity: 0;
-            transform: translateY(40px);
-            filter: drop-shadow(0 4px 12px rgba(93, 41, 22, 0.15));
-            animation: textReveal 1.2s var(--ease-out-expo) forwards;
-        }
-
-        .hero__logo-hamza {
-            width: 100%;
-            /* Hamza is the Layout Anchor - Full Width */
-            max-width: 850px;
-            margin-bottom: var(--space-sm);
-            /* Standard spacing gap */
-            animation-delay: 0.5s;
-        }
-
-        .hero__logo-express {
-            width: 65%;
-            /* Express fits "within" Hamza */
-            max-width: 550px;
-            animation-delay: 0.7s;
-        }
-
-        @keyframes textReveal {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Separator Line: 1px horizontal, #713520 at 40% opacity */
-        .hero__divider {
-            width: 0;
-            height: 1px;
-            background-color: var(--burnt-sienna);
-            opacity: 0.4;
-            margin: var(--space-md) auto;
-            animation: dividerExpand 0.6s ease forwards;
-            animation-delay: 1.3s;
-        }
-
-        @keyframes dividerExpand {
-            to {
-                width: min(280px, 50vw);
-            }
-        }
-
-        /* Tagline: Times New Roman MT Medium, Fill: #713520 */
-        /* Official: "Over 100 Years of Taste, Delivered · Est. 1918" */
-        .hero__tagline {
-            font-family: var(--font-brand);
-            font-size: clamp(0.875rem, 2vw, 1.125rem);
-            font-weight: 500;
-            font-style: italic;
-            color: var(--burnt-sienna);
-            opacity: 0;
-            transform: translateY(20px);
-            animation: taglineReveal 0.5s ease forwards;
-            animation-delay: 1.5s;
-            margin-bottom: var(--space-lg);
-        }
-
-        @keyframes taglineReveal {
-            to {
-                opacity: 0.9;
-                transform: translateY(0);
-            }
-        }
-
-        /* Speed Badge */
-        .hero__badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.25rem;
-            background-color: var(--off-white);
-            border: 1px solid var(--burnt-sienna);
-            font-family: var(--font-brand);
-            font-size: 0.8125rem;
-            font-weight: 700;
-            color: var(--burnt-sienna);
-            margin-bottom: var(--space-md);
-            opacity: 0;
-            animation: badgeReveal 0.5s ease forwards;
-            animation-delay: 1.7s;
-        }
-
-        @keyframes badgeReveal {
-            to {
-                opacity: 1;
-            }
-        }
-
-        .hero__badge svg {
-            width: 18px;
-            height: 18px;
-            stroke: var(--burnt-sienna);
-            fill: none;
-        }
-
-        /* CTA Button - Per Guidelines: Burnt Sienna background, Off-White text */
-        .hero__cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1.25rem 3rem;
-            background-color: var(--burnt-sienna);
-            color: var(--off-white);
-            font-family: var(--font-brand);
-            font-size: 1rem;
-            font-weight: 700;
+        .hero-frame::before,
+        .hero-frame::after {
+            content: '';
+            position: absolute;
+            width: 80px;
+            height: 80px;
             border: 2px solid var(--burnt-sienna);
+            opacity: 0.3;
+        }
+
+        .hero-frame::before {
+            top: -1px;
+            left: -1px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .hero-frame::after {
+            bottom: -1px;
+            right: -1px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 100%;
             position: relative;
-            overflow: hidden;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            font-family: var(--font-primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--burnt-sienna);
+            padding: 0.6rem 1.5rem;
+            border: 1px solid var(--burnt-sienna);
+            margin-bottom: var(--space-md);
             opacity: 0;
-            transform: translateY(20px) scale(0.95);
-            animation: ctaReveal 0.6s var(--ease-out-back) forwards;
-            animation-delay: 1.9s;
-            transition: all 0.4s ease;
+            animation: fadeUp 1s var(--ease-elegant) 0.3s forwards;
         }
 
-        @keyframes ctaReveal {
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        .hero-logo-container {
+            position: relative;
+            margin-bottom: var(--space-md);
         }
 
-        .hero__cta::before {
-            content: '';
+        .hero-logo {
+            width: 100%;
+            max-width: 90vw;
+            height: auto;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 1.2s var(--ease-elegant) 0.6s forwards;
+        }
+
+        /* Aromatic Steam Animation */
+        .aroma-container {
             position: absolute;
-            inset: -10px;
-            background: radial-gradient(circle, rgba(37, 211, 102, 0.35) 0%, transparent 70%);
-            opacity: 0;
-            animation: ctaPulse 2.5s ease-in-out infinite;
-            animation-delay: 3s;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 100px;
+            pointer-events: none;
+            opacity: 0.6;
         }
 
-        @keyframes ctaPulse {
+        .aroma {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            height: 60px;
+            background: linear-gradient(to top, rgba(113, 53, 32, 0.2), transparent);
+            border-radius: 50%;
+            animation: aromaRise 4s infinite ease-out;
+            filter: blur(3px);
+        }
 
-            0%,
-            100% {
-                transform: scale(0.8);
+        .aroma:nth-child(1) {
+            left: 25%;
+            animation-delay: 0s;
+        }
+
+        .aroma:nth-child(2) {
+            left: 40%;
+            animation-delay: 0.8s;
+            height: 50px;
+        }
+
+        .aroma:nth-child(3) {
+            left: 55%;
+            animation-delay: 1.6s;
+        }
+
+        .aroma:nth-child(4) {
+            left: 70%;
+            animation-delay: 2.4s;
+            height: 45px;
+        }
+
+        @keyframes aromaRise {
+            0% {
+                transform: translateY(0) scaleX(1) rotate(0deg);
                 opacity: 0;
             }
 
-            50% {
-                transform: scale(1.4);
+            20% {
                 opacity: 0.5;
+            }
+
+            50% {
+                transform: translateY(-60px) scaleX(1.8) rotate(5deg);
+                opacity: 0.3;
+            }
+
+            100% {
+                transform: translateY(-100px) scaleX(2.5) rotate(-5deg);
+                opacity: 0;
             }
         }
 
-        .hero__cta:hover {
-            background-color: var(--whatsapp);
-            border-color: var(--whatsapp);
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(37, 211, 102, 0.3);
+        .hero-tagline {
+            font-family: var(--font-display);
+            font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            color: var(--burnt-sienna);
+            margin-top: var(--space-md);
+            opacity: 0;
+            animation: fadeUp 1s var(--ease-elegant) 1s forwards;
         }
 
-        .hero__cta svg {
-            width: 22px;
-            height: 22px;
-            fill: var(--whatsapp);
-            transition: all 0.3s ease;
+        .hero-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin: var(--space-md) auto;
+            opacity: 0;
+            animation: fadeUp 1s var(--ease-elegant) 1.2s forwards;
+        }
+
+        .hero-divider-line {
+            width: 60px;
+            height: 1px;
+            background: var(--burnt-sienna);
+            opacity: 0.4;
+        }
+
+        .hero-divider-dot {
+            width: 8px;
+            height: 8px;
+            border: 1px solid var(--burnt-sienna);
+            transform: rotate(45deg);
+        }
+
+        .hero-subtitle {
+            font-family: var(--font-primary);
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            color: var(--warm-brown);
+            opacity: 0;
+            animation: fadeUp 1s var(--ease-elegant) 1.4s forwards;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--space-lg);
+            opacity: 0;
+            animation: fadeUp 1s var(--ease-elegant) 1.6s forwards;
+        }
+
+        .btn {
+            font-family: var(--font-primary);
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 1.1rem 2.8rem;
+            border: 2px solid var(--burnt-sienna);
+            background: transparent;
+            color: var(--burnt-sienna);
+            cursor: pointer;
+            transition: all 0.4s var(--ease-elegant);
             position: relative;
-            z-index: 1;
+            overflow: hidden;
         }
 
-        .hero__cta:hover svg {
-            fill: var(--off-white);
-            transform: scale(1.15);
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--burnt-sienna);
+            transition: left 0.4s var(--ease-elegant);
+            z-index: -1;
         }
 
-        .hero__cta span {
-            position: relative;
-            z-index: 1;
+        .btn:hover {
+            color: var(--off-white);
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn-primary {
+            background: var(--burnt-sienna);
+            color: var(--off-white);
+        }
+
+        .btn-primary::before {
+            background: var(--dark-sienna);
         }
 
         /* Scroll Indicator */
-        .hero__scroll {
+        .scroll-indicator {
             position: absolute;
-            bottom: var(--space-lg);
+            bottom: 50px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: var(--space-xs);
-            color: var(--burnt-sienna);
             opacity: 0;
-            animation: scrollReveal 0.5s ease forwards;
-            animation-delay: 2.5s;
+            animation: fadeUp 1s var(--ease-elegant) 2s forwards;
         }
 
-        @keyframes scrollReveal {
-            to {
-                opacity: 0.5;
-            }
-        }
-
-        .hero__scroll span {
-            font-family: var(--font-brand);
-            font-size: 0.6875rem;
-            font-weight: 600;
-            letter-spacing: 0.2em;
+        .scroll-indicator span {
+            font-family: var(--font-primary);
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
             text-transform: uppercase;
+            color: var(--burnt-sienna);
         }
 
-        .hero__scroll-line {
-            width: 1px;
-            height: 50px;
-            background: linear-gradient(to bottom, var(--burnt-sienna), transparent);
-            animation: scrollLine 2s ease-in-out infinite;
+        .scroll-indicator .arrow {
+            width: 18px;
+            height: 18px;
+            border-right: 2px solid var(--burnt-sienna);
+            border-bottom: 2px solid var(--burnt-sienna);
+            transform: rotate(45deg);
+            animation: scrollBounce 2s infinite;
         }
 
-        @keyframes scrollLine {
+        @keyframes scrollBounce {
 
             0%,
             100% {
-                transform: scaleY(1);
-                opacity: 0.5;
+                transform: rotate(45deg) translateY(0);
             }
 
             50% {
-                transform: scaleY(0.6);
-                opacity: 1;
+                transform: rotate(45deg) translateY(8px);
             }
         }
 
-        /* ================================================
-           MENU SECTION - FULL BLEED
-           ================================================ */
-        .menu {
-            background-color: var(--off-white);
-            padding: var(--space-xl) 0;
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .menu__header {
-            text-align: center;
-            padding: 0 var(--space-md);
-            margin-bottom: var(--space-xl);
-        }
-
-        .menu__subtitle {
-            font-family: var(--font-brand);
-            font-size: 0.875rem;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--burnt-sienna);
-            opacity: 0.7;
-            margin-bottom: var(--space-sm);
-        }
-
-        .menu__title {
-            font-family: var(--font-brand);
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 700;
-            color: var(--burnt-sienna);
-            line-height: 1.1;
-        }
-
-        .menu__grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            width: 100%;
-        }
-
-        .menu__item {
-            position: relative;
-            aspect-ratio: 1;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .menu__image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.8s var(--ease-out-expo);
-        }
-
-        .menu__item:hover .menu__image {
-            transform: scale(1.1);
-        }
-
-        .menu__overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top,
-                    rgba(113, 53, 32, 0.95) 0%,
-                    rgba(113, 53, 32, 0.5) 40%,
-                    transparent 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: var(--space-lg);
-            transition: background 0.4s ease;
-        }
-
-        .menu__item:hover .menu__overlay {
-            background: linear-gradient(to top,
-                    rgba(113, 53, 32, 0.98) 0%,
-                    rgba(113, 53, 32, 0.7) 50%,
-                    rgba(113, 53, 32, 0.3) 100%);
-        }
-
-        .menu__name {
-            font-family: var(--font-brand);
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            font-weight: 600;
-            color: var(--off-white);
-            margin-bottom: var(--space-xs);
-            transform: translateY(10px);
-            transition: transform 0.4s ease;
-        }
-
-        .menu__item:hover .menu__name {
-            transform: translateY(0);
-        }
-
-        .menu__desc {
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 400;
-            color: var(--tan-light);
-            margin-bottom: var(--space-sm);
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.4s ease 0.1s;
-        }
-
-        .menu__item:hover .menu__desc {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .menu__price {
-            font-family: var(--font-brand);
-            font-size: clamp(1.25rem, 2vw, 1.75rem);
-            font-weight: 700;
-            color: var(--tan);
-        }
-
-        .menu__order-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            padding: 1rem 2rem;
-            background-color: var(--off-white);
-            color: var(--burnt-sienna);
-            font-family: var(--font-brand);
-            font-size: 0.875rem;
-            font-weight: 700;
-            opacity: 0;
-            transition: all 0.4s var(--ease-out-back);
-        }
-
-        .menu__item:hover .menu__order-btn {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-        .menu__cta-wrapper {
-            text-align: center;
+        /* ═══════════════════════════════════════════════════════════
+           SECTION COMMON STYLES
+           ═══════════════════════════════════════════════════════════ */
+        section {
             padding: var(--space-xl) var(--space-md);
-        }
-
-        .menu__cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 2.5rem;
-            background-color: transparent;
-            color: var(--burnt-sienna);
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 700;
-            border: 2px solid var(--burnt-sienna);
-            transition: all 0.4s ease;
-        }
-
-        .menu__cta:hover {
-            background-color: var(--burnt-sienna);
-            color: var(--off-white);
-        }
-
-        .menu__cta svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        /* ================================================
-           EXPRESS PROMISE SECTION
-           ================================================ */
-        .promise {
-            background-color: var(--burnt-sienna);
-            padding: var(--space-2xl) var(--space-md);
             position: relative;
-            overflow: hidden;
         }
 
-        .promise::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23FAF3E3' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            pointer-events: none;
-        }
-
-        .promise__container {
+        .section-container {
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-label {
+            font-family: var(--font-primary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--gold-accent);
+            margin-bottom: var(--space-sm);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            line-height: 1.2;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            margin: var(--space-md) auto;
+        }
+
+        .section-divider-line {
+            width: 40px;
+            height: 1px;
+            background: var(--burnt-sienna);
+            opacity: 0.4;
+        }
+
+        .section-divider-center {
+            width: 10px;
+            height: 10px;
+            border: 1px solid var(--burnt-sienna);
+            transform: rotate(45deg);
+        }
+
+        /* Reveal Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s var(--ease-elegant);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: all 0.8s var(--ease-elegant);
+        }
+
+        .reveal-left.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: all 0.8s var(--ease-elegant);
+        }
+
+        .reveal-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           LEGACY SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .legacy {
+            background: linear-gradient(180deg, var(--tan) 0%, var(--off-white) 100%);
+        }
+
+        .legacy-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+
+        .legacy-image {
+            position: relative;
+        }
+
+        .legacy-image-frame {
+            position: relative;
+            padding: var(--space-md);
+        }
+
+        .legacy-image-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: var(--space-md);
+            bottom: var(--space-md);
+            border: 2px solid var(--burnt-sienna);
+            opacity: 0.25;
+        }
+
+        .legacy-image-main {
+            position: relative;
+            top: var(--space-md);
+            left: var(--space-md);
+            width: calc(100% - var(--space-md));
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .legacy-image-main img {
+            width: 100%;
+            max-width: none;
+            height: auto;
+            filter: drop-shadow(0 10px 30px rgba(113, 53, 32, 0.2));
+        }
+
+        .legacy-content {
+            padding: var(--space-md);
+        }
+
+        .legacy-year {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            opacity: 0.15;
+            line-height: 1;
+            margin-bottom: -1.5rem;
+        }
+
+        .legacy-quote {
+            font-family: var(--font-display);
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 600;
+            color: var(--burnt-sienna);
+            line-height: 1.4;
+            margin-bottom: var(--space-md);
+            position: relative;
+        }
+
+        .legacy-text {
+            font-family: var(--font-primary);
+            font-size: 1.05rem;
+            color: var(--warm-brown);
+            margin-bottom: var(--space-sm);
+            line-height: 1.9;
+        }
+
+        .legacy-signature {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(113, 53, 32, 0.2);
+        }
+
+        .signature-line {
+            width: 50px;
+            height: 1px;
+            background: var(--burnt-sienna);
+        }
+
+        .signature-text {
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--burnt-sienna);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           HERITAGE PILLARS SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .pillars {
+            background: var(--off-white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillars::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23713520' fill-opacity='0.02'%3E%3Cpath d='M40 0l40 40-40 40L0 40z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
             position: relative;
             z-index: 1;
         }
 
-        .promise__grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: var(--space-xl);
+        .pillar-card {
+            background: var(--tan);
+            padding: var(--space-lg) var(--space-md);
             text-align: center;
-        }
-
-        .promise__item {
-            padding: var(--space-lg);
-        }
-
-        .promise__icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto var(--space-md);
-            border: 2px solid var(--off-white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.4s ease;
-        }
-
-        .promise__item:hover .promise__icon {
-            background-color: var(--off-white);
-        }
-
-        .promise__icon svg {
-            width: 32px;
-            height: 32px;
-            stroke: var(--off-white);
-            fill: none;
-            transition: stroke 0.4s ease;
-        }
-
-        .promise__item:hover .promise__icon svg {
-            stroke: var(--burnt-sienna);
-        }
-
-        .promise__number {
-            font-family: var(--font-brand);
-            font-size: clamp(3rem, 6vw, 5rem);
-            font-weight: 700;
-            color: var(--tan);
-            line-height: 1;
-            margin-bottom: var(--space-xs);
-        }
-
-        .promise__label {
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--off-white);
-            margin-bottom: var(--space-sm);
-        }
-
-        .promise__desc {
-            font-family: var(--font-brand);
-            font-size: 1rem;
-            font-weight: 400;
-            color: var(--tan-light);
-            line-height: 1.7;
-        }
-
-        /* ================================================
-           HERITAGE SECTION
-           ================================================ */
-        .heritage {
-            background-color: var(--off-white);
-            padding: var(--space-2xl) var(--space-md);
-        }
-
-        .heritage__container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-2xl);
-            align-items: center;
-        }
-
-        .heritage__image {
             position: relative;
-        }
-
-        .heritage__image-wrapper {
-            position: relative;
-            padding: var(--space-md);
-            border: 1px solid var(--burnt-sienna);
-        }
-
-        .heritage__image-wrapper::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: -10px;
-            bottom: -10px;
-            border: 1px solid var(--burnt-sienna);
-            opacity: 0.3;
-            z-index: -1;
-        }
-
-        .heritage__image-wrapper img {
-            width: 100%;
-        }
-
-        .heritage__badge {
-            position: absolute;
-            top: -15px;
-            right: -15px;
-            width: 90px;
-            height: 90px;
-            background-color: var(--burnt-sienna);
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: var(--off-white);
-        }
-
-        .heritage__badge-text {
-            font-family: var(--font-brand);
-            font-size: 0.5rem;
-            font-weight: 600;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-        }
-
-        .heritage__badge-year {
-            font-family: var(--font-brand);
-            font-size: 1.75rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .heritage__content {
-            padding: var(--space-lg) 0;
-        }
-
-        .heritage__subtitle {
-            font-family: var(--font-brand);
-            font-size: 0.875rem;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--burnt-sienna);
-            opacity: 0.7;
-            margin-bottom: var(--space-sm);
-        }
-
-        .heritage__title {
-            font-family: var(--font-brand);
-            font-size: clamp(2rem, 4vw, 3rem);
-            font-weight: 700;
-            color: var(--burnt-sienna);
-            line-height: 1.2;
-            margin-bottom: var(--space-md);
-        }
-
-        .heritage__text {
-            font-family: var(--font-brand);
-            font-size: 1.0625rem;
-            font-weight: 400;
-            line-height: 1.8;
-            color: var(--gray-dark);
-            margin-bottom: var(--space-md);
-        }
-
-        .heritage__quote {
-            font-family: var(--font-brand);
-            font-style: italic;
-            font-size: 1.25rem;
-            font-weight: 400;
-            color: var(--burnt-sienna);
-            padding-left: var(--space-md);
-            border-left: 3px solid var(--tan);
-        }
-
-        /* ================================================
-           LOCATION SECTION
-           ================================================ */
-        .location {
-            background-color: var(--tan);
-            padding: var(--space-2xl) var(--space-md);
-        }
-
-        .location__container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .location__header {
-            text-align: center;
-            margin-bottom: var(--space-xl);
-        }
-
-        .location__subtitle {
-            font-family: var(--font-brand);
-            font-size: 0.875rem;
-            font-weight: 600;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--burnt-sienna);
-            opacity: 0.7;
-            margin-bottom: var(--space-sm);
-        }
-
-        .location__title {
-            font-family: var(--font-brand);
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 700;
-            color: var(--burnt-sienna);
-        }
-
-        .location__content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-xl);
-        }
-
-        .location__info {
-            background-color: var(--off-white);
-            padding: var(--space-xl);
-            border: 1px solid var(--burnt-sienna);
-        }
-
-        .location__info-item {
-            margin-bottom: var(--space-lg);
-            padding-bottom: var(--space-lg);
-            border-bottom: 1px solid var(--tan);
-        }
-
-        .location__info-item:last-of-type {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .location__info-label {
-            font-family: var(--font-brand);
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--burnt-sienna);
-            opacity: 0.7;
-            margin-bottom: var(--space-xs);
-        }
-
-        .location__info-value {
-            font-family: var(--font-brand);
-            font-size: 1.125rem;
-            font-weight: 400;
-            color: var(--burnt-sienna);
-            line-height: 1.6;
-        }
-
-        .location__cta {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 1.25rem 2rem;
-            margin-top: var(--space-lg);
-            background-color: var(--burnt-sienna);
-            color: var(--off-white);
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 700;
-            border: none;
-            transition: all 0.4s ease;
-        }
-
-        .location__cta:hover {
-            background-color: var(--whatsapp);
-            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
-        }
-
-        .location__cta svg {
-            width: 22px;
-            height: 22px;
-            fill: var(--whatsapp);
-            transition: fill 0.3s ease;
-        }
-
-        .location__cta:hover svg {
-            fill: var(--off-white);
-        }
-
-        .location__map {
-            border: 1px solid var(--burnt-sienna);
+            transition: all 0.4s var(--ease-elegant);
             overflow: hidden;
         }
 
-        .location__map iframe {
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--burnt-sienna);
+            transform: scaleX(0);
+            transition: transform 0.4s var(--ease-elegant);
+        }
+
+        .pillar-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            min-height: 400px;
-            border: 0;
-            filter: sepia(25%) saturate(85%);
-            transition: filter 0.5s ease;
+            background: linear-gradient(180deg, rgba(113, 53, 32, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-elegant);
         }
 
-        .location__map:hover iframe {
-            filter: sepia(0%) saturate(100%);
+        .pillar-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(113, 53, 32, 0.15);
         }
 
-        /* ================================================
-           FOOTER
-           ================================================ */
-        .footer {
-            background-color: var(--burnt-sienna);
-            padding: var(--space-xl) var(--space-md);
-            text-align: center;
+        .pillar-card:hover::before {
+            transform: scaleX(1);
         }
 
-        .footer__logo {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: var(--space-sm);
+        .pillar-card:hover::after {
+            opacity: 1;
         }
 
-        .footer__logo-hamza {
-            font-family: var(--font-brand);
-            font-size: 2.25rem;
+        .pillar-number {
+            font-family: var(--font-display);
+            font-size: 3rem;
             font-weight: 700;
+            color: var(--burnt-sienna);
+            opacity: 0.2;
+            line-height: 1;
+            margin-bottom: var(--space-xs);
+        }
+
+        .pillar-title {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--burnt-sienna);
+            margin-bottom: var(--space-sm);
+            position: relative;
+            z-index: 1;
+        }
+
+        .pillar-text {
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            color: var(--warm-brown);
+            line-height: 1.7;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           MENU SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .menu {
+            background: var(--tan);
+        }
+
+        .menu-intro {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto var(--space-lg);
+        }
+
+        .menu-intro p {
+            font-family: var(--font-primary);
+            font-size: 1.1rem;
+            color: var(--warm-brown);
+            font-style: italic;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-lg);
+        }
+
+        .menu-category {
+            background: var(--off-white);
+            padding: var(--space-lg);
+            position: relative;
+        }
+
+        .menu-category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--burnt-sienna);
+        }
+
+        .menu-category-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px dashed rgba(113, 53, 32, 0.3);
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: var(--space-sm) 0;
+            border-bottom: 1px dotted rgba(113, 53, 32, 0.2);
+            transition: all 0.3s var(--ease-elegant);
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            padding-left: var(--space-sm);
+            background: rgba(113, 53, 32, 0.03);
+        }
+
+        .menu-item-info {
+            flex: 1;
+        }
+
+        .menu-item-name {
+            font-family: var(--font-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--burnt-sienna);
+            margin-bottom: 4px;
+        }
+
+        .menu-item-desc {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            color: var(--warm-brown);
+            opacity: 0.85;
+        }
+
+        .menu-item-price {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            white-space: nowrap;
+            margin-left: var(--space-sm);
+        }
+
+        .menu-note {
+            text-align: center;
+            margin-top: var(--space-lg);
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            color: var(--warm-brown);
+            font-style: italic;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           STATS SECTION (Dark Theme)
+           ═══════════════════════════════════════════════════════════ */
+        .stats {
+            background: var(--burnt-sienna);
+            color: var(--off-white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(210, 180, 140, 0.1) 0%, transparent 70%);
+        }
+
+        .stats .section-label {
+            color: var(--tan);
+        }
+
+        .stats .section-title {
             color: var(--off-white);
         }
 
-        .footer__logo-express {
-            font-family: var(--font-brand);
-            font-size: 1rem;
+        .stats .section-divider-line {
+            background: var(--off-white);
+        }
+
+        .stats .section-divider-center {
+            border-color: var(--off-white);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: var(--space-lg) var(--space-md);
+            border: 1px solid rgba(250, 243, 227, 0.15);
+            transition: all 0.4s var(--ease-elegant);
+            position: relative;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(210, 180, 140, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-elegant);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--tan);
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--tan);
+            line-height: 1;
+            margin-bottom: var(--space-xs);
+        }
+
+        .stat-label {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
             font-weight: 600;
             letter-spacing: 0.2em;
             text-transform: uppercase;
             color: var(--off-white);
-            -webkit-text-stroke: 1px var(--off-white);
-            -webkit-text-fill-color: transparent;
+            opacity: 0.85;
         }
 
-        .footer__tagline {
-            font-family: var(--font-brand);
-            font-size: 0.9375rem;
-            font-weight: 500;
-            font-style: italic;
+        /* ═══════════════════════════════════════════════════════════
+           ORDER SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .order {
+            background: linear-gradient(180deg, var(--tan) 0%, var(--light-tan) 100%);
+        }
+
+        .order-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+        }
+
+        .order-card {
+            background: var(--off-white);
+            padding: var(--space-lg);
+            text-align: center;
+            border: 1px solid rgba(113, 53, 32, 0.1);
+            transition: all 0.4s var(--ease-elegant);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--burnt-sienna);
+            transform: scaleX(0);
+            transition: transform 0.4s var(--ease-elegant);
+        }
+
+        .order-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(113, 53, 32, 0.15);
+        }
+
+        .order-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .order-icon {
+            font-size: 3rem;
+            margin-bottom: var(--space-sm);
+        }
+
+        .order-card-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            margin-bottom: var(--space-xs);
+        }
+
+        .order-card-text {
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            color: var(--warm-brown);
+            margin-bottom: var(--space-md);
+            line-height: 1.6;
+        }
+
+        .order-card .btn {
+            width: 100%;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           LOCATION SECTION
+           ═══════════════════════════════════════════════════════════ */
+        .location {
+            background: var(--off-white);
+        }
+
+        .location-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: var(--space-lg);
+        }
+
+        .location-map {
+            background: var(--burnt-sienna);
+            aspect-ratio: 4/3;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .location-map iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            filter: sepia(20%) saturate(90%);
+        }
+
+        .location-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: var(--space-md);
+        }
+
+        .location-badge {
+            display: inline-block;
+            font-family: var(--font-primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--burnt-sienna);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--burnt-sienna);
+            margin-bottom: var(--space-md);
+            width: fit-content;
+        }
+
+        .location-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            margin-bottom: var(--space-md);
+        }
+
+        .location-address {
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            color: var(--warm-brown);
+            line-height: 1.8;
+            margin-bottom: var(--space-md);
+        }
+
+        .location-hours {
+            background: var(--tan);
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .location-hours h4 {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--burnt-sienna);
+            margin-bottom: var(--space-sm);
+        }
+
+        .location-hours-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: var(--space-xs) var(--space-md);
+        }
+
+        .location-hours-grid span {
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            color: var(--warm-brown);
+        }
+
+        .location-contact {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .location-contact a {
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .location-contact a:hover {
+            color: var(--dark-sienna);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════════════════════ */
+        .footer {
+            background: var(--dark-sienna);
+            color: var(--off-white);
+            padding: var(--space-lg) var(--space-md) var(--space-md);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .footer-brand {
+            max-width: 320px;
+        }
+
+        .footer-logo {
+            width: 200px;
+            margin-bottom: var(--space-md);
+            filter: brightness(1.1);
+        }
+
+        .footer-tagline {
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            color: rgba(250, 243, 227, 0.7);
+            line-height: 1.8;
+        }
+
+        .footer-column h4 {
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
             color: var(--tan);
             margin-bottom: var(--space-md);
         }
 
-        .footer__divider {
-            width: 60px;
-            height: 1px;
-            background-color: var(--tan);
-            margin: var(--space-md) auto;
-            opacity: 0.4;
+        .footer-links {
+            list-style: none;
         }
 
-        .footer__copyright {
-            font-family: var(--font-brand);
-            font-size: 0.8125rem;
-            font-weight: 400;
-            color: var(--tan-light);
-            opacity: 0.7;
+        .footer-links li {
+            margin-bottom: var(--space-xs);
         }
 
-        .footer__link {
+        .footer-links a {
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            color: rgba(250, 243, 227, 0.7);
+            transition: color 0.3s var(--ease-elegant);
+        }
+
+        .footer-links a:hover {
             color: var(--off-white);
-            text-decoration: underline;
         }
 
-        /* ================================================
-           FLOATING WHATSAPP BUTTON
-           ================================================ */
-        .floating-cta {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 999;
-            opacity: 0;
-            transform: scale(0) translateY(20px);
-            transition: all 0.4s var(--ease-out-back);
+        .footer-social {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
         }
 
-        .floating-cta.is-visible {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-
-        .floating-cta__btn {
+        .footer-social a {
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(250, 243, 227, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 60px;
-            height: 60px;
-            background-color: var(--whatsapp);
-            border-radius: 50%;
-            box-shadow: 0 6px 25px rgba(37, 211, 102, 0.45);
-            transition: all 0.3s ease;
-            position: relative;
+            font-size: 1.2rem;
+            transition: all 0.3s var(--ease-elegant);
         }
 
-        .floating-cta__btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 10px 35px rgba(37, 211, 102, 0.55);
+        .footer-social a:hover {
+            background: var(--tan);
+            border-color: var(--tan);
+            color: var(--dark-sienna);
         }
 
-        .floating-cta__btn svg {
-            width: 30px;
-            height: 30px;
-            fill: white;
+        .footer-bottom {
+            border-top: 1px solid rgba(250, 243, 227, 0.1);
+            padding-top: var(--space-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
         }
 
-        .floating-cta__btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 2px solid var(--whatsapp);
-            animation: floatingPulse 2s ease-out infinite;
+        .footer-copyright {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            color: rgba(250, 243, 227, 0.5);
         }
 
-        @keyframes floatingPulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.7;
-            }
-
-            100% {
-                transform: scale(1.5);
-                opacity: 0;
-            }
+        .footer-legal {
+            display: flex;
+            gap: var(--space-md);
         }
 
-        .floating-cta__tooltip {
-            position: absolute;
-            right: 72px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: var(--burnt-sienna);
+        .footer-legal a {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            color: rgba(250, 243, 227, 0.5);
+        }
+
+        .footer-legal a:hover {
             color: var(--off-white);
-            padding: 0.5rem 1rem;
-            font-family: var(--font-brand);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
         }
 
-        .floating-cta:hover .floating-cta__tooltip {
-            opacity: 1;
-        }
-
-        .floating-cta__tooltip::after {
-            content: '';
-            position: absolute;
-            right: -6px;
-            top: 50%;
-            transform: translateY(-50%);
-            border: 6px solid transparent;
-            border-left-color: var(--burnt-sienna);
-        }
-
-        /* ================================================
-           SCROLL ANIMATIONS
-           ================================================ */
-        .animate-on-scroll {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.8s ease, transform 0.8s var(--ease-out-expo);
-        }
-
-        .animate-on-scroll.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ================================================
-           RESPONSIVE STYLES
-           ================================================ */
+        /* ═══════════════════════════════════════════════════════════
+           RESPONSIVE DESIGN
+           ═══════════════════════════════════════════════════════════ */
         @media (max-width: 1024px) {
-            .menu__grid {
+            .pillars-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
-            .menu__grid .menu__item:last-child {
-                grid-column: span 2;
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .promise__grid {
-                grid-template-columns: 1fr;
-                gap: var(--space-lg);
+            .order-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .heritage__container {
-                grid-template-columns: 1fr;
-                gap: var(--space-xl);
-            }
-
-            .heritage__image {
-                order: -1;
-                max-width: 400px;
-                margin: 0 auto;
-            }
-
-            .location__content {
-                grid-template-columns: 1fr;
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
             }
         }
 
         @media (max-width: 768px) {
-            .nav__links {
+            :root {
+                --space-lg: 3rem;
+                --space-xl: 5rem;
+            }
+
+            .nav-links {
                 display: none;
                 position: absolute;
                 top: 100%;
                 left: 0;
-                right: 0;
+                width: 100%;
+                background: var(--tan);
                 flex-direction: column;
-                background-color: var(--tan);
                 padding: var(--space-md);
-                gap: var(--space-md);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                gap: var(--space-sm);
+                box-shadow: 0 15px 40px rgba(113, 53, 32, 0.15);
             }
 
-            .nav__links.is-open {
+            .nav-links.active {
                 display: flex;
             }
 
-            .nav__toggle {
+            .nav-toggle {
                 display: flex;
             }
 
-            .hero__express {
-                -webkit-text-stroke: 2px var(--burnt-sienna);
+            .nav-cta {
+                display: none;
             }
 
-            .menu__grid {
+            .hero-frame {
+                top: 15px;
+                left: 15px;
+                right: 15px;
+                bottom: 15px;
+            }
+
+            .hero-frame::before,
+            .hero-frame::after {
+                width: 50px;
+                height: 50px;
+            }
+
+            .hero-logo {
+                max-width: 320px;
+            }
+
+            .legacy-grid {
                 grid-template-columns: 1fr;
             }
 
-            .menu__grid .menu__item:last-child {
-                grid-column: span 1;
+            .legacy-image {
+                order: -1;
             }
 
-            .menu__overlay {
-                padding: var(--space-md);
+            .legacy-year {
+                font-size: 4rem;
             }
 
-            .floating-cta {
-                bottom: 20px;
-                right: 20px;
+            .pillars-grid {
+                grid-template-columns: 1fr;
             }
 
-            .floating-cta__btn {
-                width: 54px;
-                height: 54px;
+            .menu-grid {
+                grid-template-columns: 1fr;
             }
 
-            .floating-cta__tooltip {
-                display: none;
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .order-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .location-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-brand {
+                max-width: 100%;
+            }
+
+            .footer-logo {
+                margin: 0 auto var(--space-md);
+            }
+
+            .footer-social {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
             }
         }
 
         @media (max-width: 480px) {
-            .hero__cta {
-                padding: 1rem 2rem;
-                font-size: 0.9375rem;
+            .hero-cta-group {
+                flex-direction: column;
             }
 
-            .promise__number {
-                font-size: 2.5rem;
+            .btn {
+                width: 100%;
             }
 
-            .heritage__badge {
-                width: 75px;
-                height: 75px;
-                top: -10px;
-                right: -10px;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
 
-            .heritage__badge-year {
-                font-size: 1.5rem;
+            .location-badge {
+                margin: 0 auto var(--space-md);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           SMOOTH SCROLL MOBILE OPTIMIZATION
+           ═══════════════════════════════════════════════════════════ */
+        @supports (-webkit-touch-callout: none) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            html {
+                scroll-behavior: auto;
             }
         }
     </style>
 </head>
 
-<body class="loading">
-
+<body>
     <!-- Loading Screen -->
     <div class="loader" id="loader">
-        <div class="loader__icon">
-            <img src="assets/founder_portrait.svg" alt="Loading Hamza Express">
+        <div class="loader-content">
+            <img src="assets/Icon.svg" alt="Loading" class="loader-icon">
+            <p class="loader-text">Est. 1918</p>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="nav" id="nav">
-        <div class="nav__container">
-            <a href="#" class="nav__logo">
-                <div class="nav__logo-icon">
-                    <img src="assets/founder_portrait.svg" alt="Hamza Express Icon">
-                </div>
-                <div class="nav__logo-text">
-                    <span class="nav__logo-hamza">Hamza</span>
-                    <span class="nav__logo-express">EXPRESS</span>
-                </div>
+        <div class="nav-container">
+            <a href="#hero" class="nav-brand">
+                <img src="assets/Icon.png" alt="Hamza Express Icon" class="nav-logo-icon">
+                <img src="assets/Text_Logo_Main.png" alt="Hamza Express" class="nav-logo-text">
             </a>
-
-            <div class="nav__links" id="navLinks">
-                <a href="#menu" class="nav__link">Menu</a>
-                <a href="#heritage" class="nav__link">Our Story</a>
-                <a href="#location" class="nav__link">Location</a>
-                <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20from%20Hamza%20Express"
-                    target="_blank" rel="noopener noreferrer" class="nav__cta">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                    </svg>
-                    Order Now
-                </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#legacy">Our Legacy</a></li>
+                <li><a href="#pillars">Heritage</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#order">Order</a></li>
+                <li><a href="#location">Visit Us</a></li>
+            </ul>
+            <a href="https://wa.me/918008002045" target="_blank" class="nav-cta">Order Now</a>
+            <div class="nav-toggle" id="navToggle">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
-
-            <button class="nav__toggle" id="navToggle" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero" id="hero">
-        <div class="hero__content">
-            <!-- Founder Icon - Heritage Anchor -->
-            <div class="hero__icon">
-                <img src="assets/founder_portrait.svg" alt="Hamza Express - Heritage Icon Est. 1918" loading="eager">
+        <div class="hero-frame"></div>
+        <div class="hero-content">
+            <span class="hero-badge">Bangalore's Heritage Since 1918</span>
+            <div class="hero-logo-container">
+                <div class="aroma-container">
+                    <div class="aroma"></div>
+                    <div class="aroma"></div>
+                    <div class="aroma"></div>
+                    <div class="aroma"></div>
+                </div>
+                <img src="assets/Full_Logo_Brown_BG.svg" alt="Hamza Express - Over 100 Years of Taste, Delivered"
+                    class="hero-logo">
             </div>
-
-            <!-- Brand Name - Per Typography Guidelines -->
-            <div class="hero__brand">
-                <img src="assets/logo_hamza.svg" alt="Hamza" class="hero__logo-part hero__logo-hamza">
-                <img src="assets/logo_express.svg" alt="EXPRESS" class="hero__logo-part hero__logo-express">
+            <p class="hero-tagline">Over 100 Years of Taste, Delivered</p>
+            <div class="hero-divider">
+                <div class="hero-divider-line"></div>
+                <div class="hero-divider-dot"></div>
+                <div class="hero-divider-line"></div>
             </div>
-
-            <!-- Separator Line: 1px, #713520 at 40% opacity -->
-            <div class="hero__divider"></div>
-
-            <!-- Official Tagline from Brand Guidelines -->
-            <p class="hero__tagline">Over 100 Years of Taste, Delivered · Est. 1918</p>
-
-            <!-- Speed Badge -->
-            <div class="hero__badge">
-                <svg viewBox="0 0 24 24" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12,6 12,12 16,14" />
-                </svg>
-                Ready in 15 Minutes
+            <p class="hero-subtitle">The QSR Extension of Bangalore's Legendary Hamza Hotel</p>
+            <div class="hero-cta-group">
+                <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary">Order Now</a>
+                <a href="#menu" class="btn">View Menu</a>
             </div>
-
-            <!-- CTA Button - Burnt Sienna background, Off-White text -->
-            <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20from%20Hamza%20Express"
-                target="_blank" rel="noopener noreferrer" class="hero__cta">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-                <span>Order on WhatsApp</span>
-            </a>
         </div>
+        <div class="scroll-indicator">
+            <span>Discover</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
 
-        <!-- Scroll Indicator -->
-        <div class="hero__scroll">
-            <span>Scroll</span>
-            <div class="hero__scroll-line"></div>
+    <!-- Legacy Section -->
+    <section class="legacy" id="legacy">
+        <div class="section-container">
+            <div class="legacy-grid">
+                <div class="legacy-image reveal-left">
+                    <div class="legacy-image-frame">
+                        <div class="legacy-image-main">
+                            <img src="assets/Icon.svg" alt="Hamza Express Founder">
+                        </div>
+                    </div>
+                </div>
+                <div class="legacy-content reveal-right">
+                    <div class="legacy-year">1918</div>
+                    <span class="section-label">Our Legacy</span>
+                    <h2 class="legacy-quote">Four Generations of Culinary Excellence</h2>
+                    <p class="legacy-text">
+                        Hamza Express is not just a new brand — it's a modern facelift of a century-old legacy. We bring
+                        the legendary taste that Bangalore has trusted for over 100 years, now delivered to your
+                        doorstep.
+                    </p>
+                    <p class="legacy-text">
+                        What began as a humble eatery in 1918 has evolved into a beloved institution. Today, Hamza
+                        Express carries forward the same authentic recipes, the same uncompromising quality, refined
+                        over four generations.
+                    </p>
+                    <div class="legacy-signature">
+                        <div class="signature-line"></div>
+                        <span class="signature-text">A Legacy of Trust</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Heritage Pillars Section -->
+    <section class="pillars" id="pillars">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <span class="section-label">What Defines Us</span>
+                <h2 class="section-title">Our Heritage</h2>
+                <div class="section-divider">
+                    <div class="section-divider-line"></div>
+                    <div class="section-divider-center"></div>
+                    <div class="section-divider-line"></div>
+                </div>
+            </div>
+            <div class="pillars-grid">
+                <div class="pillar-card reveal" style="transition-delay: 0.1s;">
+                    <div class="pillar-number">01</div>
+                    <h3 class="pillar-title">Heritage</h3>
+                    <p class="pillar-text">Not a new brand, but a modern facelift of a century-old legacy that Bangalore
+                        has loved since 1918.</p>
+                </div>
+                <div class="pillar-card reveal" style="transition-delay: 0.2s;">
+                    <div class="pillar-number">02</div>
+                    <h3 class="pillar-title">Authenticity</h3>
+                    <p class="pillar-text">Same legendary recipes, passed down through four generations, prepared with
+                        traditional methods.</p>
+                </div>
+                <div class="pillar-card reveal" style="transition-delay: 0.3s;">
+                    <div class="pillar-number">03</div>
+                    <h3 class="pillar-title">Quality</h3>
+                    <p class="pillar-text">Uncompromising standards maintained across 100+ years. Every dish carries our
+                        family's reputation.</p>
+                </div>
+                <div class="pillar-card reveal" style="transition-delay: 0.4s;">
+                    <div class="pillar-number">04</div>
+                    <h3 class="pillar-title">Convenience</h3>
+                    <p class="pillar-text">Modern delivery format bringing heritage taste to your doorstep with quick
+                        service convenience.</p>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Menu Section -->
     <section class="menu" id="menu">
-        <header class="menu__header animate-on-scroll">
-            <p class="menu__subtitle">Our Legendary Menu</p>
-            <h2 class="menu__title">Signature Biryanis</h2>
-        </header>
-
-        <div class="menu__grid">
-            <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20Mutton%20Biryani"
-                target="_blank" rel="noopener noreferrer" class="menu__item">
-                <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&h=800&fit=crop&auto=format"
-                    alt="Mutton Biryani" class="menu__image" loading="lazy">
-                <div class="menu__overlay">
-                    <h3 class="menu__name">Mutton Biryani</h3>
-                    <p class="menu__desc">Slow-cooked tender mutton with aromatic basmati rice</p>
-                    <span class="menu__price">₹299</span>
+        <div class="section-container">
+            <div class="section-header reveal">
+                <span class="section-label">Our Offerings</span>
+                <h2 class="section-title">The Menu</h2>
+                <div class="section-divider">
+                    <div class="section-divider-line"></div>
+                    <div class="section-divider-center"></div>
+                    <div class="section-divider-line"></div>
                 </div>
-                <span class="menu__order-btn">Order Now</span>
-            </a>
-
-            <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20Chicken%20Biryani"
-                target="_blank" rel="noopener noreferrer" class="menu__item">
-                <img src="https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=800&h=800&fit=crop&auto=format"
-                    alt="Chicken Biryani" class="menu__image" loading="lazy">
-                <div class="menu__overlay">
-                    <h3 class="menu__name">Chicken Biryani</h3>
-                    <p class="menu__desc">Juicy chicken pieces layered with fragrant spiced rice</p>
-                    <span class="menu__price">₹249</span>
+            </div>
+            <div class="menu-intro reveal">
+                <p>"Recipes perfected over a century, served with the same love and dedication that made Hamza Hotel a
+                    Bangalore institution."</p>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-category reveal" style="transition-delay: 0.1s;">
+                    <h3 class="menu-category-title">Biryani</h3>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Hamza Special Chicken Biryani</h4>
+                            <p class="menu-item-desc">Our signature dish — aromatic basmati with tender chicken,
+                                slow-cooked to perfection</p>
+                        </div>
+                        <span class="menu-item-price">₹249</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Mutton Dum Biryani</h4>
+                            <p class="menu-item-desc">Succulent mutton pieces in fragrant rice, sealed and slow-cooked
+                            </p>
+                        </div>
+                        <span class="menu-item-price">₹349</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Egg Biryani</h4>
+                            <p class="menu-item-desc">Perfectly spiced rice with boiled eggs, a vegetarian favorite</p>
+                        </div>
+                        <span class="menu-item-price">₹179</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Family Pack (Serves 4)</h4>
+                            <p class="menu-item-desc">Share the legacy — Chicken Biryani for the whole family</p>
+                        </div>
+                        <span class="menu-item-price">₹799</span>
+                    </div>
                 </div>
-                <span class="menu__order-btn">Order Now</span>
-            </a>
-
-            <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20Express%20Combo"
-                target="_blank" rel="noopener noreferrer" class="menu__item">
-                <img src="https://images.unsplash.com/photo-1631515243349-e0cb75fb8d3a?w=800&h=800&fit=crop&auto=format"
-                    alt="Express Combo" class="menu__image" loading="lazy">
-                <div class="menu__overlay">
-                    <h3 class="menu__name">Express Combo</h3>
-                    <p class="menu__desc">Biryani + Kebab + Raita + Cold Drink</p>
-                    <span class="menu__price">₹349</span>
+                <div class="menu-category reveal" style="transition-delay: 0.2s;">
+                    <h3 class="menu-category-title">Accompaniments</h3>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Chicken 65</h4>
+                            <p class="menu-item-desc">Crispy, spicy, and utterly addictive — a South Indian classic</p>
+                        </div>
+                        <span class="menu-item-price">₹189</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Mutton Seekh Kebab</h4>
+                            <p class="menu-item-desc">Minced mutton skewers, chargrilled with aromatic spices</p>
+                        </div>
+                        <span class="menu-item-price">₹229</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Mirchi Ka Salan</h4>
+                            <p class="menu-item-desc">Traditional Hyderabadi gravy — the perfect biryani companion</p>
+                        </div>
+                        <span class="menu-item-price">₹89</span>
+                    </div>
+                    <div class="menu-item">
+                        <div class="menu-item-info">
+                            <h4 class="menu-item-name">Raita</h4>
+                            <p class="menu-item-desc">Cool, creamy yogurt with fresh cucumber and spices</p>
+                        </div>
+                        <span class="menu-item-price">₹49</span>
+                    </div>
                 </div>
-                <span class="menu__order-btn">Order Now</span>
-            </a>
-        </div>
-
-        <div class="menu__cta-wrapper animate-on-scroll">
-            <a href="https://wa.me/918008002045?text=Hi%2C%20please%20share%20the%20full%20menu" target="_blank"
-                rel="noopener noreferrer" class="menu__cta">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                </svg>
-                <span>View Full Menu</span>
-            </a>
+            </div>
+            <p class="menu-note reveal">* Prices inclusive of taxes. Delivery charges may apply based on location.</p>
         </div>
     </section>
 
-    <!-- Express Promise Section -->
-    <section class="promise" id="promise">
-        <div class="promise__container">
-            <div class="promise__grid">
-                <div class="promise__item animate-on-scroll">
-                    <div class="promise__icon">
-                        <svg viewBox="0 0 24 24" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12,6 12,12 16,14" />
-                        </svg>
-                    </div>
-                    <div class="promise__number">15</div>
-                    <div class="promise__label">Minutes</div>
-                    <p class="promise__desc">From order to your table. Speed without compromise.</p>
+    <!-- Stats Section -->
+    <section class="stats" id="stats">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <span class="section-label">The Hamza Legacy</span>
+                <h2 class="section-title">By The Numbers</h2>
+                <div class="section-divider">
+                    <div class="section-divider-line"></div>
+                    <div class="section-divider-center"></div>
+                    <div class="section-divider-line"></div>
                 </div>
-
-                <div class="promise__item animate-on-scroll">
-                    <div class="promise__icon">
-                        <svg viewBox="0 0 24 24" stroke-width="1.5">
-                            <path
-                                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                        </svg>
-                    </div>
-                    <div class="promise__number">107</div>
-                    <div class="promise__label">Years of Legacy</div>
-                    <p class="promise__desc">Recipes unchanged since 1918. Taste the tradition.</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card reveal" style="transition-delay: 0.1s;">
+                    <div class="stat-number">106</div>
+                    <div class="stat-label">Years of Legacy</div>
                 </div>
-
-                <div class="promise__item animate-on-scroll">
-                    <div class="promise__icon">
-                        <svg viewBox="0 0 24 24" stroke-width="1.5">
-                            <path
-                                d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                        </svg>
-                    </div>
-                    <div class="promise__number">100%</div>
-                    <div class="promise__label">Quality</div>
-                    <p class="promise__desc">Fresh ingredients. Authentic spices. No shortcuts.</p>
+                <div class="stat-card reveal" style="transition-delay: 0.2s;">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Generations</div>
+                </div>
+                <div class="stat-card reveal" style="transition-delay: 0.3s;">
+                    <div class="stat-number">1M+</div>
+                    <div class="stat-label">Biryanis Served</div>
+                </div>
+                <div class="stat-card reveal" style="transition-delay: 0.4s;">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Happy Customers</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Heritage Section -->
-    <section class="heritage" id="heritage">
-        <div class="heritage__container">
-            <div class="heritage__image animate-on-scroll">
-                <div class="heritage__image-wrapper">
-                    <img src="assets/founder_portrait.svg" alt="Hamza Hotel Heritage - Established 1918" loading="lazy">
-                    <div class="heritage__badge">
-                        <span class="heritage__badge-text">Since</span>
-                        <span class="heritage__badge-year">1918</span>
-                    </div>
+    <!-- Order Section -->
+    <section class="order" id="order">
+        <div class="section-container">
+            <div class="section-header reveal">
+                <span class="section-label">Get Your Order</span>
+                <h2 class="section-title">Order Now</h2>
+                <div class="section-divider">
+                    <div class="section-divider-line"></div>
+                    <div class="section-divider-center"></div>
+                    <div class="section-divider-line"></div>
                 </div>
             </div>
-
-            <div class="heritage__content animate-on-scroll">
-                <p class="heritage__subtitle">Our Heritage</p>
-                <h2 class="heritage__title">From the Legendary Kitchens of Hamza Hotel</h2>
-                <p class="heritage__text">
-                    In 1918, Mr. Hamza opened a small eatery in the heart of Shivajinagar, Bangalore. What began as a
-                    humble establishment has become one of the city's most cherished culinary institutions.
-                </p>
-                <p class="heritage__text">
-                    <strong>Hamza Express</strong> is the QSR extension of Hamza Hotel — bringing that same legendary
-                    taste to the modern world. Heritage taste, delivered with modern convenience.
-                </p>
-                <blockquote class="heritage__quote">
-                    "The same taste. The same legacy. Now, express."
-                </blockquote>
+            <div class="order-grid">
+                <div class="order-card reveal" style="transition-delay: 0.1s;">
+                    <div class="order-icon">🍽️</div>
+                    <h3 class="order-card-title">Swiggy</h3>
+                    <p class="order-card-text">Fast delivery through India's leading food platform. Track your order in
+                        real-time.</p>
+                    <a href="#" class="btn btn-primary">Order on Swiggy</a>
+                </div>
+                <div class="order-card reveal" style="transition-delay: 0.2s;">
+                    <div class="order-icon">🥘</div>
+                    <h3 class="order-card-title">Zomato</h3>
+                    <p class="order-card-text">Discover reviews and order with exclusive Zomato offers and discounts.
+                    </p>
+                    <a href="#" class="btn btn-primary">Order on Zomato</a>
+                </div>
+                <div class="order-card reveal" style="transition-delay: 0.3s;">
+                    <div class="order-icon">�</div>
+                    <h3 class="order-card-title">WhatsApp Order</h3>
+                    <p class="order-card-text">Order directly via WhatsApp for quick service and special requests.</p>
+                    <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary">Order via WhatsApp</a>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Location Section -->
     <section class="location" id="location">
-        <div class="location__container">
-            <header class="location__header animate-on-scroll">
-                <p class="location__subtitle">Find Us</p>
-                <h2 class="location__title">Visit Hamza Express</h2>
-            </header>
-
-            <div class="location__content">
-                <div class="location__info animate-on-scroll">
-                    <div class="location__info-item">
-                        <div class="location__info-label">Address</div>
-                        <div class="location__info-value">
-                            Shivajinagar, Bengaluru<br>
-                            Karnataka 560051
-                        </div>
-                    </div>
-
-                    <div class="location__info-item">
-                        <div class="location__info-label">Hours</div>
-                        <div class="location__info-value">
-                            Open Daily<br>
-                            11:00 AM – 11:00 PM
-                        </div>
-                    </div>
-
-                    <div class="location__info-item">
-                        <div class="location__info-label">Contact</div>
-                        <div class="location__info-value">
-                            <a href="tel:+918008002045">+91 800 800 2045</a>
-                        </div>
-                    </div>
-
-                    <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20from%20Hamza%20Express"
-                        target="_blank" rel="noopener noreferrer" class="location__cta">
-                        <svg viewBox="0 0 24 24">
-                            <path
-                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                        <span>Order on WhatsApp</span>
-                    </a>
+        <div class="section-container">
+            <div class="section-header reveal">
+                <span class="section-label">Find Us</span>
+                <h2 class="section-title">Visit Hamza Express</h2>
+                <div class="section-divider">
+                    <div class="section-divider-line"></div>
+                    <div class="section-divider-center"></div>
+                    <div class="section-divider-line"></div>
                 </div>
-
-                <div class="location__map animate-on-scroll">
+            </div>
+            <div class="location-grid">
+                <div class="location-map reveal-left">
                     <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.714088653068!2d77.59283!3d12.988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae167a8ef2c6b5%3A0x8c7c6e44a0a0!2sShivaji%20Nagar%2C%20Bengaluru!5e0!3m2!1sen!2sin!4v1234567890"
-                        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-                        title="Hamza Express Location">
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3888.0!2d77.5946!3d12.9716!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTLCsDU4JzE3LjgiTiA3N8KwMzUnNDAuNiJF!5e0!3m2!1sen!2sin!4v1234567890"
+                        loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Hamza Express Location">
                     </iframe>
+                </div>
+                <div class="location-info reveal-right">
+                    <span class="location-badge">Est. 1918</span>
+                    <h3 class="location-title">Hamza Express</h3>
+                    <p class="location-address">
+                        Hamza Hotel Building<br>
+                        Commercial Street, Shivajinagar<br>
+                        Bangalore, Karnataka 560001<br>
+                        India
+                    </p>
+                    <div class="location-hours">
+                        <h4>Operating Hours</h4>
+                        <div class="location-hours-grid">
+                            <span>Monday – Sunday</span>
+                            <span>11:00 AM – 11:00 PM</span>
+                            <span>Delivery</span>
+                            <span>11:30 AM – 10:30 PM</span>
+                        </div>
+                    </div>
+                    <div class="location-contact">
+                        <a href="tel:+919876543210">
+                            <span>📞</span>
+                            <span>+91 98765 43210</span>
+                        </a>
+                        <a href="https://wa.me/918008002045" target="_blank" rel="noopener">
+                            <span>💬</span>
+                            <span>WhatsApp Us</span>
+                        </a>
+                        <a href="mailto:order@hamzaexpress.in">
+                            <span>✉️</span>
+                            <span>order@hamzaexpress.in</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1703,95 +1927,139 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer__logo">
-            <span class="footer__logo-hamza">Hamza</span>
-            <span class="footer__logo-express">EXPRESS</span>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <img src="assets/Full_Logo_White_BG.svg" alt="Hamza Express" class="footer-logo">
+                <p class="footer-tagline">
+                    Over 100 years of taste, delivered. Experience the legendary flavors of Bangalore's most trusted
+                    biryani, now at your doorstep through Hamza Express.
+                </p>
+                <div class="footer-social">
+                    <a href="#" aria-label="Instagram">📷</a>
+                    <a href="#" aria-label="Facebook">📘</a>
+                    <a href="#" aria-label="YouTube">🎬</a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="#legacy">Our Legacy</a></li>
+                    <li><a href="#pillars">Heritage</a></li>
+                    <li><a href="#menu">Menu</a></li>
+                    <li><a href="#location">Visit Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Order From</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Swiggy</a></li>
+                    <li><a href="#">Zomato</a></li>
+                    <li><a href="#">Direct Order</a></li>
+                    <li><a href="#">Bulk Orders</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h4>Connect</h4>
+                <ul class="footer-links">
+                    <li><a href="#">Instagram</a></li>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Google Reviews</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
         </div>
-        <p class="footer__tagline">Over 100 Years of Taste, Delivered · Est. 1918</p>
-        <div class="footer__divider"></div>
-        <p class="footer__copyright">
-            © 2024 Hamza Express. A <a href="https://hamzahotel.com" target="_blank" rel="noopener noreferrer"
-                class="footer__link">Hamza Hotel</a> Brand.
-        </p>
+        <div class="footer-bottom">
+            <p class="footer-copyright">© 2024 Hamza Express. A Legacy of Hamza Hotel (Est. 1918). All rights reserved.
+            </p>
+            <div class="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
     </footer>
-
-    <!-- Floating WhatsApp Button -->
-    <div class="floating-cta" id="floatingCta">
-        <a href="https://wa.me/918008002045?text=Hi%2C%20I%20would%20like%20to%20order%20from%20Hamza%20Express"
-            target="_blank" rel="noopener noreferrer" class="floating-cta__btn" aria-label="Order on WhatsApp">
-            <svg viewBox="0 0 24 24">
-                <path
-                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-            </svg>
-        </a>
-        <span class="floating-cta__tooltip">Order Now</span>
-    </div>
 
     <!-- JavaScript -->
     <script>
-        // Loading Screen
+        // ═══════════════════════════════════════════════════════════
+        // LOADER
+        // ═══════════════════════════════════════════════════════════
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('loader').classList.add('hidden');
-                document.body.classList.remove('loading');
             }, 1000);
         });
 
-        // Navigation
+        // ═══════════════════════════════════════════════════════════
+        // NAVIGATION
+        // ═══════════════════════════════════════════════════════════
         const nav = document.getElementById('nav');
-        const floatingCta = document.getElementById('floatingCta');
-
-        window.addEventListener('scroll', () => {
-            const scrollY = window.pageYOffset;
-            if (scrollY > 50) {
-                nav.classList.add('nav--scrolled');
-            } else {
-                nav.classList.remove('nav--scrolled');
-            }
-            if (scrollY > window.innerHeight * 0.8) {
-                floatingCta.classList.add('is-visible');
-            } else {
-                floatingCta.classList.remove('is-visible');
-            }
-        });
-
-        // Mobile Navigation
         const navToggle = document.getElementById('navToggle');
         const navLinks = document.getElementById('navLinks');
 
-        navToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('is-open');
+        // Scroll effect
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
         });
 
-        navLinks.querySelectorAll('.nav__link').forEach(link => {
+        // Mobile menu toggle
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // Close mobile menu on link click
+        navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
-                navLinks.classList.remove('is-open');
+                navLinks.classList.remove('active');
             });
         });
 
-        // Scroll Animations
-        const animateElements = document.querySelectorAll('.animate-on-scroll');
-        const observer = new IntersectionObserver((entries) => {
+        // ═══════════════════════════════════════════════════════════
+        // SCROLL REVEAL ANIMATIONS
+        // ═══════════════════════════════════════════════════════════
+        const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+
+        const revealObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
+                    entry.target.classList.add('active');
                 }
             });
-        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
 
-        animateElements.forEach(el => observer.observe(el));
+        revealElements.forEach(el => revealObserver.observe(el));
 
-        // Smooth Scroll
+        // ═══════════════════════════════════════════════════════════
+        // SMOOTH SCROLL (for Safari)
+        // ═══════════════════════════════════════════════════════════
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
-                    const navHeight = nav.offsetHeight;
-                    const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
-                    window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 }
             });
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // PERFORMANCE: Reduce animations when page is not visible
+        // ═══════════════════════════════════════════════════════════
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                document.body.style.setProperty('--animation-play-state', 'paused');
+            } else {
+                document.body.style.setProperty('--animation-play-state', 'running');
+            }
         });
     </script>
 </body>
