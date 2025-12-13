@@ -10,7 +10,7 @@
     <title>Hamza Express | Over 100 Years of Taste, Delivered · Est. 1918</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/Icon.svg">
+    <link rel="icon" type="image/x-icon" href="assets/Icon.png">
     <link rel="apple-touch-icon" href="assets/Icon.png">
 
     <!-- Preconnect for performance -->
@@ -514,7 +514,7 @@
             font-size: 0.9rem;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            padding: 1.1rem 2.8rem;
+            padding: 1.1rem 2.0rem;
             border: 2px solid var(--burnt-sienna);
             background: transparent;
             color: var(--burnt-sienna);
@@ -522,6 +522,11 @@
             transition: all 0.4s var(--ease-elegant);
             position: relative;
             overflow: hidden;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: normal;
         }
 
         .btn::before {
@@ -542,6 +547,11 @@
 
         .btn:hover::before {
             left: 0;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 2;
         }
 
         .btn-primary {
@@ -1577,7 +1587,7 @@
     <!-- Loading Screen -->
     <div class="loader" id="loader">
         <div class="loader-content">
-            <img src="assets/Icon.svg" alt="Loading" class="loader-icon">
+            <img src="assets/Icon.png" alt="Loading" class="loader-icon">
             <p class="loader-text">Est. 1918</p>
         </div>
     </div>
@@ -1618,7 +1628,7 @@
                     <div class="aroma"></div>
                 </div>
                 <img src="assets/Full_Logo_Brown_BG.svg" alt="Hamza Express - Over 100 Years of Taste, Delivered"
-                    class="hero-logo">
+                    class="hero-logo" fetchpriority="high">
             </div>
             <p class="hero-tagline">Over 100 Years of Taste, Delivered</p>
             <div class="hero-divider">
@@ -1628,8 +1638,8 @@
             </div>
             <p class="hero-subtitle">The QSR Extension of Bangalore's Legendary Hamza Hotel</p>
             <div class="hero-cta-group">
-                <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary">Order Now</a>
-                <a href="#menu" class="btn">View Menu</a>
+                <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary"><span>Order Now</span></a>
+                <a href="#menu" class="btn"><span>View Menu</span></a>
             </div>
         </div>
         <div class="scroll-indicator">
@@ -1645,7 +1655,7 @@
                 <div class="legacy-image reveal-left">
                     <div class="legacy-image-frame">
                         <div class="legacy-image-main">
-                            <img src="assets/Icon.svg" alt="Hamza Express Founder">
+                            <img src="assets/Icon.png" alt="Hamza Express Founder" loading="lazy">
                         </div>
                     </div>
                 </div>
@@ -1850,20 +1860,21 @@
                     <h3 class="order-card-title">Swiggy</h3>
                     <p class="order-card-text">Fast delivery through India's leading food platform. Track your order in
                         real-time.</p>
-                    <a href="#" class="btn btn-primary">Order on Swiggy</a>
+                    <a href="#" class="btn btn-primary"><span>Order on Swiggy</span></a>
                 </div>
                 <div class="order-card reveal" style="transition-delay: 0.2s;">
                     <div class="order-icon">🥘</div>
                     <h3 class="order-card-title">Zomato</h3>
                     <p class="order-card-text">Discover reviews and order with exclusive Zomato offers and discounts.
                     </p>
-                    <a href="#" class="btn btn-primary">Order on Zomato</a>
+                    <a href="#" class="btn btn-primary"><span>Order on Zomato</span></a>
                 </div>
                 <div class="order-card reveal" style="transition-delay: 0.3s;">
-                    <div class="order-icon">�</div>
+                    <div class="order-icon">💬</div>
                     <h3 class="order-card-title">WhatsApp Order</h3>
                     <p class="order-card-text">Order directly via WhatsApp for quick service and special requests.</p>
-                    <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary">Order via WhatsApp</a>
+                    <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary"><span>Order via
+                            WhatsApp</span></a>
                 </div>
             </div>
         </div>
@@ -1892,9 +1903,9 @@
                     <span class="location-badge">Est. 1918</span>
                     <h3 class="location-title">Hamza Express</h3>
                     <p class="location-address">
-                        Hamza Hotel Building<br>
-                        Commercial Street, Shivajinagar<br>
-                        Bangalore, Karnataka 560001<br>
+                        151-154, H.K.P. Road<br>
+                        Shivajinagar<br>
+                        Bangalore, Karnataka 560051<br>
                         India
                     </p>
                     <div class="location-hours">
@@ -1907,17 +1918,17 @@
                         </div>
                     </div>
                     <div class="location-contact">
-                        <a href="tel:+919876543210">
+                        <a href="tel:+918008002045">
                             <span>📞</span>
-                            <span>+91 98765 43210</span>
+                            <span>+91 8008002045</span>
                         </a>
                         <a href="https://wa.me/918008002045" target="_blank" rel="noopener">
                             <span>💬</span>
                             <span>WhatsApp Us</span>
                         </a>
-                        <a href="mailto:order@hamzaexpress.in">
+                        <a href="mailto:hamzaexpress1918@gmail.com">
                             <span>✉️</span>
-                            <span>order@hamzaexpress.in</span>
+                            <span>hamzaexpress1918@gmail.com</span>
                         </a>
                     </div>
                 </div>
@@ -1969,11 +1980,12 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p class="footer-copyright">© 2024 Hamza Express. A Legacy of Hamza Hotel (Est. 1918). All rights reserved.
+            <p class="footer-copyright">© 2024 Hamza Express | A brand of HN HOTELS PRIVATE LIMITED | CIN:
+                U55101KA2023PTC182051
             </p>
             <div class="footer-legal">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/terms">Terms of Service</a>
             </div>
         </div>
     </footer>
