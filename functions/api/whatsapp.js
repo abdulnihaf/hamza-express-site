@@ -248,6 +248,11 @@ export async function onRequest(context) {
     return handleRazorpayWebhook(context, corsHeaders);
   }
 
+  // KDS webhook (POST from Odoo — auto-notify WABA customers on KDS stage changes)
+  if (context.request.method === 'POST' && action === 'kds-webhook') {
+    return handleKdsWebhook(context, url, corsHeaders);
+  }
+
   // Dashboard API (GET/POST with action param) — requires X-API-Key auth
   if (action) {
     const apiKey = context.request.headers.get('X-API-Key');
@@ -792,6 +797,21 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
 
+  // Pre-check: ensure POS session is open BEFORE accepting payment
+  const apiKey = context.env.ODOO_API_KEY;
+  if (apiKey) {
+    const sessionRes = await odooRPC(apiKey, 'pos.session', 'search_read',
+      [[['config_id', '=', POS_CONFIG_ID], ['state', '=', 'opened']]],
+      { fields: ['id'], limit: 1 });
+    if (!sessionRes || sessionRes.length === 0) {
+      await sendWhatsApp(phoneId, token, buildText(waId,
+        'Sorry, Hamza Express WhatsApp ordering is currently unavailable. ' +
+        'Please visit us in person or try again later.\n\nSend *"menu"* to try again.'));
+      await updateSession(db, waId, 'idle', '[]', 0);
+      return;
+    }
+  }
+
   const total = cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
   const collectionPoint = determineCollectionPoint(cart);
   const now = new Date().toISOString();
@@ -1073,6 +1093,136 @@ function thankYouPage(message) {
 .card{text-align:center;padding:2rem;max-width:400px;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1)}
 h1{color:#713520;font-size:1.3rem}</style></head>
 <body><div class="card"><h1>Hamza Express</h1><p>${message}</p><p>You can close this page.</p></div></body></html>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KDS → WHATSAPP AUTO-NOTIFICATION (Odoo webhook receiver)
+// ═══════════════════════════════════════════════════════════════════
+
+// Stage IDs that trigger "preparing" WhatsApp notification
+const PREPARING_STAGES = new Set([
+  44,   // KDS 15 Kitchen Pass → Ready (all station items done, KP collecting)
+  62,   // KDS 16 Juice → Preparing
+  64,   // KDS 17 Bane Marie → Preparing
+  65,   // KDS 18 Shawarma → Preparing
+  66,   // KDS 19 Grill → Preparing
+]);
+
+// Stage IDs that trigger "ready" WhatsApp notification
+const READY_STAGES = new Set([
+  76,   // KDS 21 Kitchen Pass TV → InProgress (packed, ready for pickup)
+  47,   // KDS 16 Juice → Ready
+  50,   // KDS 17 Bane Marie → Ready
+  53,   // KDS 18 Shawarma → Ready
+  56,   // KDS 19 Grill → Ready
+]);
+
+async function handleKdsWebhook(context, url, corsHeaders) {
+  try {
+    // Verify shared secret
+    const secret = url.searchParams.get('secret');
+    const expectedSecret = context.env.KDS_WEBHOOK_SECRET;
+    if (expectedSecret && secret !== expectedSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
+
+    const body = await context.request.json();
+    const { stage_id, todo, prep_line_id } = body;
+
+    // Quick filter: only react to todo=True on stages we care about
+    if (todo !== true) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'todo not true' }), { headers: corsHeaders });
+    }
+
+    const isPreparing = PREPARING_STAGES.has(stage_id);
+    const isReady = READY_STAGES.has(stage_id);
+    if (!isPreparing && !isReady) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant stage' }), { headers: corsHeaders });
+    }
+
+    const notificationType = isReady ? 'ready' : 'preparing';
+
+    // Resolve: prep_line_id → pos.prep.order → pos.order → config_id
+    const apiKey = context.env.ODOO_API_KEY;
+    if (!apiKey || !prep_line_id) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'no api key or prep_line_id' }), { headers: corsHeaders });
+    }
+
+    // Step 1: Get order_id from pos.prep.line
+    const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+      [[['id', '=', prep_line_id]]], { fields: ['order_id'], limit: 1 });
+    if (!prepLine || !prepLine[0]?.order_id) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
+    }
+    const prepOrderId = prepLine[0].order_id[0];
+
+    // Step 2: Get pos_order_id from pos.prep.order
+    const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
+      [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 });
+    if (!prepOrder || !prepOrder[0]?.pos_order_id) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'prep order not found' }), { headers: corsHeaders });
+    }
+    const posOrderId = prepOrder[0].pos_order_id[0];
+
+    // Step 3: Get config_id from pos.order — filter to WABA only
+    const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
+      [[['id', '=', posOrderId]]], { fields: ['config_id', 'tracking_number'], limit: 1 });
+    if (!posOrder || !posOrder[0]) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
+    }
+    const configId = posOrder[0].config_id[0];
+    if (configId !== POS_CONFIG_ID) {
+      // Not a WABA order — ignore silently
+      return new Response(JSON.stringify({ ok: true, skipped: 'not WABA order' }), { headers: corsHeaders });
+    }
+
+    const trackingNumber = posOrder[0].tracking_number || null;
+
+    // Step 4: Find the wa_order by Odoo order ID
+    const db = context.env.DB;
+    const waOrder = await db.prepare('SELECT * FROM wa_orders WHERE odoo_order_id = ? AND payment_status = ?')
+      .bind(posOrderId, 'paid').first();
+    if (!waOrder) {
+      return new Response(JSON.stringify({ ok: true, skipped: 'no matching wa_order' }), { headers: corsHeaders });
+    }
+
+    // Step 5: Duplicate prevention — only send if status transition is valid
+    const currentStatus = waOrder.status;
+    if (notificationType === 'preparing' && currentStatus !== 'confirmed') {
+      return new Response(JSON.stringify({ ok: true, skipped: 'already past confirmed' }), { headers: corsHeaders });
+    }
+    if (notificationType === 'ready' && currentStatus !== 'confirmed' && currentStatus !== 'preparing') {
+      return new Response(JSON.stringify({ ok: true, skipped: 'already ready or beyond' }), { headers: corsHeaders });
+    }
+
+    // Step 6: Update status and send WhatsApp notification
+    const now = new Date().toISOString();
+    await db.prepare('UPDATE wa_orders SET status = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
+      .bind(notificationType, trackingNumber, now, waOrder.id).run();
+
+    const phoneId = context.env.WA_PHONE_ID;
+    const token = context.env.WA_ACCESS_TOKEN;
+
+    if (notificationType === 'preparing') {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `Your order *${waOrder.order_code}* is now being prepared!\n\n` +
+        `*Collect from:* ${waOrder.collection_point || 'Kitchen Pass'}\n` +
+        `We'll notify you when it's ready.`));
+    } else if (notificationType === 'ready') {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `Your order *${waOrder.order_code}* is *READY* for pickup!\n\n` +
+        `*Collect from:* ${waOrder.collection_point || 'Kitchen Pass'}\n` +
+        (trackingNumber ? `*Show token:* ${trackingNumber}\n\n` : '\n') +
+        `Please collect it now. Thank you for ordering with Hamza Express!`));
+    }
+
+    console.log(`KDS→WA: ${notificationType} notification sent for ${waOrder.order_code} (Odoo #${posOrderId})`);
+    return new Response(JSON.stringify({ ok: true, sent: notificationType, order: waOrder.order_code }), { headers: corsHeaders });
+
+  } catch (error) {
+    console.error('KDS webhook error:', error.message);
+    return new Response(JSON.stringify({ ok: true, error: 'internal' }), { headers: corsHeaders });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
