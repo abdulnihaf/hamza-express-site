@@ -198,7 +198,7 @@ const PAYMENT_METHOD_UPI = 17; // WABA General UPI
 const GST_TAX_ID = 31;        // 5% GST S
 
 // ── WhatsApp configuration ──
-const WA_PHONE_ID = '878889721979898';
+// WA_PHONE_ID loaded from env secret (set via wrangler/CF dashboard)
 const WA_API_VERSION = 'v21.0';
 const PAYMENT_CONFIGURATION = 'Hamza_Express_Payments'; // Razorpay config in WhatsApp Manager
 
@@ -315,7 +315,7 @@ async function processWebhook(context, body) {
   const value = changes?.value;
   if (!value) return;
 
-  const phoneId = WA_PHONE_ID;
+  const phoneId = context.env.WA_PHONE_ID;
   const token = context.env.WA_ACCESS_TOKEN;
   const db = context.env.DB;
 
@@ -945,7 +945,7 @@ async function handlePaymentStatus(context, status, phoneId, token, db) {
 async function handleRazorpayWebhook(context, corsHeaders) {
   try {
     const db = context.env.DB;
-    const phoneId = WA_PHONE_ID;
+    const phoneId = context.env.WA_PHONE_ID;
     const token = context.env.WA_ACCESS_TOKEN;
 
     // Verify Razorpay webhook signature (HMAC-SHA256)
@@ -1007,7 +1007,7 @@ async function handleRazorpayWebhook(context, corsHeaders) {
 async function handleRazorpayCallback(context, url, corsHeaders) {
   try {
     const db = context.env.DB;
-    const phoneId = WA_PHONE_ID;
+    const phoneId = context.env.WA_PHONE_ID;
     const token = context.env.WA_ACCESS_TOKEN;
 
     const razorpayPaymentId = url.searchParams.get('razorpay_payment_id');
@@ -1535,7 +1535,7 @@ async function handleDashboardAPI(context, action, url, corsHeaders) {
     // Send WhatsApp notification for key status changes
     const order = await db.prepare('SELECT * FROM wa_orders WHERE id = ?').bind(order_id).first();
     if (order) {
-      const phoneId = WA_PHONE_ID;
+      const phoneId = context.env.WA_PHONE_ID;
       const token = context.env.WA_ACCESS_TOKEN;
 
       if (newStatus === 'preparing') {
