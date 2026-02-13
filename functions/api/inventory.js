@@ -109,6 +109,25 @@ export async function onRequest(context) {
     1328: {name: 'Spring Onion', code: 'HE-RM-069', uom: 'kg'},
     1329: {name: 'Tomato', code: 'HE-RM-070', uom: 'kg'},
     1330: {name: 'Cucumber', code: 'HE-RM-071', uom: 'kg'},
+    // ── Meat & Poultry ──
+    1331: {name: 'Chicken Whole - Skin Out', code: 'HE-RM-072', uom: 'kg'},
+    1332: {name: 'Chicken Tandoori Cut - Skin Out', code: 'HE-RM-073', uom: 'kg'},
+    1333: {name: 'Chicken Whole - With Skin', code: 'HE-RM-074', uom: 'kg'},
+    1334: {name: 'Chicken Boneless Breast', code: 'HE-RM-075', uom: 'kg'},
+    1335: {name: 'Chicken Thighs', code: 'HE-RM-076', uom: 'kg'},
+    1336: {name: 'Mutton Biryani Cut', code: 'HE-RM-077', uom: 'kg'},
+    1337: {name: 'Mutton Chops', code: 'HE-RM-078', uom: 'kg'},
+    1338: {name: 'Mutton Gravy Cut', code: 'HE-RM-079', uom: 'kg'},
+    // ── Additional Spices ──
+    1339: {name: 'Guntur Red Chilli (Dried)', code: 'HE-RM-080', uom: 'kg'},
+    1340: {name: 'Khaskhas (Poppy Seeds)', code: 'HE-RM-081', uom: 'kg'},
+    1341: {name: 'Imli (Tamarind)', code: 'HE-RM-082', uom: 'kg'},
+    1342: {name: 'Carom Seeds (Ajwain)', code: 'HE-RM-083', uom: 'kg'},
+    1343: {name: 'Saffron (Kesar)', code: 'HE-RM-084', uom: 'kg'},
+    1344: {name: 'Kalonji (Nigella Seeds)', code: 'HE-RM-085', uom: 'kg'},
+    // ── Additional Dry Goods ──
+    1345: {name: 'Peanuts (Raw)', code: 'HE-RM-086', uom: 'kg'},
+    1346: {name: 'Lemon Salt (Citric Acid)', code: 'HE-RM-087', uom: 'kg'},
   };
 
   const DB = context.env.DB;
