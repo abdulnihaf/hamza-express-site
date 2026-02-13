@@ -1148,13 +1148,13 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       return new Response(JSON.stringify({ ok: true, skipped: 'no api key or prep_line_id' }), { headers: corsHeaders });
     }
 
-    // Step 1: Get order_id from pos.prep.line
+    // Step 1: Get prep_order_id from pos.prep.line
     const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
-      [[['id', '=', prep_line_id]]], { fields: ['order_id'], limit: 1 });
-    if (!prepLine || !prepLine[0]?.order_id) {
+      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id'], limit: 1 });
+    if (!prepLine || !prepLine[0]?.prep_order_id) {
       return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
     }
-    const prepOrderId = prepLine[0].order_id[0];
+    const prepOrderId = prepLine[0].prep_order_id[0];
 
     // Step 2: Get pos_order_id from pos.prep.order
     const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
