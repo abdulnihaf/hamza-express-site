@@ -118,6 +118,23 @@
   <p>Loading inventory...</p>
 </div>
 
+<!-- PIN Login Screen -->
+<div id="loginScreen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+  <div style="text-align:center;max-width:300px">
+    <h1 style="font-size:20px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:4px;height:22px;background:var(--green);border-radius:2px;display:inline-block"></span>Live Inventory</h1>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:24px">Enter your PIN to continue</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px" id="loginPinInput">
+      <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--bg2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+      <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--bg2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+      <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--bg2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+      <input type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;background:var(--bg2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;outline:none" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div id="loginPinError" style="color:var(--red);font-size:13px;display:none">Invalid PIN. Try again.</div>
+  </div>
+</div>
+
+<!-- Main App (hidden until authenticated) -->
+<div id="mainApp" style="display:none">
 <div class="header">
   <div class="header-top">
     <div>
@@ -146,6 +163,7 @@
 </div>
 
 <div class="auto-refresh" id="autoRefresh"><span class="dot"></span>Auto-refresh 60s</div>
+</div>
 
 <script>
 const API = '/api/inventory';
@@ -153,9 +171,55 @@ let liveData = null;
 let trailData = null;
 let refreshTimer = null;
 let trailLoaded = false;
+let sessionPin = '';
 
-// --- INIT ---
+// --- PIN LOGIN ---
 document.addEventListener('DOMContentLoaded', () => {
+  const pins = Array.from(document.querySelectorAll('#loginPinInput input'));
+  pins[0].focus();
+  pins.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      if (input.value && i < 3) pins[i + 1].focus();
+      if (pins.every(p => p.value)) verifyLoginPin();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && i > 0) {
+        pins[i - 1].value = '';
+        pins[i - 1].focus();
+      }
+    });
+  });
+});
+
+async function verifyLoginPin() {
+  const pins = Array.from(document.querySelectorAll('#loginPinInput input'));
+  const pin = pins.map(p => p.value).join('');
+  if (pin.length !== 4) return;
+  try {
+    const res = await fetch(API + '?action=verify-pin&pin=' + pin);
+    const data = await res.json();
+    if (data.success) {
+      sessionPin = pin;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      loadLiveStatus();
+      startAutoRefresh();
+    } else {
+      document.getElementById('loginPinError').style.display = 'block';
+      pins.forEach(p => { p.value = ''; });
+      pins[0].focus();
+      setTimeout(() => { document.getElementById('loginPinError').style.display = 'none'; }, 2000);
+    }
+  } catch (e) {
+    document.getElementById('loginPinError').textContent = 'Connection error';
+    document.getElementById('loginPinError').style.display = 'block';
+    pins.forEach(p => { p.value = ''; });
+    pins[0].focus();
+  }
+}
+
+// --- INIT (called after PIN auth) ---
+function initApp() {
   loadLiveStatus();
   startAutoRefresh();
 });
@@ -194,7 +258,7 @@ function stopAutoRefresh() {
 async function loadLiveStatus(silent) {
   if (!silent) showLoading();
   try {
-    const res = await fetch(API + '?action=live-status');
+    const res = await fetch(API + '?action=live-status&pin=' + sessionPin);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
     liveData = data;
@@ -328,7 +392,7 @@ function renderLiveStock() {
 async function loadSettlementTrail() {
   showLoading();
   try {
-    var res = await fetch(API + '?action=settlement-trail&limit=20');
+    var res = await fetch(API + '?action=settlement-trail&limit=20&pin=' + sessionPin);
     var data = await res.json();
     if (!data.success) throw new Error(data.error);
     trailData = data;

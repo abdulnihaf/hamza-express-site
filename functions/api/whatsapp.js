@@ -227,7 +227,7 @@ export async function onRequest(context) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
     'Content-Type': 'application/json',
   };
 
@@ -243,13 +243,18 @@ export async function onRequest(context) {
     return handleRazorpayCallback(context, url, corsHeaders);
   }
 
-  // Razorpay webhook (POST from Razorpay servers)
+  // Razorpay webhook (POST from Razorpay servers — signature verified inside handler)
   if (context.request.method === 'POST' && action === 'razorpay-webhook') {
     return handleRazorpayWebhook(context, corsHeaders);
   }
 
-  // Dashboard API (GET/POST with action param)
+  // Dashboard API (GET/POST with action param) — requires X-API-Key auth
   if (action) {
+    const apiKey = context.request.headers.get('X-API-Key');
+    const expectedKey = context.env.DASHBOARD_API_KEY;
+    if (!expectedKey || apiKey !== expectedKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
+    }
     return handleDashboardAPI(context, action, url, corsHeaders);
   }
 
@@ -277,7 +282,7 @@ export async function onRequest(context) {
       await processWebhook(context, body);
       return new Response('OK', { status: 200 });
     } catch (error) {
-      console.error('Webhook error:', error.message, error.stack);
+      console.error('Webhook error:', error.message);
       return new Response('OK', { status: 200 }); // Always 200 to prevent retries
     }
   }
@@ -943,7 +948,25 @@ async function handleRazorpayWebhook(context, corsHeaders) {
     const phoneId = WA_PHONE_ID;
     const token = context.env.WA_ACCESS_TOKEN;
 
-    const body = await context.request.json();
+    // Verify Razorpay webhook signature (HMAC-SHA256)
+    const rawBody = await context.request.text();
+    const signature = context.request.headers.get('X-Razorpay-Signature');
+    const webhookSecret = context.env.RAZORPAY_WEBHOOK_SECRET;
+    if (webhookSecret && signature) {
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', encoder.encode(webhookSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const sigBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody));
+      const expectedSig = [...new Uint8Array(sigBuf)].map(b => b.toString(16).padStart(2, '0')).join('');
+      if (expectedSig !== signature) {
+        console.error('Razorpay webhook signature mismatch');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401, headers: corsHeaders });
+      }
+    } else if (webhookSecret) {
+      console.error('Razorpay webhook missing X-Razorpay-Signature header');
+      return new Response(JSON.stringify({ error: 'Missing signature' }), { status: 401, headers: corsHeaders });
+    }
+
+    const body = JSON.parse(rawBody);
     const event = body.event;
     console.log('Razorpay webhook:', event);
 
@@ -1003,6 +1026,32 @@ async function handleRazorpayCallback(context, url, corsHeaders) {
     }
 
     if (order.payment_status !== 'paid') {
+      // Server-side verification: confirm payment status with Razorpay API
+      const keyId = context.env.RAZORPAY_KEY_ID;
+      const keySecret = context.env.RAZORPAY_KEY_SECRET;
+      let paymentVerified = false;
+      if (keyId && keySecret && razorpayLinkId) {
+        try {
+          const linkRes = await fetch(`https://api.razorpay.com/v1/payment_links/${razorpayLinkId}`, {
+            headers: { 'Authorization': 'Basic ' + btoa(`${keyId}:${keySecret}`) },
+          });
+          if (linkRes.ok) {
+            const linkData = await linkRes.json();
+            paymentVerified = linkData.status === 'paid';
+          }
+        } catch (e) {
+          console.error('Razorpay verification error:', e.message);
+        }
+      }
+
+      if (!paymentVerified) {
+        // Don't confirm order if we can't verify — webhook will handle it
+        return new Response(
+          thankYouPage('Payment is being verified. You will receive a WhatsApp confirmation shortly.'),
+          { status: 200, headers: { 'Content-Type': 'text/html' } }
+        );
+      }
+
       await confirmOrder(context, order, razorpayPaymentId, phoneId, token, db);
     }
 
@@ -1140,16 +1189,35 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
     const sessionId = sessionRes[0].id;
 
     // Build order lines (prices are GST-inclusive in cart, Odoo needs excl.)
-    const lines = cart.map(item => [0, 0, {
-      product_id: item.odooId,
-      qty: item.qty,
-      price_unit: item.priceExclGst || Math.round(item.price / 1.05 * 100) / 100,
-      price_subtotal: (item.priceExclGst || Math.round(item.price / 1.05 * 100) / 100) * item.qty,
-      price_subtotal_incl: item.price * item.qty,
-      discount: 0,
-      tax_ids: [[6, 0, [GST_TAX_ID]]],
-      full_product_name: item.name,
-    }]);
+    // Also build KDS preparation data (last_order_preparation_change) for each line
+    const kdsLines = {};
+    const lines = cart.map(item => {
+      // Generate a UUID for this line (used by KDS prep system)
+      const lineUuid = crypto.randomUUID();
+      kdsLines[lineUuid] = {
+        attribute_value_names: [],
+        uuid: lineUuid,
+        isCombo: false,
+        product_id: item.odooId,
+        name: item.name,
+        basic_name: item.name,
+        display_name: item.name,
+        note: '[]',
+        quantity: item.qty,
+        customer_note: '',
+      };
+      return [0, 0, {
+        product_id: item.odooId,
+        qty: item.qty,
+        price_unit: item.priceExclGst || Math.round(item.price / 1.05 * 100) / 100,
+        price_subtotal: (item.priceExclGst || Math.round(item.price / 1.05 * 100) / 100) * item.qty,
+        price_subtotal_incl: item.price * item.qty,
+        discount: 0,
+        tax_ids: [[6, 0, [GST_TAX_ID]]],
+        full_product_name: item.name,
+        uuid: lineUuid,
+      }];
+    });
 
     // Calculate tax amounts
     const totalExclGst = cart.reduce((sum, item) => {
@@ -1168,7 +1236,17 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-    // Create the POS order
+    // Build the KDS preparation change payload — this is what the POS frontend sends
+    // to trigger _send_orders_to_preparation_display and create prep orders/lines/states
+    const prepChangePayload = JSON.stringify({
+      lines: kdsLines,
+      metadata: { serverDate: now },
+      general_customer_note: '',
+      internal_note: noteLines,
+      sittingMode: 0,
+    });
+
+    // Create the POS order with last_order_preparation_change to trigger KDS
     const orderId = await odooRPC(apiKey, 'pos.order', 'create', [{
       session_id: sessionId,
       config_id: POS_CONFIG_ID,
@@ -1182,6 +1260,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       lines,
       internal_note: noteLines,
       state: 'draft',
+      last_order_preparation_change: prepChangePayload,
     }]);
 
     if (!orderId) { console.error('Failed to create POS order'); return null; }
@@ -1195,7 +1274,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       session_id: sessionId,
     }]);
 
-    // Mark as paid → triggers KDS routing
+    // Mark as paid → finalizes order + KDS prep orders already created via last_order_preparation_change
     await odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]);
 
     // Get order name and tracking number
@@ -1474,15 +1553,6 @@ async function handleDashboardAPI(context, action, url, corsHeaders) {
     }
 
     return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
-  }
-
-  if (action === 'odoo-query') {
-    const model = url.searchParams.get('model');
-    const fields = url.searchParams.get('fields')?.split(',') || ['id', 'name'];
-    const domain = url.searchParams.get('domain') ? JSON.parse(url.searchParams.get('domain')) : [];
-    const apiKey = context.env.ODOO_API_KEY;
-    const result = await odooRPC(apiKey, model, 'search_read', [domain], { fields, limit: 50 });
-    return new Response(JSON.stringify({ result }), { headers: corsHeaders });
   }
 
   return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers: corsHeaders });

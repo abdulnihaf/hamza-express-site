@@ -132,8 +132,13 @@ export async function onRequest(context) {
 
   const DB = context.env.DB;
 
+  // Helper: verify PIN from query param or POST body (required for all actions except verify-pin)
+  function requirePin(pin) {
+    return PINS[pin] || null;
+  }
+
   try {
-    // ─── GET PENDING RECEIPTS ────────────────────────────────────
+    // ─── GET PENDING RECEIPTS (no auth — non-sensitive PO list, PIN checked at confirm) ──
     if (action === 'pending-receipts') {
       const pickings = await odooCall(ODOO_URL, ODOO_DB, ODOO_UID, ODOO_API_KEY,
         'stock.picking', 'search_read',
@@ -316,7 +321,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({success: false, error: 'Invalid PIN'}), {headers: corsHeaders});
     }
 
-    // ─── RECENT RECEIPTS ─────────────────────────────────────────
+    // ─── RECENT RECEIPTS (no auth — non-sensitive completed PO list) ──
     if (action === 'recent-receipts') {
       const limit = parseInt(url.searchParams.get('limit') || '10');
       const pickings = await odooCall(ODOO_URL, ODOO_DB, ODOO_UID, ODOO_API_KEY,
@@ -328,12 +333,16 @@ export async function onRequest(context) {
 
     // ─── STORAGE STOCK ───────────────────────────────────────────
     if (action === 'storage-stock') {
+      const pin = url.searchParams.get('pin');
+      if (!requirePin(pin)) return new Response(JSON.stringify({success: false, error: 'Authentication required'}), {status: 401, headers: corsHeaders});
       const stock = await fetchLocationStock(ODOO_URL, ODOO_DB, ODOO_UID, ODOO_API_KEY, [LOC.MAIN_STORAGE, LOC.COLD_STORAGE], 1);
       return new Response(JSON.stringify({success: true, stock}), {headers: corsHeaders});
     }
 
     // ─── KITCHEN STOCK ───────────────────────────────────────────
     if (action === 'kitchen-stock') {
+      const pin = url.searchParams.get('pin');
+      if (!requirePin(pin)) return new Response(JSON.stringify({success: false, error: 'Authentication required'}), {status: 401, headers: corsHeaders});
       const stock = await fetchLocationStock(ODOO_URL, ODOO_DB, ODOO_UID, ODOO_API_KEY, [LOC.KITCHEN], 1);
       return new Response(JSON.stringify({success: true, stock}), {headers: corsHeaders});
     }
@@ -433,6 +442,8 @@ export async function onRequest(context) {
 
     // ─── LIVE INVENTORY STATUS ───────────────────────────────────
     if (action === 'live-status') {
+      const pin = url.searchParams.get('pin');
+      if (!requirePin(pin)) return new Response(JSON.stringify({success: false, error: 'Authentication required'}), {status: 401, headers: corsHeaders});
       let lastSettlement = null;
       let closingStock = {};
       if (DB) {
@@ -533,6 +544,8 @@ export async function onRequest(context) {
 
     // ─── SETTLEMENT TRAIL ────────────────────────────────────────
     if (action === 'settlement-trail') {
+      const pin = url.searchParams.get('pin');
+      if (!requirePin(pin)) return new Response(JSON.stringify({success: false, error: 'Authentication required'}), {status: 401, headers: corsHeaders});
       if (!DB) return new Response(JSON.stringify({success: false, error: 'DB not configured'}), {headers: corsHeaders});
       const limit = parseInt(url.searchParams.get('limit') || '20');
       try {
@@ -553,7 +566,8 @@ export async function onRequest(context) {
 
     return new Response(JSON.stringify({success: false, error: 'Invalid action'}), {headers: corsHeaders});
   } catch (error) {
-    return new Response(JSON.stringify({success: false, error: error.message, stack: error.stack}), {status: 500, headers: corsHeaders});
+    console.error('Inventory API error:', error.message, error.stack);
+    return new Response(JSON.stringify({success: false, error: 'Internal server error'}), {status: 500, headers: corsHeaders});
   }
 }
 
