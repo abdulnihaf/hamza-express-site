@@ -1451,7 +1451,7 @@ async function odooRPC(apiKey, model, method, args, kwargs) {
     jsonrpc: '2.0', method: 'call', id: 1,
     params: {
       service: 'object', method: 'execute_kw',
-      args: [ODOO_DB, ODOO_UID, apiKey, model, method, ...args, kwargs || {}],
+      args: [ODOO_DB, ODOO_UID, apiKey, model, method, args, kwargs || {}],
     },
   };
   const res = await fetch(ODOO_URL, {
