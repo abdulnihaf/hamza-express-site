@@ -123,7 +123,7 @@ export async function onRequest(context) {
     1340: {name: 'Khaskhas (Poppy Seeds)', code: 'HE-RM-081', uom: 'kg'},
     1341: {name: 'Imli (Tamarind)', code: 'HE-RM-082', uom: 'kg'},
     1342: {name: 'Carom Seeds (Ajwain)', code: 'HE-RM-083', uom: 'kg'},
-    1343: {name: 'Saffron (Kesar)', code: 'HE-RM-084', uom: 'kg'},
+    1343: {name: 'Saffron (Kesar)', code: 'HE-RM-084', uom: 'g'},
     1344: {name: 'Kalonji (Nigella Seeds)', code: 'HE-RM-085', uom: 'kg'},
     // ── Additional Dry Goods ──
     1345: {name: 'Peanuts (Raw)', code: 'HE-RM-086', uom: 'kg'},
