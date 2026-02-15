@@ -9,11 +9,15 @@ ODOO_DB = "main"
 ODOO_UID = "2"
 
 # Secrets (set via: wrangler pages secret put <NAME>)
-# WA_ACCESS_TOKEN     — Meta WhatsApp Cloud API bearer token
-# WA_VERIFY_TOKEN     — Webhook verification token (you choose)
-# ODOO_API_KEY        — Odoo JSON-RPC API key
-# RAZORPAY_KEY_ID     — Razorpay live key
-# RAZORPAY_KEY_SECRET — Razorpay live secret
+# WA_ACCESS_TOKEN       — Meta WhatsApp Cloud API bearer token
+# WA_PHONE_ID           — HE phone number ID (987158291152067)
+# WA_VERIFY_TOKEN       — Webhook verification token
+# ODOO_API_KEY          — Odoo JSON-RPC API key
+# RAZORPAY_KEY_ID       — Razorpay live key
+# RAZORPAY_KEY_SECRET   — Razorpay live secret
+# RAZORPAY_WEBHOOK_SECRET — Razorpay webhook HMAC secret
+# DASHBOARD_API_KEY     — Dashboard API authentication key
+# KDS_WEBHOOK_SECRET    — KDS webhook shared secret
 
 [[d1_databases]]
 binding = "DB"

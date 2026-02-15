@@ -1,0 +1,83 @@
+{
+  "_description": "NCH WABA Configuration Backup — Feb 15, 2026",
+  "_purpose": "Restore NCH phone business profile when HE WABA is approved and HE gets its own phone",
+  "_restore_script": "scripts/restore-nch-profile.sh",
+
+  "waba": {
+    "id": "27110385081896362",
+    "name": "Nawabi Chai House",
+    "account_review_status": "APPROVED",
+    "currency": "INR",
+    "timezone_id": "71",
+    "owner_business": {
+      "id": "2590924097967277",
+      "name": "HN Hotels Private Limited"
+    }
+  },
+
+  "phone_number": {
+    "id": "970365416152029",
+    "display_phone_number": "+91 80080 02049",
+    "verified_name": "Nawabi Chai House",
+    "name_status": "APPROVED",
+    "status": "CONNECTED",
+    "platform_type": "CLOUD_API",
+    "quality_rating": "GREEN",
+    "messaging_limit_tier": "TIER_1K",
+    "is_pin_enabled": true,
+    "account_mode": "LIVE",
+    "throughput": "STANDARD"
+  },
+
+  "business_profile": {
+    "about": "Authentic Irani Chai ☕ HKP Road Delivery ~5 min",
+    "address": "HKP Road, Shivajinagar, Bangalore 560051",
+    "description": "Nawabi Chai House — Authentic Irani Chai & Snacks by HN Hotels (Est. 1918).\n\n☕ Irani Chai • Bun Maska • Osmania Biscuits • Chicken Cutlet\n\n📍 HKP Road delivery in ~5 minutes\n🎁 First 2 Irani Chai FREE for new customers!\n\nOrder right here on WhatsApp — just say Hi!",
+    "email": "nawabichaihouse@gmail.com",
+    "websites": ["https://nawabichaihouse.com/"],
+    "vertical": "RESTAURANT",
+    "profile_picture_url": "https://pps.whatsapp.net/v/t61.24694-24/625676686_917743990707941_1816259686778585828_n.jpg?ccb=11-4&oh=01_Q5Aa3wHkqsvViQUp-4nCDWWKybf_GVfE3dHpeQNLC7W5HHMh3w&oe=6995C3BF&_nc_sid=5e03e0&_nc_cat=110"
+  },
+
+  "catalog": {
+    "id": "1639757440737691",
+    "name": "Hamza_Super_Menu",
+    "_note": "Already configured with HE products — no change needed"
+  },
+
+  "message_templates": {
+    "_note": "Templates belong to WABA, not phone. NCH-specific templates are NOT affected by profile changes.",
+    "he_templates": [
+      {"name": "he_welcome_menu", "id": "1262233265791712", "status": "APPROVED", "category": "MARKETING"},
+      {"name": "he_order_ready", "id": "1586040625773617", "status": "APPROVED", "category": "UTILITY"},
+      {"name": "he_order_confirmed", "id": "1230188259093483", "status": "APPROVED", "category": "UTILITY"},
+      {"name": "he_payment_request", "id": "1971450550423146", "status": "APPROVED", "category": "UTILITY"},
+      {"name": "he_order_preparing", "id": "918070624112900", "status": "APPROVED", "category": "UTILITY"}
+    ],
+    "nch_templates": [
+      {"name": "hello_world", "id": "1580840386269077", "status": "APPROVED", "category": "UTILITY"},
+      {"name": "nawabi_chai_h_", "id": "3261243697382815", "status": "APPROVED", "category": "MARKETING"},
+      {"name": "nawabi_chai_h_1", "id": "895768116478795", "status": "APPROVED", "category": "MARKETING"},
+      {"name": "nawabi_chai_cta_v1", "id": "1614840179950342", "status": "APPROVED", "category": "MARKETING"},
+      {"name": "nawabi_chai_expert_v1", "id": "1580981029880059", "status": "APPROVED", "category": "MARKETING"}
+    ],
+    "hiring_templates": [
+      {"name": "p4_warm_senior_fb_managers_captains_supervisors_5_yrs", "id": "676046522186924"},
+      {"name": "p3_cold_senior_fb_managers_captains_supervisors_5_yrs", "id": "4312079325741090"},
+      {"name": "general_roles_hiring_1", "id": "799045063195680"},
+      {"name": "he_ops_manager_hiring_v1", "id": "907472155297356"},
+      {"name": "snacks_master_hiring", "id": "788302297609321"},
+      {"name": "he_captain_hiring_v1", "id": "2895217417536194"},
+      {"name": "hyd_50k_consultant_outreach", "id": "1419356916268933"},
+      {"name": "tea_master_hiring_1", "id": "33227400240238412"},
+      {"name": "tea_master_hiring_2", "id": "1198781082455810"},
+      {"name": "hamaza_express", "id": "1186876610294103"}
+    ]
+  },
+
+  "webhook": {
+    "app_id": "2079361756134123",
+    "app_name": "HN Hotels Private Limited",
+    "_note": "NCH currently uses nawabichaihouse.com — HE worker already handles NCH forwarding via NCH_PHONE_ID check"
+  }
+}

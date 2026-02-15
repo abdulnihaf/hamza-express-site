@@ -215,9 +215,11 @@ const STATION_KEYWORDS = {
   'kp':       { sets: null,               collection: 'Kitchen Pass',        label: 'Full Menu' }, // null = full menu
 };
 
-// ── NCH forwarding (shared WABA webhook) ──
-const NCH_PHONE_ID = '970365416152029';
-const NCH_WEBHOOK_URL = 'https://nawabichaihouse.com/api/whatsapp';
+// ── NCH forwarding (disabled — NCH phone now serves HE) ──
+// When HE gets its own WABA+phone, re-enable NCH forwarding:
+// const NCH_PHONE_ID = '970365416152029';
+// const NCH_WEBHOOK_URL = 'https://nawabichaihouse.com/api/whatsapp';
+// Also restore NCH profile via: bash scripts/restore-nch-profile.sh
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN ENTRY POINT
@@ -272,18 +274,8 @@ export async function onRequest(context) {
   if (context.request.method === 'POST') {
     try {
       const body = await context.request.json();
-      const incomingPhoneId = body?.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
-
-      // Forward NCH messages to NCH endpoint (shared WABA webhook)
-      if (incomingPhoneId === NCH_PHONE_ID) {
-        fetch(NCH_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }).catch(e => console.error('NCH forward error:', e.message));
-        return new Response('OK', { status: 200 });
-      }
-
+      // NCH forwarding disabled — NCH phone (970365416152029) now serves HE
+      // When HE gets its own phone, re-enable: check incomingPhoneId and forward NCH messages
       await processWebhook(context, body);
       return new Response('OK', { status: 200 });
     } catch (error) {
