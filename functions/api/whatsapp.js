@@ -163,6 +163,34 @@ const PRODUCTS = {
   'HE-1257': { name: 'Kadai Prawns',               price: 250, odooId: 1257, catId: 24 },
   'HE-1258': { name: 'Prawns Chilly Manchurian',   price: 250, odooId: 1258, catId: 24 },
   'HE-1259': { name: 'Prawns Pepper Fry',          price: 250, odooId: 1259, catId: 24 },
+
+  // ── Krispy Eats / Fried Chicken (cat 26) ──
+  'HE-1366': { name: '1 Pc Fried Chicken',              price: 71,  odooId: 1366, catId: 26 },
+  'HE-1367': { name: '2 Pcs Fried Chicken',             price: 143, odooId: 1367, catId: 26 },
+  'HE-1368': { name: '4 Pcs Fried Chicken',             price: 266, odooId: 1368, catId: 26 },
+  'HE-1369': { name: 'Duet Combo',                      price: 181, odooId: 1369, catId: 26 },
+  'HE-1370': { name: 'Regular Combo',                   price: 352, odooId: 1370, catId: 26 },
+  'HE-1371': { name: 'Family Combo',                    price: 666, odooId: 1371, catId: 26 },
+  'HE-1372': { name: 'Party Combo',                     price: 951, odooId: 1372, catId: 26 },
+  'HE-1373': { name: 'Cheesy Fries',                    price: 143, odooId: 1373, catId: 26 },
+  'HE-1374': { name: 'Loaded Fries',                    price: 181, odooId: 1374, catId: 26 },
+  'HE-1375': { name: 'Krispy Popcorn (S)',              price: 76,  odooId: 1375, catId: 26 },
+  'HE-1376': { name: 'Krispy Popcorn (M)',              price: 143, odooId: 1376, catId: 26 },
+  'HE-1377': { name: 'Krispy Popcorn (L)',              price: 219, odooId: 1377, catId: 26 },
+  'HE-1378': { name: 'Krispy Shrimps with Mayo (10pcs)',price: 237, odooId: 1378, catId: 26 },
+  'HE-1379': { name: 'Krispy Wings with Mayo (6pcs)',   price: 94,  odooId: 1379, catId: 26 },
+  'HE-1380': { name: 'Krispy Lollipop with Mayo (6pcs)',price: 123, odooId: 1380, catId: 26 },
+  'HE-1381': { name: 'Chicken Zinger Burger',           price: 171, odooId: 1381, catId: 26 },
+  'HE-1382': { name: 'Classic Chicken Burger',          price: 124, odooId: 1382, catId: 26 },
+  'HE-1383': { name: 'Chicken Zinger Roll',             price: 152, odooId: 1383, catId: 26 },
+  'HE-1384': { name: 'Mutton Sheekh Roll',              price: 152, odooId: 1384, catId: 26 },
+  'HE-1385': { name: 'Shawarma Roll',                   price: 76,  odooId: 1385, catId: 26 },
+  'HE-1386': { name: 'Chicken Popcorn Salad',           price: 181, odooId: 1386, catId: 26 },
+  'HE-1387': { name: 'Chicken Doner Salad',             price: 181, odooId: 1387, catId: 26 },
+  'HE-1388': { name: 'Rice with Chicken Popcorn',       price: 181, odooId: 1388, catId: 26 },
+  'HE-1389': { name: 'Extra Bun',                       price: 14,  odooId: 1389, catId: 26 },
+  'HE-1390': { name: 'Extra Mayo',                      price: 19,  odooId: 1390, catId: 26 },
+  'HE-1391': { name: 'Soft Drink',                      price: 38,  odooId: 1391, catId: 26 },
 };
 
 // ── Category → collection point mapping ──
@@ -212,6 +240,9 @@ const STATION_KEYWORDS = {
   'juices':   { sets: ['juices'],          collection: 'Juice Counter',       label: 'Juices & Desserts' },
   'shawarma': { sets: ['shawarma'],        collection: 'Shawarma Counter',    label: 'Shawarma' },
   'grill':    { sets: ['grill'],           collection: 'Grill Counter',       label: 'Grill' },
+  'fc':       { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
+  'chicken':  { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
+  'krispy':   { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
   'kp':       { sets: null,               collection: 'Kitchen Pass',        label: 'Full Menu' }, // null = full menu
 };
 
