@@ -203,19 +203,6 @@ const COUNTER_CATS = {
   30: 'Grill Counter',
 };
 
-// ── Product set IDs for multi-product messages ──
-const PRODUCT_SETS = {
-  indian:   { id: '745179045076813',  name: 'Indian Curries' },
-  biryani:  { id: '1223000523357258', name: 'Biryani' },
-  chinese:  { id: '4496376613930350', name: 'Chinese' },
-  tandoor:  { id: '2771330763214717', name: 'Tandoor & Breads' },
-  fc:       { id: '1559176248638822', name: 'Fried Chicken' },
-  juices:   { id: '1687197135776243', name: 'Juices & Desserts' },
-  bm:       { id: '911630838467540',  name: 'Bane Marie' },
-  shawarma: { id: '1390365316106529', name: 'Shawarma' },
-  grill:    { id: '1674777217014393', name: 'Grill' },
-};
-
 // ── Odoo configuration ──
 const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
 const ODOO_DB = 'main';
@@ -232,18 +219,89 @@ const PAYMENT_CONFIGURATION = 'Hamza_Express_Payments'; // Razorpay config in Wh
 
 const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
-// ── Station QR keyword → filtered menu mapping ──
+// ── Customer-facing menu categories (for WhatsApp category picker) ──
+// Each category ≤ 30 products (WhatsApp MPM hard limit is 30 total per message)
+// Grouped by how customers browse food online (Swiggy/Zomato style), NOT by KDS station
+const MENU_CATEGORIES = {
+  biryani: {
+    title: 'Biryani & Rice', desc: 'Mutton, Chicken, Egg Biryani & more',
+    sections: [
+      { title: 'Biryani', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204'] },
+      { title: 'Rice', items: ['HE-1205','HE-1206','HE-1207'] },
+    ],
+  },
+  starters: {
+    title: 'Starters', desc: 'Tandoori, Chinese dry, Kababs',
+    sections: [
+      { title: 'Tandoori', items: ['HE-1134','HE-1135','HE-1136','HE-1137','HE-1138','HE-1139','HE-1140','HE-1141','HE-1142','HE-1143','HE-1144','HE-1145'] },
+      { title: 'Chinese Dry', items: ['HE-1163','HE-1164','HE-1165','HE-1166','HE-1167','HE-1168','HE-1169','HE-1170','HE-1171','HE-1172','HE-1173','HE-1174','HE-1175','HE-1176'] },
+    ],
+  },
+  chicken: {
+    title: 'Chicken Curry', desc: 'Butter Chicken, Kadai & more',
+    sections: [
+      { title: 'Chicken Curry', items: ['HE-1146','HE-1147','HE-1148','HE-1149','HE-1150','HE-1151','HE-1152','HE-1153','HE-1154','HE-1155','HE-1156','HE-1157','HE-1158','HE-1159','HE-1160','HE-1161','HE-1162'] },
+    ],
+  },
+  mutton: {
+    title: 'Mutton', desc: 'Rogan Josh, Pepper Roast & more',
+    sections: [
+      { title: 'Mutton Curry', items: ['HE-1177','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1185','HE-1186','HE-1187','HE-1188','HE-1189','HE-1190'] },
+      { title: 'Mutton Dry', items: ['HE-1191','HE-1192','HE-1193','HE-1194','HE-1195'] },
+    ],
+  },
+  rice_noodle: {
+    title: 'Fried Rice & Noodles', desc: 'Chicken, Mutton, Egg, Prawns',
+    sections: [
+      { title: 'Fried Rice & Noodles', items: ['HE-1235','HE-1236','HE-1237','HE-1238','HE-1239','HE-1240','HE-1241','HE-1242','HE-1243','HE-1244','HE-1245','HE-1246','HE-1247','HE-1248'] },
+    ],
+  },
+  breads: {
+    title: 'Roti & Breads', desc: 'Naan, Paratha, Rolls',
+    sections: [
+      { title: 'Roti & Paratha', items: ['HE-1212','HE-1213','HE-1214','HE-1215','HE-1216','HE-1217','HE-1218','HE-1219','HE-1220','HE-1221','HE-1222','HE-1223','HE-1224'] },
+      { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1210','HE-1211'] },
+    ],
+  },
+  krispy: {
+    title: 'Krispy Eats', desc: 'Fried Chicken, Burgers, Combos',
+    sections: [
+      { title: 'Fried Chicken', items: ['HE-1366','HE-1367','HE-1368'] },
+      { title: 'Combos', items: ['HE-1369','HE-1370','HE-1371','HE-1372'] },
+      { title: 'Snacks & Sides', items: ['HE-1373','HE-1374','HE-1375','HE-1376','HE-1377','HE-1378','HE-1379','HE-1380'] },
+      { title: 'Burgers & Rolls', items: ['HE-1381','HE-1382','HE-1383','HE-1384','HE-1385'] },
+      { title: 'Salads & Rice', items: ['HE-1386','HE-1387','HE-1388'] },
+      { title: 'Extras', items: ['HE-1389','HE-1390','HE-1391'] },
+    ],
+  },
+  veg: {
+    title: 'Veg & Dal', desc: 'Paneer, Dal, Mixed Veg',
+    sections: [
+      { title: 'Veg & Dal', items: ['HE-1225','HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1233','HE-1234'] },
+    ],
+  },
+  more: {
+    title: 'Seafood & More', desc: 'Fish, Prawns, Breakfast, Sides',
+    sections: [
+      { title: 'Fish & Seafood', items: ['HE-1253','HE-1254','HE-1255','HE-1256','HE-1257','HE-1258','HE-1259'] },
+      { title: 'Breakfast Special', items: ['HE-1196','HE-1197','HE-1198','HE-1199'] },
+      { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+    ],
+  },
+};
+
+// ── Keyword shortcuts → jump directly to a category MPM ──
 const STATION_KEYWORDS = {
-  'bm':       { sets: ['biryani', 'bm'],  collection: 'Bane Marie Counter',  label: 'Biryani & Bane Marie' },
-  'biryani':  { sets: ['biryani', 'bm'],  collection: 'Bane Marie Counter',  label: 'Biryani & Bane Marie' },
-  'juice':    { sets: ['juices'],          collection: 'Juice Counter',       label: 'Juices & Desserts' },
-  'juices':   { sets: ['juices'],          collection: 'Juice Counter',       label: 'Juices & Desserts' },
-  'shawarma': { sets: ['shawarma'],        collection: 'Shawarma Counter',    label: 'Shawarma' },
-  'grill':    { sets: ['grill'],           collection: 'Grill Counter',       label: 'Grill' },
-  'fc':       { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
-  'chicken':  { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
-  'krispy':   { sets: ['fc'],             collection: 'Kitchen Pass',        label: 'Krispy Eats' },
-  'kp':       { sets: null,               collection: 'Kitchen Pass',        label: 'Full Menu' }, // null = full menu
+  'krispy':   'krispy',
+  'fc':       'krispy',
+  'biryani':  'biryani',
+  'starters': 'starters',
+  'veg':      'veg',
+  'mutton':   'mutton',
+  'breads':   'breads',
+  'noodles':  'rice_noodle',
+  'seafood':  'more',
+  'bm':       'biryani',    // Bane Marie items are in Biryani & Rice + Seafood & More
 };
 
 // ── NCH forwarding (disabled — NCH phone now serves HE) ──
@@ -460,14 +518,20 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     return handleOrderMessage(context, session, user, msg, waId, phoneId, token, db);
   }
 
+  // Category selection from list picker (works in any state)
+  if (msg.type === 'list_reply' && msg.id && msg.id.startsWith('cat_')) {
+    const categoryKey = msg.id.replace('cat_', '');
+    return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+  }
+
   // Global commands (work in any state)
   if (msg.type === 'text') {
     const text = msg.text;
 
-    // Station QR keywords — show filtered menu for that station
-    const station = STATION_KEYWORDS[text];
-    if (station) {
-      return handleShowStationMenu(context, user, station, waId, phoneId, token, db);
+    // Keyword shortcuts — jump directly to a category MPM
+    const categoryKey = STATION_KEYWORDS[text];
+    if (categoryKey) {
+      return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
     }
 
     if (['menu', '/menu', 'order', '/order', 'hi', 'hello', 'start'].includes(text)) {
@@ -551,12 +615,49 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
 }
 
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
-  // Send multi-product message with all 9 categories
-  const sections = Object.values(PRODUCT_SETS).map(set => ({
-    title: set.name,
-    product_items: getProductsForSet(set.id).map(p => ({
-      product_retailer_id: p.retailerId,
-    })),
+  // Send WhatsApp List message with 9 customer-facing categories
+  // Customer taps a category → receives a focused MPM (≤30 items) for that category
+  const rows = Object.entries(MENU_CATEGORIES).map(([key, cat]) => ({
+    id: `cat_${key}`,
+    title: cat.title,
+    description: cat.desc,
+  }));
+
+  const listMsg = {
+    messaging_product: 'whatsapp',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'list',
+      header: { type: 'text', text: 'Hamza Express Menu' },
+      body: {
+        text: user.name
+          ? `Hi ${user.name}! What are you in the mood for? Pick a category below.`
+          : 'What are you in the mood for? Pick a category below.',
+      },
+      footer: { text: 'Biryani & More Since 1918 | All prices incl. GST' },
+      action: {
+        button: 'Browse Menu',
+        sections: [{ title: 'Our Menu', rows }],
+      },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, listMsg);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+}
+
+async function handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db) {
+  const category = MENU_CATEGORIES[categoryKey];
+  if (!category) {
+    // Unknown category — fall back to category picker
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+
+  // Build MPM sections from category definition
+  const sections = category.sections.map(section => ({
+    title: section.title,
+    product_items: section.items.map(rid => ({ product_retailer_id: rid })),
   }));
 
   const mpm = {
@@ -565,8 +666,10 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
     type: 'interactive',
     interactive: {
       type: 'product_list',
-      header: { type: 'text', text: 'Hamza Express Menu' },
-      body: { text: user.name ? `Hi ${user.name}! Browse our menu, add items to cart, and tap Send when ready.` : 'Browse our menu, add items to cart, and tap Send when ready.' },
+      header: { type: 'text', text: category.title },
+      body: {
+        text: 'Add items to your cart, then tap Send.\nSend *"menu"* to browse other categories.',
+      },
       footer: { text: 'All prices inclusive of GST' },
       action: {
         catalog_id: CATALOG_ID,
@@ -576,115 +679,20 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
   };
 
   await sendWhatsApp(phoneId, token, mpm);
+  // Stay in awaiting_menu state so customer can browse more categories or send order
   await updateSession(db, waId, 'awaiting_menu', '[]', 0);
-}
-
-async function handleShowStationMenu(context, user, station, waId, phoneId, token, db) {
-  // If station has null sets, show full menu
-  if (!station.sets) {
-    return handleShowMenu(context, user, waId, phoneId, token, db);
-  }
-
-  // Build filtered sections for this station only
-  const sections = station.sets.map(setKey => {
-    const set = PRODUCT_SETS[setKey];
-    if (!set) return null;
-    return {
-      title: set.name,
-      product_items: getProductsForSet(set.id).map(p => ({
-        product_retailer_id: p.retailerId,
-      })),
-    };
-  }).filter(Boolean);
-
-  if (sections.length === 0) {
-    return handleShowMenu(context, user, waId, phoneId, token, db);
-  }
-
-  // For single-section stations, WhatsApp MPM needs at least 1 section
-  const mpm = {
-    messaging_product: 'whatsapp',
-    to: waId,
-    type: 'interactive',
-    interactive: {
-      type: 'product_list',
-      header: { type: 'text', text: `${station.label} Menu` },
-      body: { text: user.name
-        ? `Hi ${user.name}! Here's our ${station.label} menu. Add items to cart and tap Send.`
-        : `Here's our ${station.label} menu. Add items to cart and tap Send.` },
-      footer: { text: `Collect from: ${station.collection}` },
-      action: {
-        catalog_id: CATALOG_ID,
-        sections,
-      },
-    },
-  };
-
-  await sendWhatsApp(phoneId, token, mpm);
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
-}
-
-function getProductsForSet(setId) {
-  // Map product set IDs to retailer IDs
-  // Grouped by WhatsApp catalog product sets (sections in MPM)
-  const setMap = {
-    [PRODUCT_SETS.indian.id]: [
-      // Chicken Gravy
-      'HE-1146','HE-1147','HE-1148','HE-1149','HE-1150','HE-1151','HE-1152','HE-1153',
-      'HE-1154','HE-1155','HE-1156','HE-1157','HE-1158','HE-1159','HE-1160','HE-1161','HE-1162',
-      // Mutton Gravy
-      'HE-1177','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184',
-      'HE-1185','HE-1186','HE-1187','HE-1188','HE-1189','HE-1190',
-      // Breakfast Special
-      'HE-1196','HE-1197','HE-1198','HE-1199',
-      // Indian Veg
-      'HE-1225','HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1233','HE-1234',
-    ],
-    [PRODUCT_SETS.biryani.id]: [
-      // Biryani
-      'HE-1200','HE-1201','HE-1202','HE-1203','HE-1204',
-      // Rice Items
-      'HE-1205','HE-1206','HE-1207',
-    ],
-    [PRODUCT_SETS.chinese.id]: [
-      // Chinese Chicken
-      'HE-1163','HE-1164','HE-1165','HE-1166','HE-1167','HE-1168','HE-1169','HE-1170',
-      'HE-1171','HE-1172','HE-1173','HE-1174','HE-1175','HE-1176',
-      // Mutton Dry
-      'HE-1191','HE-1192','HE-1193','HE-1194','HE-1195',
-      // Fish & Seafood
-      'HE-1253','HE-1254','HE-1255','HE-1256','HE-1257','HE-1258','HE-1259',
-      // Fried Rice & Noodles
-      'HE-1235','HE-1236','HE-1237','HE-1238','HE-1239','HE-1240',
-      'HE-1241','HE-1242','HE-1243','HE-1244','HE-1245','HE-1246','HE-1247','HE-1248',
-    ],
-    [PRODUCT_SETS.tandoor.id]: [
-      // Tandoori Dishes
-      'HE-1134','HE-1135','HE-1136','HE-1137','HE-1138','HE-1139','HE-1140','HE-1141',
-      'HE-1142','HE-1143','HE-1144','HE-1145',
-      // Roti & Parathas
-      'HE-1212','HE-1213','HE-1214','HE-1215','HE-1216','HE-1217','HE-1218',
-      'HE-1219','HE-1220','HE-1221','HE-1222','HE-1223','HE-1224',
-      // Rolls
-      'HE-1208','HE-1209','HE-1210','HE-1211',
-    ],
-    [PRODUCT_SETS.fc.id]: [], // FC category not populated yet — will add when menu expands
-    [PRODUCT_SETS.juices.id]: [], // Juices not on current menu card — will add when available
-    [PRODUCT_SETS.bm.id]: [
-      // Salad & Raitha (under Bane Marie parent)
-      'HE-1249','HE-1250','HE-1251','HE-1252',
-    ],
-    [PRODUCT_SETS.shawarma.id]: [], // Shawarma not on current menu card
-    [PRODUCT_SETS.grill.id]: [], // Grill not on current menu card
-  };
-  return (setMap[setId] || []).map(rid => ({ retailerId: rid }));
 }
 
 async function handleMenuState(context, session, user, msg, waId, phoneId, token, db) {
-  // Waiting for order submission from native cart
-  // Any text that's not a command shows helpful message
+  // Handle category selection from list picker
+  if (msg.type === 'list_reply' && msg.id && msg.id.startsWith('cat_')) {
+    const categoryKey = msg.id.replace('cat_', '');
+    return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+  }
+
+  // Any text that's not a global command — prompt to use the picker
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'Tap on the menu above to browse items, add them to your cart, then tap *Send* to place your order.\n\nOr send *"menu"* to see the menu again.'));
+    'Tap *Browse Menu* above to pick a category, or send *"menu"* to see categories again.'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
