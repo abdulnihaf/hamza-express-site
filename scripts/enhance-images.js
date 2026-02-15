@@ -18,7 +18,8 @@ const SOURCE_DIR = path.join(BASE_DIR, 'images', 'source');
 const ENHANCED_DIR = path.join(BASE_DIR, 'images', 'enhanced');
 const MANIFEST_PATH = path.join(BASE_DIR, 'images', 'manifest.json');
 
-const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyBnkKEcWrNkJTRL9wtzeGmFSsBvgoPyu9c';
+const API_KEY = process.env.GEMINI_API_KEY;
+if (!API_KEY) { console.error('Set GEMINI_API_KEY env var'); process.exit(1); }
 const MODEL = 'gemini-2.5-flash-image';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
 
