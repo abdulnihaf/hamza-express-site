@@ -194,7 +194,8 @@ const PRODUCTS = {
 };
 
 // ── Category → collection point mapping ──
-const KITCHEN_CATS = new Set([22, 24, 25, 26]); // Indian, Chinese, Tandoor, FC → Kitchen Pass
+const KITCHEN_CATS = new Set([22, 24, 25, 26]); // Indian, Chinese, Tandoor, FC → Kitchen Counter
+const KITCHEN_COUNTER_LABEL = 'Kitchen Counter'; // Customer-facing name (internal: Kitchen Pass)
 const COUNTER_CATS = {
   23: 'Bane Marie Counter',
   27: 'Juice Counter',
@@ -202,6 +203,30 @@ const COUNTER_CATS = {
   29: 'Shawarma Counter',
   30: 'Grill Counter',
 };
+
+// ── KDS stage → customer-facing counter name (for WhatsApp notifications) ──
+const STAGE_COUNTER_MAP = {
+  // PREPARING stages
+  44: KITCHEN_COUNTER_LABEL,  // KDS 15 Kitchen Pass → Ready (all station items done)
+  62: 'Juice Counter',        // KDS 16 Juice → Preparing
+  64: 'Bane Marie Counter',   // KDS 17 Bane Marie → Preparing
+  65: 'Shawarma Counter',     // KDS 18 Shawarma → Preparing
+  66: 'Grill Counter',        // KDS 19 Grill → Preparing
+  // READY stages
+  76: KITCHEN_COUNTER_LABEL,  // KDS 21 Kitchen Pass TV → InProgress (packed, ready for pickup)
+  47: 'Juice Counter',        // KDS 16 Juice → Ready
+  50: 'Bane Marie Counter',   // KDS 17 Bane Marie → Ready
+  53: 'Shawarma Counter',     // KDS 18 Shawarma → Ready
+  56: 'Grill Counter',        // KDS 19 Grill → Ready
+};
+
+// ── Customer tier based on order history ──
+function getCustomerTier(totalOrders) {
+  if (totalOrders === 0) return 'new';      // First order: full guidance
+  if (totalOrders <= 2) return 'learning';  // 1-2 orders: moderate guidance
+  if (totalOrders <= 9) return 'familiar';  // 3-9 orders: concise
+  return 'regular';                          // 10+ orders: minimal, speed
+}
 
 // ── Odoo configuration ──
 const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
@@ -592,9 +617,11 @@ async function handleIdle(context, session, user, msg, waId, phoneId, token, db)
   if (user.name) {
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
-  // Ask for name
+  // Ask for name — first-time welcome with context about the ordering flow
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'Welcome to *Hamza Express*! Biryani & More Since 1918.\n\nWhat\'s your name?'));
+    'Welcome to *Hamza Express*! Biryani & More Since 1918.\n\n' +
+    'Order from your phone, pay via UPI, and collect at the counter — skip the queue!\n\n' +
+    'What\'s your name?'));
   await updateSession(db, waId, 'awaiting_name', '[]', 0);
 }
 
@@ -617,11 +644,25 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
   // Send WhatsApp List message with 9 customer-facing categories
   // Customer taps a category → receives a focused MPM (≤30 items) for that category
+  const tier = getCustomerTier(user.total_orders || 0);
   const rows = Object.entries(MENU_CATEGORIES).map(([key, cat]) => ({
     id: `cat_${key}`,
     title: cat.title,
     description: cat.desc,
   }));
+
+  let bodyText;
+  if (tier === 'new') {
+    bodyText = user.name
+      ? `Hi ${user.name}! Welcome to Hamza Express.\n\nBrowse a category, add items to cart, pay via UPI — and collect from the counter. Pick a category below.`
+      : 'Welcome to Hamza Express!\n\nBrowse a category, add items to cart, pay via UPI — and collect from the counter. Pick a category below.';
+  } else if (tier === 'regular') {
+    bodyText = `Hey ${user.name || 'there'}! What'll it be today?`;
+  } else {
+    bodyText = user.name
+      ? `Hi ${user.name}! What are you in the mood for?`
+      : 'What are you in the mood for? Pick a category below.';
+  }
 
   const listMsg = {
     messaging_product: 'whatsapp',
@@ -630,11 +671,7 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
     interactive: {
       type: 'list',
       header: { type: 'text', text: 'Hamza Express Menu' },
-      body: {
-        text: user.name
-          ? `Hi ${user.name}! What are you in the mood for? Pick a category below.`
-          : 'What are you in the mood for? Pick a category below.',
-      },
+      body: { text: bodyText },
       footer: { text: 'Biryani & More Since 1918 | All prices incl. GST' },
       action: {
         button: 'Browse Menu',
@@ -723,20 +760,40 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
     return;
   }
 
-  // Determine collection point
-  const collectionPoint = determineCollectionPoint(cart.items);
+  // Determine collection points (may be multiple for mixed orders)
+  const collection = determineCollectionPoints(cart.items);
+  const tier = getCustomerTier(user.total_orders || 0);
 
   // Save cart and move to payment
   await updateSession(db, waId, 'awaiting_payment', JSON.stringify(cart.items), cart.total);
 
   // Build order summary
   const itemLines = cart.items.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
-  const gstAmount = Math.round(cart.total * 5 / 105 * 100) / 100; // Extract GST from inclusive price
 
-  const body = `*Your Order:*\n${itemLines}\n\n` +
-    `*Total: Rs.${cart.total}* (incl. GST)\n` +
-    `*Collect from:* ${collectionPoint}\n\n` +
-    `Tap *Pay Now* to pay via UPI and confirm your order.`;
+  // Build collection point text
+  let collectionText;
+  if (collection.points.length === 1) {
+    collectionText = `*Collect from:* ${collection.points[0].counter}`;
+  } else {
+    const lines = collection.points.map(p =>
+      `• *${p.counter}* — ${p.items.join(', ')}`
+    ).join('\n');
+    collectionText = `*Collect from:*\n${lines}`;
+  }
+
+  let body;
+  if (tier === 'new') {
+    body = `*Your Order:*\n${itemLines}\n\n` +
+      `*Total: Rs.${cart.total}* (incl. GST)\n\n` +
+      `${collectionText}\n\n` +
+      `_Look for the counter name boards above each station._\n\n` +
+      `Tap *Pay Now* to pay via UPI and confirm your order.`;
+  } else {
+    body = `*Your Order:*\n${itemLines}\n\n` +
+      `*Total: Rs.${cart.total}* (incl. GST)\n` +
+      `${collectionText}\n\n` +
+      `Tap *Pay Now* to pay via UPI.`;
+  }
 
   const buttons = [
     { type: 'reply', reply: { id: 'pay_upi', title: 'Pay Now (UPI)' } },
@@ -770,23 +827,37 @@ function buildCartFromItems(orderItems) {
   return { items, total };
 }
 
-function determineCollectionPoint(cartItems) {
-  const categories = new Set(cartItems.map(item => item.catId));
-  const hasKitchenItems = [...categories].some(c => KITCHEN_CATS.has(c));
-  const counterCats = [...categories].filter(c => !KITCHEN_CATS.has(c));
+function determineCollectionPoints(cartItems) {
+  const kitchenItems = cartItems.filter(item => KITCHEN_CATS.has(item.catId));
+  const counterItems = cartItems.filter(item => !KITCHEN_CATS.has(item.catId));
 
-  // If ANY kitchen items → collect at Kitchen Pass (they consolidate everything)
-  if (hasKitchenItems) return 'Kitchen Pass';
+  const points = [];
 
-  // If ALL items from single counter → that counter
-  if (counterCats.length === 1) {
-    return COUNTER_CATS[counterCats[0]] || 'Kitchen Pass';
+  if (kitchenItems.length > 0) {
+    points.push({
+      counter: KITCHEN_COUNTER_LABEL,
+      items: kitchenItems.map(i => `${i.qty}x ${i.name}`),
+    });
   }
 
-  // Multiple counter categories → Kitchen Pass (consolidation point)
-  if (counterCats.length > 1) return 'Kitchen Pass';
+  // Group counter items by their counter name
+  const counterGroups = {};
+  for (const item of counterItems) {
+    const counterName = COUNTER_CATS[item.catId] || KITCHEN_COUNTER_LABEL;
+    if (!counterGroups[counterName]) counterGroups[counterName] = [];
+    counterGroups[counterName].push(`${item.qty}x ${item.name}`);
+  }
+  for (const [counter, items] of Object.entries(counterGroups)) {
+    points.push({ counter, items });
+  }
 
-  return 'Kitchen Pass';
+  // Backward-compat: primary + summary string for DB storage
+  const primary = points[0]?.counter || KITCHEN_COUNTER_LABEL;
+  const summary = points.length === 1
+    ? points[0].counter
+    : points.map(p => p.counter).join(' + ');
+
+  return { points, primary, summary };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -844,7 +915,7 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
   }
 
   const total = cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
-  const collectionPoint = determineCollectionPoint(cart);
+  const collection = determineCollectionPoints(cart);
   const now = new Date().toISOString();
 
   // Generate order code: HE-DDMM-NNNN
@@ -857,14 +928,14 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
   const todayCount = (countResult?.cnt || 0) + 1;
   const orderCode = `HE-${datePrefix}-${String(todayCount).padStart(4, '0')}`;
 
-  // Create order in DB with payment_pending status
+  // Create order in DB with payment_pending status (store summary string for reference)
   const result = await db.prepare(
     `INSERT INTO wa_orders (order_code, wa_id, items, subtotal, total, payment_method, payment_status,
      collection_point, status, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     orderCode, waId, JSON.stringify(cart), total, total, 'upi', 'pending',
-    collectionPoint, 'payment_pending', now, now
+    collection.summary, 'payment_pending', now, now
   ).run();
   const orderId = result.meta?.last_row_id;
 
@@ -1217,38 +1288,58 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       return new Response(JSON.stringify({ ok: true, skipped: 'no matching wa_order' }), { headers: corsHeaders });
     }
 
-    // Step 5: Duplicate prevention — only send if status transition is valid
-    const currentStatus = waOrder.status;
-    if (notificationType === 'preparing' && currentStatus !== 'confirmed') {
-      return new Response(JSON.stringify({ ok: true, skipped: 'already past confirmed' }), { headers: corsHeaders });
-    }
-    if (notificationType === 'ready' && currentStatus !== 'confirmed' && currentStatus !== 'preparing') {
-      return new Response(JSON.stringify({ ok: true, skipped: 'already ready or beyond' }), { headers: corsHeaders });
-    }
+    // Step 5: Counter-aware dedup — allow separate notifications per counter
+    const counterName = STAGE_COUNTER_MAP[stage_id] || KITCHEN_COUNTER_LABEL;
+    const notified = JSON.parse(waOrder.notified_counters || '{}');
+    const counterKey = counterName.replace(/\s+/g, '_').toLowerCase();
+    const notifKey = `${notificationType}_${counterKey}`;
 
-    // Step 6: Update status and send WhatsApp notification
+    if (notified[notifKey]) {
+      return new Response(JSON.stringify({ ok: true, skipped: `already sent ${notifKey}` }), { headers: corsHeaders });
+    }
+    notified[notifKey] = new Date().toISOString();
+
+    // Step 6: Update status (keep highest status) + track notifications
     const now = new Date().toISOString();
-    await db.prepare('UPDATE wa_orders SET status = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
-      .bind(notificationType, trackingNumber, now, waOrder.id).run();
+    const newStatus = notificationType === 'ready' ? 'ready' :
+      (waOrder.status === 'ready' ? 'ready' : 'preparing');
+    await db.prepare('UPDATE wa_orders SET status = ?, notified_counters = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
+      .bind(newStatus, JSON.stringify(notified), trackingNumber, now, waOrder.id).run();
+
+    // Step 7: Load user tier for adaptive messaging
+    const waUser = await db.prepare('SELECT total_orders FROM wa_users WHERE wa_id = ?')
+      .bind(waOrder.wa_id).first();
+    const tier = getCustomerTier(waUser?.total_orders || 0);
 
     const phoneId = context.env.WA_PHONE_ID;
     const token = context.env.WA_ACCESS_TOKEN;
 
     if (notificationType === 'preparing') {
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `Your order *${waOrder.order_code}* is now being prepared!\n\n` +
-        `*Collect from:* ${waOrder.collection_point || 'Kitchen Pass'}\n` +
-        `We'll notify you when it's ready.`));
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — preparing at ${counterName}`));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `Your order *${waOrder.order_code}* is being prepared!\n\n` +
+          `*At:* ${counterName}\n` +
+          `We'll notify you when it's ready for pickup.`));
+      }
     } else if (notificationType === 'ready') {
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `Your order *${waOrder.order_code}* is *READY* for pickup!\n\n` +
-        `*Collect from:* ${waOrder.collection_point || 'Kitchen Pass'}\n` +
-        (trackingNumber ? `*Show token:* ${trackingNumber}\n\n` : '\n') +
-        `Please collect it now. Thank you for ordering with Hamza Express!`));
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — READY at ${counterName}` +
+          (trackingNumber ? ` (Token ${trackingNumber})` : '')));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `Your order *${waOrder.order_code}* is *READY* for pickup!\n\n` +
+          `*Collect from:* ${counterName}\n` +
+          (trackingNumber ? `*Token:* ${trackingNumber}\n\n` : '\n') +
+          `Please collect it now.`));
+      }
     }
 
-    console.log(`KDS→WA: ${notificationType} notification sent for ${waOrder.order_code} (Odoo #${posOrderId})`);
-    return new Response(JSON.stringify({ ok: true, sent: notificationType, order: waOrder.order_code }), { headers: corsHeaders });
+    console.log(`KDS→WA: ${notificationType} at ${counterName} sent for ${waOrder.order_code} (Odoo #${posOrderId}, tier: ${tier})`);
+    return new Response(JSON.stringify({ ok: true, sent: notificationType, counter: counterName, order: waOrder.order_code }), { headers: corsHeaders });
 
   } catch (error) {
     console.error('KDS webhook error:', error.message);
@@ -1262,6 +1353,11 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
 async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, db) {
   const now = new Date().toISOString();
+
+  // Load user for tier (before incrementing total_orders — this order not counted yet)
+  const waUser = await db.prepare('SELECT total_orders FROM wa_users WHERE wa_id = ?')
+    .bind(order.wa_id).first();
+  const tier = getCustomerTier(waUser?.total_orders || 0);
 
   // Update order status
   await db.prepare(
@@ -1282,23 +1378,70 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
       .bind(odooResult.id, odooResult.name, odooResult.trackingNumber, order.id).run();
   }
 
-  // Send confirmation to customer
+  // Build confirmation message — adaptive based on customer tier
   const itemLines = cart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
   const trackingNum = odooResult?.trackingNumber || order.order_code;
+  const collection = determineCollectionPoints(cart);
 
-  let confirmMsg = `*Payment received! Order confirmed!*\n\n` +
-    `*Order:* ${order.order_code}\n` +
-    `*Token:* ${trackingNum}\n\n` +
-    `${itemLines}\n\n` +
-    `*Total: Rs.${order.total}* (UPI Paid)\n` +
-    `*Collect from:* ${order.collection_point}\n\n` +
-    `Your order is now being prepared. We'll notify you when it's ready!\n\n` +
-    `_Show your token number at the counter_`;
+  let confirmMsg;
+  if (tier === 'new') {
+    // First order ever — full welcome + guidance
+    let collectionGuide;
+    if (collection.points.length === 1) {
+      collectionGuide = `*Collect from:* ${collection.points[0].counter}\n` +
+        `_Look for the "${collection.points[0].counter}" board above the counter._`;
+    } else {
+      const lines = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+      collectionGuide = `*Collect from:*\n${lines}\n` +
+        `_Look for the counter name boards above each station._`;
+    }
+
+    confirmMsg = `*Order confirmed! Payment received.*\n\n` +
+      `*Order:* ${order.order_code}\n` +
+      `*Token:* ${trackingNum}\n\n` +
+      `${itemLines}\n` +
+      `*Total: Rs.${order.total}* (UPI Paid)\n\n` +
+      `${collectionGuide}\n\n` +
+      `We'll send you a message when your food is being prepared, and another when it's ready.\n\n` +
+      `_Show your token number at the counter._`;
+
+  } else if (tier === 'regular') {
+    // 10+ orders — minimal, fast
+    const collectionText = collection.points.length === 1
+      ? collection.points[0].counter
+      : collection.points.map(p => p.counter).join(' + ');
+
+    confirmMsg = `*Confirmed!* ${order.order_code}\n` +
+      `Token: ${trackingNum} | Rs.${order.total}\n` +
+      `Collect: ${collectionText}`;
+
+  } else {
+    // Learning (1-2) or Familiar (3-9) — balanced
+    let collectionText;
+    if (collection.points.length === 1) {
+      collectionText = `*Collect from:* ${collection.points[0].counter}`;
+    } else {
+      const lines = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+      collectionText = `*Collect from:*\n${lines}`;
+    }
+
+    confirmMsg = `*Order confirmed!*\n\n` +
+      `*Order:* ${order.order_code}\n` +
+      `*Token:* ${trackingNum}\n\n` +
+      `${itemLines}\n` +
+      `*Total: Rs.${order.total}* (UPI Paid)\n` +
+      `${collectionText}\n\n` +
+      `_Show token at counter._`;
+  }
 
   await sendWhatsApp(phoneId, token, buildText(order.wa_id, confirmMsg));
   await updateSession(db, order.wa_id, 'idle', '[]', 0);
 
-  console.log(`Order confirmed: ${order.order_code}, Odoo: ${odooResult?.name || 'N/A'}`);
+  console.log(`Order confirmed: ${order.order_code}, Odoo: ${odooResult?.name || 'N/A'}, Tier: ${tier}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1329,7 +1472,7 @@ async function handleTrackOrder(context, user, waId, phoneId, token, db) {
     (order.tracking_number ? `*Token:* ${order.tracking_number}\n\n` : '\n') +
     `${itemLines}\n\n` +
     `*Status:* ${statusEmoji[order.status] || order.status}\n` +
-    `*Collect from:* ${order.collection_point || 'Kitchen Pass'}\n` +
+    `*Collect from:* ${order.collection_point || KITCHEN_COUNTER_LABEL}\n` +
     `*Total:* Rs.${order.total}`;
 
   await sendWhatsApp(phoneId, token, buildText(waId, trackMsg));
@@ -1722,14 +1865,14 @@ async function handleDashboardAPI(context, action, url, corsHeaders) {
       if (newStatus === 'preparing') {
         await sendWhatsApp(phoneId, token, buildText(order.wa_id,
           `Your order *${order.order_code}* is now being prepared!\n\n` +
-          `*Collect from:* ${order.collection_point || 'Kitchen Pass'}\n` +
+          `*Collect from:* ${order.collection_point || KITCHEN_COUNTER_LABEL}\n` +
           `We'll notify you when it's ready.`));
       } else if (newStatus === 'ready') {
         await sendWhatsApp(phoneId, token, buildText(order.wa_id,
           `Your order *${order.order_code}* is *READY*!\n\n` +
-          `*Collect from:* ${order.collection_point || 'Kitchen Pass'}\n` +
-          (order.tracking_number ? `*Show token:* ${order.tracking_number}\n\n` : '\n') +
-          `Please collect it now. Thank you for ordering with Hamza Express!`));
+          `*Collect from:* ${order.collection_point || KITCHEN_COUNTER_LABEL}\n` +
+          (order.tracking_number ? `*Token:* ${order.tracking_number}\n\n` : '\n') +
+          `Please collect it now.`));
       }
     }
 
