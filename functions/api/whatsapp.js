@@ -817,8 +817,52 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
 }
 
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
-  // Send WhatsApp List message with 5 meal-intent options
-  // Customer picks intent → receives ALL items via 1-3 MPMs. Cart persists across MPMs.
+  // Send catalog_message — opens visual catalog browser with images, categories, prices, built-in cart.
+  // NOTE: catalog_message API quirks:
+  //   - Body text MUST NOT contain exclamation marks (!) — causes silent API failure
+  //   - Footer and thumbnail_product_retailer_id params also cause failures
+  //   - Keep payload minimal: body + action only
+  const tier = getCustomerTier(user.total_orders || 0);
+
+  let bodyText;
+  if (tier === 'new') {
+    bodyText = user.name
+      ? `Hi ${user.name}, welcome to Hamza Express. Tap below to browse our full menu — add items to cart, pay via UPI, and collect at the counter.`
+      : 'Welcome to Hamza Express. Tap below to browse our full menu, add items to cart, pay via UPI and collect at the counter.';
+  } else if (tier === 'regular') {
+    bodyText = `Hey ${user.name || 'there'}, tap below to order.`;
+  } else {
+    bodyText = user.name
+      ? `Hi ${user.name}, tap below to browse our menu.`
+      : 'Tap below to browse our menu and order.';
+  }
+
+  const catalogMsg = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'catalog_message',
+      body: { text: bodyText },
+      action: {
+        name: 'catalog_message',
+      },
+    },
+  };
+
+  const resp = await sendWhatsApp(phoneId, token, catalogMsg);
+  if (!resp || !resp.ok) {
+    // Fallback: if catalog_message fails, send the meal-intent list instead
+    console.log('catalog_message failed (status:', resp?.status, '), falling back to list menu');
+    return handleShowMenuList(context, user, waId, phoneId, token, db);
+  }
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+}
+
+async function handleShowMenuList(context, user, waId, phoneId, token, db) {
+  // Fallback: Send WhatsApp List message with 5 meal-intent options
+  // Used when catalog_message fails or when triggered via keyword "menu list"
   const tier = getCustomerTier(user.total_orders || 0);
   const rows = [
     { id: 'intent_meals', title: '🍛 Meals', description: 'Curry + Bread + Rice + Veg — all in one go' },
