@@ -315,18 +315,142 @@ const MENU_CATEGORIES = {
   },
 };
 
-// ── Keyword shortcuts → jump directly to a category MPM ──
+// ── Meal-intent groupings: customer picks an "intent" → receives ALL items via multi-MPM ──
+// Each MPM ≤ 30 items (WhatsApp hard limit). WhatsApp native cart persists across MPMs.
+const MEAL_INTENT_CATEGORIES = {
+  meals: {
+    label: '🍛 Meals',
+    desc: 'Curry + Bread + Rice + Veg — all in one go',
+    mpms: [
+      {
+        header: 'Chicken & Biryani',
+        body: '🍗 Chicken curries + Biryani & Rice\nAdd items to cart, then browse next message for more!',
+        sections: [
+          { title: 'Chicken Curry', items: ['HE-1146','HE-1147','HE-1148','HE-1149','HE-1150','HE-1151','HE-1152','HE-1153','HE-1154','HE-1155','HE-1156','HE-1157','HE-1158','HE-1159','HE-1160','HE-1161','HE-1162'] },
+          { title: 'Biryani & Rice', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204','HE-1205','HE-1206','HE-1207'] },
+        ],
+      },
+      {
+        header: 'Mutton & Veg',
+        body: '🐑 Mutton curries + Veg & Dal\nKeep adding to the same cart!',
+        sections: [
+          { title: 'Mutton Curry', items: ['HE-1177','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1185','HE-1186','HE-1187','HE-1188','HE-1189','HE-1190'] },
+          { title: 'Mutton Dry', items: ['HE-1191','HE-1192','HE-1193','HE-1194','HE-1195'] },
+          { title: 'Veg & Dal', items: ['HE-1225','HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1233','HE-1234'] },
+        ],
+      },
+      {
+        header: 'Roti & Breads',
+        body: '🫓 Roti, Naan, Paratha & Rolls\nAdd breads to complete your meal, then Send your cart!',
+        sections: [
+          { title: 'Roti & Paratha', items: ['HE-1212','HE-1213','HE-1214','HE-1215','HE-1216','HE-1217','HE-1218','HE-1219','HE-1220','HE-1221','HE-1222','HE-1223','HE-1224'] },
+          { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1210','HE-1211'] },
+        ],
+      },
+    ],
+  },
+  starters: {
+    label: '🔥 Starters',
+    desc: 'Tandoori, Chinese dry, Kababs',
+    mpms: [
+      {
+        header: 'Starters',
+        body: 'Tandoori, Chinese dry & Kababs\nAdd items to cart, then tap Send!',
+        sections: [
+          { title: 'Tandoori', items: ['HE-1134','HE-1135','HE-1136','HE-1137','HE-1138','HE-1139','HE-1140','HE-1141','HE-1142','HE-1143','HE-1144','HE-1145'] },
+          { title: 'Chinese Dry', items: ['HE-1163','HE-1164','HE-1165','HE-1166','HE-1167','HE-1168','HE-1169','HE-1170','HE-1171','HE-1172','HE-1173','HE-1174','HE-1175','HE-1176'] },
+        ],
+      },
+    ],
+  },
+  krispy: {
+    label: '🍗 Krispy Eats',
+    desc: 'Fried Chicken, Burgers, Combos',
+    mpms: [
+      {
+        header: 'Krispy Eats',
+        body: 'Fried Chicken, Burgers, Combos & more\nAdd items to cart, then tap Send!',
+        sections: [
+          { title: 'Fried Chicken', items: ['HE-1366','HE-1367','HE-1368'] },
+          { title: 'Combos', items: ['HE-1369','HE-1370','HE-1371','HE-1372'] },
+          { title: 'Snacks & Sides', items: ['HE-1373','HE-1374','HE-1375','HE-1376','HE-1377','HE-1378','HE-1379','HE-1380'] },
+          { title: 'Burgers & Rolls', items: ['HE-1381','HE-1382','HE-1383','HE-1384','HE-1385'] },
+          { title: 'Salads & Rice', items: ['HE-1386','HE-1387','HE-1388'] },
+          { title: 'Extras', items: ['HE-1389','HE-1390','HE-1391'] },
+        ],
+      },
+    ],
+  },
+  rice_seafood: {
+    label: '🍜 Rice & Seafood',
+    desc: 'Fried rice, noodles, fish, prawns & more',
+    mpms: [
+      {
+        header: 'Rice, Noodles & Seafood',
+        body: 'Fried rice, noodles, seafood, breakfast & sides\nAdd items to cart, then tap Send!',
+        sections: [
+          { title: 'Fried Rice & Noodles', items: ['HE-1235','HE-1236','HE-1237','HE-1238','HE-1239','HE-1240','HE-1241','HE-1242','HE-1243','HE-1244','HE-1245','HE-1246','HE-1247','HE-1248'] },
+          { title: 'Fish & Seafood', items: ['HE-1253','HE-1254','HE-1255','HE-1256','HE-1257','HE-1258','HE-1259'] },
+          { title: 'Breakfast Special', items: ['HE-1196','HE-1197','HE-1198','HE-1199'] },
+          { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+        ],
+      },
+    ],
+  },
+};
+
+// ── Counter-specific menus for in-outlet QR ordering ──
+// Customer scans QR at counter → sees ONLY that counter's items → orders → pays → collects there
+const COUNTER_MENUS = {
+  bm_counter: {
+    title: 'Bane Marie Counter',
+    counter: 'Bane Marie Counter',
+    greeting: 'Order from the Bane Marie counter — Biryani, Rice & Sides!',
+    sections: [
+      { title: 'Biryani', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204'] },
+      { title: 'Rice', items: ['HE-1205','HE-1206','HE-1207'] },
+      { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+    ],
+  },
+  // Future counters (0 products in PRODUCTS + Meta catalog — uncomment when products added):
+  // juice_counter: { title: 'Juice Counter', counter: 'Juice Counter', greeting: '...', sections: [] },
+  // shawarma_counter: { title: 'Shawarma Counter', counter: 'Shawarma Counter', greeting: '...', sections: [] },
+  // grill_counter: { title: 'Grill Counter', counter: 'Grill Counter', greeting: '...', sections: [] },
+};
+
+// ── Detect counter keyword from QR code text (e.g. "BM Counter") ──
+function detectCounterKeyword(text) {
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (normalized === 'bm counter' || normalized === 'bm_counter') return 'bm_counter';
+  if (normalized === 'juice counter' || normalized === 'juice_counter') return 'juice_counter';
+  if (normalized === 'shawarma counter' || normalized === 'shawarma_counter') return 'shawarma_counter';
+  if (normalized === 'grill counter' || normalized === 'grill_counter') return 'grill_counter';
+  return null;
+}
+
+// ── Keyword shortcuts → jump directly to a meal intent or category MPM ──
 const STATION_KEYWORDS = {
+  // Direct category shortcuts (used by "Browse by Category" sub-flow)
   'krispy':   'krispy',
   'fc':       'krispy',
   'biryani':  'biryani',
-  'starters': 'starters',
   'veg':      'veg',
-  'mutton':   'mutton',
   'breads':   'breads',
   'noodles':  'rice_noodle',
-  'seafood':  'more',
-  'bm':       'biryani',    // Bane Marie items are in Biryani & Rice + Seafood & More
+  'bm':       'biryani',
+  // Meal-intent shortcuts (route to multi-MPM meal intents)
+  'meals':    'intent_meals',
+  'meal':     'intent_meals',
+  'curry':    'intent_meals',
+  'curries':  'intent_meals',
+  'starters': 'intent_starters',
+  'starter':  'intent_starters',
+  'snacks':   'intent_starters',
+  'mutton':   'intent_meals',
+  'seafood':  'intent_rice_seafood',
+  'rice':     'intent_rice_seafood',
+  'fish':     'intent_rice_seafood',
+  'prawns':   'intent_rice_seafood',
 };
 
 // ── NCH forwarding (disabled — NCH phone now serves HE) ──
@@ -543,20 +667,41 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     return handleOrderMessage(context, session, user, msg, waId, phoneId, token, db);
   }
 
-  // Category selection from list picker (works in any state)
-  if (msg.type === 'list_reply' && msg.id && msg.id.startsWith('cat_')) {
-    const categoryKey = msg.id.replace('cat_', '');
-    return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+  // List picker selections (works in any state)
+  if (msg.type === 'list_reply' && msg.id) {
+    // Meal-intent selection → send multi-MPMs
+    if (msg.id.startsWith('intent_')) {
+      const intentKey = msg.id.replace('intent_', '');
+      return handleMealIntent(context, user, intentKey, waId, phoneId, token, db);
+    }
+    // "Full Menu" → show original 9-category sub-menu
+    if (msg.id === 'cat_full_menu') {
+      return handleShowFullMenu(context, user, waId, phoneId, token, db);
+    }
+    // Direct category selection (from "Full Menu" sub-flow)
+    if (msg.id.startsWith('cat_')) {
+      const categoryKey = msg.id.replace('cat_', '');
+      return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+    }
   }
 
   // Global commands (work in any state)
   if (msg.type === 'text') {
     const text = msg.text;
 
-    // Keyword shortcuts — jump directly to a category MPM
-    const categoryKey = STATION_KEYWORDS[text];
-    if (categoryKey) {
-      return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+    // Counter-specific entry (QR code scan — "BM Counter", "Juice Counter", etc.)
+    const counterKey = detectCounterKeyword(text);
+    if (counterKey) {
+      return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db);
+    }
+
+    // Keyword shortcuts — jump to meal intent or direct category MPM
+    const keywordTarget = STATION_KEYWORDS[text];
+    if (keywordTarget) {
+      if (keywordTarget.startsWith('intent_')) {
+        return handleMealIntent(context, user, keywordTarget.replace('intent_', ''), waId, phoneId, token, db);
+      }
+      return handleCategorySelection(context, user, keywordTarget, waId, phoneId, token, db);
     }
 
     if (['menu', '/menu', 'order', '/order', 'hi', 'hello', 'start'].includes(text)) {
@@ -636,32 +781,64 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
   await db.prepare('UPDATE wa_users SET name = ? WHERE wa_id = ?').bind(name, waId).run();
   user.name = name;
 
+  // If there's a saved cart from a pre-name order, resume the order flow
+  const savedCart = JSON.parse(session.cart || '[]');
+  if (Array.isArray(savedCart) && savedCart.length > 0 && session.cart_total > 0) {
+    const collection = determineCollectionPoints(savedCart);
+    await updateSession(db, waId, 'awaiting_payment', session.cart, session.cart_total);
+
+    const itemLines = savedCart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
+    let collectionText;
+    if (collection.points.length === 1) {
+      collectionText = `*Collect from:* ${collection.points[0].counter}`;
+    } else {
+      const lines = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+      collectionText = `*Collect from:*\n${lines}`;
+    }
+
+    const body = `Thanks, *${name}*!\n\n*Your Order:*\n${itemLines}\n\n` +
+      `*Total: Rs.${session.cart_total}* (incl. GST)\n` +
+      `${collectionText}\n\n` +
+      `Tap *Pay Now* to pay via UPI.`;
+
+    const buttons = [
+      { type: 'reply', reply: { id: 'pay_upi', title: 'Pay Now (UPI)' } },
+      { type: 'reply', reply: { id: 'pay_cancel', title: 'Cancel' } },
+    ];
+    await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    return;
+  }
+
   await sendWhatsApp(phoneId, token, buildText(waId,
     `Great, *${name}*! Let's get you some amazing food.`));
   return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
-  // Send WhatsApp List message with 9 customer-facing categories
-  // Customer taps a category → receives a focused MPM (≤30 items) for that category
+  // Send WhatsApp List message with 5 meal-intent options
+  // Customer picks intent → receives ALL items via 1-3 MPMs. Cart persists across MPMs.
   const tier = getCustomerTier(user.total_orders || 0);
-  const rows = Object.entries(MENU_CATEGORIES).map(([key, cat]) => ({
-    id: `cat_${key}`,
-    title: cat.title,
-    description: cat.desc,
-  }));
+  const rows = [
+    { id: 'intent_meals', title: '🍛 Meals', description: 'Curry + Bread + Rice + Veg — all in one go' },
+    { id: 'intent_starters', title: '🔥 Starters', description: 'Tandoori, Chinese dry, Kababs' },
+    { id: 'intent_krispy', title: '🍗 Krispy Eats', description: 'Fried Chicken, Burgers, Combos' },
+    { id: 'intent_rice_seafood', title: '🍜 Rice & Seafood', description: 'Fried rice, noodles, fish, prawns' },
+    { id: 'cat_full_menu', title: '📋 Full Menu', description: 'Browse all 9 categories separately' },
+  ];
 
   let bodyText;
   if (tier === 'new') {
     bodyText = user.name
-      ? `Hi ${user.name}! Welcome to Hamza Express.\n\nBrowse a category, add items to cart, pay via UPI — and collect from the counter. Pick a category below.`
-      : 'Welcome to Hamza Express!\n\nBrowse a category, add items to cart, pay via UPI — and collect from the counter. Pick a category below.';
+      ? `Hi ${user.name}! Welcome to Hamza Express.\n\nPick what you're in the mood for — add items to cart, pay via UPI, and collect at the counter!`
+      : 'Welcome to Hamza Express!\n\nPick what you\'re in the mood for, add items to cart, pay via UPI — and collect from the counter!';
   } else if (tier === 'regular') {
     bodyText = `Hey ${user.name || 'there'}! What'll it be today?`;
   } else {
     bodyText = user.name
       ? `Hi ${user.name}! What are you in the mood for?`
-      : 'What are you in the mood for? Pick a category below.';
+      : 'What are you in the mood for? Pick below.';
   }
 
   const listMsg = {
@@ -674,8 +851,49 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
       body: { text: bodyText },
       footer: { text: 'Biryani & More Since 1918 | All prices incl. GST' },
       action: {
-        button: 'Browse Menu',
-        sections: [{ title: 'Our Menu', rows }],
+        button: 'What\'s Cooking?',
+        sections: [{ title: 'Order By', rows }],
+      },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, listMsg);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+}
+
+async function handleShowFullMenu(context, user, waId, phoneId, token, db) {
+  // Original 9-category list — accessible via "Full Menu" option
+  // Customer taps a category → receives a focused MPM (≤30 items) for that category
+  const tier = getCustomerTier(user.total_orders || 0);
+  const rows = Object.entries(MENU_CATEGORIES).map(([key, cat]) => ({
+    id: `cat_${key}`,
+    title: cat.title,
+    description: cat.desc,
+  }));
+
+  let bodyText;
+  if (tier === 'new') {
+    bodyText = user.name
+      ? `Hi ${user.name}! Here are all 9 categories.\n\nPick a category, add items to cart, then send.`
+      : 'Here are all 9 categories.\n\nPick a category, add items to cart, then send.';
+  } else if (tier === 'regular') {
+    bodyText = 'All categories:';
+  } else {
+    bodyText = 'Pick a category below to browse items.';
+  }
+
+  const listMsg = {
+    messaging_product: 'whatsapp',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'list',
+      header: { type: 'text', text: 'Full Menu — All Categories' },
+      body: { text: bodyText },
+      footer: { text: 'Biryani & More Since 1918 | All prices incl. GST' },
+      action: {
+        button: 'Browse Categories',
+        sections: [{ title: 'Categories', rows }],
       },
     },
   };
@@ -720,16 +938,105 @@ async function handleCategorySelection(context, user, categoryKey, waId, phoneId
   await updateSession(db, waId, 'awaiting_menu', '[]', 0);
 }
 
+async function handleMealIntent(context, user, intentKey, waId, phoneId, token, db) {
+  const intent = MEAL_INTENT_CATEGORIES[intentKey];
+  if (!intent) {
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+
+  // Send each MPM sequentially (WhatsApp native cart persists across messages)
+  for (let i = 0; i < intent.mpms.length; i++) {
+    const mpmDef = intent.mpms[i];
+    const sections = mpmDef.sections.map(section => ({
+      title: section.title,
+      product_items: section.items.map(rid => ({ product_retailer_id: rid })),
+    }));
+
+    const isLast = i === intent.mpms.length - 1;
+    let bodyText = mpmDef.body;
+    if (isLast) {
+      bodyText += '\n\n✅ Done? Tap Send on your cart!';
+    }
+
+    const mpm = {
+      messaging_product: 'whatsapp',
+      to: waId,
+      type: 'interactive',
+      interactive: {
+        type: 'product_list',
+        header: { type: 'text', text: mpmDef.header },
+        body: { text: bodyText },
+        footer: { text: 'All prices inclusive of GST' },
+        action: { catalog_id: CATALOG_ID, sections },
+      },
+    };
+
+    await sendWhatsApp(phoneId, token, mpm);
+    // Small delay between MPMs to avoid rate limiting (except after last)
+    if (!isLast) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  // Send tip: browse more or send cart
+  if (intent.mpms.length > 1) {
+    await sendWhatsApp(phoneId, token, buildText(waId,
+      'Browse all messages above, add items to your cart from any message, then tap *Send*!\n\n' +
+      'Send *"menu"* to browse other categories too — your cart stays intact.'));
+  }
+
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+}
+
+async function handleCounterMenu(context, user, counterKey, waId, phoneId, token, db) {
+  const counterMenu = COUNTER_MENUS[counterKey];
+  if (!counterMenu || counterMenu.sections.length === 0) {
+    await sendWhatsApp(phoneId, token, buildText(waId,
+      `Sorry, ${counterMenu?.title || 'this counter'} menu isn\'t available for WhatsApp ordering yet.\n\n` +
+      `Send *"menu"* to browse our full menu.`));
+    return;
+  }
+
+  // Build and send single MPM for this counter's items
+  const sections = counterMenu.sections.map(section => ({
+    title: section.title,
+    product_items: section.items.map(rid => ({ product_retailer_id: rid })),
+  }));
+
+  const mpm = {
+    messaging_product: 'whatsapp',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'product_list',
+      header: { type: 'text', text: counterMenu.title },
+      body: { text: counterMenu.greeting + '\n\nAdd items to cart, then tap Send!' },
+      footer: { text: 'All prices inclusive of GST | Collect at this counter' },
+      action: { catalog_id: CATALOG_ID, sections },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, mpm);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+}
+
 async function handleMenuState(context, session, user, msg, waId, phoneId, token, db) {
-  // Handle category selection from list picker
-  if (msg.type === 'list_reply' && msg.id && msg.id.startsWith('cat_')) {
-    const categoryKey = msg.id.replace('cat_', '');
-    return handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db);
+  // Handle list picker selections (intent or category)
+  if (msg.type === 'list_reply' && msg.id) {
+    if (msg.id.startsWith('intent_')) {
+      return handleMealIntent(context, user, msg.id.replace('intent_', ''), waId, phoneId, token, db);
+    }
+    if (msg.id === 'cat_full_menu') {
+      return handleShowFullMenu(context, user, waId, phoneId, token, db);
+    }
+    if (msg.id.startsWith('cat_')) {
+      return handleCategorySelection(context, user, msg.id.replace('cat_', ''), waId, phoneId, token, db);
+    }
   }
 
   // Any text that's not a global command — prompt to use the picker
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'Tap *Browse Menu* above to pick a category, or send *"menu"* to see categories again.'));
+    'Tap *What\'s Cooking?* above to pick a category, or send *"menu"* to see the menu again.'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
