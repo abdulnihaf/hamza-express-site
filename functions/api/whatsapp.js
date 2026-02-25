@@ -10,194 +10,193 @@
 const CATALOG_ID = '1639757440737691';
 
 const PRODUCTS = {
-  // ── Tandoori Dishes (cat 64 → parent 25) ──
-  'HE-1134': { name: 'Grill Chicken',              price: 190, odooId: 1134, catId: 25 },
-  'HE-1135': { name: 'Tandoori Chicken',            price: 190, odooId: 1135, catId: 25 },
-  'HE-1136': { name: 'Barbique Chicken (Boona)',     price: 200, odooId: 1136, catId: 25 },
-  'HE-1137': { name: 'Chicken Tikka',               price: 230, odooId: 1137, catId: 25 },
-  'HE-1138': { name: 'Kalmi Kabab',                 price: 100, odooId: 1138, catId: 25 },
-  'HE-1139': { name: 'Chicken Chops',               price: 200, odooId: 1139, catId: 25 },
-  'HE-1140': { name: 'American Chops',              price: 240, odooId: 1140, catId: 25 },
-  'HE-1141': { name: 'Haryali Tikka',               price: 230, odooId: 1141, catId: 25 },
-  'HE-1142': { name: 'Malai Tikka',                 price: 250, odooId: 1142, catId: 25 },
-  'HE-1143': { name: 'Andra Tikka',                 price: 230, odooId: 1143, catId: 25 },
-  'HE-1144': { name: 'Pepper Barbique',             price: 200, odooId: 1144, catId: 25 },
-  'HE-1145': { name: 'Pahadi Kabab',                price: 210, odooId: 1145, catId: 25 },
+  // ── Indian — Chicken Starters (cat 77 → parent 22) ──
+  'HE-1140': { name: 'American Chops',             price: 257, odooId: 1158, catId: 22 },
+  'HE-1136': { name: 'Barbeque Chicken',           price: 210, odooId: 1154, catId: 22 },
+  'HE-1169': { name: 'Chicken Pepper Dry',         price: 190, odooId: 1187, catId: 22 },
+  'HE-1173': { name: 'Thethar Pepper Dry',         price: 286, odooId: 1191, catId: 22 },
+  'HE-1159': { name: 'Thethar Pepper Roast',       price: 305, odooId: 1177, catId: 22 },
 
-  // ── Chicken Gravy (cat 56 → parent 22) ──
-  'HE-1146': { name: 'Mughlai Chicken',             price: 200, odooId: 1146, catId: 22 },
-  'HE-1147': { name: 'Chicken Dopiyaza',            price: 200, odooId: 1147, catId: 22 },
-  'HE-1148': { name: 'Hyderabadi Chicken',          price: 190, odooId: 1148, catId: 22 },
-  'HE-1149': { name: 'Butter Chicken',              price: 190, odooId: 1149, catId: 22 },
-  'HE-1150': { name: 'Punjabi Chicken',             price: 200, odooId: 1150, catId: 22 },
-  'HE-1151': { name: 'Chicken Kali Mirch',          price: 200, odooId: 1151, catId: 22 },
-  'HE-1152': { name: 'Chicken Burtha',              price: 220, odooId: 1152, catId: 22 },
-  'HE-1153': { name: 'Chicken Masala',              price: 190, odooId: 1153, catId: 22 },
-  'HE-1154': { name: 'Methi Chicken',               price: 190, odooId: 1154, catId: 22 },
-  'HE-1155': { name: 'Kadai Chicken',               price: 190, odooId: 1155, catId: 22 },
-  'HE-1156': { name: 'Chicken Chatpat',             price: 200, odooId: 1156, catId: 22 },
-  'HE-1157': { name: 'Chicken Sagwala',             price: 210, odooId: 1157, catId: 22 },
-  'HE-1158': { name: 'Tandoori Chicken Masala',     price: 260, odooId: 1158, catId: 22 },
-  'HE-1159': { name: 'Theethar Pepper Roast',       price: 280, odooId: 1159, catId: 22 },
-  'HE-1160': { name: 'Chicken Hamza Special',       price: 210, odooId: 1160, catId: 22 },
-  'HE-1161': { name: 'Chicken Tikka Masala',        price: 280, odooId: 1161, catId: 22 },
-  'HE-1162': { name: 'Kolapuri Chicken',            price: 200, odooId: 1162, catId: 22 },
+  // ── Indian — Mutton Starters (cat 78 → parent 22) ──
+  'HE-1192': { name: 'Mutton Brain Dry',           price: 152, odooId: 1210, catId: 22 },
+  'HE-1199': { name: 'Mutton Chops',               price: 219, odooId: 1217, catId: 22 },
+  'HE-1194': { name: 'Mutton Gurda Dry',           price: 200, odooId: 1212, catId: 22 },
+  'HE-1187': { name: 'Mutton Pepper Roast',        price: 210, odooId: 1205, catId: 22 },
+  'HE-1191': { name: 'Mutton Pepper Dry',          price: 200, odooId: 1209, catId: 22 },
+  'HE-1195': { name: 'Mutton Sheekh Kabab',        price: 143, odooId: 1213, catId: 22 },
 
-  // ── Chinese Chicken (cat 60 → parent 24) ──
-  'HE-1163': { name: 'Chicken Kabab',               price: 170, odooId: 1163, catId: 24 },
-  'HE-1164': { name: 'Chilly Chicken',              price: 190, odooId: 1164, catId: 24 },
-  'HE-1165': { name: 'Chicken Manchurian',          price: 190, odooId: 1165, catId: 24 },
-  'HE-1166': { name: 'Chicken 65',                  price: 200, odooId: 1166, catId: 24 },
-  'HE-1167': { name: 'Chicken Singapore',           price: 210, odooId: 1167, catId: 24 },
-  'HE-1168': { name: 'Lemon Chicken',               price: 210, odooId: 1168, catId: 24 },
-  'HE-1169': { name: 'Chicken Pepper Dry',          price: 190, odooId: 1169, catId: 24 },
-  'HE-1170': { name: 'Garlic Chicken',              price: 190, odooId: 1170, catId: 24 },
-  'HE-1171': { name: 'Chicken Jalfrize',            price: 220, odooId: 1171, catId: 24 },
-  'HE-1172': { name: 'Lollipop',                    price: 170, odooId: 1172, catId: 24 },
-  'HE-1173': { name: 'Theethar Pepper Dry',         price: 260, odooId: 1173, catId: 24 },
-  'HE-1174': { name: 'Hongkong Chicken',            price: 210, odooId: 1174, catId: 24 },
-  'HE-1175': { name: 'Chicken Hot & Sour Wings',    price: 170, odooId: 1175, catId: 24 },
-  'HE-1176': { name: 'Honey Chicken',               price: 230, odooId: 1176, catId: 24 },
+  // ── Indian — Chicken Curry (cat 79 → parent 22) ──
+  'HE-1149': { name: 'Butter Chicken',             price: 200, odooId: 1167, catId: 22 },
+  'HE-1152': { name: 'Chicken Burtha',             price: 238, odooId: 1170, catId: 22 },
+  'HE-1156': { name: 'Chicken Chatpata',           price: 238, odooId: 1174, catId: 22 },
+  'HE-1147': { name: 'Chicken Dopiyaza',           price: 219, odooId: 1165, catId: 22 },
+  'HE-1148': { name: 'Hyderabadi Chicken',         price: 200, odooId: 1166, catId: 22 },
+  'HE-1151': { name: 'Chicken Kali Mirch',         price: 200, odooId: 1169, catId: 22 },
+  'HE-1162': { name: 'Kolhapuri Chicken',          price: 200, odooId: 1180, catId: 22 },
+  'HE-1157': { name: 'Chicken Sagwala',            price: 210, odooId: 1175, catId: 22 },
+  'HE-1161': { name: 'Chicken Tikka Masala',       price: 286, odooId: 1179, catId: 22 },
+  'HE-1160': { name: 'Chicken Hamza Special',      price: 210, odooId: 1178, catId: 22 },
+  'HE-1155': { name: 'Kadai Chicken',              price: 210, odooId: 1173, catId: 22 },
+  'HE-1154': { name: 'Methi Chicken',              price: 200, odooId: 1172, catId: 22 },
+  'HE-1146': { name: 'Mughlai Chicken',            price: 219, odooId: 1164, catId: 22 },
+  'HE-1150': { name: 'Punjabi Chicken',            price: 219, odooId: 1168, catId: 22 },
+  'HE-1158': { name: 'Tandoori Chicken Masala',    price: 267, odooId: 1176, catId: 22 },
 
-  // ── Mutton Gravy (cat 57 → parent 22) ──
-  'HE-1177': { name: 'Mutton Rogan Josh',           price: 200, odooId: 1177, catId: 22 },
-  'HE-1178': { name: 'Methi Mutton',                price: 200, odooId: 1178, catId: 22 },
-  'HE-1179': { name: 'Mutton Achari',               price: 220, odooId: 1179, catId: 22 },
-  'HE-1180': { name: 'Kadai Mutton',                price: 210, odooId: 1180, catId: 22 },
-  'HE-1181': { name: 'Mutton Chatpat',              price: 220, odooId: 1181, catId: 22 },
-  'HE-1182': { name: 'Mutton Punjabi',              price: 220, odooId: 1182, catId: 22 },
-  'HE-1183': { name: 'Mutton Sagwala',              price: 220, odooId: 1183, catId: 22 },
-  'HE-1184': { name: 'Mutton Hyderabadi',           price: 210, odooId: 1184, catId: 22 },
-  'HE-1185': { name: 'Mutton Masala',               price: 200, odooId: 1185, catId: 22 },
-  'HE-1186': { name: 'Mutton Kolapuri',             price: 220, odooId: 1186, catId: 22 },
-  'HE-1187': { name: 'Mutton Pepper Roast',         price: 210, odooId: 1187, catId: 22 },
-  'HE-1188': { name: 'Mutton Kassa',                price: 220, odooId: 1188, catId: 22 },
-  'HE-1189': { name: 'Mutton Tadka',                price: 200, odooId: 1189, catId: 22 },
-  'HE-1190': { name: 'Mutton Hamza Special',        price: 230, odooId: 1190, catId: 22 },
+  // ── Indian — Mutton Curry (cat 80 → parent 22) ──
+  'HE-1180': { name: 'Kadai Mutton',               price: 210, odooId: 1198, catId: 22 },
+  'HE-1178': { name: 'Methi Mutton',               price: 200, odooId: 1196, catId: 22 },
+  'HE-1179': { name: 'Mutton Achari',              price: 219, odooId: 1197, catId: 22 },
+  'HE-1198': { name: 'Mutton Brain',               price: 152, odooId: 1216, catId: 22 },
+  'HE-1181': { name: 'Mutton Chatpata',            price: 219, odooId: 1199, catId: 22 },
+  'HE-1190': { name: 'Mutton Hamza Special',       price: 229, odooId: 1208, catId: 22 },
+  'HE-1184': { name: 'Hyderabadi Mutton',          price: 210, odooId: 1202, catId: 22 },
+  'HE-1188': { name: 'Mutton Kassa',               price: 219, odooId: 1206, catId: 22 },
+  'HE-1197': { name: 'Mutton Khima',               price: 219, odooId: 1215, catId: 22 },
+  'HE-1186': { name: 'Mutton Kolhapuri',           price: 219, odooId: 1204, catId: 22 },
+  'HE-1386': { name: 'Mutton Kolhapuri Gravy',     price: 219, odooId: 1404, catId: 22 },
+  'HE-1185': { name: 'Mutton Masala',              price: 200, odooId: 1203, catId: 22 },
+  'HE-1182': { name: 'Mutton Punjabi',             price: 219, odooId: 1200, catId: 22 },
+  'HE-1177': { name: 'Mutton Rogan Josh',          price: 200, odooId: 1195, catId: 22 },
+  'HE-1183': { name: 'Mutton Sagwala',             price: 219, odooId: 1201, catId: 22 },
+  'HE-1189': { name: 'Mutton Tadka',               price: 219, odooId: 1207, catId: 22 },
 
-  // ── Mutton Dry (cat 62 → parent 24) ──
-  'HE-1191': { name: 'Mutton Pepper Dry',           price: 200, odooId: 1191, catId: 24 },
-  'HE-1192': { name: 'Mutton Brain Dry',            price: 150, odooId: 1192, catId: 24 },
-  'HE-1193': { name: 'Mutton Jalfrize',             price: 230, odooId: 1193, catId: 24 },
-  'HE-1194': { name: 'Mutton Gurda Dry',            price: 200, odooId: 1194, catId: 24 },
-  'HE-1195': { name: 'Mutton Sheek Kabab',          price: 130, odooId: 1195, catId: 24 },
+  // ── Indian — Vegetarian (cat 81 → parent 22) ──
+  'HE-1230': { name: 'Aloo Gobi',                  price: 171, odooId: 1248, catId: 22 },
+  'HE-1225': { name: 'Dal Fry',                    price: 105, odooId: 1243, catId: 22 },
+  'HE-1233': { name: 'Dal Tadka',                  price: 114, odooId: 1251, catId: 22 },
+  'HE-1232': { name: 'Gobi Masala',                price: 152, odooId: 1250, catId: 22 },
+  'HE-1227': { name: 'Kadai Paneer',               price: 171, odooId: 1245, catId: 22 },
+  'HE-1387': { name: 'Malai Kofta',                price: 229, odooId: 1405, catId: 22 },
+  'HE-1231': { name: 'Mixed Veg Curry',            price: 190, odooId: 1249, catId: 22 },
+  'HE-1234': { name: 'Mushroom Masala',            price: 171, odooId: 1252, catId: 22 },
+  'HE-1228': { name: 'Palak Paneer',               price: 190, odooId: 1246, catId: 22 },
+  'HE-1226': { name: 'Paneer Butter Masala',       price: 171, odooId: 1244, catId: 22 },
+  'HE-1229': { name: 'Paneer Mutter Masala',       price: 190, odooId: 1247, catId: 22 },
+  'HE-1388': { name: 'Veg Kofta',                  price: 210, odooId: 1406, catId: 22 },
 
-  // ── Breakfast Special (cat 59 → parent 22) ──
-  'HE-1196': { name: 'Mutton Paya',                 price: 130, odooId: 1196, catId: 22 },
-  'HE-1197': { name: 'Mutton Khima',                price: 120, odooId: 1197, catId: 22 },
-  'HE-1198': { name: 'Mutton Brain',                price: 150, odooId: 1198, catId: 22 },
-  'HE-1199': { name: 'Mutton Chops',                price: 130, odooId: 1199, catId: 22 },
+  // ── Indian — Biryani & Rice (cat 82 → parent 22) ──
+  'HE-1203': { name: 'Biryani Rice',               price: 114, odooId: 1221, catId: 22 },
+  'HE-1389': { name: 'Chicken Boneless Biryani',   price: 267, odooId: 1407, catId: 22 },
+  'HE-1204': { name: 'Egg Biryani',                price: 152, odooId: 1222, catId: 22 },
+  'HE-1207': { name: 'Plain Rice',                 price: 48,  odooId: 1225, catId: 22 },
+  'HE-1202': { name: 'Thethar Biryani',            price: 257, odooId: 1220, catId: 22 },
 
-  // ── Biryani (cat 67 → parent 23) ──
-  'HE-1200': { name: 'Mutton Biryani',              price: 220, odooId: 1200, catId: 23 },
-  'HE-1201': { name: 'Chicken Biryani',             price: 220, odooId: 1201, catId: 23 },
-  'HE-1202': { name: 'Theethar Biryani',            price: 280, odooId: 1202, catId: 23 },
-  'HE-1203': { name: 'Biryani Rice',                price: 160, odooId: 1203, catId: 23 },
-  'HE-1204': { name: 'Egg Biryani',                 price: 180, odooId: 1204, catId: 23 },
+  // ── Chinese — Fried Rice (cat 83 → parent 24) ──
+  'HE-1235': { name: 'Chicken Fried Rice',         price: 181, odooId: 1253, catId: 24 },
+  'HE-1243': { name: 'Mix Fried Rice',             price: 229, odooId: 1261, catId: 24 },
+  'HE-1237': { name: 'Mutton Fried Rice',          price: 219, odooId: 1255, catId: 24 },
+  'HE-1241': { name: 'Prawns Fried Rice',          price: 219, odooId: 1259, catId: 24 },
+  'HE-1245': { name: 'Shezwan Fried Rice',         price: 190, odooId: 1263, catId: 24 },
+  'HE-1247': { name: 'Veg Fried Rice',             price: 143, odooId: 1265, catId: 24 },
 
-  // ── Rice Items (cat 68 → parent 23) ──
-  'HE-1205': { name: 'Ghee Rice',                   price: 80,  odooId: 1205, catId: 23 },
-  'HE-1206': { name: 'Jeera Rice',                  price: 60,  odooId: 1206, catId: 23 },
-  'HE-1207': { name: 'Plain Rice',                  price: 45,  odooId: 1207, catId: 23 },
+  // ── Chinese — Noodles (cat 84 → parent 24) ──
+  'HE-1236': { name: 'Chicken Noodles',            price: 181, odooId: 1254, catId: 24 },
+  'HE-1244': { name: 'Mix Noodles',                price: 229, odooId: 1262, catId: 24 },
+  'HE-1238': { name: 'Mutton Noodles',             price: 219, odooId: 1256, catId: 24 },
+  'HE-1242': { name: 'Prawns Noodles',             price: 219, odooId: 1260, catId: 24 },
+  'HE-1246': { name: 'Shezwan Noodles',            price: 190, odooId: 1264, catId: 24 },
+  'HE-1248': { name: 'Veg Noodles',                price: 143, odooId: 1266, catId: 24 },
 
-  // ── Rolls (cat 66 → parent 25) ──
-  'HE-1208': { name: 'Chicken Roll',                price: 80,  odooId: 1208, catId: 25 },
-  'HE-1209': { name: 'Egg Roll',                    price: 80,  odooId: 1209, catId: 25 },
-  'HE-1210': { name: 'Veg Roll',                    price: 70,  odooId: 1210, catId: 25 },
-  'HE-1211': { name: 'Mutton Sheek Roll',           price: 140, odooId: 1211, catId: 25 },
+  // ── Chinese — Chinese Gravy (cat 85 → parent 24) ──
+  'HE-1170': { name: 'Garlic Chicken',             price: 190, odooId: 1188, catId: 24 },
+  'HE-1174': { name: 'Hongkong Chicken',           price: 210, odooId: 1192, catId: 24 },
+  'HE-1390': { name: 'Shezwan Chicken',            price: 219, odooId: 1408, catId: 24 },
+  'HE-1391': { name: 'Shezwan Mutton',             price: 219, odooId: 1409, catId: 24 },
+  'HE-1167': { name: 'Singapore Chicken',          price: 210, odooId: 1185, catId: 24 },
 
-  // ── Roti & Parathas (cat 65 → parent 25) ──
-  'HE-1212': { name: 'Kerala Paratha',              price: 25,  odooId: 1212, catId: 25 },
-  'HE-1213': { name: 'Ceylon Paratha',              price: 27,  odooId: 1213, catId: 25 },
-  'HE-1214': { name: 'Coin Paratha',               price: 25,  odooId: 1214, catId: 25 },
-  'HE-1215': { name: 'Irani Paratha',              price: 37,  odooId: 1215, catId: 25 },
-  'HE-1216': { name: 'Wheat Paratha',              price: 30,  odooId: 1216, catId: 25 },
-  'HE-1217': { name: 'Chapathi',                   price: 18,  odooId: 1217, catId: 25 },
-  'HE-1218': { name: 'Roomali Roti',               price: 15,  odooId: 1218, catId: 25 },
-  'HE-1219': { name: 'Naan',                       price: 40,  odooId: 1219, catId: 25 },
-  'HE-1220': { name: 'Butter Naan',                price: 45,  odooId: 1220, catId: 25 },
-  'HE-1221': { name: 'Kulcha',                     price: 45,  odooId: 1221, catId: 25 },
-  'HE-1222': { name: 'Garlic Naan',                price: 45,  odooId: 1222, catId: 25 },
-  'HE-1223': { name: 'Tandoori Paratha',           price: 40,  odooId: 1223, catId: 25 },
-  'HE-1224': { name: 'Pathla Roti',                price: 30,  odooId: 1224, catId: 25 },
+  // ── Chinese — Chinese Starters (cat 86 → parent 24) ──
+  'HE-1166': { name: 'Chicken 65',                 price: 210, odooId: 1184, catId: 24 },
+  'HE-1168': { name: 'Lemon Chicken',              price: 219, odooId: 1186, catId: 24 },
+  'HE-1172': { name: 'Lollipop',                   price: 190, odooId: 1190, catId: 24 },
 
-  // ── Indian Veg (cat 58 → parent 22) ──
-  'HE-1225': { name: 'Dal Fry',                    price: 100, odooId: 1225, catId: 22 },
-  'HE-1226': { name: 'Paneer Butter Masala',       price: 160, odooId: 1226, catId: 22 },
-  'HE-1227': { name: 'Kadai Paneer',               price: 160, odooId: 1227, catId: 22 },
-  'HE-1228': { name: 'Palak Paneer',               price: 170, odooId: 1228, catId: 22 },
-  'HE-1229': { name: 'Paneer Mutter Masala',       price: 170, odooId: 1229, catId: 22 },
-  'HE-1230': { name: 'Aloo Gobi',                  price: 160, odooId: 1230, catId: 22 },
-  'HE-1231': { name: 'Mixed Veg Curry',            price: 170, odooId: 1231, catId: 22 },
-  'HE-1232': { name: 'Gobi Masala',                price: 170, odooId: 1232, catId: 22 },
-  'HE-1233': { name: 'Dal Tadka',                  price: 110, odooId: 1233, catId: 22 },
-  'HE-1234': { name: 'Mushroom Masala',            price: 190, odooId: 1234, catId: 22 },
+  // ── Chinese — Rolls (cat 87 → parent 24) ──
+  'HE-1208': { name: 'Chicken Roll',               price: 86,  odooId: 1226, catId: 24 },
+  'HE-1209': { name: 'Egg Roll',                   price: 86,  odooId: 1227, catId: 24 },
+  'HE-1211': { name: 'Mutton Sheekh Roll',         price: 152, odooId: 1229, catId: 24 },
+  'HE-1392': { name: 'Paneer Roll',                price: 86,  odooId: 1410, catId: 24 },
+  'HE-1210': { name: 'Veg Roll',                   price: 76,  odooId: 1228, catId: 24 },
 
-  // ── Fried Rice & Noodles (cat 61 → parent 24) ──
-  'HE-1235': { name: 'Chicken Fried Rice',         price: 150, odooId: 1235, catId: 24 },
-  'HE-1236': { name: 'Chicken Noodles',            price: 150, odooId: 1236, catId: 24 },
-  'HE-1237': { name: 'Mutton Fried Rice',          price: 170, odooId: 1237, catId: 24 },
-  'HE-1238': { name: 'Mutton Noodles',             price: 170, odooId: 1238, catId: 24 },
-  'HE-1239': { name: 'Egg Fried Rice',             price: 120, odooId: 1239, catId: 24 },
-  'HE-1240': { name: 'Egg Noodles',                price: 120, odooId: 1240, catId: 24 },
-  'HE-1241': { name: 'Prawns Fried Rice',          price: 200, odooId: 1241, catId: 24 },
-  'HE-1242': { name: 'Prawns Noodles',             price: 200, odooId: 1242, catId: 24 },
-  'HE-1243': { name: 'Mix Fried Rice',             price: 160, odooId: 1243, catId: 24 },
-  'HE-1244': { name: 'Mix Noodles',                price: 160, odooId: 1244, catId: 24 },
-  'HE-1245': { name: 'Chicken Schezwan Fried Rice',price: 170, odooId: 1245, catId: 24 },
-  'HE-1246': { name: 'Chicken Schezwan Noodles',   price: 170, odooId: 1246, catId: 24 },
-  'HE-1247': { name: 'Veg Fried Rice',             price: 120, odooId: 1247, catId: 24 },
-  'HE-1248': { name: 'Veg Noodles',                price: 120, odooId: 1248, catId: 24 },
+  // ── Chinese — Seafood (cat 88 → parent 24) ──
+  'HE-1258': { name: 'Prawns Chilly Manchurian',   price: 257, odooId: 1276, catId: 24 },
 
-  // ── Salad & Raitha (cat 69 → parent 28) ──
-  'HE-1249': { name: 'Green Salad',                price: 60,  odooId: 1249, catId: 28 },
-  'HE-1250': { name: 'Cucumber Salad',             price: 60,  odooId: 1250, catId: 28 },
-  'HE-1251': { name: 'Pineapple Raitha',           price: 50,  odooId: 1251, catId: 28 },
-  'HE-1252': { name: 'Mix Raitha',                 price: 50,  odooId: 1252, catId: 28 },
+  // ── Tandoor — Tandoori Starters (cat 89 → parent 25) ──
+  'HE-1143': { name: 'Andhra Tikka',               price: 238, odooId: 1161, catId: 25 },
+  'HE-1163': { name: 'Chicken Kabab',              price: 171, odooId: 1181, catId: 25 },
+  'HE-1395': { name: 'Garlic Kabab',               price: 229, odooId: 1413, catId: 25 },
+  'HE-1141': { name: 'Haryali Tikka',              price: 229, odooId: 1159, catId: 25 },
+  'HE-1393': { name: 'Irani Chicken',              price: 219, odooId: 1411, catId: 25 },
+  'HE-1138': { name: 'Kalmi Kabab',                price: 257, odooId: 1156, catId: 25 },
+  'HE-1142': { name: 'Malai Tikka',                price: 238, odooId: 1160, catId: 25 },
+  'HE-1145': { name: 'Pathak Kabab',               price: 219, odooId: 1163, catId: 25 },
+  'HE-1394': { name: 'Reshmi Kabab',               price: 229, odooId: 1412, catId: 25 },
+  'HE-1135': { name: 'Tandoori Chicken',           price: 190, odooId: 1153, catId: 25 },
 
-  // ── Fish & Seafood (cat 63 → parent 24) ──
-  'HE-1253': { name: 'Fried Fish',                 price: 200, odooId: 1253, catId: 24 },
-  'HE-1254': { name: 'Fish Masala',                price: 200, odooId: 1254, catId: 24 },
-  'HE-1255': { name: 'Chilly Fish',                price: 200, odooId: 1255, catId: 24 },
-  'HE-1256': { name: 'Fish Manchurian',            price: 200, odooId: 1256, catId: 24 },
-  'HE-1257': { name: 'Kadai Prawns',               price: 250, odooId: 1257, catId: 24 },
-  'HE-1258': { name: 'Prawns Chilly Manchurian',   price: 250, odooId: 1258, catId: 24 },
-  'HE-1259': { name: 'Prawns Pepper Fry',          price: 250, odooId: 1259, catId: 24 },
+  // ── Tandoor — Indian Breads (cat 90 → parent 25) ──
+  'HE-1220': { name: 'Butter Naan',                price: 43,  odooId: 1238, catId: 25 },
+  'HE-1213': { name: 'Ceylon Paratha',              price: 33,  odooId: 1231, catId: 25 },
+  'HE-1217': { name: 'Chapathi',                   price: 19,  odooId: 1235, catId: 25 },
+  'HE-1222': { name: 'Garlic Naan',                price: 48,  odooId: 1240, catId: 25 },
+  'HE-1212': { name: 'Kerala Paratha',             price: 29,  odooId: 1230, catId: 25 },
+  'HE-1221': { name: 'Kulcha',                     price: 48,  odooId: 1239, catId: 25 },
+  'HE-1396': { name: 'Pathiri Roti',               price: 36,  odooId: 1414, catId: 25 },
+  'HE-1218': { name: 'Roomali Roti',               price: 17,  odooId: 1236, catId: 25 },
+  'HE-1223': { name: 'Tandoori Paratha',           price: 48,  odooId: 1241, catId: 25 },
+  'HE-1216': { name: 'Wheat Paratha',              price: 43,  odooId: 1234, catId: 25 },
 
-  // ── Krispy Eats / Fried Chicken (cat 26) ──
-  'HE-1366': { name: '1 Pc Fried Chicken',              price: 71,  odooId: 1366, catId: 26 },
-  'HE-1367': { name: '2 Pcs Fried Chicken',             price: 143, odooId: 1367, catId: 26 },
-  'HE-1368': { name: '4 Pcs Fried Chicken',             price: 266, odooId: 1368, catId: 26 },
-  'HE-1369': { name: 'Duet Combo',                      price: 181, odooId: 1369, catId: 26 },
-  'HE-1370': { name: 'Regular Combo',                   price: 352, odooId: 1370, catId: 26 },
-  'HE-1371': { name: 'Family Combo',                    price: 666, odooId: 1371, catId: 26 },
-  'HE-1372': { name: 'Party Combo',                     price: 951, odooId: 1372, catId: 26 },
-  'HE-1373': { name: 'Cheesy Fries',                    price: 143, odooId: 1373, catId: 26 },
-  'HE-1374': { name: 'Loaded Fries',                    price: 181, odooId: 1374, catId: 26 },
-  'HE-1375': { name: 'Krispy Popcorn (S)',              price: 76,  odooId: 1375, catId: 26 },
-  'HE-1376': { name: 'Krispy Popcorn (M)',              price: 143, odooId: 1376, catId: 26 },
-  'HE-1377': { name: 'Krispy Popcorn (L)',              price: 219, odooId: 1377, catId: 26 },
-  'HE-1378': { name: 'Krispy Shrimps with Mayo (10pcs)',price: 237, odooId: 1378, catId: 26 },
-  'HE-1379': { name: 'Krispy Wings with Mayo (6pcs)',   price: 94,  odooId: 1379, catId: 26 },
-  'HE-1380': { name: 'Krispy Lollipop with Mayo (6pcs)',price: 123, odooId: 1380, catId: 26 },
-  'HE-1381': { name: 'Chicken Zinger Burger',           price: 171, odooId: 1381, catId: 26 },
-  'HE-1382': { name: 'Classic Chicken Burger',          price: 124, odooId: 1382, catId: 26 },
-  'HE-1383': { name: 'Chicken Zinger Roll',             price: 152, odooId: 1383, catId: 26 },
-  'HE-1384': { name: 'Mutton Sheekh Roll',              price: 152, odooId: 1384, catId: 26 },
-  'HE-1385': { name: 'Shawarma Roll',                   price: 76,  odooId: 1385, catId: 26 },
-  'HE-1386': { name: 'Chicken Popcorn Salad',           price: 181, odooId: 1386, catId: 26 },
-  'HE-1387': { name: 'Chicken Doner Salad',             price: 181, odooId: 1387, catId: 26 },
-  'HE-1388': { name: 'Rice with Chicken Popcorn',       price: 181, odooId: 1388, catId: 26 },
-  'HE-1389': { name: 'Extra Bun',                       price: 14,  odooId: 1389, catId: 26 },
-  'HE-1390': { name: 'Extra Mayo',                      price: 19,  odooId: 1390, catId: 26 },
-  'HE-1391': { name: 'Soft Drink',                      price: 38,  odooId: 1391, catId: 26 },
+  // ── Fried Chicken — Combos (cat 70 → parent 26) ──
+  'HE-1351': { name: 'Duet Combo',                 price: 181, odooId: 1369, catId: 26 },
+  'HE-1352': { name: 'Regular Combo',              price: 352, odooId: 1370, catId: 26 },
+  'HE-1353': { name: 'Family Combo',               price: 666, odooId: 1371, catId: 26 },
+  'HE-1354': { name: 'Party Combo',                price: 951, odooId: 1372, catId: 26 },
+
+  // ── Fried Chicken — Pieces (cat 71 → parent 26) ──
+  'HE-1348': { name: '1 Pc Fried Chicken',         price: 71,  odooId: 1366, catId: 26 },
+  'HE-1349': { name: '2 Pcs Fried Chicken',        price: 143, odooId: 1367, catId: 26 },
+  'HE-1350': { name: '4 Pcs Fried Chicken',        price: 266, odooId: 1368, catId: 26 },
+
+  // ── Fried Chicken — Sides (cat 72 → parent 26) ──
+  'HE-1355': { name: 'Cheesy Fries',               price: 143, odooId: 1373, catId: 26 },
+  'HE-1356': { name: 'Loaded Fries',               price: 181, odooId: 1374, catId: 26 },
+  'HE-1357': { name: 'Krispy Popcorn (S)',          price: 76,  odooId: 1375, catId: 26 },
+  'HE-1358': { name: 'Krispy Popcorn (M)',          price: 143, odooId: 1376, catId: 26 },
+  'HE-1359': { name: 'Krispy Popcorn (L)',          price: 219, odooId: 1377, catId: 26 },
+
+  // ── Fried Chicken — Wings & Lollipop (cat 73 → parent 26) ──
+  'HE-1360': { name: 'Krispy Shrimps with Mayo (10pcs)', price: 237, odooId: 1378, catId: 26 },
+  'HE-1361': { name: 'Krispy Wings with Mayo (6pcs)',    price: 94,  odooId: 1379, catId: 26 },
+  'HE-1362': { name: 'Krispy Lollipop with Mayo (6pcs)', price: 123, odooId: 1380, catId: 26 },
+
+  // ── Fried Chicken — Burgers (cat 74 → parent 26) ──
+  'HE-1363': { name: 'Chicken Zinger Burger',      price: 171, odooId: 1381, catId: 26 },
+  'HE-1364': { name: 'Classic Chicken Burger',     price: 124, odooId: 1382, catId: 26 },
+
+  // ── Fried Chicken — Salads & Rice (cat 75 → parent 26) ──
+  'HE-1368': { name: 'Chicken Popcorn Salad',      price: 181, odooId: 1386, catId: 26 },
+  'HE-1369': { name: 'Chicken Doner Salad',        price: 181, odooId: 1387, catId: 26 },
+  'HE-1365': { name: 'Chicken Zinger Roll',        price: 152, odooId: 1383, catId: 26 },
+  'HE-1370': { name: 'Rice with Chicken Popcorn',  price: 181, odooId: 1388, catId: 26 },
+
+  // ── Fried Chicken — Extras (cat 76 → parent 26) ──
+  'HE-1371': { name: 'Extra Bun',                  price: 14,  odooId: 1389, catId: 26 },
+  'HE-1372': { name: 'Extra Mayo',                 price: 19,  odooId: 1390, catId: 26 },
+  'HE-1367': { name: 'Shawarma Roll',              price: 76,  odooId: 1385, catId: 26 },
+  'HE-1373': { name: 'Soft Drink',                 price: 38,  odooId: 1391, catId: 26 },
+
+  // ── Bane Marie (cat 28) — counter service items ──
+  'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
+  'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
+  'HE-1205': { name: 'Ghee Rice',                  price: 95,  odooId: 1223, catId: 28 },
+  'HE-1164': { name: 'Chilli Chicken',             price: 190, odooId: 1182, catId: 28 },
+  'HE-1397': { name: 'Butter Chicken (BM)',        price: 200, odooId: 1415, catId: 28 },
+  'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1416, catId: 28 },
+  'HE-1399': { name: 'Singapore Chicken (BM)',     price: 210, odooId: 1417, catId: 28 },
+  'HE-1400': { name: 'Lemon Chicken (BM)',         price: 219, odooId: 1418, catId: 28 },
 };
 
 // ── Category → collection point mapping ──
 const KITCHEN_CATS = new Set([22, 24, 25, 26]); // Indian, Chinese, Tandoor, FC → Kitchen Counter
 const KITCHEN_COUNTER_LABEL = 'Kitchen Counter'; // Customer-facing name (internal: Kitchen Pass)
 const COUNTER_CATS = {
-  23: 'Bane Marie Counter',
   27: 'Juice Counter',
   28: 'Bane Marie Counter',
   29: 'Shawarma Counter',
@@ -251,66 +250,61 @@ const MENU_CATEGORIES = {
   biryani: {
     title: 'Biryani & Rice', desc: 'Mutton, Chicken, Egg Biryani & more',
     sections: [
-      { title: 'Biryani', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204'] },
-      { title: 'Rice', items: ['HE-1205','HE-1206','HE-1207'] },
+      { title: 'Biryani', items: ['HE-1201','HE-1200','HE-1202','HE-1389','HE-1204'] },
+      { title: 'Rice', items: ['HE-1203','HE-1205','HE-1207'] },
     ],
   },
   starters: {
-    title: 'Starters', desc: 'Tandoori, Chinese dry, Kababs',
+    title: 'Starters', desc: 'Tandoori, Chicken & Mutton dry starters',
     sections: [
-      { title: 'Tandoori', items: ['HE-1134','HE-1135','HE-1136','HE-1137','HE-1138','HE-1139','HE-1140','HE-1141','HE-1142','HE-1143','HE-1144','HE-1145'] },
-      { title: 'Chinese Dry', items: ['HE-1163','HE-1164','HE-1165','HE-1166','HE-1167','HE-1168','HE-1169','HE-1170','HE-1171','HE-1172','HE-1173','HE-1174','HE-1175','HE-1176'] },
+      { title: 'Tandoori Starters', items: ['HE-1135','HE-1138','HE-1142','HE-1143','HE-1141','HE-1393','HE-1394','HE-1395','HE-1145','HE-1163'] },
+      { title: 'Chicken Starters', items: ['HE-1169','HE-1173','HE-1159','HE-1136','HE-1140'] },
+      { title: 'Mutton Starters', items: ['HE-1191','HE-1187','HE-1192','HE-1194','HE-1199','HE-1195'] },
     ],
   },
   chicken: {
-    title: 'Chicken Curry', desc: 'Butter Chicken, Kadai & more',
+    title: 'Chicken Curry', desc: 'Butter Chicken, Kadai, Tikka Masala & more',
     sections: [
-      { title: 'Chicken Curry', items: ['HE-1146','HE-1147','HE-1148','HE-1149','HE-1150','HE-1151','HE-1152','HE-1153','HE-1154','HE-1155','HE-1156','HE-1157','HE-1158','HE-1159','HE-1160','HE-1161','HE-1162'] },
+      { title: 'Chicken Curry', items: ['HE-1149','HE-1146','HE-1150','HE-1147','HE-1148','HE-1151','HE-1155','HE-1154','HE-1162','HE-1157','HE-1156','HE-1152','HE-1158','HE-1161','HE-1160'] },
     ],
   },
   mutton: {
-    title: 'Mutton', desc: 'Rogan Josh, Pepper Roast & more',
+    title: 'Mutton', desc: 'Rogan Josh, Kassa, Kolhapuri & more',
     sections: [
-      { title: 'Mutton Curry', items: ['HE-1177','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1185','HE-1186','HE-1187','HE-1188','HE-1189','HE-1190'] },
-      { title: 'Mutton Dry', items: ['HE-1191','HE-1192','HE-1193','HE-1194','HE-1195'] },
+      { title: 'Mutton Curry', items: ['HE-1177','HE-1185','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1186','HE-1386','HE-1188','HE-1189','HE-1190','HE-1197','HE-1198'] },
     ],
   },
-  rice_noodle: {
-    title: 'Fried Rice & Noodles', desc: 'Chicken, Mutton, Egg, Prawns',
+  chinese: {
+    title: 'Chinese', desc: 'Fried Rice, Noodles, Gravy, Rolls & more',
     sections: [
-      { title: 'Fried Rice & Noodles', items: ['HE-1235','HE-1236','HE-1237','HE-1238','HE-1239','HE-1240','HE-1241','HE-1242','HE-1243','HE-1244','HE-1245','HE-1246','HE-1247','HE-1248'] },
+      { title: 'Fried Rice', items: ['HE-1235','HE-1237','HE-1243','HE-1241','HE-1245','HE-1247'] },
+      { title: 'Noodles', items: ['HE-1236','HE-1238','HE-1244','HE-1242','HE-1246','HE-1248'] },
+      { title: 'Chinese Gravy', items: ['HE-1170','HE-1174','HE-1167','HE-1390','HE-1391'] },
+      { title: 'Starters & Seafood', items: ['HE-1166','HE-1168','HE-1172','HE-1164','HE-1258'] },
+      { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1211','HE-1392','HE-1210'] },
     ],
   },
   breads: {
-    title: 'Roti & Breads', desc: 'Naan, Paratha, Rolls',
+    title: 'Roti & Breads', desc: 'Naan, Paratha, Chapathi & more',
     sections: [
-      { title: 'Roti & Paratha', items: ['HE-1212','HE-1213','HE-1214','HE-1215','HE-1216','HE-1217','HE-1218','HE-1219','HE-1220','HE-1221','HE-1222','HE-1223','HE-1224'] },
-      { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1210','HE-1211'] },
+      { title: 'Indian Breads', items: ['HE-1220','HE-1222','HE-1221','HE-1223','HE-1216','HE-1212','HE-1213','HE-1217','HE-1218','HE-1396'] },
     ],
   },
   krispy: {
     title: 'Krispy Eats', desc: 'Fried Chicken, Burgers, Combos',
     sections: [
-      { title: 'Fried Chicken', items: ['HE-1366','HE-1367','HE-1368'] },
-      { title: 'Combos', items: ['HE-1369','HE-1370','HE-1371','HE-1372'] },
-      { title: 'Snacks & Sides', items: ['HE-1373','HE-1374','HE-1375','HE-1376','HE-1377','HE-1378','HE-1379','HE-1380'] },
-      { title: 'Burgers & Rolls', items: ['HE-1381','HE-1382','HE-1383','HE-1384','HE-1385'] },
-      { title: 'Salads & Rice', items: ['HE-1386','HE-1387','HE-1388'] },
-      { title: 'Extras', items: ['HE-1389','HE-1390','HE-1391'] },
+      { title: 'Fried Chicken', items: ['HE-1348','HE-1349','HE-1350'] },
+      { title: 'Combos', items: ['HE-1351','HE-1352','HE-1353','HE-1354'] },
+      { title: 'Snacks & Sides', items: ['HE-1355','HE-1356','HE-1357','HE-1358','HE-1359','HE-1360','HE-1361','HE-1362'] },
+      { title: 'Burgers & Rolls', items: ['HE-1363','HE-1364','HE-1365','HE-1367'] },
+      { title: 'Salads & Rice', items: ['HE-1368','HE-1369','HE-1370'] },
+      { title: 'Extras', items: ['HE-1371','HE-1372','HE-1373'] },
     ],
   },
   veg: {
-    title: 'Veg & Dal', desc: 'Paneer, Dal, Mixed Veg',
+    title: 'Veg & Dal', desc: 'Paneer, Kofta, Dal, Mixed Veg',
     sections: [
-      { title: 'Veg & Dal', items: ['HE-1225','HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1233','HE-1234'] },
-    ],
-  },
-  more: {
-    title: 'Seafood & More', desc: 'Fish, Prawns, Breakfast, Sides',
-    sections: [
-      { title: 'Fish & Seafood', items: ['HE-1253','HE-1254','HE-1255','HE-1256','HE-1257','HE-1258','HE-1259'] },
-      { title: 'Breakfast Special', items: ['HE-1196','HE-1197','HE-1198','HE-1199'] },
-      { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+      { title: 'Veg & Dal', items: ['HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1234','HE-1225','HE-1233','HE-1387','HE-1388'] },
     ],
   },
 };
@@ -319,80 +313,80 @@ const MENU_CATEGORIES = {
 // Each MPM ≤ 30 items (WhatsApp hard limit). WhatsApp native cart persists across MPMs.
 const MEAL_INTENT_CATEGORIES = {
   meals: {
-    label: '🍛 Meals',
+    label: 'Meals',
     desc: 'Curry + Bread + Rice + Veg — all in one go',
     mpms: [
       {
-        header: 'Chicken & Biryani',
-        body: '🍗 Chicken curries + Biryani & Rice\nAdd items to cart, then browse next message for more!',
+        header: 'Chicken Curry & Biryani',
+        body: 'Chicken curries + Biryani & Rice\nAdd items to cart, then browse next message for more!',
         sections: [
-          { title: 'Chicken Curry', items: ['HE-1146','HE-1147','HE-1148','HE-1149','HE-1150','HE-1151','HE-1152','HE-1153','HE-1154','HE-1155','HE-1156','HE-1157','HE-1158','HE-1159','HE-1160','HE-1161','HE-1162'] },
-          { title: 'Biryani & Rice', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204','HE-1205','HE-1206','HE-1207'] },
+          { title: 'Chicken Curry', items: ['HE-1149','HE-1146','HE-1150','HE-1147','HE-1148','HE-1151','HE-1155','HE-1154','HE-1162','HE-1157','HE-1156','HE-1152','HE-1158','HE-1161','HE-1160'] },
+          { title: 'Biryani & Rice', items: ['HE-1201','HE-1200','HE-1202','HE-1389','HE-1204','HE-1203','HE-1205','HE-1207'] },
         ],
       },
       {
         header: 'Mutton & Veg',
-        body: '🐑 Mutton curries + Veg & Dal\nKeep adding to the same cart!',
+        body: 'Mutton curries + Veg & Dal\nKeep adding to the same cart!',
         sections: [
-          { title: 'Mutton Curry', items: ['HE-1177','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1185','HE-1186','HE-1187','HE-1188','HE-1189','HE-1190'] },
-          { title: 'Mutton Dry', items: ['HE-1191','HE-1192','HE-1193','HE-1194','HE-1195'] },
-          { title: 'Veg & Dal', items: ['HE-1225','HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1233','HE-1234'] },
+          { title: 'Mutton Curry', items: ['HE-1177','HE-1185','HE-1178','HE-1179','HE-1180','HE-1181','HE-1182','HE-1183','HE-1184','HE-1186','HE-1386','HE-1188','HE-1189','HE-1190','HE-1197','HE-1198'] },
+          { title: 'Veg & Dal', items: ['HE-1226','HE-1227','HE-1228','HE-1229','HE-1230','HE-1231','HE-1232','HE-1234','HE-1225','HE-1233','HE-1387','HE-1388'] },
         ],
       },
       {
         header: 'Roti & Breads',
-        body: '🫓 Roti, Naan, Paratha & Rolls\nAdd breads to complete your meal, then Send your cart!',
+        body: 'Naan, Paratha, Chapathi & more\nAdd breads to complete your meal, then Send your cart!',
         sections: [
-          { title: 'Roti & Paratha', items: ['HE-1212','HE-1213','HE-1214','HE-1215','HE-1216','HE-1217','HE-1218','HE-1219','HE-1220','HE-1221','HE-1222','HE-1223','HE-1224'] },
-          { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1210','HE-1211'] },
+          { title: 'Indian Breads', items: ['HE-1220','HE-1222','HE-1221','HE-1223','HE-1216','HE-1212','HE-1213','HE-1217','HE-1218','HE-1396'] },
         ],
       },
     ],
   },
   starters: {
-    label: '🔥 Starters',
-    desc: 'Tandoori, Chinese dry, Kababs',
+    label: 'Starters',
+    desc: 'Tandoori, Chicken & Mutton dry starters',
     mpms: [
       {
         header: 'Starters',
-        body: 'Tandoori, Chinese dry & Kababs\nAdd items to cart, then tap Send!',
+        body: 'Tandoori, Chicken & Mutton dry starters\nAdd items to cart, then tap Send!',
         sections: [
-          { title: 'Tandoori', items: ['HE-1134','HE-1135','HE-1136','HE-1137','HE-1138','HE-1139','HE-1140','HE-1141','HE-1142','HE-1143','HE-1144','HE-1145'] },
-          { title: 'Chinese Dry', items: ['HE-1163','HE-1164','HE-1165','HE-1166','HE-1167','HE-1168','HE-1169','HE-1170','HE-1171','HE-1172','HE-1173','HE-1174','HE-1175','HE-1176'] },
+          { title: 'Tandoori Starters', items: ['HE-1135','HE-1138','HE-1142','HE-1143','HE-1141','HE-1393','HE-1394','HE-1395','HE-1145','HE-1163'] },
+          { title: 'Chicken Starters', items: ['HE-1169','HE-1173','HE-1159','HE-1136','HE-1140'] },
+          { title: 'Mutton Starters', items: ['HE-1191','HE-1187','HE-1192','HE-1194','HE-1199','HE-1195'] },
         ],
       },
     ],
   },
   krispy: {
-    label: '🍗 Krispy Eats',
+    label: 'Krispy Eats',
     desc: 'Fried Chicken, Burgers, Combos',
     mpms: [
       {
         header: 'Krispy Eats',
         body: 'Fried Chicken, Burgers, Combos & more\nAdd items to cart, then tap Send!',
         sections: [
-          { title: 'Fried Chicken', items: ['HE-1366','HE-1367','HE-1368'] },
-          { title: 'Combos', items: ['HE-1369','HE-1370','HE-1371','HE-1372'] },
-          { title: 'Snacks & Sides', items: ['HE-1373','HE-1374','HE-1375','HE-1376','HE-1377','HE-1378','HE-1379','HE-1380'] },
-          { title: 'Burgers & Rolls', items: ['HE-1381','HE-1382','HE-1383','HE-1384','HE-1385'] },
-          { title: 'Salads & Rice', items: ['HE-1386','HE-1387','HE-1388'] },
-          { title: 'Extras', items: ['HE-1389','HE-1390','HE-1391'] },
+          { title: 'Fried Chicken', items: ['HE-1348','HE-1349','HE-1350'] },
+          { title: 'Combos', items: ['HE-1351','HE-1352','HE-1353','HE-1354'] },
+          { title: 'Snacks & Sides', items: ['HE-1355','HE-1356','HE-1357','HE-1358','HE-1359','HE-1360','HE-1361','HE-1362'] },
+          { title: 'Burgers & Rolls', items: ['HE-1363','HE-1364','HE-1365','HE-1367'] },
+          { title: 'Salads & Rice', items: ['HE-1368','HE-1369','HE-1370'] },
+          { title: 'Extras', items: ['HE-1371','HE-1372','HE-1373'] },
         ],
       },
     ],
   },
-  rice_seafood: {
-    label: '🍜 Rice & Seafood',
-    desc: 'Fried rice, noodles, fish, prawns & more',
+  chinese: {
+    label: 'Chinese',
+    desc: 'Fried rice, noodles, gravy, rolls & seafood',
     mpms: [
       {
-        header: 'Rice, Noodles & Seafood',
-        body: 'Fried rice, noodles, seafood, breakfast & sides\nAdd items to cart, then tap Send!',
+        header: 'Chinese',
+        body: 'Fried rice, noodles, gravy, starters & rolls\nAdd items to cart, then tap Send!',
         sections: [
-          { title: 'Fried Rice & Noodles', items: ['HE-1235','HE-1236','HE-1237','HE-1238','HE-1239','HE-1240','HE-1241','HE-1242','HE-1243','HE-1244','HE-1245','HE-1246','HE-1247','HE-1248'] },
-          { title: 'Fish & Seafood', items: ['HE-1253','HE-1254','HE-1255','HE-1256','HE-1257','HE-1258','HE-1259'] },
-          { title: 'Breakfast Special', items: ['HE-1196','HE-1197','HE-1198','HE-1199'] },
-          { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+          { title: 'Fried Rice', items: ['HE-1235','HE-1237','HE-1243','HE-1241','HE-1245','HE-1247'] },
+          { title: 'Noodles', items: ['HE-1236','HE-1238','HE-1244','HE-1242','HE-1246','HE-1248'] },
+          { title: 'Chinese Gravy', items: ['HE-1170','HE-1174','HE-1167','HE-1390','HE-1391'] },
+          { title: 'Starters & Seafood', items: ['HE-1166','HE-1168','HE-1172','HE-1164','HE-1258'] },
+          { title: 'Rolls', items: ['HE-1208','HE-1209','HE-1211','HE-1392','HE-1210'] },
         ],
       },
     ],
@@ -405,17 +399,12 @@ const COUNTER_MENUS = {
   bm_counter: {
     title: 'Bane Marie Counter',
     counter: 'Bane Marie Counter',
-    greeting: 'Order from the Bane Marie counter — Biryani, Rice & Sides!',
+    greeting: 'Order from the Bane Marie counter — Biryani, Rice & Curry!',
     sections: [
-      { title: 'Biryani', items: ['HE-1200','HE-1201','HE-1202','HE-1203','HE-1204'] },
-      { title: 'Rice', items: ['HE-1205','HE-1206','HE-1207'] },
-      { title: 'Salad & Raitha', items: ['HE-1249','HE-1250','HE-1251','HE-1252'] },
+      { title: 'Biryani & Rice', items: ['HE-1201','HE-1200','HE-1205'] },
+      { title: 'Curry & Starters', items: ['HE-1397','HE-1398','HE-1164','HE-1399','HE-1400'] },
     ],
   },
-  // Future counters (0 products in PRODUCTS + Meta catalog — uncomment when products added):
-  // juice_counter: { title: 'Juice Counter', counter: 'Juice Counter', greeting: '...', sections: [] },
-  // shawarma_counter: { title: 'Shawarma Counter', counter: 'Shawarma Counter', greeting: '...', sections: [] },
-  // grill_counter: { title: 'Grill Counter', counter: 'Grill Counter', greeting: '...', sections: [] },
 };
 
 // ── Detect counter keyword from QR code text (e.g. "BM Counter") ──
@@ -431,26 +420,33 @@ function detectCounterKeyword(text) {
 // ── Keyword shortcuts → jump directly to a meal intent or category MPM ──
 const STATION_KEYWORDS = {
   // Direct category shortcuts (used by "Browse by Category" sub-flow)
-  'krispy':   'krispy',
-  'fc':       'krispy',
-  'biryani':  'biryani',
-  'veg':      'veg',
-  'breads':   'breads',
-  'noodles':  'rice_noodle',
-  'bm':       'biryani',
+  'krispy':       'krispy',
+  'fc':           'krispy',
+  'fried chicken':'krispy',
+  'biryani':      'biryani',
+  'veg':          'veg',
+  'breads':       'breads',
+  'bread':        'breads',
+  'roti':         'breads',
+  'naan':         'breads',
+  'noodles':      'chinese',
+  'chinese':      'chinese',
+  'fried rice':   'chinese',
+  'chicken':      'chicken',
+  'mutton':       'mutton',
   // Meal-intent shortcuts (route to multi-MPM meal intents)
-  'meals':    'intent_meals',
-  'meal':     'intent_meals',
-  'curry':    'intent_meals',
-  'curries':  'intent_meals',
-  'starters': 'intent_starters',
-  'starter':  'intent_starters',
-  'snacks':   'intent_starters',
-  'mutton':   'intent_meals',
-  'seafood':  'intent_rice_seafood',
-  'rice':     'intent_rice_seafood',
-  'fish':     'intent_rice_seafood',
-  'prawns':   'intent_rice_seafood',
+  'meals':        'intent_meals',
+  'meal':         'intent_meals',
+  'curry':        'intent_meals',
+  'curries':      'intent_meals',
+  'starters':     'intent_starters',
+  'starter':      'intent_starters',
+  'snacks':       'intent_starters',
+  'tandoori':     'intent_starters',
+  'kabab':        'intent_starters',
+  'rice':         'intent_chinese',
+  'prawns':       'intent_chinese',
+  'seafood':      'intent_chinese',
 };
 
 // ── NCH forwarding (disabled — NCH phone now serves HE) ──
@@ -491,6 +487,11 @@ export async function onRequest(context) {
   // KDS webhook (POST from Odoo — auto-notify WABA customers on KDS stage changes)
   if (context.request.method === 'POST' && action === 'kds-webhook') {
     return handleKdsWebhook(context, url, corsHeaders);
+  }
+
+  // Floor operations — Captain/Waiter coordination (PIN-gated, no X-API-Key)
+  if (action && action.startsWith('floor-')) {
+    return handleFloorAction(context, action, corsHeaders);
   }
 
   // Dashboard API (GET/POST with action param) — requires X-API-Key auth
@@ -868,7 +869,7 @@ async function handleShowMenuList(context, user, waId, phoneId, token, db) {
     { id: 'intent_meals', title: '🍛 Meals', description: 'Curry + Bread + Rice + Veg — all in one go' },
     { id: 'intent_starters', title: '🔥 Starters', description: 'Tandoori, Chinese dry, Kababs' },
     { id: 'intent_krispy', title: '🍗 Krispy Eats', description: 'Fried Chicken, Burgers, Combos' },
-    { id: 'intent_rice_seafood', title: '🍜 Rice & Seafood', description: 'Fried rice, noodles, fish, prawns' },
+    { id: 'intent_chinese', title: '🍜 Chinese', description: 'Fried rice, noodles, gravy, rolls & seafood' },
     { id: 'cat_full_menu', title: '📋 Full Menu', description: 'Browse all 9 categories separately' },
   ];
 
@@ -1582,19 +1583,6 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const body = await context.request.json();
     const { stage_id, todo, prep_line_id } = body;
 
-    // Quick filter: only react to todo=True on stages we care about
-    if (todo !== true) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'todo not true' }), { headers: corsHeaders });
-    }
-
-    const isPreparing = PREPARING_STAGES.has(stage_id);
-    const isReady = READY_STAGES.has(stage_id);
-    if (!isPreparing && !isReady) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant stage' }), { headers: corsHeaders });
-    }
-
-    const notificationType = isReady ? 'ready' : 'preparing';
-
     // Resolve: prep_line_id → pos.prep.order → pos.order → config_id
     const apiKey = context.env.ODOO_API_KEY;
     if (!apiKey || !prep_line_id) {
@@ -1603,11 +1591,12 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     // Step 1: Get prep_order_id from pos.prep.line
     const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
-      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id'], limit: 1 });
+      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 });
     if (!prepLine || !prepLine[0]?.prep_order_id) {
       return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
     }
     const prepOrderId = prepLine[0].prep_order_id[0];
+    const productId = prepLine[0].product_id?.[0] || null;
 
     // Step 2: Get pos_order_id from pos.prep.order
     const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
@@ -1617,85 +1606,829 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     }
     const posOrderId = prepOrder[0].pos_order_id[0];
 
-    // Step 3: Get config_id from pos.order — filter to WABA only
+    // Step 3: Get config_id + preset_id from pos.order
     const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
-      [[['id', '=', posOrderId]]], { fields: ['config_id', 'tracking_number'], limit: 1 });
+      [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 });
     if (!posOrder || !posOrder[0]) {
       return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
     }
     const configId = posOrder[0].config_id[0];
-    if (configId !== POS_CONFIG_ID) {
-      // Not a WABA order — ignore silently
-      return new Response(JSON.stringify({ ok: true, skipped: 'not WABA order' }), { headers: corsHeaders });
-    }
-
+    const presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
     const trackingNumber = posOrder[0].tracking_number || null;
 
-    // Step 4: Find the wa_order by Odoo order ID
-    const db = context.env.DB;
-    const waOrder = await db.prepare('SELECT * FROM wa_orders WHERE odoo_order_id = ? AND payment_status = ?')
-      .bind(posOrderId, 'paid').first();
-    if (!waOrder) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'no matching wa_order' }), { headers: corsHeaders });
+    // Route by config
+    if (configId === POS_CONFIG_ID) {
+      // WABA order (config 10) — existing WhatsApp notification flow
+      return handleKdsWebhookWABA(context, corsHeaders, {
+        stage_id, todo, prep_line_id, posOrderId, trackingNumber
+      });
     }
 
-    // Step 5: Counter-aware dedup — allow separate notifications per counter
-    const counterName = STAGE_COUNTER_MAP[stage_id] || KITCHEN_COUNTER_LABEL;
-    const notified = JSON.parse(waOrder.notified_counters || '{}');
-    const counterKey = counterName.replace(/\s+/g, '_').toLowerCase();
-    const notifKey = `${notificationType}_${counterKey}`;
-
-    if (notified[notifKey]) {
-      return new Response(JSON.stringify({ ok: true, skipped: `already sent ${notifKey}` }), { headers: corsHeaders });
-    }
-    notified[notifKey] = new Date().toISOString();
-
-    // Step 6: Update status (keep highest status) + track notifications
-    const now = new Date().toISOString();
-    const newStatus = notificationType === 'ready' ? 'ready' :
-      (waOrder.status === 'ready' ? 'ready' : 'preparing');
-    await db.prepare('UPDATE wa_orders SET status = ?, notified_counters = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
-      .bind(newStatus, JSON.stringify(notified), trackingNumber, now, waOrder.id).run();
-
-    // Step 7: Load user tier for adaptive messaging
-    const waUser = await db.prepare('SELECT total_orders FROM wa_users WHERE wa_id = ?')
-      .bind(waOrder.wa_id).first();
-    const tier = getCustomerTier(waUser?.total_orders || 0);
-
-    const phoneId = context.env.WA_PHONE_ID;
-    const token = context.env.WA_ACCESS_TOKEN;
-
-    if (notificationType === 'preparing') {
-      if (tier === 'regular') {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `*${waOrder.order_code}* — preparing at ${counterName}`));
-      } else {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `Your order *${waOrder.order_code}* is being prepared!\n\n` +
-          `*At:* ${counterName}\n` +
-          `We'll notify you when it's ready for pickup.`));
-      }
-    } else if (notificationType === 'ready') {
-      if (tier === 'regular') {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `*${waOrder.order_code}* — READY at ${counterName}` +
-          (trackingNumber ? ` (Token ${trackingNumber})` : '')));
-      } else {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `Your order *${waOrder.order_code}* is *READY* for pickup!\n\n` +
-          `*Collect from:* ${counterName}\n` +
-          (trackingNumber ? `*Token:* ${trackingNumber}\n\n` : '\n') +
-          `Please collect it now.`));
-      }
+    if (configId === 6 && presetId === 1) {
+      // Captain dine-in order — floor tracking flow
+      return handleKdsWebhookFloor(context, corsHeaders, {
+        stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId
+      });
     }
 
-    console.log(`KDS→WA: ${notificationType} at ${counterName} sent for ${waOrder.order_code} (Odoo #${posOrderId}, tier: ${tier})`);
-    return new Response(JSON.stringify({ ok: true, sent: notificationType, counter: counterName, order: waOrder.order_code }), { headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant config' }), { headers: corsHeaders });
 
   } catch (error) {
     console.error('KDS webhook error:', error.message);
     return new Response(JSON.stringify({ ok: true, error: 'internal' }), { headers: corsHeaders });
   }
+}
+
+// WABA KDS notification (extracted from original handleKdsWebhook)
+async function handleKdsWebhookWABA(context, corsHeaders, data) {
+  const { stage_id, todo, prep_line_id, posOrderId, trackingNumber } = data;
+
+  // Quick filter: only react to todo=true on stages we care about
+  if (todo !== true) {
+    return new Response(JSON.stringify({ ok: true, skipped: 'todo not true' }), { headers: corsHeaders });
+  }
+  const isPreparing = PREPARING_STAGES.has(stage_id);
+  const isReady = READY_STAGES.has(stage_id);
+  if (!isPreparing && !isReady) {
+    return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant stage' }), { headers: corsHeaders });
+  }
+  const notificationType = isReady ? 'ready' : 'preparing';
+
+  const db = context.env.DB;
+  const waOrder = await db.prepare('SELECT * FROM wa_orders WHERE odoo_order_id = ? AND payment_status = ?')
+    .bind(posOrderId, 'paid').first();
+  if (!waOrder) {
+    return new Response(JSON.stringify({ ok: true, skipped: 'no matching wa_order' }), { headers: corsHeaders });
+  }
+
+  // Counter-aware dedup
+  const counterName = STAGE_COUNTER_MAP[stage_id] || KITCHEN_COUNTER_LABEL;
+  const notified = JSON.parse(waOrder.notified_counters || '{}');
+  const counterKey = counterName.replace(/\s+/g, '_').toLowerCase();
+  const notifKey = `${notificationType}_${counterKey}`;
+  if (notified[notifKey]) {
+    return new Response(JSON.stringify({ ok: true, skipped: `already sent ${notifKey}` }), { headers: corsHeaders });
+  }
+  notified[notifKey] = new Date().toISOString();
+
+  const now = new Date().toISOString();
+  const newStatus = notificationType === 'ready' ? 'ready' :
+    (waOrder.status === 'ready' ? 'ready' : 'preparing');
+  await db.prepare('UPDATE wa_orders SET status = ?, notified_counters = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
+    .bind(newStatus, JSON.stringify(notified), trackingNumber, now, waOrder.id).run();
+
+  const waUser = await db.prepare('SELECT total_orders FROM wa_users WHERE wa_id = ?')
+    .bind(waOrder.wa_id).first();
+  const tier = getCustomerTier(waUser?.total_orders || 0);
+  const phoneId = context.env.WA_PHONE_ID;
+  const token = context.env.WA_ACCESS_TOKEN;
+
+  if (notificationType === 'preparing') {
+    if (tier === 'regular') {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*${waOrder.order_code}* — preparing at ${counterName}`));
+    } else {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `Your order *${waOrder.order_code}* is being prepared!\n\n` +
+        `*At:* ${counterName}\n` +
+        `We'll notify you when it's ready for pickup.`));
+    }
+  } else if (notificationType === 'ready') {
+    if (tier === 'regular') {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*${waOrder.order_code}* — READY at ${counterName}` +
+        (trackingNumber ? ` (Token ${trackingNumber})` : '')));
+    } else {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `Your order *${waOrder.order_code}* is *READY* for pickup!\n\n` +
+        `*Collect from:* ${counterName}\n` +
+        (trackingNumber ? `*Token:* ${trackingNumber}\n\n` : '\n') +
+        `Please collect it now.`));
+    }
+  }
+
+  console.log(`KDS→WA: ${notificationType} at ${counterName} sent for ${waOrder.order_code} (Odoo #${posOrderId}, tier: ${tier})`);
+  return new Response(JSON.stringify({ ok: true, sent: notificationType, counter: counterName, order: waOrder.order_code }), { headers: corsHeaders });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FLOOR KDS WEBHOOK — Captain dine-in item readiness tracking
+// ═══════════════════════════════════════════════════════════════════
+
+// Stage → {counter, status} mapping for floor item tracking
+const FLOOR_STAGE_MAP = {
+  // Station last stages → "cooked" (item done at cooking station)
+  78: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done
+  81: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done
+  84: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done
+  87: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done
+  // KP Preparing strike-through → "at_counter" (PRIMARY waiter signal)
+  75: { counter: 'Kitchen Pass', status: 'at_counter' },
+  // KP Completed → informational
+  63: { counter: 'Kitchen Pass', status: 'kp_completed' },
+  // Counter last stages → "at_counter"
+  47: { counter: 'Juice Counter', status: 'at_counter' },
+  50: { counter: 'Bane Marie', status: 'at_counter' },
+  53: { counter: 'Shawarma Counter', status: 'at_counter' },
+  56: { counter: 'Grill Counter', status: 'at_counter' },
+};
+
+const FLOOR_STATUS_ORDER = { cooking: 0, cooked: 1, at_counter: 2, picked_up: 3, delivered: 4 };
+
+// Category → counter mapping for floor items
+const FLOOR_COUNTER_MAP = {
+  22: 'Kitchen Pass', 24: 'Kitchen Pass', 25: 'Kitchen Pass', 26: 'Kitchen Pass',
+  27: 'Juice Counter', 28: 'Bane Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
+};
+
+async function handleKdsWebhookFloor(context, corsHeaders, data) {
+  const { stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId } = data;
+  const db = context.env.DB;
+  const ok = (msg) => new Response(JSON.stringify({ ok: true, floor: msg }), { headers: corsHeaders });
+
+  // Check if this stage is relevant for floor tracking
+  const stageInfo = FLOOR_STAGE_MAP[stage_id];
+  if (!stageInfo) return ok('irrelevant stage for floor');
+
+  // Only process todo=false signals (all relevant floor signals are todo→false)
+  if (todo !== false) return ok('todo not false');
+
+  // Find or create floor_order
+  let floorOrder = await db.prepare('SELECT * FROM floor_orders WHERE odoo_order_id = ?')
+    .bind(posOrderId).first();
+
+  if (!floorOrder) {
+    // Auto-create from Odoo data (webhook arrived before poller)
+    floorOrder = await createFloorOrderFromOdoo(context, posOrderId, configId);
+    if (!floorOrder) return ok('could not create floor order');
+  }
+
+  // Find floor_item by prep_line_id
+  let floorItem = await db.prepare('SELECT * FROM floor_items WHERE prep_line_id = ?')
+    .bind(prep_line_id).first();
+
+  if (!floorItem && productId) {
+    // Fallback: match by product_id within this order (for items not yet bound)
+    floorItem = await db.prepare(
+      'SELECT * FROM floor_items WHERE floor_order_id = ? AND odoo_product_id = ? AND prep_line_id IS NULL LIMIT 1'
+    ).bind(floorOrder.id, productId).first();
+
+    if (floorItem) {
+      await db.prepare('UPDATE floor_items SET prep_line_id = ? WHERE id = ?')
+        .bind(prep_line_id, floorItem.id).run();
+    }
+  }
+
+  if (!floorItem) return ok('no matching floor item');
+
+  // Status advancement (only forward, never backward)
+  const newStatus = stageInfo.status === 'kp_completed' ? floorItem.status : stageInfo.status;
+  if ((FLOOR_STATUS_ORDER[newStatus] || 0) <= (FLOOR_STATUS_ORDER[floorItem.status] || 0)) {
+    return ok('status not advancing');
+  }
+
+  const now = new Date().toISOString();
+  let sql = 'UPDATE floor_items SET status = ?, counter = ?, updated_at = ?';
+  const params = [newStatus, stageInfo.counter, now];
+
+  if (newStatus === 'cooked') { sql += ', cooked_at = ?'; params.push(now); }
+  if (newStatus === 'at_counter') { sql += ', at_counter_at = ?'; params.push(now); }
+
+  sql += ' WHERE id = ?';
+  params.push(floorItem.id);
+  await db.prepare(sql).bind(...params).run();
+
+  // Update order-level counters
+  if (newStatus === 'at_counter') {
+    await db.prepare(
+      'UPDATE floor_orders SET items_ready = items_ready + 1, status = CASE WHEN status = \'served\' THEN status ELSE \'in_progress\' END, updated_at = ? WHERE id = ?'
+    ).bind(now, floorOrder.id).run();
+  }
+
+  // Update tracking number if we have it
+  if (trackingNumber && !floorOrder.tracking_number) {
+    await db.prepare('UPDATE floor_orders SET tracking_number = ? WHERE id = ?')
+      .bind(trackingNumber, floorOrder.id).run();
+  }
+
+  console.log(`KDS→Floor: item ${floorItem.id} (${floorItem.product_name}) → ${newStatus} at ${stageInfo.counter} (order ${floorOrder.odoo_order_name})`);
+  return ok(`item ${floorItem.id} → ${newStatus}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FLOOR OPERATIONS — Captain/Waiter Coordination System
+// ═══════════════════════════════════════════════════════════════════
+
+// Counter adjacency for multi-counter trip suggestions (physical layout from stairs)
+const COUNTER_ADJACENCY = ['Kitchen Pass', 'Bane Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
+
+// ── Auth helper: validate session token ──
+async function validateFloorToken(db, token, requireRole) {
+  if (!token) return null;
+  const staff = await db.prepare(
+    'SELECT * FROM floor_staff WHERE session_token = ? AND is_active = 1'
+  ).bind(token).first();
+  if (!staff) return null;
+  if (staff.token_expires_at && new Date(staff.token_expires_at) < new Date()) return null;
+  if (requireRole === 'captain' && !staff.can_captain) return null;
+  if (requireRole === 'waiter' && !staff.can_waiter) return null;
+  // Update last_seen
+  await db.prepare('UPDATE floor_staff SET last_seen_at = ? WHERE id = ?')
+    .bind(new Date().toISOString(), staff.id).run();
+  return staff;
+}
+
+// ── Router for all floor-* actions ──
+async function handleFloorAction(context, action, corsHeaders) {
+  const db = context.env.DB;
+  const method = context.request.method;
+  const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: corsHeaders });
+  const err = (msg, status = 400) => json({ error: msg }, status);
+
+  // CORS preflight
+  if (method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+
+  // Login doesn't need auth
+  if (action === 'floor-login' && method === 'POST') {
+    const body = await context.request.json();
+    const pin = String(body.pin || '').trim();
+    if (!pin) return err('PIN required');
+
+    const staff = await db.prepare('SELECT * FROM floor_staff WHERE pin = ? AND is_active = 1').bind(pin).first();
+    if (!staff) return err('Invalid PIN', 401);
+
+    // Generate session token (32-char hex, valid 12h)
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+    const expires = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+    await db.prepare('UPDATE floor_staff SET session_token = ?, token_expires_at = ?, last_seen_at = ? WHERE id = ?')
+      .bind(token, expires, new Date().toISOString(), staff.id).run();
+
+    return json({
+      token, name: staff.name, role: staff.role,
+      can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
+      staff_id: staff.id
+    });
+  }
+
+  // All other actions require auth
+  const token = context.request.headers.get('Authorization')?.replace('Bearer ', '') || '';
+  const staff = await validateFloorToken(db, token);
+  if (!staff) return err('Unauthorized', 401);
+
+  // ── Poll for new Odoo orders (Captain) ──
+  if (action === 'floor-poll' && method === 'GET') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    return handleFloorPoll(context, db, staff, json, corsHeaders);
+  }
+
+  // ── Dashboard (Captain) ──
+  if (action === 'floor-dashboard' && method === 'GET') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    return handleFloorDashboard(context, db, staff, json, corsHeaders);
+  }
+
+  // ── Assign order to waiter (Captain) ──
+  if (action === 'floor-assign' && method === 'POST') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const body = await context.request.json();
+    return handleFloorAssign(db, body, json, err);
+  }
+
+  // ── Reassign order (Captain) ──
+  if (action === 'floor-reassign' && method === 'POST') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const body = await context.request.json();
+    return handleFloorReassign(db, body, json, err);
+  }
+
+  // ── Set table number (Captain) ──
+  if (action === 'floor-set-table' && method === 'POST') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const body = await context.request.json();
+    const { order_id, table_number } = body;
+    if (!order_id || !table_number) return err('order_id and table_number required');
+    const now = new Date().toISOString();
+    await db.prepare('UPDATE floor_orders SET table_number = ?, updated_at = ? WHERE id = ?')
+      .bind(String(table_number), now, order_id).run();
+    return json({ ok: true });
+  }
+
+  // ── Waiter's orders + ready batches ──
+  if (action === 'floor-my-orders' && method === 'GET') {
+    if (!staff.can_waiter) return err('Waiter access required', 403);
+    return handleFloorMyOrders(db, staff, json);
+  }
+
+  // ── Mark items picked up (Waiter) ──
+  if (action === 'floor-pickup' && method === 'POST') {
+    if (!staff.can_waiter) return err('Waiter access required', 403);
+    const body = await context.request.json();
+    return handleFloorPickup(db, staff, body, json, err);
+  }
+
+  // ── Mark items delivered (Waiter) ──
+  if (action === 'floor-deliver' && method === 'POST') {
+    if (!staff.can_waiter) return err('Waiter access required', 403);
+    const body = await context.request.json();
+    return handleFloorDeliver(db, staff, body, json, err);
+  }
+
+  // ── Manage staff (Captain) ──
+  if (action === 'floor-manage-staff' && method === 'POST') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const body = await context.request.json();
+    return handleFloorManageStaff(db, body, json, err);
+  }
+
+  // ── List staff (Captain) ──
+  if (action === 'floor-staff' && method === 'GET') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const staffList = await db.prepare('SELECT id, name, role, can_captain, can_waiter, is_active, current_load, last_seen_at FROM floor_staff ORDER BY name').all();
+    return json({ staff: staffList.results });
+  }
+
+  return err('Unknown floor action');
+}
+
+// ── Create floor_order from Odoo (when webhook arrives before poller) ──
+async function createFloorOrderFromOdoo(context, posOrderId, configId) {
+  const db = context.env.DB;
+  const apiKey = context.env.ODOO_API_KEY;
+  const now = new Date().toISOString();
+
+  // Fetch order details from Odoo
+  const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
+    [[['id', '=', posOrderId]]], {
+      fields: ['name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id'],
+      limit: 1
+    });
+  if (!posOrder?.[0]) return null;
+
+  const order = posOrder[0];
+  const tableId = order.table_id?.[0] || null;
+
+  // Get table number if available
+  let tableNumber = null;
+  if (tableId) {
+    const table = await odooRPC(apiKey, 'restaurant.table', 'search_read',
+      [[['id', '=', tableId]]], { fields: ['table_number'], limit: 1 });
+    tableNumber = table?.[0]?.table_number || null;
+  }
+
+  // Fetch order lines for items
+  const lines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
+    [[['order_id', '=', posOrderId], ['product_id', '!=', false]]], {
+      fields: ['product_id', 'full_product_name', 'qty', 'note']
+    });
+  if (!lines || lines.length === 0) return null;
+
+  // Determine category for each product → counter mapping
+  const productIds = lines.map(l => l.product_id[0]);
+  const products = await odooRPC(apiKey, 'product.product', 'search_read',
+    [[['id', 'in', productIds]]], { fields: ['id', 'pos_categ_ids'] });
+  const prodCatMap = {};
+  if (products) {
+    for (const p of products) {
+      // Use first pos_categ_ids entry that maps to a counter
+      const catIds = p.pos_categ_ids || [];
+      for (const cid of catIds) {
+        if (FLOOR_COUNTER_MAP[cid]) { prodCatMap[p.id] = cid; break; }
+      }
+      if (!prodCatMap[p.id] && catIds.length > 0) prodCatMap[p.id] = catIds[0];
+    }
+  }
+
+  // Create floor_order
+  await db.prepare(
+    `INSERT INTO floor_orders (odoo_order_id, odoo_order_name, config_id, table_number, tracking_number, status, total_items, customer_note, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`
+  ).bind(
+    posOrderId, order.name, configId, tableNumber,
+    order.tracking_number || null, lines.length,
+    order.note || null, now, now
+  ).run();
+
+  const floorOrder = await db.prepare('SELECT * FROM floor_orders WHERE odoo_order_id = ?').bind(posOrderId).first();
+  if (!floorOrder) return null;
+
+  // Create floor_items
+  for (const line of lines) {
+    const productId = line.product_id[0];
+    const catId = prodCatMap[productId] || null;
+    const counter = catId ? (FLOOR_COUNTER_MAP[catId] || null) : null;
+    await db.prepare(
+      `INSERT INTO floor_items (floor_order_id, odoo_product_id, product_name, quantity, category_id, counter, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'cooking', ?, ?)`
+    ).bind(floorOrder.id, productId, line.full_product_name || line.product_id[1], line.qty, catId, counter, now, now).run();
+  }
+
+  console.log(`Floor: auto-created order ${order.name} (${lines.length} items, table ${tableNumber || '?'})`);
+  return floorOrder;
+}
+
+// ── Poll Odoo for new config 6 dine-in orders ──
+async function handleFloorPoll(context, db, staff, json) {
+  const apiKey = context.env.ODOO_API_KEY;
+  if (!apiKey) return json({ error: 'Odoo not configured' }, 500);
+
+  // Get last poll time
+  const pollState = await db.prepare("SELECT value FROM floor_poll_state WHERE key = 'last_poll_time'").first();
+  const lastPollTime = pollState?.value || '2026-02-26T00:00:00';
+
+  // Query Odoo for new config 6 dine-in orders since last poll
+  const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
+    [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', lastPollTime.replace('T', ' ')], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+    { fields: ['id', 'name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id', 'date_order', 'state'], order: 'date_order asc' }
+  );
+
+  const now = new Date().toISOString();
+  let created = 0;
+  let cancelled = 0;
+
+  if (newOrders && newOrders.length > 0) {
+    for (const order of newOrders) {
+      // Check if we already have this order
+      const existing = await db.prepare('SELECT id FROM floor_orders WHERE odoo_order_id = ?').bind(order.id).first();
+      if (existing) continue;
+
+      // Handle cancelled orders
+      if (order.state === 'cancel') { cancelled++; continue; }
+
+      // Create floor_order + items
+      await createFloorOrderFromOdoo(context, order.id, 6);
+      created++;
+    }
+  }
+
+  // Check for cancelled orders we already track
+  const trackedOrders = await db.prepare(
+    "SELECT odoo_order_id FROM floor_orders WHERE status NOT IN ('closed', 'cancelled')"
+  ).all();
+
+  if (trackedOrders.results.length > 0) {
+    const odooIds = trackedOrders.results.map(o => o.odoo_order_id);
+    // Check statuses in batches of 20
+    for (let i = 0; i < odooIds.length; i += 20) {
+      const batch = odooIds.slice(i, i + 20);
+      const statuses = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', 'in', batch], ['state', '=', 'cancel']]],
+        { fields: ['id'] }
+      );
+      if (statuses) {
+        for (const s of statuses) {
+          await db.prepare("UPDATE floor_orders SET status = 'cancelled', updated_at = ? WHERE odoo_order_id = ?")
+            .bind(now, s.id).run();
+          cancelled++;
+        }
+      }
+    }
+  }
+
+  // Update last poll time
+  await db.prepare("UPDATE floor_poll_state SET value = ? WHERE key = 'last_poll_time'").bind(now).run();
+
+  return json({ ok: true, created, cancelled, polled_at: now });
+}
+
+// ── Captain Dashboard ──
+async function handleFloorDashboard(context, db, staff, json) {
+  const now = new Date().toISOString();
+
+  // Unassigned orders
+  const unassigned = await db.prepare(
+    "SELECT * FROM floor_orders WHERE waiter_id IS NULL AND status IN ('new') ORDER BY created_at ASC"
+  ).all();
+
+  // Active orders (assigned, not yet closed)
+  const active = await db.prepare(
+    "SELECT fo.*, fs.name as waiter_name FROM floor_orders fo LEFT JOIN floor_staff fs ON fo.waiter_id = fs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC"
+  ).all();
+
+  // Waiter loads
+  const waiters = await db.prepare(
+    `SELECT fs.id, fs.name, fs.role, fs.can_captain, fs.can_waiter, fs.current_load, fs.last_seen_at,
+      (SELECT COUNT(*) FROM floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders,
+      (SELECT COALESCE(SUM(items_ready - items_delivered), 0) FROM floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as ready_items
+     FROM floor_staff fs WHERE fs.is_active = 1 AND fs.can_waiter = 1 ORDER BY fs.name`
+  ).all();
+
+  // Shift stats
+  const stats = await db.prepare(
+    `SELECT
+       COUNT(*) as total_orders,
+       SUM(CASE WHEN waiter_id IS NULL AND status = 'new' THEN 1 ELSE 0 END) as unassigned,
+       SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN items_ready - items_delivered ELSE 0 END) as items_ready,
+       SUM(CASE WHEN status = 'served' THEN 1 ELSE 0 END) as served
+     FROM floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)`
+  ).bind(now).first();
+
+  // Get items for active orders
+  const activeIds = active.results.map(o => o.id);
+  let itemsByOrder = {};
+  if (activeIds.length > 0) {
+    // Batch fetch items for all active orders
+    const placeholders = activeIds.map(() => '?').join(',');
+    const items = await db.prepare(
+      `SELECT * FROM floor_items WHERE floor_order_id IN (${placeholders}) ORDER BY id`
+    ).bind(...activeIds).all();
+    for (const item of items.results) {
+      if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
+      itemsByOrder[item.floor_order_id].push(item);
+    }
+  }
+
+  return json({
+    unassigned: unassigned.results,
+    active: active.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
+    waiters: waiters.results,
+    stats: stats || { total_orders: 0, unassigned: 0, items_ready: 0, served: 0 },
+    staff_id: staff.id
+  });
+}
+
+// ── Assign order to waiter ──
+async function handleFloorAssign(db, body, json, err) {
+  const { order_id, waiter_id } = body;
+  if (!order_id || !waiter_id) return err('order_id and waiter_id required');
+
+  const order = await db.prepare('SELECT * FROM floor_orders WHERE id = ?').bind(order_id).first();
+  if (!order) return err('Order not found', 404);
+  if (order.waiter_id) return err('Order already assigned — use reassign');
+
+  const waiter = await db.prepare('SELECT * FROM floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1').bind(waiter_id).first();
+  if (!waiter) return err('Waiter not found or inactive', 404);
+
+  const now = new Date().toISOString();
+  await db.prepare(
+    "UPDATE floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ?"
+  ).bind(waiter_id, now, now, order_id).run();
+  await db.prepare('UPDATE floor_staff SET current_load = current_load + 1 WHERE id = ?').bind(waiter_id).run();
+
+  return json({ ok: true, order_id, waiter_id });
+}
+
+// ── Reassign order ──
+async function handleFloorReassign(db, body, json, err) {
+  const { order_id, waiter_id } = body;
+  if (!order_id || !waiter_id) return err('order_id and waiter_id required');
+
+  const order = await db.prepare('SELECT * FROM floor_orders WHERE id = ?').bind(order_id).first();
+  if (!order) return err('Order not found', 404);
+
+  const newWaiter = await db.prepare('SELECT * FROM floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1').bind(waiter_id).first();
+  if (!newWaiter) return err('Waiter not found or inactive', 404);
+
+  const now = new Date().toISOString();
+  // Decrement old waiter load
+  if (order.waiter_id) {
+    await db.prepare('UPDATE floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?').bind(order.waiter_id).run();
+  }
+  // Assign to new waiter
+  await db.prepare(
+    "UPDATE floor_orders SET waiter_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?"
+  ).bind(waiter_id, now, now, order_id).run();
+  await db.prepare('UPDATE floor_staff SET current_load = current_load + 1 WHERE id = ?').bind(waiter_id).run();
+
+  return json({ ok: true, order_id, old_waiter: order.waiter_id, new_waiter: waiter_id });
+}
+
+// ── Waiter's orders with batching intelligence ──
+async function handleFloorMyOrders(db, staff, json) {
+  // Get all active orders assigned to this waiter
+  const orders = await db.prepare(
+    "SELECT * FROM floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress') ORDER BY created_at ASC"
+  ).bind(staff.id).all();
+
+  if (orders.results.length === 0) {
+    return json({ orders: [], ready_batches: [], cooking_summary: {} });
+  }
+
+  // Get all items for these orders
+  const orderIds = orders.results.map(o => o.id);
+  const placeholders = orderIds.map(() => '?').join(',');
+  const items = await db.prepare(
+    `SELECT fi.*, fo.table_number FROM floor_items fi JOIN floor_orders fo ON fi.floor_order_id = fo.id WHERE fi.floor_order_id IN (${placeholders}) ORDER BY fi.id`
+  ).bind(...orderIds).all();
+
+  // Build ready batches (group at_counter items by counter)
+  const readyByCounter = {};
+  const cookingSummary = {};
+
+  for (const item of items.results) {
+    if (item.status === 'at_counter') {
+      const counter = item.counter || 'Unknown';
+      if (!readyByCounter[counter]) readyByCounter[counter] = { counter, items: [], tables: new Set(), oldest_at: null };
+      readyByCounter[counter].items.push(item);
+      if (item.table_number) readyByCounter[counter].tables.add(item.table_number);
+      const readyTime = item.at_counter_at || item.updated_at;
+      if (!readyByCounter[counter].oldest_at || readyTime < readyByCounter[counter].oldest_at) {
+        readyByCounter[counter].oldest_at = readyTime;
+      }
+    } else if (item.status === 'cooking' || item.status === 'cooked') {
+      const counter = item.counter || 'Unknown';
+      cookingSummary[counter] = (cookingSummary[counter] || 0) + 1;
+    }
+  }
+
+  // Convert to sorted array with urgency
+  const now = Date.now();
+  const readyBatches = Object.values(readyByCounter).map(batch => ({
+    counter: batch.counter,
+    item_count: batch.items.length,
+    tables: [...batch.tables].sort(),
+    items: batch.items.map(i => ({
+      id: i.id, product_name: i.product_name, quantity: i.quantity,
+      table_number: i.table_number, floor_order_id: i.floor_order_id,
+      at_counter_at: i.at_counter_at
+    })),
+    oldest_ready_minutes: batch.oldest_at ? Math.round((now - new Date(batch.oldest_at).getTime()) / 60000) : 0,
+    urgent: batch.oldest_at ? (now - new Date(batch.oldest_at).getTime()) > 5 * 60000 : false, // >5 min
+  }));
+
+  // Sort: urgent first, then by item count descending
+  readyBatches.sort((a, b) => {
+    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+    return b.item_count - a.item_count;
+  });
+
+  // Multi-counter trip suggestion (sorted by physical adjacency)
+  const multiCounterRoute = readyBatches.length > 1
+    ? readyBatches
+        .map(b => b.counter)
+        .sort((a, b) => COUNTER_ADJACENCY.indexOf(a) - COUNTER_ADJACENCY.indexOf(b))
+    : null;
+
+  // Group items by order for "My Orders" view
+  const itemsByOrder = {};
+  for (const item of items.results) {
+    if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
+    itemsByOrder[item.floor_order_id].push(item);
+  }
+
+  return json({
+    orders: orders.results.map(o => ({
+      ...o,
+      items: (itemsByOrder[o.id] || []).map(i => ({
+        id: i.id, product_name: i.product_name, quantity: i.quantity,
+        counter: i.counter, status: i.status,
+        at_counter_at: i.at_counter_at, picked_up_at: i.picked_up_at, delivered_at: i.delivered_at
+      }))
+    })),
+    ready_batches: readyBatches,
+    cooking_summary: cookingSummary,
+    multi_counter_route: multiCounterRoute,
+    total_ready: readyBatches.reduce((sum, b) => sum + b.item_count, 0)
+  });
+}
+
+// ── Mark items as picked up (creates trip) ──
+async function handleFloorPickup(db, staff, body, json, err) {
+  const { item_ids, counter } = body;
+  if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) return err('item_ids array required');
+
+  const now = new Date().toISOString();
+  const placeholders = item_ids.map(() => '?').join(',');
+
+  // Verify all items belong to this waiter's orders and are at_counter
+  const items = await db.prepare(
+    `SELECT fi.*, fo.waiter_id, fo.table_number FROM floor_items fi
+     JOIN floor_orders fo ON fi.floor_order_id = fo.id
+     WHERE fi.id IN (${placeholders})`
+  ).bind(...item_ids).all();
+
+  const validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'at_counter');
+  if (validItems.length === 0) return err('No valid items to pick up');
+
+  // Create pickup trip
+  const tables = [...new Set(validItems.map(i => i.table_number).filter(Boolean))];
+  const counters = [...new Set(validItems.map(i => i.counter).filter(Boolean))];
+
+  await db.prepare(
+    'INSERT INTO pickup_trips (waiter_id, counters, tables_served, item_count, started_at) VALUES (?, ?, ?, ?, ?)'
+  ).bind(staff.id, JSON.stringify(counters), JSON.stringify(tables), validItems.length, now).run();
+
+  const trip = await db.prepare('SELECT last_insert_rowid() as id').first();
+  const tripId = trip?.id || null;
+
+  // Update items to picked_up
+  for (const item of validItems) {
+    await db.prepare(
+      "UPDATE floor_items SET status = 'picked_up', picked_up_at = ?, trip_id = ?, updated_at = ? WHERE id = ?"
+    ).bind(now, tripId, now, item.id).run();
+  }
+
+  return json({ ok: true, trip_id: tripId, picked_up: validItems.length, tables, counters });
+}
+
+// ── Mark items as delivered to table ──
+async function handleFloorDeliver(db, staff, body, json, err) {
+  const { item_ids, trip_id } = body;
+  if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) return err('item_ids array required');
+
+  const now = new Date().toISOString();
+  const placeholders = item_ids.map(() => '?').join(',');
+
+  // Verify items belong to this waiter and are picked_up
+  const items = await db.prepare(
+    `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM floor_items fi
+     JOIN floor_orders fo ON fi.floor_order_id = fo.id
+     WHERE fi.id IN (${placeholders})`
+  ).bind(...item_ids).all();
+
+  const validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'picked_up');
+  if (validItems.length === 0) return err('No valid items to deliver');
+
+  // Update items to delivered
+  const affectedOrders = new Set();
+  for (const item of validItems) {
+    await db.prepare(
+      "UPDATE floor_items SET status = 'delivered', delivered_at = ?, updated_at = ? WHERE id = ?"
+    ).bind(now, now, item.id).run();
+    affectedOrders.add(item.order_id);
+  }
+
+  // Update order-level counters and check if fully served
+  for (const orderId of affectedOrders) {
+    const delivered = await db.prepare(
+      "SELECT COUNT(*) as cnt FROM floor_items WHERE floor_order_id = ? AND status = 'delivered'"
+    ).bind(orderId).first();
+    const total = await db.prepare(
+      'SELECT total_items FROM floor_orders WHERE id = ?'
+    ).bind(orderId).first();
+
+    await db.prepare(
+      'UPDATE floor_orders SET items_delivered = ?, updated_at = ? WHERE id = ?'
+    ).bind(delivered.cnt, now, orderId).run();
+
+    // If all items delivered, mark order as served
+    if (delivered.cnt >= (total?.total_items || 0)) {
+      await db.prepare(
+        "UPDATE floor_orders SET status = 'served', updated_at = ? WHERE id = ?"
+      ).bind(now, orderId).run();
+      // Decrement waiter load
+      const order = await db.prepare('SELECT waiter_id FROM floor_orders WHERE id = ?').bind(orderId).first();
+      if (order?.waiter_id) {
+        await db.prepare('UPDATE floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?')
+          .bind(order.waiter_id).run();
+      }
+    }
+  }
+
+  // Complete trip if provided
+  if (trip_id) {
+    await db.prepare('UPDATE pickup_trips SET completed_at = ? WHERE id = ?').bind(now, trip_id).run();
+  }
+
+  return json({ ok: true, delivered: validItems.length, orders_served: [...affectedOrders].length });
+}
+
+// ── Staff management (Captain) ──
+async function handleFloorManageStaff(db, body, json, err) {
+  const { operation, staff_id, name, pin, role, can_captain, can_waiter } = body;
+  const now = new Date().toISOString();
+
+  if (operation === 'add') {
+    if (!name || !pin) return err('name and pin required');
+    const existing = await db.prepare('SELECT id FROM floor_staff WHERE pin = ?').bind(pin).first();
+    if (existing) return err('PIN already in use');
+    await db.prepare(
+      'INSERT INTO floor_staff (pin, name, role, can_captain, can_waiter, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
+    ).bind(pin, name, role || 'waiter', can_captain ? 1 : 0, can_waiter !== false ? 1 : 0, now).run();
+    return json({ ok: true, operation: 'add' });
+  }
+
+  if (operation === 'toggle') {
+    if (!staff_id) return err('staff_id required');
+    const s = await db.prepare('SELECT is_active FROM floor_staff WHERE id = ?').bind(staff_id).first();
+    if (!s) return err('Staff not found', 404);
+    await db.prepare('UPDATE floor_staff SET is_active = ?, last_seen_at = ? WHERE id = ?')
+      .bind(s.is_active ? 0 : 1, now, staff_id).run();
+    return json({ ok: true, operation: 'toggle', is_active: !s.is_active });
+  }
+
+  if (operation === 'update') {
+    if (!staff_id) return err('staff_id required');
+    const updates = [];
+    const params = [];
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (pin !== undefined) { updates.push('pin = ?'); params.push(pin); }
+    if (role !== undefined) { updates.push('role = ?'); params.push(role); }
+    if (can_captain !== undefined) { updates.push('can_captain = ?'); params.push(can_captain ? 1 : 0); }
+    if (can_waiter !== undefined) { updates.push('can_waiter = ?'); params.push(can_waiter ? 1 : 0); }
+    if (updates.length === 0) return err('Nothing to update');
+    params.push(staff_id);
+    await db.prepare(`UPDATE floor_staff SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    return json({ ok: true, operation: 'update' });
+  }
+
+  if (operation === 'remove') {
+    if (!staff_id) return err('staff_id required');
+    await db.prepare('DELETE FROM floor_staff WHERE id = ?').bind(staff_id).run();
+    return json({ ok: true, operation: 'remove' });
+  }
+
+  return err('Unknown operation (add|toggle|update|remove)');
 }
 
 // ═══════════════════════════════════════════════════════════════════
