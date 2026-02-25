@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Hamza Express Menu — Authentic Dakhni Cuisine since 1918. Biryani, Starters, Curries, Chinese & more. Shivajinagar, Bangalore.">
+    <meta name="theme-color" content="#713520">
+    <title>Menu | Hamza Express — Since 1918</title>
+    <link rel="icon" type="image/png" href="/assets/Icon.png">
+    <link rel="apple-touch-icon" href="/assets/Icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Crimson+Text:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════
+           DESIGN TOKENS (matches main site)
+           ═══════════════════════════════════════════════ */
+        :root {
+            --burnt-sienna: #713520;
+            --tan: #D2B48C;
+            --off-white: #FAF3E3;
+            --dark-sienna: #4A2315;
+            --light-tan: #E8D4B8;
+            --warm-brown: #8B4513;
+            --cream: #FFF8F0;
+            --gold-accent: #C9A050;
+            --font-primary: 'Crimson Text', 'Times New Roman', Georgia, serif;
+            --font-display: 'Playfair Display', 'Times New Roman', Georgia, serif;
+        }
+
+        /* ═══════════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; scroll-padding-top: 100px; }
+        body {
+            font-family: var(--font-primary);
+            background: var(--off-white);
+            color: var(--dark-sienna);
+            line-height: 1.5;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        img { max-width: 100%; height: auto; display: block; }
+
+        /* Paper texture overlay */
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.025;
+        }
+
+        /* ═══════════════════════════════════════════════
+           HEADER
+           ═══════════════════════════════════════════════ */
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            height: 52px;
+            background: var(--dark-sienna);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px;
+            box-shadow: 0 2px 8px rgba(74,35,21,0.3);
+        }
+        .header-logo {
+            height: 32px; width: auto;
+            filter: brightness(1.1);
+        }
+        .header-badge {
+            font-family: var(--font-display);
+            font-size: 0.7rem;
+            color: var(--gold-accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .header-wa {
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: #25D366; border-radius: 50%;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .header-wa:active { transform: scale(0.92); }
+        .header-wa svg { width: 20px; height: 20px; fill: white; }
+
+        /* ═══════════════════════════════════════════════
+           HERO
+           ═══════════════════════════════════════════════ */
+        .hero {
+            margin-top: 52px;
+            background: linear-gradient(175deg, var(--dark-sienna) 0%, var(--burnt-sienna) 100%);
+            padding: 28px 20px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(201,160,80,0.08) 0%, transparent 70%);
+        }
+        .hero-emblem {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            border: 2px solid var(--gold-accent);
+            object-fit: cover;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--off-white);
+            letter-spacing: 0.04em;
+            position: relative;
+        }
+        .hero-sub {
+            font-family: var(--font-primary);
+            font-size: 0.85rem;
+            color: var(--tan);
+            margin-top: 4px;
+            font-style: italic;
+            position: relative;
+        }
+        /* Ornamental divider */
+        .hero-divider {
+            width: 120px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-accent), transparent);
+            margin: 12px auto 0;
+            position: relative;
+        }
+        .hero-divider::after {
+            content: '◆';
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px; color: var(--gold-accent);
+            background: var(--burnt-sienna);
+            padding: 0 6px;
+        }
+
+        /* ═══════════════════════════════════════════════
+           CATEGORY TABS
+           ═══════════════════════════════════════════════ */
+        .tabs-wrap {
+            position: sticky; top: 52px; z-index: 150;
+            background: var(--off-white);
+            border-bottom: 1px solid rgba(113,53,32,0.12);
+            box-shadow: 0 2px 6px rgba(74,35,21,0.06);
+        }
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 0 8px;
+            gap: 0;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex-shrink: 0;
+            padding: 11px 14px;
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--warm-brown);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            -webkit-user-select: none; user-select: none;
+            opacity: 0.7;
+        }
+        .tab.active {
+            color: var(--burnt-sienna);
+            border-bottom-color: var(--gold-accent);
+            opacity: 1;
+        }
+
+        /* ═══════════════════════════════════════════════
+           MENU CONTAINER
+           ═══════════════════════════════════════════════ */
+        .menu-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* ── Section ── */
+        .menu-section {
+            padding: 20px 16px 8px;
+        }
+        .section-header {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .section-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--warm-brown);
+            opacity: 0.7;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+        /* Ornamental underline */
+        .section-ornament {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; margin-bottom: 16px;
+        }
+        .section-ornament::before, .section-ornament::after {
+            content: '';
+            width: 40px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold-accent));
+        }
+        .section-ornament::after {
+            background: linear-gradient(90deg, var(--gold-accent), transparent);
+        }
+        .section-ornament span {
+            font-size: 10px; color: var(--gold-accent);
+        }
+
+        /* ── Sub-section ── */
+        .subsection-title {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--warm-brown);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 12px 0 6px;
+            border-bottom: 1px solid rgba(113,53,32,0.1);
+            margin-bottom: 4px;
+        }
+
+        /* ── Item Card ── */
+        .item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px dotted rgba(113,53,32,0.12);
+        }
+        .item:last-child { border-bottom: none; }
+
+        .item-img-wrap {
+            width: 60px; height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: var(--light-tan);
+        }
+        .item-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+
+        .item-info { flex: 1; min-width: 0; }
+        .item-name {
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--dark-sienna);
+            line-height: 1.3;
+        }
+        .item-prices {
+            display: flex; flex-wrap: wrap; gap: 2px 10px;
+            margin-top: 2px;
+        }
+        .price-tag {
+            font-family: var(--font-primary);
+            font-size: 0.82rem;
+            color: var(--warm-brown);
+            font-weight: 600;
+        }
+        .price-tag .label {
+            font-size: 0.7rem;
+            color: var(--warm-brown);
+            opacity: 0.65;
+            font-weight: 400;
+            margin-right: 2px;
+        }
+        .price-single {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--burnt-sienna);
+        }
+
+        /* Popular badge */
+        .badge-popular {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold-accent), #B8922E);
+            color: white;
+            font-size: 0.58rem;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-left: 6px;
+            vertical-align: middle;
+            font-family: var(--font-primary);
+        }
+        .badge-star {
+            display: inline-block;
+            background: var(--burnt-sienna);
+            color: var(--gold-accent);
+            font-size: 0.58rem;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* ═══════════════════════════════════════════════
+           KRISPY EATS THEME
+           ═══════════════════════════════════════════════ */
+        .section-krispy {
+            background: linear-gradient(180deg, #2C1810 0%, #1A0E08 100%);
+            padding: 20px 16px 24px;
+            margin-top: 8px;
+            /* Break out of container to go full-width */
+            margin-left: calc(-50vw + 50%);
+            margin-right: calc(-50vw + 50%);
+            padding-left: calc(50vw - 50% + 16px);
+            padding-right: calc(50vw - 50% + 16px);
+        }
+        .section-krispy .section-header { color: var(--gold-accent); }
+        .section-krispy .section-ornament::before,
+        .section-krispy .section-ornament::after {
+            background: linear-gradient(90deg, transparent, rgba(201,160,80,0.5));
+        }
+        .section-krispy .section-ornament::after {
+            background: linear-gradient(90deg, rgba(201,160,80,0.5), transparent);
+        }
+        .section-krispy .subsection-title {
+            color: var(--tan);
+            border-bottom-color: rgba(201,160,80,0.15);
+        }
+        .section-krispy .item {
+            border-bottom-color: rgba(201,160,80,0.1);
+        }
+        .section-krispy .item-name { color: var(--off-white); }
+        .section-krispy .price-tag { color: var(--tan); }
+        .section-krispy .price-tag .label { color: var(--tan); }
+        .section-krispy .price-single { color: var(--gold-accent); }
+        .section-krispy .item-img-wrap { background: #3D2518; }
+
+        /* ═══════════════════════════════════════════════
+           BANE MARIE THEME (subtle distinction)
+           ═══════════════════════════════════════════════ */
+        .section-bm {
+            background: linear-gradient(180deg, rgba(210,180,140,0.25) 0%, rgba(210,180,140,0.08) 100%);
+            padding: 20px 16px 16px;
+            border-top: 2px solid var(--gold-accent);
+            /* Break out of container to go full-width */
+            margin-left: calc(-50vw + 50%);
+            margin-right: calc(-50vw + 50%);
+            padding-left: calc(50vw - 50% + 16px);
+            padding-right: calc(50vw - 50% + 16px);
+        }
+        .section-bm .section-note {
+            background: rgba(201,160,80,0.12);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        /* ═══════════════════════════════════════════════
+           FOOTER
+           ═══════════════════════════════════════════════ */
+        .footer {
+            background: var(--dark-sienna);
+            padding: 32px 20px 28px;
+            text-align: center;
+            border-top: 1px solid rgba(201,160,80,0.25);
+        }
+        .footer-gst {
+            font-size: 0.72rem;
+            color: var(--tan);
+            opacity: 0.7;
+            margin-bottom: 16px;
+        }
+        .footer-cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #25D366;
+            color: white;
+            padding: 12px 28px;
+            border-radius: 28px;
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(37,211,102,0.3);
+        }
+        .footer-cta:active { transform: scale(0.96); }
+        .footer-cta svg { width: 20px; height: 20px; fill: white; }
+        .footer-info {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: var(--tan);
+            opacity: 0.6;
+            line-height: 1.7;
+        }
+        .footer-info a { color: var(--tan); text-decoration: underline; }
+        .footer-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            color: var(--gold-accent);
+            text-decoration: none;
+            border: 1px solid rgba(201,160,80,0.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* ═══════════════════════════════════════════════
+           FLOATING WhatsApp BUTTON
+           ═══════════════════════════════════════════════ */
+        .fab-wa {
+            position: fixed;
+            bottom: 20px; right: 16px;
+            z-index: 100;
+            width: 52px; height: 52px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(37,211,102,0.4);
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .fab-wa:active { transform: scale(0.9); }
+        .fab-wa svg { width: 28px; height: 28px; fill: white; }
+
+        /* ═══════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════ */
+        @media (min-width: 480px) {
+            .item-img-wrap { width: 68px; height: 68px; }
+            .item { gap: 14px; padding: 12px 0; }
+            .item-name { font-size: 1rem; }
+        }
+        @media (min-width: 768px) {
+            .hero { padding: 36px 20px 32px; }
+            .hero-emblem { width: 96px; height: 96px; }
+            .hero h1 { font-size: 1.8rem; }
+            .menu-container { padding: 0 16px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+    <a href="/"><img src="/assets/Text_Logo_Main.png" alt="Hamza Express" class="header-logo"></a>
+    <span class="header-badge">Since 1918</span>
+    <a href="https://wa.me/918008002049" class="header-wa" aria-label="Order on WhatsApp">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+</header>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+    <img src="/assets/Icon.png" alt="Hamza Express Emblem" class="hero-emblem">
+    <h1>Our Menu</h1>
+    <p class="hero-sub">Authentic Dakhni Cuisine &middot; Shivajinagar</p>
+    <div class="hero-divider"></div>
+</section>
+
+<!-- ═══════════ CATEGORY TABS ═══════════ -->
+<nav class="tabs-wrap">
+    <div class="tabs" id="tabs"></div>
+</nav>
+
+<!-- ═══════════ MENU CONTENT ═══════════ -->
+<main class="menu-container" id="menuContainer"></main>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+    <p class="footer-gst">All prices inclusive of 5% GST</p>
+    <a href="https://wa.me/918008002049" class="footer-cta">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Order on WhatsApp
+    </a>
+    <div class="footer-info">
+        <p>11 AM – 11 PM &middot; All Days</p>
+        <p>151–154, HKP Road, Shivajinagar, Bengaluru 560051</p>
+        <p><a href="tel:+918008002049">+91 8008 002 049</a></p>
+    </div>
+    <a href="/" class="footer-link">← Visit hamzaexpress.in</a>
+</footer>
+
+<!-- ═══════════ FLOATING WhatsApp FAB ═══════════ -->
+<a href="https://wa.me/918008002049" class="fab-wa" aria-label="Order on WhatsApp">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// MENU DATA — Prices from print menu (GST-inclusive)
+// ═══════════════════════════════════════════════════════════
+const MENU_DATA = [
+  {
+    id: 'biryani', name: 'Biryani & Rice', theme: '',
+    sections: [
+      { title: 'Biryani', items: [
+        { id:'HE-1201', name:'Chicken Biryani', p:[[250]], pop:true },
+        { id:'HE-1200', name:'Mutton Biryani', p:[[340]], pop:true },
+        { id:'HE-1389', name:'Chicken Boneless Biryani', p:[[280]] },
+        { id:'HE-1202', name:'Thethar Biryani', p:[[270]] },
+        { id:'HE-1204', name:'Egg Biryani', p:[[160]] },
+      ]},
+      { title: 'Rice', items: [
+        { id:'HE-1203', name:'Biryani Rice', p:[[120]] },
+        { id:'HE-1205', name:'Ghee Rice', p:[[100]], pop:true },
+        { id:'HE-1207', name:'Plain Rice', p:[[50]] },
+      ]},
+    ],
+  },
+  {
+    id: 'starters', name: 'Starters & Kebabs', theme: '',
+    note: 'Half & Full portions available',
+    sections: [
+      { title: 'Chicken', items: [
+        { id:'HE-1393', name:'Irani Chicken', p:[['Half',230],['Full',460]], star:true },
+        { id:'HE-1163', name:'Chicken Kabab', p:[['Half',180],['Full',360]] },
+        { id:'HE-1135', name:'Tandoori Chicken', p:[['Half',200],['Full',400]], pop:true },
+        { id:'HE-1169', name:'Chicken Pepper Dry', p:[['Half',200],['Full',400]] },
+        { id:'HE-1166', name:'Chicken 65', p:[['Half',220],['Full',440]], pop:true },
+        { id:'HE-1172', name:'Lollipop', p:[['Half',200],['Full',400]] },
+        { id:'HE-1168', name:'Lemon Chicken', p:[['Half',230],['Full',460]] },
+        { id:'HE-1136', name:'Barbeque Chicken', p:[['Half',220],['Full',440]] },
+        { id:'HE-1138', name:'Kalmi Kabab', p:[['Half',270],['Full',540]] },
+        { id:'HE-1142', name:'Malai Tikka', p:[['Half',250],['Full',500]] },
+        { id:'HE-1143', name:'Andhra Tikka', p:[['Half',250],['Full',500]] },
+        { id:'HE-1394', name:'Reshmi Kabab', p:[['Half',240],['Full',480]] },
+        { id:'HE-1141', name:'Haryali Tikka', p:[['Half',240],['Full',480]] },
+        { id:'HE-1395', name:'Garlic Kabab', p:[['Half',240],['Full',480]] },
+        { id:'HE-1145', name:'Pathak Kabab', p:[['Half',230],['Full',460]] },
+        { id:'HE-1140', name:'American Chops', p:[['Half',270],['Full',540]] },
+        { id:'HE-1173', name:'Thethar Pepper Dry', p:[['Half',300],['Full',600]] },
+        { id:'HE-1159', name:'Thethar Pepper Roast', p:[['Half',320],['Full',640]] },
+      ]},
+      { title: 'Mutton', items: [
+        { id:'HE-1192', name:'Mutton Brain Dry', p:[['Qtr',160],['Half',320],['Full',640]] },
+        { id:'HE-1191', name:'Mutton Pepper Dry', p:[['Qtr',210],['Half',420],['Full',840]], pop:true },
+        { id:'HE-1187', name:'Mutton Pepper Roast', p:[['Qtr',220],['Half',400],['Full',800]] },
+        { id:'HE-1199', name:'Mutton Chops', p:[['Qtr',230],['Half',380],['Full',760]] },
+        { id:'HE-1195', name:'Mutton Sheekh Kabab', p:[['Half',150],['Full',280]] },
+        { id:'HE-1194', name:'Mutton Gurda Dry', p:[['Qtr',210],['Half',380],['Full',760]] },
+      ]},
+    ],
+  },
+  {
+    id: 'chicken', name: 'Chicken Curry', theme: '',
+    note: 'Half & Full portions available',
+    sections: [
+      { title: '', items: [
+        { id:'HE-1149', name:'Butter Chicken', p:[['Half',210],['Full',420]], pop:true },
+        { id:'HE-1150', name:'Punjabi Chicken', p:[['Half',230],['Full',440]] },
+        { id:'HE-1156', name:'Chicken Chatpata', p:[['Half',250],['Full',500]] },
+        { id:'HE-1148', name:'Chicken Hyderabadi Gravy', p:[['Half',210],['Full',440]] },
+        { id:'HE-1155', name:'Kadai Chicken', p:[['Half',220],['Full',420]] },
+        { id:'HE-1151', name:'Chicken Kali Mirch', p:[['Half',210],['Full',400]] },
+        { id:'HE-1146', name:'Mughlai Chicken', p:[['Half',230],['Full',440]] },
+        { id:'HE-1158', name:'Tandoori Chicken Masala', p:[['Half',280],['Full',560]] },
+        { id:'HE-1154', name:'Methi Chicken', p:[['Half',210],['Full',420]] },
+        { id:'HE-1147', name:'Chicken Dopiyaza', p:[['Half',230],['Full',440]] },
+        { id:'HE-1157', name:'Chicken Sagwala', p:[['Half',220],['Full',440]] },
+        { id:'HE-1162', name:'Chicken Kolhapuri Gravy', p:[['Half',210],['Full',420]] },
+        { id:'HE-1152', name:'Chicken Burtha', p:[['Half',250],['Full',500]] },
+        { id:'HE-1160', name:'Hamza Special', p:[['Half',220],['Full',440]] },
+        { id:'HE-1161', name:'Chicken Tikka Masala', p:[['Half',300],['Full',600]] },
+      ]},
+    ],
+  },
+  {
+    id: 'mutton', name: 'Mutton Curry', theme: '',
+    note: 'Qtr, Half & Full portions available',
+    sections: [
+      { title: '', items: [
+        { id:'HE-1190', name:'Mutton Hamza Special', p:[['Qtr',240],['Half',440],['Full',880]] },
+        { id:'HE-1177', name:'Mutton Rogan Josh', p:[['Qtr',210],['Half',380],['Full',760]] },
+        { id:'HE-1185', name:'Mutton Masala', p:[['Qtr',210],['Half',380],['Full',760]] },
+        { id:'HE-1188', name:'Mutton Kassa', p:[['Qtr',230],['Half',430],['Full',840]] },
+        { id:'HE-1180', name:'Kadai Mutton', p:[['Qtr',220],['Half',400],['Full',800]] },
+        { id:'HE-1184', name:'Mutton Hyderabadi Gravy', p:[['Qtr',220],['Half',400],['Full',800]] },
+        { id:'HE-1186', name:'Mutton Kolhapuri', p:[['Qtr',230],['Half',430],['Full',840]] },
+        { id:'HE-1178', name:'Methi Mutton', p:[['Qtr',210],['Half',380],['Full',760]] },
+        { id:'HE-1179', name:'Mutton Achari', p:[['Qtr',230],['Half',430],['Full',840]] },
+        { id:'HE-1182', name:'Mutton Punjabi', p:[['Qtr',230],['Half',430],['Full',840]] },
+        { id:'HE-1181', name:'Mutton Chatpata', p:[['Qtr',230],['Half',420],['Full',840]] },
+        { id:'HE-1183', name:'Mutton Sagwala', p:[['Qtr',230],['Half',420],['Full',840]] },
+        { id:'HE-1198', name:'Mutton Brain', p:[['Qtr',160],['Half',320],['Full',640]] },
+        { id:'HE-1189', name:'Mutton Tadka', p:[['Qtr',230],['Half',420],['Full',840]] },
+        { id:'HE-1197', name:'Mutton Khima', p:[['Qtr',230],['Half',380],['Full',760]] },
+        { id:'HE-1386', name:'Mutton Kolhapuri Gravy', p:[['Qtr',230],['Half',420],['Full',840]] },
+      ]},
+    ],
+  },
+  {
+    id: 'veg', name: 'Veg & Dal', theme: '',
+    sections: [
+      { title: '', items: [
+        { id:'HE-1225', name:'Dal Fry', p:[[110]] },
+        { id:'HE-1233', name:'Dal Tadka', p:[[120]] },
+        { id:'HE-1226', name:'Paneer Butter Masala', p:[[180]] },
+        { id:'HE-1227', name:'Kadai Paneer', p:[[180]] },
+        { id:'HE-1228', name:'Palak Paneer', p:[[200]] },
+        { id:'HE-1229', name:'Paneer Mutter Masala', p:[[200]] },
+        { id:'HE-1234', name:'Mushroom Masala', p:[[180]] },
+        { id:'HE-1230', name:'Aloo Gobi', p:[[180]] },
+        { id:'HE-1232', name:'Gobi Masala', p:[[160]] },
+        { id:'HE-1231', name:'Mixed Veg Curry', p:[[200]] },
+        { id:'HE-1388', name:'Veg Kofta', p:[[220]] },
+        { id:'HE-1387', name:'Malai Kofta', p:[[240]] },
+      ]},
+    ],
+  },
+  {
+    id: 'chinese', name: 'Chinese', theme: '',
+    sections: [
+      { title: 'Fried Rice', items: [
+        { id:'HE-1235', name:'Chicken Fried Rice', p:[[190]], pop:true },
+        { id:'HE-1247', name:'Veg Fried Rice', p:[[150]] },
+        { id:'HE-1241', name:'Prawns Fried Rice', p:[[230]] },
+        { id:'HE-1237', name:'Mutton Fried Rice', p:[[230]] },
+        { id:'HE-1243', name:'Mix Fried Rice', p:[[240]] },
+      ]},
+      { title: 'Noodles', items: [
+        { id:'HE-1236', name:'Chicken Noodles', p:[[190]] },
+        { id:'HE-1248', name:'Veg Noodles', p:[[150]] },
+        { id:'HE-1242', name:'Prawns Noodles', p:[[230]] },
+        { id:'HE-1238', name:'Mutton Noodles', p:[[230]] },
+        { id:'HE-1244', name:'Mix Noodles', p:[[240]] },
+      ]},
+      { title: 'Shezwan', items: [
+        { id:'HE-1390', name:'Shezwan Chicken', p:[[230],['Full',460]] },
+        { id:'HE-1245', name:'Shezwan Fried Rice', p:[[200]] },
+        { id:'HE-1246', name:'Shezwan Noodles', p:[[200]] },
+        { id:'HE-1391', name:'Shezwan Mutton', p:[[230],['Full',460]] },
+      ]},
+      { title: 'Gravy', items: [
+        { id:'HE-1164', name:'Chilly Chicken', p:[['Half',200],['Full',400]] },
+        { id:'HE-1170', name:'Garlic Chicken', p:[['Half',200],['Full',400]] },
+        { id:'HE-1167', name:'Singapore Chicken', p:[['Half',220],['Full',440]] },
+        { id:'HE-1174', name:'Hongkong Chicken', p:[['Half',220],['Full',400]] },
+        { id:'HE-1258', name:'Prawns Chilly Manchurian', p:[[270]] },
+      ]},
+      { title: 'Rolls', items: [
+        { id:'HE-1208', name:'Chicken Roll', p:[[90]] },
+        { id:'HE-1209', name:'Egg Roll', p:[[90]] },
+        { id:'HE-1392', name:'Paneer Roll', p:[[90]] },
+        { id:'HE-1211', name:'Mutton Sheekh Roll', p:[[160]] },
+        { id:'HE-1210', name:'Veg Roll', p:[[80]] },
+      ]},
+    ],
+  },
+  {
+    id: 'breads', name: 'Indian Breads', theme: '',
+    sections: [
+      { title: '', items: [
+        { id:'HE-1220', name:'Butter Naan', p:[[45]], pop:true },
+        { id:'HE-1222', name:'Garlic Naan', p:[[50]] },
+        { id:'HE-1221', name:'Kulcha', p:[[50]] },
+        { id:'HE-1223', name:'Tandoori Paratha', p:[[50]] },
+        { id:'HE-1216', name:'Wheat Paratha', p:[[45]] },
+        { id:'HE-1212', name:'Kerala Paratha', p:[[30]] },
+        { id:'HE-1213', name:'Ceylon Paratha', p:[[35]] },
+        { id:'HE-1396', name:'Pathiri Roti', p:[[38]] },
+        { id:'HE-1217', name:'Chapathi', p:[[20]] },
+        { id:'HE-1218', name:'Roomali Roti', p:[[18]] },
+      ]},
+    ],
+  },
+  {
+    id: 'bm', name: 'Bane Marie', theme: 'bm',
+    note: 'Ready-to-serve at the Bane Marie counter',
+    sections: [
+      { title: 'Biryani & Rice', items: [
+        { id:'HE-1201', name:'Chicken Biryani', p:[[250]], pop:true },
+        { id:'HE-1200', name:'Mutton Biryani', p:[[340]] },
+        { id:'HE-1205', name:'Ghee Rice', p:[[100]] },
+      ]},
+      { title: 'Curry & Starters', items: [
+        { id:'HE-1397', name:'Butter Chicken', p:[[210]] },
+        { id:'HE-1164', name:'Chilli Chicken', p:[[200]] },
+        { id:'HE-1398', name:'Mutton Chatpata', p:[[230]] },
+        { id:'HE-1399', name:'Singapore Chicken', p:[[220]] },
+        { id:'HE-1400', name:'Lemon Chicken', p:[[230]] },
+      ]},
+    ],
+  },
+  {
+    id: 'krispy', name: 'Krispy Eats', theme: 'krispy',
+    sections: [
+      { title: 'Fried Chicken', items: [
+        { id:'HE-1348', name:'1 Pc Fried Chicken', p:[[75]], pop:true },
+        { id:'HE-1349', name:'2 Pcs Fried Chicken', p:[[150]] },
+        { id:'HE-1350', name:'4 Pcs Fried Chicken', p:[[280]] },
+      ]},
+      { title: 'Combos', items: [
+        { id:'HE-1351', name:'Duet Combo', p:[[190]] },
+        { id:'HE-1352', name:'Regular Combo', p:[[370]] },
+        { id:'HE-1353', name:'Family Combo', p:[[700]] },
+        { id:'HE-1354', name:'Party Combo', p:[[999]] },
+      ]},
+      { title: 'Snacks & Sides', items: [
+        { id:'HE-1355', name:'Cheesy Fries', p:[[150]] },
+        { id:'HE-1356', name:'Loaded Fries', p:[[190]] },
+        { id:'HE-1357', name:'Krispy Popcorn (S)', p:[[80]] },
+        { id:'HE-1358', name:'Krispy Popcorn (M)', p:[[150]] },
+        { id:'HE-1359', name:'Krispy Popcorn (L)', p:[[230]] },
+        { id:'HE-1360', name:'Krispy Shrimps w/ Mayo (10pc)', p:[[250]] },
+        { id:'HE-1361', name:'Krispy Wings w/ Mayo (6pc)', p:[[99]] },
+        { id:'HE-1362', name:'Krispy Lollipop w/ Mayo (6pc)', p:[[129]] },
+      ]},
+      { title: 'Burgers & Rolls', items: [
+        { id:'HE-1363', name:'Chicken Zinger Burger', p:[[180]] },
+        { id:'HE-1364', name:'Classic Chicken Burger', p:[[130]] },
+        { id:'HE-1365', name:'Chicken Zinger Roll', p:[[160]] },
+        { id:'HE-1367', name:'Shawarma Roll', p:[[80]] },
+      ]},
+      { title: 'Salads & Rice', items: [
+        { id:'HE-1368', name:'Chicken Popcorn Salad', p:[[190]] },
+        { id:'HE-1369', name:'Chicken Doner Salad', p:[[190]] },
+        { id:'HE-1370', name:'Rice with Chicken Popcorn', p:[[190]] },
+      ]},
+      { title: 'Extras', items: [
+        { id:'HE-1371', name:'Extra Bun', p:[[15]] },
+        { id:'HE-1372', name:'Extra Mayo', p:[[20]] },
+        { id:'HE-1373', name:'Soft Drink', p:[[40]] },
+      ]},
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════
+// RENDER MENU
+// ═══════════════════════════════════════════════════════════
+function renderMenu() {
+  const tabsEl = document.getElementById('tabs');
+  const container = document.getElementById('menuContainer');
+
+  // Build tabs
+  MENU_DATA.forEach(cat => {
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.dataset.target = cat.id;
+    tab.textContent = cat.name;
+    tab.addEventListener('click', () => {
+      const target = document.getElementById('sec-' + cat.id);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    tabsEl.appendChild(tab);
+  });
+
+  // Build sections
+  MENU_DATA.forEach(cat => {
+    const section = document.createElement('section');
+    section.id = 'sec-' + cat.id;
+    let cls = 'menu-section';
+    if (cat.theme === 'krispy') cls += ' section-krispy';
+    if (cat.theme === 'bm') cls += ' section-bm';
+    section.className = cls;
+
+    // Section header
+    section.innerHTML = `
+      <h2 class="section-header">${cat.name}</h2>
+      <div class="section-ornament"><span>◆</span></div>
+      ${cat.note ? '<p class="section-note">' + cat.note + '</p>' : ''}
+    `;
+
+    // Sub-sections
+    cat.sections.forEach(sub => {
+      if (sub.title) {
+        const subH = document.createElement('h3');
+        subH.className = 'subsection-title';
+        subH.textContent = sub.title;
+        section.appendChild(subH);
+      }
+
+      sub.items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'item';
+
+        // Prices rendering
+        let priceHTML = '';
+        if (item.p.length === 1 && item.p[0].length === 1) {
+          // Single price: [[250]]
+          priceHTML = `<span class="price-single">₹${item.p[0][0]}</span>`;
+        } else {
+          // Multi-price: [['Half',210],['Full',420]] or [[230],['Full',460]]
+          priceHTML = item.p.map(v => {
+            if (v.length === 1) return `<span class="price-tag">₹${v[0]}</span>`;
+            return `<span class="price-tag"><span class="label">${v[0]}</span>₹${v[1]}</span>`;
+          }).join('<span class="price-tag" style="opacity:0.3">·</span>');
+        }
+
+        // Badges
+        let badges = '';
+        if (item.pop) badges += '<span class="badge-popular">Popular</span>';
+        if (item.star) badges += '<span class="badge-star">★ Signature</span>';
+
+        card.innerHTML = `
+          <div class="item-img-wrap">
+            <img class="item-img" src="/assets/menu/${item.id}.jpg" alt="${item.name}" loading="lazy" decoding="async">
+          </div>
+          <div class="item-info">
+            <div class="item-name">${item.name}${badges}</div>
+            <div class="item-prices">${priceHTML}</div>
+          </div>
+        `;
+        section.appendChild(card);
+      });
+    });
+
+    container.appendChild(section);
+  });
+
+  // Activate first tab
+  const firstTab = tabsEl.querySelector('.tab');
+  if (firstTab) firstTab.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCROLL SYNC — IntersectionObserver
+// ═══════════════════════════════════════════════════════════
+function setupScrollSync() {
+  const sections = document.querySelectorAll('.menu-section');
+  const tabsContainer = document.getElementById('tabs');
+
+  function setActiveTab(id) {
+    const activeTab = tabsContainer.querySelector('.tab.active');
+    const newTab = tabsContainer.querySelector(`.tab[data-target="${id}"]`);
+    if (activeTab === newTab) return;
+    if (activeTab) activeTab.classList.remove('active');
+    if (newTab) {
+      newTab.classList.add('active');
+      newTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        setActiveTab(entry.target.id.replace('sec-', ''));
+      }
+    });
+  }, {
+    rootMargin: '-104px 0px -65% 0px',
+    threshold: 0
+  });
+
+  sections.forEach(sec => observer.observe(sec));
+
+  // Detect bottom-of-page → activate last tab
+  window.addEventListener('scroll', () => {
+    if ((window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50)) {
+      const lastSec = sections[sections.length - 1];
+      if (lastSec) setActiveTab(lastSec.id.replace('sec-', ''));
+    }
+  }, { passive: true });
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  renderMenu();
+  setupScrollSync();
+});
+</script>
+</body>
+</html>
