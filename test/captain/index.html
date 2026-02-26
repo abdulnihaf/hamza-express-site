@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Captain [TEST]</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:var(--amber);border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+    .icon-btn.spinning{animation:spin .6s ease}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+    /* Tabs */
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:99}
+    .tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+    .tab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--red);color:#fff;border-radius:9px;font-size:11px;margin-left:4px;padding:0 5px}
+
+    /* Screens */
+    .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:80px}
+    .screen.active{display:block}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    #pin-screen .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    #pin-screen .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--amber);border-color:var(--amber)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Stats bar */
+    .stats-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+    .stat-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;white-space:nowrap;font-size:12px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .stat-chip .val{font-weight:700;font-size:14px}
+    .stat-chip.alert{border-color:var(--red);background:var(--red-dim)}
+
+    /* Order cards */
+    .section-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;margin-top:20px}
+    .section-title:first-child{margin-top:0}
+
+    .order-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative}
+    .order-card:active{transform:scale(.98)}
+    .order-card.unassigned{border-color:var(--red);animation:pulse-border 2s infinite}
+    @keyframes pulse-border{0%,100%{border-color:var(--red)}50%{border-color:rgba(239,68,68,.4)}}
+    .order-card .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .order-card .table-num{font-size:18px;font-weight:700}
+    .order-card .order-name{color:var(--text2);font-size:12px;font-family:'JetBrains Mono',monospace}
+    .order-card .order-meta{display:flex;gap:8px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+    .order-card .order-meta span{display:flex;align-items:center;gap:3px}
+    .order-card .progress-bar{height:4px;background:var(--bg2);border-radius:2px;margin-top:10px;overflow:hidden}
+    .order-card .progress-bar .fill{height:100%;border-radius:2px;transition:width .3s}
+    .order-card .progress-bar .fill.low{background:var(--orange)}
+    .order-card .progress-bar .fill.mid{background:var(--amber)}
+    .order-card .progress-bar .fill.high{background:var(--green)}
+    .order-card .waiter-tag{background:var(--blue-dim);color:var(--blue);font-size:11px;padding:2px 8px;border-radius:6px}
+
+    .order-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .order-items .item-chip{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
+    .order-items .item-chip.cooking{border-color:var(--orange);color:var(--orange)}
+    .order-items .item-chip.cooked{border-color:var(--amber);color:var(--amber)}
+    .order-items .item-chip.at_counter{border-color:var(--green);color:var(--green);font-weight:600}
+    .order-items .item-chip.picked_up{border-color:var(--blue);color:var(--blue)}
+    .order-items .item-chip.delivered{border-color:var(--text2);color:var(--text2);opacity:.5}
+
+    /* Waiter cards (horizontal scroll) */
+    .waiter-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+    .waiter-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 16px;min-width:140px;flex-shrink:0;text-align:center}
+    .waiter-card .waiter-name{font-size:14px;font-weight:600;margin-bottom:4px}
+    .waiter-card .waiter-stats{font-size:12px;color:var(--text2)}
+    .waiter-card.green{border-color:var(--green)}
+    .waiter-card.yellow{border-color:var(--amber)}
+    .waiter-card.red{border-color:var(--red)}
+    .waiter-card.gray{border-color:var(--border);opacity:.5}
+    .waiter-card.self{background:var(--amber-dim)}
+    .waiter-card .load-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+
+    /* Assign modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:70vh;overflow-y:auto;padding:20px}
+    .modal h2{font-size:16px;margin-bottom:4px}
+    .modal .modal-sub{color:var(--text2);font-size:13px;margin-bottom:16px}
+    .modal .assign-btn{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;text-align:left}
+    .modal .assign-btn:active{background:var(--border)}
+    .modal .assign-btn.self{border-color:var(--amber);background:var(--amber-dim)}
+    .modal .assign-btn .load-info{color:var(--text2);font-size:12px}
+    .modal .close-modal{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;margin-top:8px}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:40px 20px}
+    .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+    .empty-state p{color:var(--text2);font-size:14px}
+
+    /* Staff management */
+    .staff-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+    .staff-card.inactive{opacity:.4}
+    .staff-card .staff-info{flex:1}
+    .staff-card .staff-name{font-size:14px;font-weight:600}
+    .staff-card .staff-role{font-size:12px;color:var(--text2)}
+    .staff-actions{display:flex;gap:6px}
+    .staff-actions button{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
+    .staff-actions button:active{background:var(--border)}
+
+    .form-row{margin-bottom:12px}
+    .form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+    .form-row input,.form-row select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit}
+    .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--blue)}
+    .btn-primary{background:var(--amber);color:#000;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%}
+    .btn-primary:active{opacity:.8}
+
+    /* Connection status */
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+    .toast.show{opacity:1}
+    .toast.error{border-color:var(--red);color:var(--red)}
+    .toast.success{border-color:var(--green);color:var(--green)}
+  </style>
+</head>
+<body>
+<div style="background:#ef4444;color:#fff;text-align:center;padding:6px;font-weight:700;font-size:13px;letter-spacing:1px;position:sticky;top:0;z-index:999">TEST MODE — test.hamzahotel.com</div>
+
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <div class="pin-title">Captain Login</div>
+  <div class="pin-sub">Enter your 4-digit PIN</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key del" data-key="del">DEL</button>
+  </div>
+</div>
+
+<!-- Main App (hidden until login) -->
+<div id="app" style="display:none">
+  <div class="header">
+    <h1><span class="accent"></span>Captain</h1>
+    <div class="header-right">
+      <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="icon-btn" onclick="pollOdoo()" title="Poll Odoo">+</button>
+      <button class="icon-btn" onclick="refreshDashboard()" title="Refresh">&#x21bb;</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="main-tabs">
+    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard<span class="badge" id="unassigned-badge" style="display:none">0</span></div>
+    <div class="tab" data-tab="waiter" onclick="switchTab('waiter')" id="waiter-tab" style="display:none">My Pickups</div>
+    <div class="tab" data-tab="staff" onclick="switchTab('staff')">Staff</div>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <div id="unassigned-section"></div>
+
+    <div class="section-title">WAITERS</div>
+    <div class="waiter-scroll" id="waiter-scroll"></div>
+
+    <div class="section-title" style="margin-top:20px">ACTIVE ORDERS</div>
+    <div id="active-orders"></div>
+  </div>
+
+  <!-- Waiter (dual-role) Screen -->
+  <div class="screen" id="screen-waiter">
+    <div id="waiter-content"></div>
+  </div>
+
+  <!-- Staff Management Screen -->
+  <div class="screen" id="screen-staff">
+    <div class="section-title" style="margin-top:0">STAFF</div>
+    <div id="staff-list"></div>
+    <button class="btn-primary" style="margin-top:16px" onclick="showAddStaff()">+ Add Staff</button>
+    <div id="add-staff-form" style="display:none;margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
+      <div class="form-row"><label>Name</label><input id="new-name" placeholder="Staff name"></div>
+      <div class="form-row"><label>PIN (4 digits)</label><input id="new-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="1234"></div>
+      <div class="form-row"><label>Role</label>
+        <select id="new-role"><option value="waiter">Waiter</option><option value="captain">Captain</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-can-captain"> Can Captain</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-can-waiter" checked> Can Waiter</label>
+      </div>
+      <button class="btn-primary" style="margin-top:12px" onclick="addStaff()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal-overlay" id="assign-modal">
+  <div class="modal">
+    <h2 id="assign-title">Assign Order</h2>
+    <div class="modal-sub" id="assign-sub"></div>
+    <div id="assign-options"></div>
+    <button class="close-modal" onclick="closeAssignModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+    const ENV_SUFFIX = '&env=test';
+let token = localStorage.getItem('floor_test_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_test_staff') || 'null');
+let dashboardData = null;
+let dashboardInterval = null;
+let pollInterval = null;
+let assigningOrderId = null;
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── API helper ──
+async function api(action, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const url = `${API_BASE}?action=${action}${ENV_SUFFIX}`;
+  try {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    document.getElementById('conn-dot').className = 'conn-dot';
+    return data;
+  } catch (e) {
+    if (e.message !== 'Session expired') document.getElementById('conn-dot').className = 'conn-dot offline';
+    throw e;
+  }
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  // Update dots
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const data = await fetch(`${API_BASE}?action=floor-login${ENV_SUFFIX}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      }).then(r => r.json());
+
+      if (data.error) throw new Error(data.error);
+      if (!data.can_captain) throw new Error('Captain access required');
+
+      token = data.token;
+      staffInfo = data;
+      localStorage.setItem('floor_test_token', token);
+      localStorage.setItem('floor_test_staff', JSON.stringify(data));
+      enterApp();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+function logout() {
+  token = '';
+  staffInfo = null;
+  localStorage.removeItem('floor_test_token');
+  localStorage.removeItem('floor_test_staff');
+  clearInterval(dashboardInterval);
+  clearInterval(pollInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinBuffer = '';
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+}
+
+// ── Enter App ──
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('staff-name').textContent = staffInfo.name;
+
+  // Show waiter tab if dual-role
+  if (staffInfo.can_waiter) {
+    document.getElementById('waiter-tab').style.display = '';
+  }
+
+  refreshDashboard();
+  pollOdoo();
+  dashboardInterval = setInterval(refreshDashboard, 10000);
+  pollInterval = setInterval(pollOdoo, 30000);
+}
+
+// ── Tab switching ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + tab));
+  if (tab === 'dashboard') refreshDashboard();
+  if (tab === 'staff') loadStaff();
+  if (tab === 'waiter') loadWaiterView();
+}
+
+// ── Dashboard ──
+async function refreshDashboard() {
+  try {
+    dashboardData = await api('floor-dashboard');
+    renderDashboard();
+  } catch (e) { console.error('Dashboard error:', e); }
+}
+
+function renderDashboard() {
+  const d = dashboardData;
+  if (!d) return;
+
+  // Stats bar
+  const s = d.stats;
+  const alertClass = s.unassigned > 0 ? ' alert' : '';
+  document.getElementById('stats-bar').innerHTML =
+    `<div class="stat-chip"><span class="val">${s.total_orders || 0}</span> Orders</div>` +
+    `<div class="stat-chip${alertClass}"><span class="val">${s.unassigned || 0}</span> Unassigned</div>` +
+    `<div class="stat-chip"><span class="val">${s.items_ready || 0}</span> Ready</div>` +
+    `<div class="stat-chip"><span class="val">${s.served || 0}</span> Served</div>`;
+
+  // Unassigned badge
+  const badge = document.getElementById('unassigned-badge');
+  if (d.unassigned.length > 0) {
+    badge.style.display = '';
+    badge.textContent = d.unassigned.length;
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Unassigned orders
+  const usec = document.getElementById('unassigned-section');
+  if (d.unassigned.length > 0) {
+    usec.innerHTML = '<div class="section-title" style="margin-top:0;color:var(--red)">UNASSIGNED ORDERS</div>' +
+      d.unassigned.map(o => renderOrderCard(o, true)).join('');
+  } else {
+    usec.innerHTML = '';
+  }
+
+  // Waiter cards
+  const wscroll = document.getElementById('waiter-scroll');
+  wscroll.innerHTML = d.waiters.map(w => {
+    const load = w.active_orders || 0;
+    const color = load === 0 ? 'gray' : load <= 2 ? 'green' : load <= 4 ? 'yellow' : 'red';
+    const isSelf = w.id === d.staff_id;
+    return `<div class="waiter-card ${color}${isSelf ? ' self' : ''}">
+      <div class="waiter-name">${w.name}${isSelf ? ' (You)' : ''}</div>
+      <div class="waiter-stats"><span class="load-dot" style="background:var(--${color === 'gray' ? 'text2' : color})"></span>${load} orders | ${w.ready_items || 0} ready</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text2);font-size:13px;padding:8px">No active waiters</div>';
+
+  // Active orders
+  const aDiv = document.getElementById('active-orders');
+  const assigned = d.active.filter(o => o.waiter_id);
+  if (assigned.length > 0) {
+    aDiv.innerHTML = assigned.map(o => renderOrderCard(o, false)).join('');
+  } else {
+    aDiv.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No active orders</p></div>';
+  }
+}
+
+function renderOrderCard(order, isUnassigned) {
+  const age = Math.round((Date.now() - new Date(order.created_at).getTime()) / 60000);
+  const progress = order.total_items > 0 ? Math.round((order.items_delivered || 0) / order.total_items * 100) : 0;
+  const readyPct = order.total_items > 0 ? Math.round((order.items_ready || 0) / order.total_items * 100) : 0;
+  const pClass = readyPct < 33 ? 'low' : readyPct < 66 ? 'mid' : 'high';
+
+  let itemsHtml = '';
+  if (order.items && order.items.length > 0) {
+    itemsHtml = '<div class="order-items">' + order.items.map(i =>
+      `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+    ).join('') + '</div>';
+  }
+
+  return `<div class="order-card${isUnassigned ? ' unassigned' : ''}" onclick="${isUnassigned ? `openAssignModal(${order.id})` : ''}">
+    <div class="order-top">
+      <span class="table-num">${order.table_number ? 'Table ' + order.table_number : 'No Table'}</span>
+      <span class="order-name">${order.odoo_order_name || ''}</span>
+    </div>
+    <div class="order-meta">
+      <span>${order.total_items || 0} items</span>
+      <span>${age}m ago</span>
+      ${order.items_ready > 0 ? `<span style="color:var(--green)">${order.items_ready} ready</span>` : ''}
+      ${order.items_delivered > 0 ? `<span style="color:var(--blue)">${order.items_delivered} delivered</span>` : ''}
+      ${order.waiter_name ? `<span class="waiter-tag">${order.waiter_name}</span>` : ''}
+    </div>
+    ${itemsHtml}
+    ${!isUnassigned ? `<div class="progress-bar"><div class="fill ${pClass}" style="width:${readyPct}%"></div></div>` : ''}
+  </div>`;
+}
+
+// ── Assign Modal ──
+function openAssignModal(orderId) {
+  assigningOrderId = orderId;
+  const order = dashboardData.unassigned.find(o => o.id === orderId) || dashboardData.active.find(o => o.id === orderId);
+  document.getElementById('assign-title').textContent = order?.table_number ? 'Table ' + order.table_number : 'Assign Order';
+  document.getElementById('assign-sub').textContent = `${order?.total_items || '?'} items | ${order?.odoo_order_name || ''}`;
+
+  const opts = document.getElementById('assign-options');
+  const waiters = dashboardData.waiters.sort((a, b) => (a.active_orders || 0) - (b.active_orders || 0));
+  opts.innerHTML = waiters.map(w => {
+    const isSelf = w.id === dashboardData.staff_id;
+    return `<button class="assign-btn${isSelf ? ' self' : ''}" onclick="assignOrder(${w.id})">
+      <span>${w.name}${isSelf ? ' (Me)' : ''}</span>
+      <span class="load-info">${w.active_orders || 0} orders</span>
+    </button>`;
+  }).join('');
+
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function closeAssignModal() {
+  document.getElementById('assign-modal').classList.remove('show');
+  assigningOrderId = null;
+}
+
+async function assignOrder(waiterId) {
+  try {
+    await api('floor-assign', 'POST', { order_id: assigningOrderId, waiter_id: waiterId });
+    closeAssignModal();
+    toast('Order assigned');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Poll Odoo ──
+async function pollOdoo() {
+  try {
+    const r = await api('floor-poll');
+    if (r.created > 0) {
+      toast(`${r.created} new order${r.created > 1 ? 's' : ''} found`);
+      refreshDashboard();
+    }
+  } catch (e) { console.error('Poll error:', e); }
+}
+
+// ── Staff Management ──
+async function loadStaff() {
+  try {
+    const data = await api('floor-staff');
+    const list = document.getElementById('staff-list');
+    list.innerHTML = data.staff.map(s => {
+      const roles = [];
+      if (s.can_captain) roles.push('Captain');
+      if (s.can_waiter) roles.push('Waiter');
+      return `<div class="staff-card${s.is_active ? '' : ' inactive'}">
+        <div class="staff-info">
+          <div class="staff-name">${s.name}</div>
+          <div class="staff-role">${roles.join(' + ') || s.role} | Load: ${s.current_load || 0}</div>
+        </div>
+        <div class="staff-actions">
+          <button onclick="toggleStaff(${s.id})">${s.is_active ? 'Off' : 'On'}</button>
+          <button onclick="removeStaff(${s.id})" style="color:var(--red)">Del</button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="empty-state"><p>No staff configured</p></div>';
+  } catch (e) { console.error('Staff load error:', e); }
+}
+
+function showAddStaff() {
+  const form = document.getElementById('add-staff-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addStaff() {
+  const name = document.getElementById('new-name').value.trim();
+  const pin = document.getElementById('new-pin').value.trim();
+  const role = document.getElementById('new-role').value;
+  const can_captain = document.getElementById('new-can-captain').checked;
+  const can_waiter = document.getElementById('new-can-waiter').checked;
+  if (!name || !pin || pin.length !== 4) { toast('Name + 4-digit PIN required', 'error'); return; }
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'add', name, pin, role, can_captain, can_waiter });
+    toast('Staff added');
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-pin').value = '';
+    document.getElementById('add-staff-form').style.display = 'none';
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function toggleStaff(id) {
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'toggle', staff_id: id });
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function removeStaff(id) {
+  if (!confirm('Remove this staff member?')) return;
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'remove', staff_id: id });
+    toast('Staff removed');
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Dual-role: Waiter view for captain ──
+async function loadWaiterView() {
+  try {
+    const data = await api('floor-my-orders');
+    const div = document.getElementById('waiter-content');
+
+    if (data.ready_batches.length === 0 && data.orders.length === 0) {
+      div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No orders assigned to you</p></div>';
+      return;
+    }
+
+    let html = '';
+    if (data.ready_batches.length > 0) {
+      html += '<div class="section-title" style="margin-top:0;color:var(--green)">READY FOR PICKUP</div>';
+      html += data.ready_batches.map(b => {
+        const counterColor = { 'Kitchen Pass': 'amber', 'Juice Counter': 'green', 'Bane Marie': 'blue', 'Shawarma Counter': 'orange', 'Grill Counter': 'red' }[b.counter] || 'text2';
+        return `<div class="order-card" style="border-color:var(--${counterColor})${b.urgent ? ';animation:pulse-border 1s infinite' : ''}">
+          <div class="order-top">
+            <span class="table-num" style="color:var(--${counterColor})">${b.counter}</span>
+            <span style="font-size:16px;font-weight:700">${b.item_count} items</span>
+          </div>
+          <div class="order-meta">
+            <span>Tables: ${b.tables.join(', ') || '?'}</span>
+            <span>${b.oldest_ready_minutes}m waiting</span>
+          </div>
+          <div class="order-items" style="margin-top:8px">${b.items.map(i =>
+            `<span class="item-chip at_counter">T${i.table_number || '?'}: ${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+          ).join('')}</div>
+          <button class="btn-primary" style="margin-top:10px" onclick="goPickup([${b.items.map(i => i.id).join(',')}], '${b.counter}')">GO - Pick Up</button>
+        </div>`;
+      }).join('');
+    }
+
+    if (Object.keys(data.cooking_summary).length > 0) {
+      html += '<div style="margin-top:12px;font-size:12px;color:var(--text2)">Cooking: ' +
+        Object.entries(data.cooking_summary).map(([c, n]) => `${c} ${n}`).join(' | ') + '</div>';
+    }
+
+    div.innerHTML = html;
+  } catch (e) { console.error('Waiter view error:', e); }
+}
+
+async function goPickup(itemIds, counter) {
+  try {
+    const r = await api('floor-pickup', 'POST', { item_ids: itemIds, counter });
+    toast(`Picked up ${r.picked_up} items`);
+    // Now show delivery buttons
+    if (r.tables && r.tables.length > 0) {
+      const deliverHtml = r.tables.map(t =>
+        `<button class="btn-primary" style="margin:6px 0;background:var(--blue)" onclick="goDeliver([${itemIds.join(',')}], ${r.trip_id})">Delivered to Table ${t}</button>`
+      ).join('');
+      document.getElementById('waiter-content').innerHTML =
+        `<div class="section-title" style="margin-top:0;color:var(--blue)">DELIVERING from ${counter}</div>${deliverHtml}`;
+    } else {
+      loadWaiterView();
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function goDeliver(itemIds, tripId) {
+  try {
+    await api('floor-deliver', 'POST', { item_ids: itemIds, trip_id: tripId });
+    toast('Delivered!', 'success');
+    loadWaiterView();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Init ──
+if (token && staffInfo) {
+  enterApp();
+} else {
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

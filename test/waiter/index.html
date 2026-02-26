@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Waiter [TEST]</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:var(--green);border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* Tabs */
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:99}
+    .tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--green);border-bottom-color:var(--green)}
+    .tab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--green);color:#000;border-radius:9px;font-size:11px;font-weight:700;margin-left:4px;padding:0 5px}
+    .tab .badge.urgent{background:var(--red);color:#fff}
+
+    /* Screens */
+    .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:100px}
+    .screen.active{display:block}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    #pin-screen .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    #pin-screen .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--green);border-color:var(--green)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Counter batch cards */
+    .batch-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;position:relative;transition:all .15s}
+    .batch-card.urgent{animation:pulse-urgent 1.5s infinite}
+    @keyframes pulse-urgent{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+    .batch-card.kp{border-color:var(--amber)}
+    .batch-card.juice{border-color:var(--green)}
+    .batch-card.bm{border-color:var(--blue)}
+    .batch-card.shawarma{border-color:var(--orange)}
+    .batch-card.grill{border-color:var(--red)}
+    .batch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .batch-counter{font-size:16px;font-weight:700}
+    .batch-count{font-size:22px;font-weight:700}
+    .batch-meta{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;gap:10px}
+    .batch-items{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+    .batch-item{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+    .batch-item .tbl{color:var(--text2);font-size:11px}
+
+    .go-btn{width:100%;padding:14px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+    .go-btn:active{opacity:.8}
+    .go-btn.blue{background:var(--blue);color:#fff}
+
+    /* Pickup mode */
+    .pickup-header{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;font-weight:600;text-align:center}
+    .pickup-group{margin-bottom:16px}
+    .pickup-group .table-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+    .pickup-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
+    .pickup-item.checked{border-color:var(--green);background:var(--green-dim)}
+    .pickup-item .check{width:24px;height:24px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:14px}
+    .pickup-item.checked .check{border-color:var(--green);background:var(--green);color:#000}
+    .pickup-item .item-info{flex:1}
+    .pickup-item .item-name{font-size:14px;font-weight:500}
+    .pickup-item .item-qty{font-size:12px;color:var(--text2)}
+
+    .confirm-pickup{width:100%;padding:16px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px}
+    .confirm-pickup:disabled{background:var(--border);color:var(--text2);cursor:default}
+    .confirm-pickup:active:not(:disabled){opacity:.8}
+
+    /* Delivery mode */
+    .deliver-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    .deliver-card .table-info{flex:1}
+    .deliver-card .table-num{font-size:20px;font-weight:700}
+    .deliver-card .item-count{font-size:13px;color:var(--text2)}
+    .deliver-btn{padding:12px 24px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+    .deliver-btn:active{opacity:.8}
+    .deliver-btn.done{background:var(--green);color:#000}
+
+    /* My Orders tab */
+    .order-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+    .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .order-table{font-size:16px;font-weight:700}
+    .order-name{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .order-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+    .item-chip{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
+    .item-chip.cooking{border-color:var(--orange);color:var(--orange)}
+    .item-chip.cooked{border-color:var(--amber);color:var(--amber)}
+    .item-chip.at_counter{border-color:var(--green);color:var(--green);font-weight:600}
+    .item-chip.picked_up{border-color:var(--blue);color:var(--blue)}
+    .item-chip.delivered{color:var(--text2);opacity:.5}
+
+    /* Route suggestion */
+    .route-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+    .route-bar .arrow{color:var(--green)}
+
+    /* Cooking summary */
+    .cooking-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:12px;-webkit-overflow-scrolling:touch}
+    .cooking-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;white-space:nowrap;color:var(--text2);flex-shrink:0}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:40px 20px}
+    .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+    .empty-state p{color:var(--text2);font-size:14px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+    .toast.show{opacity:1}
+    .toast.error{border-color:var(--red);color:var(--red)}
+    .toast.success{border-color:var(--green);color:var(--green)}
+  </style>
+</head>
+<body>
+<div style="background:#ef4444;color:#fff;text-align:center;padding:6px;font-weight:700;font-size:13px;letter-spacing:1px;position:sticky;top:0;z-index:999">TEST MODE — test.hamzahotel.com</div>
+
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <div class="pin-title">Waiter Login</div>
+  <div class="pin-sub">Enter your 4-digit PIN</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key del" data-key="del">DEL</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="header">
+    <h1><span class="accent"></span>Waiter</h1>
+    <div class="header-right">
+      <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="icon-btn" onclick="refresh()" title="Refresh">&#x21bb;</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="ready" onclick="switchTab('ready')">Ready<span class="badge" id="ready-badge" style="display:none">0</span></div>
+    <div class="tab" data-tab="orders" onclick="switchTab('orders')">My Orders<span class="badge" id="orders-badge" style="display:none">0</span></div>
+  </div>
+
+  <!-- Ready Batches Screen (default) -->
+  <div class="screen active" id="screen-ready">
+    <div id="ready-content"></div>
+  </div>
+
+  <!-- My Orders Screen -->
+  <div class="screen" id="screen-orders">
+    <div id="orders-content"></div>
+  </div>
+
+  <!-- Pickup Mode (overlay) -->
+  <div class="screen" id="screen-pickup">
+    <div id="pickup-content"></div>
+  </div>
+
+  <!-- Delivery Mode (overlay) -->
+  <div class="screen" id="screen-deliver">
+    <div id="deliver-content"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+    const ENV_SUFFIX = '&env=test';
+let token = localStorage.getItem('floor_waiter_test_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_test_staff') || 'null');
+let myData = null;
+let prevReadyCount = 0;
+let pollInterval = null;
+let currentMode = 'ready'; // ready | orders | pickup | deliver
+
+// Counter color class mapping
+const COUNTER_CLASS = {
+  'Kitchen Pass': 'kp', 'Juice Counter': 'juice', 'Bane Marie': 'bm',
+  'Shawarma Counter': 'shawarma', 'Grill Counter': 'grill'
+};
+const COUNTER_COLOR = {
+  'Kitchen Pass': 'amber', 'Juice Counter': 'green', 'Bane Marie': 'blue',
+  'Shawarma Counter': 'orange', 'Grill Counter': 'red'
+};
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── Vibrate ──
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── API helper ──
+async function api(action, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  try {
+    const res = await fetch(`${API_BASE}?action=${action}${ENV_SUFFIX}`, opts);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    document.getElementById('conn-dot').className = 'conn-dot';
+    return data;
+  } catch (e) {
+    if (e.message !== 'Session expired') document.getElementById('conn-dot').className = 'conn-dot offline';
+    throw e;
+  }
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const data = await fetch(`${API_BASE}?action=floor-login${ENV_SUFFIX}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      }).then(r => r.json());
+
+      if (data.error) throw new Error(data.error);
+      if (!data.can_waiter) throw new Error('Waiter access required');
+
+      token = data.token;
+      staffInfo = data;
+      localStorage.setItem('floor_waiter_test_token', token);
+      localStorage.setItem('floor_waiter_test_staff', JSON.stringify(data));
+      enterApp();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+function logout() {
+  token = '';
+  staffInfo = null;
+  localStorage.removeItem('floor_waiter_test_token');
+  localStorage.removeItem('floor_waiter_test_staff');
+  clearInterval(pollInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinBuffer = '';
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+}
+
+// ── Enter App ──
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('staff-name').textContent = staffInfo.name;
+  refresh();
+  pollInterval = setInterval(refresh, 5000);
+}
+
+// ── Tab switching ──
+function switchTab(tab) {
+  currentMode = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+}
+
+// ── Main refresh ──
+async function refresh() {
+  if (currentMode === 'pickup' || currentMode === 'deliver') return; // Don't refresh during active workflow
+  try {
+    myData = await api('floor-my-orders');
+    renderReady();
+    renderOrders();
+    checkNotifications();
+  } catch (e) { console.error('Refresh error:', e); }
+}
+
+// ── Notifications (compare ready counts) ──
+function checkNotifications() {
+  if (!myData) return;
+  const newReady = myData.total_ready || 0;
+  if (newReady > prevReadyCount && prevReadyCount > 0) {
+    // New items became ready
+    vibrate([200, 100, 200]);
+  }
+  const hasUrgent = myData.ready_batches.some(b => b.urgent);
+  if (hasUrgent) {
+    vibrate([400, 200, 400, 200, 400]);
+  }
+  prevReadyCount = newReady;
+}
+
+// ── Ready Batches Screen ──
+function renderReady() {
+  const d = myData;
+  if (!d) return;
+
+  // Update badge
+  const badge = document.getElementById('ready-badge');
+  if (d.total_ready > 0) {
+    badge.style.display = '';
+    badge.textContent = d.total_ready;
+    badge.className = 'badge' + (d.ready_batches.some(b => b.urgent) ? ' urgent' : '');
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Update orders badge
+  const oBadge = document.getElementById('orders-badge');
+  if (d.orders.length > 0) {
+    oBadge.style.display = '';
+    oBadge.textContent = d.orders.length;
+  } else {
+    oBadge.style.display = 'none';
+  }
+
+  const div = document.getElementById('ready-content');
+  if (d.ready_batches.length === 0) {
+    let html = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No items ready for pickup</p></div>';
+    if (Object.keys(d.cooking_summary).length > 0) {
+      html += '<div class="cooking-bar">' +
+        Object.entries(d.cooking_summary).map(([c, n]) =>
+          `<div class="cooking-chip">${c}: ${n} cooking</div>`
+        ).join('') + '</div>';
+    }
+    div.innerHTML = html;
+    return;
+  }
+
+  let html = '';
+
+  // Multi-counter route suggestion
+  if (d.multi_counter_route && d.multi_counter_route.length > 1) {
+    html += `<div class="route-bar">Route: ${d.multi_counter_route.map(c =>
+      `<span style="color:var(--${COUNTER_COLOR[c] || 'text'})">${c}</span>`
+    ).join(' <span class="arrow">&#x2192;</span> ')} (${d.total_ready} items)</div>`;
+  }
+
+  // Batch cards
+  html += d.ready_batches.map(b => {
+    const cls = COUNTER_CLASS[b.counter] || '';
+    const color = COUNTER_COLOR[b.counter] || 'text';
+    return `<div class="batch-card ${cls}${b.urgent ? ' urgent' : ''}">
+      <div class="batch-header">
+        <span class="batch-counter" style="color:var(--${color})">${b.counter}</span>
+        <span class="batch-count">${b.item_count}</span>
+      </div>
+      <div class="batch-meta">
+        <span>Tables: ${b.tables.join(', ') || '?'}</span>
+        <span>${b.oldest_ready_minutes}m waiting</span>
+      </div>
+      <div class="batch-items">${b.items.map(i =>
+        `<span class="batch-item"><span class="tbl">T${i.table_number || '?'}</span> ${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('')}</div>
+      <button class="go-btn" onclick='enterPickupMode(${JSON.stringify(b)})'>GO &#x2192;</button>
+    </div>`;
+  }).join('');
+
+  // Cooking summary
+  if (Object.keys(d.cooking_summary).length > 0) {
+    html += '<div class="cooking-bar">' +
+      Object.entries(d.cooking_summary).map(([c, n]) =>
+        `<div class="cooking-chip">${c}: ${n}</div>`
+      ).join('') + '</div>';
+  }
+
+  div.innerHTML = html;
+}
+
+// ── My Orders Screen ──
+function renderOrders() {
+  const d = myData;
+  if (!d) return;
+  const div = document.getElementById('orders-content');
+
+  if (d.orders.length === 0) {
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No orders assigned to you</p></div>';
+    return;
+  }
+
+  div.innerHTML = d.orders.map(o => {
+    const readyCount = (o.items || []).filter(i => i.status === 'at_counter').length;
+    const deliveredCount = (o.items || []).filter(i => i.status === 'delivered').length;
+    return `<div class="order-card">
+      <div class="order-top">
+        <span class="order-table">${o.table_number ? 'Table ' + o.table_number : 'No Table'}</span>
+        <span class="order-name">${o.odoo_order_name || ''}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">
+        ${o.total_items} items | ${readyCount} ready | ${deliveredCount} delivered
+      </div>
+      <div class="order-items">${(o.items || []).map(i =>
+        `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Pickup Mode ──
+let pickupBatch = null;
+let checkedItems = new Set();
+
+function enterPickupMode(batch) {
+  pickupBatch = batch;
+  checkedItems = new Set();
+  currentMode = 'pickup';
+
+  // Hide other screens, show pickup
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-pickup').classList.add('active');
+
+  renderPickup();
+}
+
+function renderPickup() {
+  const b = pickupBatch;
+  const color = COUNTER_COLOR[b.counter] || 'green';
+
+  // Group items by table
+  const byTable = {};
+  for (const item of b.items) {
+    const t = item.table_number || '?';
+    if (!byTable[t]) byTable[t] = [];
+    byTable[t].push(item);
+  }
+
+  let html = `<div class="pickup-header" style="border-color:var(--${color});color:var(--${color})">PICKING UP at ${b.counter}</div>`;
+
+  for (const [table, items] of Object.entries(byTable)) {
+    html += `<div class="pickup-group">
+      <div class="table-label">Table ${table}</div>
+      ${items.map(i => `<div class="pickup-item${checkedItems.has(i.id) ? ' checked' : ''}" onclick="togglePickupItem(${i.id})">
+        <div class="check">${checkedItems.has(i.id) ? '&#x2713;' : ''}</div>
+        <div class="item-info">
+          <div class="item-name">${i.product_name}</div>
+          ${i.quantity > 1 ? `<div class="item-qty">x${i.quantity}</div>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  const allChecked = b.items.every(i => checkedItems.has(i.id));
+  html += `<button class="confirm-pickup" onclick="confirmPickup()" ${allChecked ? '' : 'disabled'}>&#x2713; ALL PICKED UP (${checkedItems.size}/${b.items.length})</button>`;
+  html += `<button style="width:100%;margin-top:8px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit" onclick="cancelPickup()">Cancel</button>`;
+
+  document.getElementById('pickup-content').innerHTML = html;
+}
+
+function togglePickupItem(id) {
+  if (checkedItems.has(id)) checkedItems.delete(id); else checkedItems.add(id);
+  renderPickup();
+  vibrate([50]);
+}
+
+function cancelPickup() {
+  currentMode = 'ready';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-ready').classList.add('active');
+}
+
+async function confirmPickup() {
+  const itemIds = pickupBatch.items.map(i => i.id);
+  try {
+    const r = await api('floor-pickup', 'POST', { item_ids: itemIds, counter: pickupBatch.counter });
+    vibrate([100]);
+    toast(`Picked up ${r.picked_up} items`);
+
+    // Enter delivery mode
+    if (r.tables && r.tables.length > 0) {
+      enterDeliverMode(r, itemIds);
+    } else {
+      currentMode = 'ready';
+      switchTab('ready');
+      refresh();
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Delivery Mode ──
+let deliverData = null;
+let deliveredTables = new Set();
+
+function enterDeliverMode(pickupResult, itemIds) {
+  deliverData = { ...pickupResult, item_ids: itemIds };
+  deliveredTables = new Set();
+  currentMode = 'deliver';
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-deliver').classList.add('active');
+
+  renderDeliver();
+}
+
+function renderDeliver() {
+  const d = deliverData;
+  let html = `<div class="pickup-header" style="border-color:var(--blue);color:var(--blue)">DELIVERING</div>`;
+
+  for (const table of d.tables) {
+    const isDone = deliveredTables.has(table);
+    html += `<div class="deliver-card${isDone ? ' delivered' : ''}" style="${isDone ? 'opacity:.4;border-color:var(--green)' : ''}">
+      <div class="table-info">
+        <div class="table-num">Table ${table}</div>
+      </div>
+      <button class="deliver-btn${isDone ? ' done' : ''}" onclick="deliverTable('${table}')" ${isDone ? 'disabled' : ''}>
+        ${isDone ? '&#x2713; Done' : 'DELIVERED &#x2713;'}
+      </button>
+    </div>`;
+  }
+
+  document.getElementById('deliver-content').innerHTML = html;
+}
+
+async function deliverTable(table) {
+  // Find items for this table
+  const tableItems = pickupBatch.items.filter(i => String(i.table_number) === String(table));
+  const itemIds = tableItems.map(i => i.id);
+
+  try {
+    await api('floor-deliver', 'POST', { item_ids: itemIds, trip_id: deliverData.trip_id });
+    vibrate([100]);
+    deliveredTables.add(table);
+
+    // Check if all tables delivered
+    if (deliveredTables.size >= deliverData.tables.length) {
+      toast('All delivered!');
+      currentMode = 'ready';
+      switchTab('ready');
+      refresh();
+    } else {
+      renderDeliver();
+    }
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Init ──
+if (token && staffInfo) {
+  enterApp();
+} else {
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

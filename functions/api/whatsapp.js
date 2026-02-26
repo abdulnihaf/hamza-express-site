@@ -231,6 +231,7 @@ function getCustomerTier(totalOrders) {
 const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
 const ODOO_DB = 'main';
 const ODOO_UID = 2;
+const TEST_ODOO_URL = 'https://test.hamzahotel.com/jsonrpc';
 const POS_CONFIG_ID = 10;     // HE - WABA
 const PRICELIST_ID = 1;       // Default pricelist
 const PAYMENT_METHOD_UPI = 17; // WABA General UPI
@@ -1580,6 +1581,10 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
     }
 
+    // Detect test mode from webhook URL (?env=test added by test SA 944)
+    const isTestWebhook = url.searchParams.get('env') === 'test';
+    const webhookOdooUrl = isTestWebhook ? TEST_ODOO_URL : undefined;
+
     const body = await context.request.json();
     const { stage_id, todo, prep_line_id } = body;
 
@@ -1591,7 +1596,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     // Step 1: Get prep_order_id from pos.prep.line
     const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
-      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 });
+      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 }, webhookOdooUrl);
     if (!prepLine || !prepLine[0]?.prep_order_id) {
       return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
     }
@@ -1600,7 +1605,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     // Step 2: Get pos_order_id from pos.prep.order
     const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
-      [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 });
+      [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 }, webhookOdooUrl);
     if (!prepOrder || !prepOrder[0]?.pos_order_id) {
       return new Response(JSON.stringify({ ok: true, skipped: 'prep order not found' }), { headers: corsHeaders });
     }
@@ -1608,7 +1613,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     // Step 3: Get config_id + preset_id from pos.order
     const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
-      [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 });
+      [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
     if (!posOrder || !posOrder[0]) {
       return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
     }
@@ -1617,8 +1622,8 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const trackingNumber = posOrder[0].tracking_number || null;
 
     // Route by config
-    if (configId === POS_CONFIG_ID) {
-      // WABA order (config 10) — existing WhatsApp notification flow
+    if (configId === POS_CONFIG_ID && !isTestWebhook) {
+      // WABA order (config 10) — existing WhatsApp notification flow (production only)
       return handleKdsWebhookWABA(context, corsHeaders, {
         stage_id, todo, prep_line_id, posOrderId, trackingNumber
       });
@@ -1626,9 +1631,13 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     if (configId === 6 && presetId === 1) {
       // Captain dine-in order — floor tracking flow
+      // Use test config if webhook came from test Odoo
+      const floorCfg = isTestWebhook
+        ? { isTest: true, odooUrl: TEST_ODOO_URL, stageMap: TEST_FLOOR_STAGE_MAP, t: 'test_' }
+        : { isTest: false, odooUrl: ODOO_URL, stageMap: FLOOR_STAGE_MAP, t: '' };
       return handleKdsWebhookFloor(context, corsHeaders, {
         stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId
-      });
+      }, floorCfg);
     }
 
     return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant config' }), { headers: corsHeaders });
@@ -1735,46 +1744,74 @@ const FLOOR_STAGE_MAP = {
 
 const FLOOR_STATUS_ORDER = { cooking: 0, cooked: 1, at_counter: 2, picked_up: 3, delivered: 4 };
 
+// Test stage IDs (differ for station Prepared stages only)
+const TEST_FLOOR_STAGE_MAP = {
+  83: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done (test)
+  84: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done (test)
+  89: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done (test)
+  92: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done (test)
+  75: { counter: 'Kitchen Pass', status: 'at_counter' }, // KP strike-through (same)
+  63: { counter: 'Kitchen Pass', status: 'kp_completed' }, // KP Completed (same)
+  47: { counter: 'Juice Counter', status: 'at_counter' },
+  50: { counter: 'Bane Marie', status: 'at_counter' },
+  53: { counter: 'Shawarma Counter', status: 'at_counter' },
+  56: { counter: 'Grill Counter', status: 'at_counter' },
+};
+
 // Category → counter mapping for floor items
 const FLOOR_COUNTER_MAP = {
   22: 'Kitchen Pass', 24: 'Kitchen Pass', 25: 'Kitchen Pass', 26: 'Kitchen Pass',
   27: 'Juice Counter', 28: 'Bane Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
 };
 
-async function handleKdsWebhookFloor(context, corsHeaders, data) {
+// Get floor config based on env=test query param
+function getFloorConfig(url) {
+  const isTest = new URL(url).searchParams.get('env') === 'test';
+  const t = isTest ? 'test_' : '';
+  return {
+    isTest,
+    odooUrl: isTest ? TEST_ODOO_URL : ODOO_URL,
+    stageMap: isTest ? TEST_FLOOR_STAGE_MAP : FLOOR_STAGE_MAP,
+    t, // table prefix: '' for prod, 'test_' for test
+  };
+}
+
+async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
   const { stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId } = data;
   const db = context.env.DB;
+  const t = floorCfg?.t || '';
+  const stageMap = floorCfg?.stageMap || FLOOR_STAGE_MAP;
   const ok = (msg) => new Response(JSON.stringify({ ok: true, floor: msg }), { headers: corsHeaders });
 
   // Check if this stage is relevant for floor tracking
-  const stageInfo = FLOOR_STAGE_MAP[stage_id];
+  const stageInfo = stageMap[stage_id];
   if (!stageInfo) return ok('irrelevant stage for floor');
 
   // Only process todo=false signals (all relevant floor signals are todo→false)
   if (todo !== false) return ok('todo not false');
 
   // Find or create floor_order
-  let floorOrder = await db.prepare('SELECT * FROM floor_orders WHERE odoo_order_id = ?')
+  let floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE odoo_order_id = ?`)
     .bind(posOrderId).first();
 
   if (!floorOrder) {
     // Auto-create from Odoo data (webhook arrived before poller)
-    floorOrder = await createFloorOrderFromOdoo(context, posOrderId, configId);
+    floorOrder = await createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg);
     if (!floorOrder) return ok('could not create floor order');
   }
 
   // Find floor_item by prep_line_id
-  let floorItem = await db.prepare('SELECT * FROM floor_items WHERE prep_line_id = ?')
+  let floorItem = await db.prepare(`SELECT * FROM ${t}floor_items WHERE prep_line_id = ?`)
     .bind(prep_line_id).first();
 
   if (!floorItem && productId) {
     // Fallback: match by product_id within this order (for items not yet bound)
     floorItem = await db.prepare(
-      'SELECT * FROM floor_items WHERE floor_order_id = ? AND odoo_product_id = ? AND prep_line_id IS NULL LIMIT 1'
+      `SELECT * FROM ${t}floor_items WHERE floor_order_id = ? AND odoo_product_id = ? AND prep_line_id IS NULL LIMIT 1`
     ).bind(floorOrder.id, productId).first();
 
     if (floorItem) {
-      await db.prepare('UPDATE floor_items SET prep_line_id = ? WHERE id = ?')
+      await db.prepare(`UPDATE ${t}floor_items SET prep_line_id = ? WHERE id = ?`)
         .bind(prep_line_id, floorItem.id).run();
     }
   }
@@ -1788,7 +1825,7 @@ async function handleKdsWebhookFloor(context, corsHeaders, data) {
   }
 
   const now = new Date().toISOString();
-  let sql = 'UPDATE floor_items SET status = ?, counter = ?, updated_at = ?';
+  let sql = `UPDATE ${t}floor_items SET status = ?, counter = ?, updated_at = ?`;
   const params = [newStatus, stageInfo.counter, now];
 
   if (newStatus === 'cooked') { sql += ', cooked_at = ?'; params.push(now); }
@@ -1801,17 +1838,17 @@ async function handleKdsWebhookFloor(context, corsHeaders, data) {
   // Update order-level counters
   if (newStatus === 'at_counter') {
     await db.prepare(
-      'UPDATE floor_orders SET items_ready = items_ready + 1, status = CASE WHEN status = \'served\' THEN status ELSE \'in_progress\' END, updated_at = ? WHERE id = ?'
+      `UPDATE ${t}floor_orders SET items_ready = items_ready + 1, status = CASE WHEN status = 'served' THEN status ELSE 'in_progress' END, updated_at = ? WHERE id = ?`
     ).bind(now, floorOrder.id).run();
   }
 
   // Update tracking number if we have it
   if (trackingNumber && !floorOrder.tracking_number) {
-    await db.prepare('UPDATE floor_orders SET tracking_number = ? WHERE id = ?')
+    await db.prepare(`UPDATE ${t}floor_orders SET tracking_number = ? WHERE id = ?`)
       .bind(trackingNumber, floorOrder.id).run();
   }
 
-  console.log(`KDS→Floor: item ${floorItem.id} (${floorItem.product_name}) → ${newStatus} at ${stageInfo.counter} (order ${floorOrder.odoo_order_name})`);
+  console.log(`KDS→Floor${t ? '[TEST]' : ''}: item ${floorItem.id} (${floorItem.product_name}) → ${newStatus} at ${stageInfo.counter} (order ${floorOrder.odoo_order_name})`);
   return ok(`item ${floorItem.id} → ${newStatus}`);
 }
 
@@ -1823,17 +1860,17 @@ async function handleKdsWebhookFloor(context, corsHeaders, data) {
 const COUNTER_ADJACENCY = ['Kitchen Pass', 'Bane Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
 
 // ── Auth helper: validate session token ──
-async function validateFloorToken(db, token, requireRole) {
+async function validateFloorToken(db, token, requireRole, t) {
   if (!token) return null;
   const staff = await db.prepare(
-    'SELECT * FROM floor_staff WHERE session_token = ? AND is_active = 1'
+    `SELECT * FROM ${t}floor_staff WHERE session_token = ? AND is_active = 1`
   ).bind(token).first();
   if (!staff) return null;
   if (staff.token_expires_at && new Date(staff.token_expires_at) < new Date()) return null;
   if (requireRole === 'captain' && !staff.can_captain) return null;
   if (requireRole === 'waiter' && !staff.can_waiter) return null;
   // Update last_seen
-  await db.prepare('UPDATE floor_staff SET last_seen_at = ? WHERE id = ?')
+  await db.prepare(`UPDATE ${t}floor_staff SET last_seen_at = ? WHERE id = ?`)
     .bind(new Date().toISOString(), staff.id).run();
   return staff;
 }
@@ -1842,6 +1879,8 @@ async function validateFloorToken(db, token, requireRole) {
 async function handleFloorAction(context, action, corsHeaders) {
   const db = context.env.DB;
   const method = context.request.method;
+  const cfg = getFloorConfig(context.request.url);
+  const t = cfg.t; // table prefix: '' for prod, 'test_' for test
   const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: corsHeaders });
   const err = (msg, status = 400) => json({ error: msg }, status);
 
@@ -1854,14 +1893,14 @@ async function handleFloorAction(context, action, corsHeaders) {
     const pin = String(body.pin || '').trim();
     if (!pin) return err('PIN required');
 
-    const staff = await db.prepare('SELECT * FROM floor_staff WHERE pin = ? AND is_active = 1').bind(pin).first();
+    const staff = await db.prepare(`SELECT * FROM ${t}floor_staff WHERE pin = ? AND is_active = 1`).bind(pin).first();
     if (!staff) return err('Invalid PIN', 401);
 
     // Generate session token (32-char hex, valid 12h)
     const token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
       .map(b => b.toString(16).padStart(2, '0')).join('');
     const expires = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
-    await db.prepare('UPDATE floor_staff SET session_token = ?, token_expires_at = ?, last_seen_at = ? WHERE id = ?')
+    await db.prepare(`UPDATE ${t}floor_staff SET session_token = ?, token_expires_at = ?, last_seen_at = ? WHERE id = ?`)
       .bind(token, expires, new Date().toISOString(), staff.id).run();
 
     return json({
@@ -1873,33 +1912,33 @@ async function handleFloorAction(context, action, corsHeaders) {
 
   // All other actions require auth
   const token = context.request.headers.get('Authorization')?.replace('Bearer ', '') || '';
-  const staff = await validateFloorToken(db, token);
+  const staff = await validateFloorToken(db, token, null, t);
   if (!staff) return err('Unauthorized', 401);
 
   // ── Poll for new Odoo orders (Captain) ──
   if (action === 'floor-poll' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
-    return handleFloorPoll(context, db, staff, json, corsHeaders);
+    return handleFloorPoll(context, db, staff, json, corsHeaders, cfg);
   }
 
   // ── Dashboard (Captain) ──
   if (action === 'floor-dashboard' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
-    return handleFloorDashboard(context, db, staff, json, corsHeaders);
+    return handleFloorDashboard(context, db, staff, json, corsHeaders, t);
   }
 
   // ── Assign order to waiter (Captain) ──
   if (action === 'floor-assign' && method === 'POST') {
     if (!staff.can_captain) return err('Captain access required', 403);
     const body = await context.request.json();
-    return handleFloorAssign(db, body, json, err);
+    return handleFloorAssign(db, body, json, err, t);
   }
 
   // ── Reassign order (Captain) ──
   if (action === 'floor-reassign' && method === 'POST') {
     if (!staff.can_captain) return err('Captain access required', 403);
     const body = await context.request.json();
-    return handleFloorReassign(db, body, json, err);
+    return handleFloorReassign(db, body, json, err, t);
   }
 
   // ── Set table number (Captain) ──
@@ -1909,7 +1948,7 @@ async function handleFloorAction(context, action, corsHeaders) {
     const { order_id, table_number } = body;
     if (!order_id || !table_number) return err('order_id and table_number required');
     const now = new Date().toISOString();
-    await db.prepare('UPDATE floor_orders SET table_number = ?, updated_at = ? WHERE id = ?')
+    await db.prepare(`UPDATE ${t}floor_orders SET table_number = ?, updated_at = ? WHERE id = ?`)
       .bind(String(table_number), now, order_id).run();
     return json({ ok: true });
   }
@@ -1917,34 +1956,34 @@ async function handleFloorAction(context, action, corsHeaders) {
   // ── Waiter's orders + ready batches ──
   if (action === 'floor-my-orders' && method === 'GET') {
     if (!staff.can_waiter) return err('Waiter access required', 403);
-    return handleFloorMyOrders(db, staff, json);
+    return handleFloorMyOrders(db, staff, json, t);
   }
 
   // ── Mark items picked up (Waiter) ──
   if (action === 'floor-pickup' && method === 'POST') {
     if (!staff.can_waiter) return err('Waiter access required', 403);
     const body = await context.request.json();
-    return handleFloorPickup(db, staff, body, json, err);
+    return handleFloorPickup(db, staff, body, json, err, t);
   }
 
   // ── Mark items delivered (Waiter) ──
   if (action === 'floor-deliver' && method === 'POST') {
     if (!staff.can_waiter) return err('Waiter access required', 403);
     const body = await context.request.json();
-    return handleFloorDeliver(db, staff, body, json, err);
+    return handleFloorDeliver(db, staff, body, json, err, t);
   }
 
   // ── Manage staff (Captain) ──
   if (action === 'floor-manage-staff' && method === 'POST') {
     if (!staff.can_captain) return err('Captain access required', 403);
     const body = await context.request.json();
-    return handleFloorManageStaff(db, body, json, err);
+    return handleFloorManageStaff(db, body, json, err, t);
   }
 
   // ── List staff (Captain) ──
   if (action === 'floor-staff' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
-    const staffList = await db.prepare('SELECT id, name, role, can_captain, can_waiter, is_active, current_load, last_seen_at FROM floor_staff ORDER BY name').all();
+    const staffList = await db.prepare(`SELECT id, name, role, can_captain, can_waiter, is_active, current_load, last_seen_at FROM ${t}floor_staff ORDER BY name`).all();
     return json({ staff: staffList.results });
   }
 
@@ -1952,17 +1991,19 @@ async function handleFloorAction(context, action, corsHeaders) {
 }
 
 // ── Create floor_order from Odoo (when webhook arrives before poller) ──
-async function createFloorOrderFromOdoo(context, posOrderId, configId) {
+async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg) {
   const db = context.env.DB;
   const apiKey = context.env.ODOO_API_KEY;
   const now = new Date().toISOString();
+  const t = floorCfg?.t || '';
+  const odooUrl = floorCfg?.odooUrl || ODOO_URL;
 
   // Fetch order details from Odoo
   const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
     [[['id', '=', posOrderId]]], {
       fields: ['name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id'],
       limit: 1
-    });
+    }, odooUrl);
   if (!posOrder?.[0]) return null;
 
   const order = posOrder[0];
@@ -1972,7 +2013,7 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId) {
   let tableNumber = null;
   if (tableId) {
     const table = await odooRPC(apiKey, 'restaurant.table', 'search_read',
-      [[['id', '=', tableId]]], { fields: ['table_number'], limit: 1 });
+      [[['id', '=', tableId]]], { fields: ['table_number'], limit: 1 }, odooUrl);
     tableNumber = table?.[0]?.table_number || null;
   }
 
@@ -1980,13 +2021,13 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId) {
   const lines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
     [[['order_id', '=', posOrderId], ['product_id', '!=', false]]], {
       fields: ['product_id', 'full_product_name', 'qty', 'note']
-    });
+    }, odooUrl);
   if (!lines || lines.length === 0) return null;
 
   // Determine category for each product → counter mapping
   const productIds = lines.map(l => l.product_id[0]);
   const products = await odooRPC(apiKey, 'product.product', 'search_read',
-    [[['id', 'in', productIds]]], { fields: ['id', 'pos_categ_ids'] });
+    [[['id', 'in', productIds]]], { fields: ['id', 'pos_categ_ids'] }, odooUrl);
   const prodCatMap = {};
   if (products) {
     for (const p of products) {
@@ -2001,7 +2042,7 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId) {
 
   // Create floor_order
   await db.prepare(
-    `INSERT INTO floor_orders (odoo_order_id, odoo_order_name, config_id, table_number, tracking_number, status, total_items, customer_note, created_at, updated_at)
+    `INSERT INTO ${t}floor_orders (odoo_order_id, odoo_order_name, config_id, table_number, tracking_number, status, total_items, customer_note, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`
   ).bind(
     posOrderId, order.name, configId, tableNumber,
@@ -2009,7 +2050,7 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId) {
     order.note || null, now, now
   ).run();
 
-  const floorOrder = await db.prepare('SELECT * FROM floor_orders WHERE odoo_order_id = ?').bind(posOrderId).first();
+  const floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE odoo_order_id = ?`).bind(posOrderId).first();
   if (!floorOrder) return null;
 
   // Create floor_items
@@ -2018,28 +2059,31 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId) {
     const catId = prodCatMap[productId] || null;
     const counter = catId ? (FLOOR_COUNTER_MAP[catId] || null) : null;
     await db.prepare(
-      `INSERT INTO floor_items (floor_order_id, odoo_product_id, product_name, quantity, category_id, counter, status, created_at, updated_at)
+      `INSERT INTO ${t}floor_items (floor_order_id, odoo_product_id, product_name, quantity, category_id, counter, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, 'cooking', ?, ?)`
     ).bind(floorOrder.id, productId, line.full_product_name || line.product_id[1], line.qty, catId, counter, now, now).run();
   }
 
-  console.log(`Floor: auto-created order ${order.name} (${lines.length} items, table ${tableNumber || '?'})`);
+  console.log(`Floor${t ? '[TEST]' : ''}: auto-created order ${order.name} (${lines.length} items, table ${tableNumber || '?'})`);
   return floorOrder;
 }
 
 // ── Poll Odoo for new config 6 dine-in orders ──
-async function handleFloorPoll(context, db, staff, json) {
+async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
   const apiKey = context.env.ODOO_API_KEY;
   if (!apiKey) return json({ error: 'Odoo not configured' }, 500);
+  const t = cfg?.t || '';
+  const odooUrl = cfg?.odooUrl || ODOO_URL;
 
   // Get last poll time
-  const pollState = await db.prepare("SELECT value FROM floor_poll_state WHERE key = 'last_poll_time'").first();
+  const pollState = await db.prepare(`SELECT value FROM ${t}floor_poll_state WHERE key = 'last_poll_time'`).first();
   const lastPollTime = pollState?.value || '2026-02-26T00:00:00';
 
   // Query Odoo for new config 6 dine-in orders since last poll
   const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
     [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', lastPollTime.replace('T', ' ')], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
-    { fields: ['id', 'name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id', 'date_order', 'state'], order: 'date_order asc' }
+    { fields: ['id', 'name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id', 'date_order', 'state'], order: 'date_order asc' },
+    odooUrl
   );
 
   const now = new Date().toISOString();
@@ -2049,21 +2093,21 @@ async function handleFloorPoll(context, db, staff, json) {
   if (newOrders && newOrders.length > 0) {
     for (const order of newOrders) {
       // Check if we already have this order
-      const existing = await db.prepare('SELECT id FROM floor_orders WHERE odoo_order_id = ?').bind(order.id).first();
+      const existing = await db.prepare(`SELECT id FROM ${t}floor_orders WHERE odoo_order_id = ?`).bind(order.id).first();
       if (existing) continue;
 
       // Handle cancelled orders
       if (order.state === 'cancel') { cancelled++; continue; }
 
       // Create floor_order + items
-      await createFloorOrderFromOdoo(context, order.id, 6);
+      await createFloorOrderFromOdoo(context, order.id, 6, cfg);
       created++;
     }
   }
 
   // Check for cancelled orders we already track
   const trackedOrders = await db.prepare(
-    "SELECT odoo_order_id FROM floor_orders WHERE status NOT IN ('closed', 'cancelled')"
+    `SELECT odoo_order_id FROM ${t}floor_orders WHERE status NOT IN ('closed', 'cancelled')`
   ).all();
 
   if (trackedOrders.results.length > 0) {
@@ -2073,11 +2117,12 @@ async function handleFloorPoll(context, db, staff, json) {
       const batch = odooIds.slice(i, i + 20);
       const statuses = await odooRPC(apiKey, 'pos.order', 'search_read',
         [[['id', 'in', batch], ['state', '=', 'cancel']]],
-        { fields: ['id'] }
+        { fields: ['id'] },
+        odooUrl
       );
       if (statuses) {
         for (const s of statuses) {
-          await db.prepare("UPDATE floor_orders SET status = 'cancelled', updated_at = ? WHERE odoo_order_id = ?")
+          await db.prepare(`UPDATE ${t}floor_orders SET status = 'cancelled', updated_at = ? WHERE odoo_order_id = ?`)
             .bind(now, s.id).run();
           cancelled++;
         }
@@ -2086,31 +2131,31 @@ async function handleFloorPoll(context, db, staff, json) {
   }
 
   // Update last poll time
-  await db.prepare("UPDATE floor_poll_state SET value = ? WHERE key = 'last_poll_time'").bind(now).run();
+  await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
 
   return json({ ok: true, created, cancelled, polled_at: now });
 }
 
 // ── Captain Dashboard ──
-async function handleFloorDashboard(context, db, staff, json) {
+async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '') {
   const now = new Date().toISOString();
 
   // Unassigned orders
   const unassigned = await db.prepare(
-    "SELECT * FROM floor_orders WHERE waiter_id IS NULL AND status IN ('new') ORDER BY created_at ASC"
+    `SELECT * FROM ${t}floor_orders WHERE waiter_id IS NULL AND status IN ('new') ORDER BY created_at ASC`
   ).all();
 
   // Active orders (assigned, not yet closed)
   const active = await db.prepare(
-    "SELECT fo.*, fs.name as waiter_name FROM floor_orders fo LEFT JOIN floor_staff fs ON fo.waiter_id = fs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC"
+    `SELECT fo.*, fs.name as waiter_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC`
   ).all();
 
   // Waiter loads
   const waiters = await db.prepare(
     `SELECT fs.id, fs.name, fs.role, fs.can_captain, fs.can_waiter, fs.current_load, fs.last_seen_at,
-      (SELECT COUNT(*) FROM floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders,
-      (SELECT COALESCE(SUM(items_ready - items_delivered), 0) FROM floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as ready_items
-     FROM floor_staff fs WHERE fs.is_active = 1 AND fs.can_waiter = 1 ORDER BY fs.name`
+      (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders,
+      (SELECT COALESCE(SUM(items_ready - items_delivered), 0) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as ready_items
+     FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.can_waiter = 1 ORDER BY fs.name`
   ).all();
 
   // Shift stats
@@ -2120,17 +2165,16 @@ async function handleFloorDashboard(context, db, staff, json) {
        SUM(CASE WHEN waiter_id IS NULL AND status = 'new' THEN 1 ELSE 0 END) as unassigned,
        SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN items_ready - items_delivered ELSE 0 END) as items_ready,
        SUM(CASE WHEN status = 'served' THEN 1 ELSE 0 END) as served
-     FROM floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)`
+     FROM ${t}floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)`
   ).bind(now).first();
 
   // Get items for active orders
   const activeIds = active.results.map(o => o.id);
   let itemsByOrder = {};
   if (activeIds.length > 0) {
-    // Batch fetch items for all active orders
     const placeholders = activeIds.map(() => '?').join(',');
     const items = await db.prepare(
-      `SELECT * FROM floor_items WHERE floor_order_id IN (${placeholders}) ORDER BY id`
+      `SELECT * FROM ${t}floor_items WHERE floor_order_id IN (${placeholders}) ORDER BY id`
     ).bind(...activeIds).all();
     for (const item of items.results) {
       if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
@@ -2148,56 +2192,56 @@ async function handleFloorDashboard(context, db, staff, json) {
 }
 
 // ── Assign order to waiter ──
-async function handleFloorAssign(db, body, json, err) {
+async function handleFloorAssign(db, body, json, err, t = '') {
   const { order_id, waiter_id } = body;
   if (!order_id || !waiter_id) return err('order_id and waiter_id required');
 
-  const order = await db.prepare('SELECT * FROM floor_orders WHERE id = ?').bind(order_id).first();
+  const order = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(order_id).first();
   if (!order) return err('Order not found', 404);
   if (order.waiter_id) return err('Order already assigned — use reassign');
 
-  const waiter = await db.prepare('SELECT * FROM floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1').bind(waiter_id).first();
+  const waiter = await db.prepare(`SELECT * FROM ${t}floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1`).bind(waiter_id).first();
   if (!waiter) return err('Waiter not found or inactive', 404);
 
   const now = new Date().toISOString();
   await db.prepare(
-    "UPDATE floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ?"
+    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ?`
   ).bind(waiter_id, now, now, order_id).run();
-  await db.prepare('UPDATE floor_staff SET current_load = current_load + 1 WHERE id = ?').bind(waiter_id).run();
+  await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter_id).run();
 
   return json({ ok: true, order_id, waiter_id });
 }
 
 // ── Reassign order ──
-async function handleFloorReassign(db, body, json, err) {
+async function handleFloorReassign(db, body, json, err, t = '') {
   const { order_id, waiter_id } = body;
   if (!order_id || !waiter_id) return err('order_id and waiter_id required');
 
-  const order = await db.prepare('SELECT * FROM floor_orders WHERE id = ?').bind(order_id).first();
+  const order = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(order_id).first();
   if (!order) return err('Order not found', 404);
 
-  const newWaiter = await db.prepare('SELECT * FROM floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1').bind(waiter_id).first();
+  const newWaiter = await db.prepare(`SELECT * FROM ${t}floor_staff WHERE id = ? AND is_active = 1 AND can_waiter = 1`).bind(waiter_id).first();
   if (!newWaiter) return err('Waiter not found or inactive', 404);
 
   const now = new Date().toISOString();
   // Decrement old waiter load
   if (order.waiter_id) {
-    await db.prepare('UPDATE floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?').bind(order.waiter_id).run();
+    await db.prepare(`UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?`).bind(order.waiter_id).run();
   }
   // Assign to new waiter
   await db.prepare(
-    "UPDATE floor_orders SET waiter_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?"
+    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, updated_at = ? WHERE id = ?`
   ).bind(waiter_id, now, now, order_id).run();
-  await db.prepare('UPDATE floor_staff SET current_load = current_load + 1 WHERE id = ?').bind(waiter_id).run();
+  await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter_id).run();
 
   return json({ ok: true, order_id, old_waiter: order.waiter_id, new_waiter: waiter_id });
 }
 
 // ── Waiter's orders with batching intelligence ──
-async function handleFloorMyOrders(db, staff, json) {
+async function handleFloorMyOrders(db, staff, json, t = '') {
   // Get all active orders assigned to this waiter
   const orders = await db.prepare(
-    "SELECT * FROM floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress') ORDER BY created_at ASC"
+    `SELECT * FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress') ORDER BY created_at ASC`
   ).bind(staff.id).all();
 
   if (orders.results.length === 0) {
@@ -2208,7 +2252,7 @@ async function handleFloorMyOrders(db, staff, json) {
   const orderIds = orders.results.map(o => o.id);
   const placeholders = orderIds.map(() => '?').join(',');
   const items = await db.prepare(
-    `SELECT fi.*, fo.table_number FROM floor_items fi JOIN floor_orders fo ON fi.floor_order_id = fo.id WHERE fi.floor_order_id IN (${placeholders}) ORDER BY fi.id`
+    `SELECT fi.*, fo.table_number FROM ${t}floor_items fi JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id WHERE fi.floor_order_id IN (${placeholders}) ORDER BY fi.id`
   ).bind(...orderIds).all();
 
   // Build ready batches (group at_counter items by counter)
@@ -2283,7 +2327,7 @@ async function handleFloorMyOrders(db, staff, json) {
 }
 
 // ── Mark items as picked up (creates trip) ──
-async function handleFloorPickup(db, staff, body, json, err) {
+async function handleFloorPickup(db, staff, body, json, err, t = '') {
   const { item_ids, counter } = body;
   if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) return err('item_ids array required');
 
@@ -2292,8 +2336,8 @@ async function handleFloorPickup(db, staff, body, json, err) {
 
   // Verify all items belong to this waiter's orders and are at_counter
   const items = await db.prepare(
-    `SELECT fi.*, fo.waiter_id, fo.table_number FROM floor_items fi
-     JOIN floor_orders fo ON fi.floor_order_id = fo.id
+    `SELECT fi.*, fo.waiter_id, fo.table_number FROM ${t}floor_items fi
+     JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
      WHERE fi.id IN (${placeholders})`
   ).bind(...item_ids).all();
 
@@ -2305,7 +2349,7 @@ async function handleFloorPickup(db, staff, body, json, err) {
   const counters = [...new Set(validItems.map(i => i.counter).filter(Boolean))];
 
   await db.prepare(
-    'INSERT INTO pickup_trips (waiter_id, counters, tables_served, item_count, started_at) VALUES (?, ?, ?, ?, ?)'
+    `INSERT INTO ${t}pickup_trips (waiter_id, counters, tables_served, item_count, started_at) VALUES (?, ?, ?, ?, ?)`
   ).bind(staff.id, JSON.stringify(counters), JSON.stringify(tables), validItems.length, now).run();
 
   const trip = await db.prepare('SELECT last_insert_rowid() as id').first();
@@ -2314,7 +2358,7 @@ async function handleFloorPickup(db, staff, body, json, err) {
   // Update items to picked_up
   for (const item of validItems) {
     await db.prepare(
-      "UPDATE floor_items SET status = 'picked_up', picked_up_at = ?, trip_id = ?, updated_at = ? WHERE id = ?"
+      `UPDATE ${t}floor_items SET status = 'picked_up', picked_up_at = ?, trip_id = ?, updated_at = ? WHERE id = ?`
     ).bind(now, tripId, now, item.id).run();
   }
 
@@ -2322,7 +2366,7 @@ async function handleFloorPickup(db, staff, body, json, err) {
 }
 
 // ── Mark items as delivered to table ──
-async function handleFloorDeliver(db, staff, body, json, err) {
+async function handleFloorDeliver(db, staff, body, json, err, t = '') {
   const { item_ids, trip_id } = body;
   if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) return err('item_ids array required');
 
@@ -2331,8 +2375,8 @@ async function handleFloorDeliver(db, staff, body, json, err) {
 
   // Verify items belong to this waiter and are picked_up
   const items = await db.prepare(
-    `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM floor_items fi
-     JOIN floor_orders fo ON fi.floor_order_id = fo.id
+    `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
+     JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
      WHERE fi.id IN (${placeholders})`
   ).bind(...item_ids).all();
 
@@ -2343,7 +2387,7 @@ async function handleFloorDeliver(db, staff, body, json, err) {
   const affectedOrders = new Set();
   for (const item of validItems) {
     await db.prepare(
-      "UPDATE floor_items SET status = 'delivered', delivered_at = ?, updated_at = ? WHERE id = ?"
+      `UPDATE ${t}floor_items SET status = 'delivered', delivered_at = ?, updated_at = ? WHERE id = ?`
     ).bind(now, now, item.id).run();
     affectedOrders.add(item.order_id);
   }
@@ -2351,25 +2395,25 @@ async function handleFloorDeliver(db, staff, body, json, err) {
   // Update order-level counters and check if fully served
   for (const orderId of affectedOrders) {
     const delivered = await db.prepare(
-      "SELECT COUNT(*) as cnt FROM floor_items WHERE floor_order_id = ? AND status = 'delivered'"
+      `SELECT COUNT(*) as cnt FROM ${t}floor_items WHERE floor_order_id = ? AND status = 'delivered'`
     ).bind(orderId).first();
     const total = await db.prepare(
-      'SELECT total_items FROM floor_orders WHERE id = ?'
+      `SELECT total_items FROM ${t}floor_orders WHERE id = ?`
     ).bind(orderId).first();
 
     await db.prepare(
-      'UPDATE floor_orders SET items_delivered = ?, updated_at = ? WHERE id = ?'
+      `UPDATE ${t}floor_orders SET items_delivered = ?, updated_at = ? WHERE id = ?`
     ).bind(delivered.cnt, now, orderId).run();
 
     // If all items delivered, mark order as served
     if (delivered.cnt >= (total?.total_items || 0)) {
       await db.prepare(
-        "UPDATE floor_orders SET status = 'served', updated_at = ? WHERE id = ?"
+        `UPDATE ${t}floor_orders SET status = 'served', updated_at = ? WHERE id = ?`
       ).bind(now, orderId).run();
       // Decrement waiter load
-      const order = await db.prepare('SELECT waiter_id FROM floor_orders WHERE id = ?').bind(orderId).first();
+      const order = await db.prepare(`SELECT waiter_id FROM ${t}floor_orders WHERE id = ?`).bind(orderId).first();
       if (order?.waiter_id) {
-        await db.prepare('UPDATE floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?')
+        await db.prepare(`UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?`)
           .bind(order.waiter_id).run();
       }
     }
@@ -2377,32 +2421,32 @@ async function handleFloorDeliver(db, staff, body, json, err) {
 
   // Complete trip if provided
   if (trip_id) {
-    await db.prepare('UPDATE pickup_trips SET completed_at = ? WHERE id = ?').bind(now, trip_id).run();
+    await db.prepare(`UPDATE ${t}pickup_trips SET completed_at = ? WHERE id = ?`).bind(now, trip_id).run();
   }
 
   return json({ ok: true, delivered: validItems.length, orders_served: [...affectedOrders].length });
 }
 
 // ── Staff management (Captain) ──
-async function handleFloorManageStaff(db, body, json, err) {
+async function handleFloorManageStaff(db, body, json, err, t = '') {
   const { operation, staff_id, name, pin, role, can_captain, can_waiter } = body;
   const now = new Date().toISOString();
 
   if (operation === 'add') {
     if (!name || !pin) return err('name and pin required');
-    const existing = await db.prepare('SELECT id FROM floor_staff WHERE pin = ?').bind(pin).first();
+    const existing = await db.prepare(`SELECT id FROM ${t}floor_staff WHERE pin = ?`).bind(pin).first();
     if (existing) return err('PIN already in use');
     await db.prepare(
-      'INSERT INTO floor_staff (pin, name, role, can_captain, can_waiter, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)'
+      `INSERT INTO ${t}floor_staff (pin, name, role, can_captain, can_waiter, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)`
     ).bind(pin, name, role || 'waiter', can_captain ? 1 : 0, can_waiter !== false ? 1 : 0, now).run();
     return json({ ok: true, operation: 'add' });
   }
 
   if (operation === 'toggle') {
     if (!staff_id) return err('staff_id required');
-    const s = await db.prepare('SELECT is_active FROM floor_staff WHERE id = ?').bind(staff_id).first();
+    const s = await db.prepare(`SELECT is_active FROM ${t}floor_staff WHERE id = ?`).bind(staff_id).first();
     if (!s) return err('Staff not found', 404);
-    await db.prepare('UPDATE floor_staff SET is_active = ?, last_seen_at = ? WHERE id = ?')
+    await db.prepare(`UPDATE ${t}floor_staff SET is_active = ?, last_seen_at = ? WHERE id = ?`)
       .bind(s.is_active ? 0 : 1, now, staff_id).run();
     return json({ ok: true, operation: 'toggle', is_active: !s.is_active });
   }
@@ -2418,13 +2462,13 @@ async function handleFloorManageStaff(db, body, json, err) {
     if (can_waiter !== undefined) { updates.push('can_waiter = ?'); params.push(can_waiter ? 1 : 0); }
     if (updates.length === 0) return err('Nothing to update');
     params.push(staff_id);
-    await db.prepare(`UPDATE floor_staff SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+    await db.prepare(`UPDATE ${t}floor_staff SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
     return json({ ok: true, operation: 'update' });
   }
 
   if (operation === 'remove') {
     if (!staff_id) return err('staff_id required');
-    await db.prepare('DELETE FROM floor_staff WHERE id = ?').bind(staff_id).run();
+    await db.prepare(`DELETE FROM ${t}floor_staff WHERE id = ?`).bind(staff_id).run();
     return json({ ok: true, operation: 'remove' });
   }
 
@@ -2704,7 +2748,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 // ODOO RPC HELPER
 // ═══════════════════════════════════════════════════════════════════
 
-async function odooRPC(apiKey, model, method, args, kwargs) {
+async function odooRPC(apiKey, model, method, args, kwargs, odooUrl) {
   const payload = {
     jsonrpc: '2.0', method: 'call', id: 1,
     params: {
@@ -2712,7 +2756,7 @@ async function odooRPC(apiKey, model, method, args, kwargs) {
       args: [ODOO_DB, ODOO_UID, apiKey, model, method, args, kwargs || {}],
     },
   };
-  const res = await fetch(ODOO_URL, {
+  const res = await fetch(odooUrl || ODOO_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
