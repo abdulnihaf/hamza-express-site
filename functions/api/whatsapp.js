@@ -2014,9 +2014,10 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
   const odooUrl = floorCfg?.odooUrl || ODOO_URL;
 
   // Fetch order details from Odoo
+  // Note: 'note' field doesn't exist on pos.order in Odoo 18; use 'general_customer_note' or skip
   const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
     [[['id', '=', posOrderId]]], {
-      fields: ['name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id'],
+      fields: ['name', 'config_id', 'tracking_number', 'table_id', 'preset_id', 'general_customer_note'],
       limit: 1
     }, odooUrl);
   if (!posOrder?.[0]) return null;
@@ -2062,7 +2063,7 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
   ).bind(
     posOrderId, order.name, configId, tableNumber,
     order.tracking_number || null, lines.length,
-    order.note || null, now, now
+    order.general_customer_note || null, now, now
   ).run();
 
   const floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE odoo_order_id = ?`).bind(posOrderId).first();
@@ -2098,9 +2099,10 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
   const odooLastPoll = lastPollTime.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
 
   // Query Odoo for new config 6 dine-in orders since last poll
+  // Note: only need id + state here; createFloorOrderFromOdoo fetches full details separately
   const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
     [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', odooLastPoll], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
-    { fields: ['id', 'name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id', 'date_order', 'state'], order: 'date_order asc' },
+    { fields: ['id', 'name', 'date_order', 'state'], order: 'date_order asc' },
     odooUrl
   );
 
