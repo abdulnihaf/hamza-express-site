@@ -2030,7 +2030,9 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
   if (tableId) {
     const table = await odooRPC(apiKey, 'restaurant.table', 'search_read',
       [[['id', '=', tableId]]], { fields: ['table_number'], limit: 1 }, odooUrl);
-    tableNumber = table?.[0]?.table_number || null;
+    const rawTableNum = table?.[0]?.table_number;
+    // table_number can be float like "1.0" — clean to integer string
+    tableNumber = rawTableNum != null ? String(rawTableNum).replace(/\.0$/, '') : null;
   }
 
   // Fetch order lines for items
