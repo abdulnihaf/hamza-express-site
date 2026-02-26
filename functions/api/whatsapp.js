@@ -1726,36 +1726,50 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
 
 // Stage → {counter, status} mapping for floor item tracking
 const FLOOR_STAGE_MAP = {
-  // Station last stages → "cooked" (item done at cooking station)
+  // Station Done → cooked (item finished at cooking station)
   78: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done
   81: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done
   84: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done
   87: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done
-  // KP Preparing strike-through → "at_counter" (PRIMARY waiter signal)
-  75: { counter: 'Kitchen Pass', status: 'at_counter' },
-  // KP Completed → informational
-  63: { counter: 'Kitchen Pass', status: 'kp_completed' },
-  // Counter last stages → "at_counter"
+  // KP Packed (stage 74) → at_counter (waiter READY signal: items packed for pickup)
+  74: { counter: 'Kitchen Pass', status: 'at_counter' },
+  // KP Completed (stage 63) → picked_up (counter confirms waiter collected)
+  63: { counter: 'Kitchen Pass', status: 'picked_up' },
+  // Counter Ready → at_counter (waiter READY signal)
   47: { counter: 'Juice Counter', status: 'at_counter' },
   50: { counter: 'Bane Marie', status: 'at_counter' },
   53: { counter: 'Shawarma Counter', status: 'at_counter' },
   56: { counter: 'Grill Counter', status: 'at_counter' },
+  // Counter Completed → picked_up (counter confirms waiter collected)
+  48: { counter: 'Juice Counter', status: 'picked_up' },
+  51: { counter: 'Bane Marie', status: 'picked_up' },
+  54: { counter: 'Shawarma Counter', status: 'picked_up' },
+  57: { counter: 'Grill Counter', status: 'picked_up' },
 };
 
 const FLOOR_STATUS_ORDER = { cooking: 0, cooked: 1, at_counter: 2, picked_up: 3, delivered: 4 };
 
-// Test stage IDs (differ for station Prepared stages only)
+// Test stage IDs (differ for station Prepared stages only; KP + counter stages same as prod)
 const TEST_FLOOR_STAGE_MAP = {
+  // Station Done (test-specific IDs)
   83: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done (test)
   84: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done (test)
   89: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done (test)
   92: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done (test)
-  75: { counter: 'Kitchen Pass', status: 'at_counter' }, // KP strike-through (same)
-  63: { counter: 'Kitchen Pass', status: 'kp_completed' }, // KP Completed (same)
+  // KP Packed (stage 74) → at_counter
+  74: { counter: 'Kitchen Pass', status: 'at_counter' },
+  // KP Completed (stage 63) → picked_up
+  63: { counter: 'Kitchen Pass', status: 'picked_up' },
+  // Counter Ready → at_counter
   47: { counter: 'Juice Counter', status: 'at_counter' },
   50: { counter: 'Bane Marie', status: 'at_counter' },
   53: { counter: 'Shawarma Counter', status: 'at_counter' },
   56: { counter: 'Grill Counter', status: 'at_counter' },
+  // Counter Completed → picked_up
+  48: { counter: 'Juice Counter', status: 'picked_up' },
+  51: { counter: 'Bane Marie', status: 'picked_up' },
+  54: { counter: 'Shawarma Counter', status: 'picked_up' },
+  57: { counter: 'Grill Counter', status: 'picked_up' },
 };
 
 // Category → counter mapping for floor items
@@ -1798,12 +1812,14 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
   const stageMap = floorCfg?.stageMap || FLOOR_STAGE_MAP;
   const ok = (msg) => new Response(JSON.stringify({ ok: true, floor: msg }), { headers: corsHeaders });
 
-  // Check if this stage is relevant for floor tracking
+  // Check if this stage is relevant for floor tracking (stage map is the sole filter)
   const stageInfo = stageMap[stage_id];
   if (!stageInfo) return ok('irrelevant stage for floor');
 
-  // Only process todo=false signals (all relevant floor signals are todo→false)
-  if (todo !== false) return ok('todo not false');
+  // NOTE: We intentionally do NOT check todo !== false here.
+  // Intermediate KDS stages (Ready, Packed) fire with todo=true.
+  // The stage map filters which stages we care about, and the
+  // forward-only status guard below prevents backward/redundant moves.
 
   // Find or create floor_order
   let floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE odoo_order_id = ?`)
@@ -1813,6 +1829,10 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
     // Auto-create from Odoo data (webhook arrived before poller)
     floorOrder = await createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg);
     if (!floorOrder) return ok('could not create floor order');
+    // Auto-assign to on-shift waiter
+    await autoAssignOrder(db, floorOrder.id, t);
+    // Re-read to get assignment data
+    floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(floorOrder.id).first();
   }
 
   // Find floor_item by prep_line_id
@@ -1834,7 +1854,7 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
   if (!floorItem) return ok('no matching floor item');
 
   // Status advancement (only forward, never backward)
-  const newStatus = stageInfo.status === 'kp_completed' ? floorItem.status : stageInfo.status;
+  const newStatus = stageInfo.status;
   if ((FLOOR_STATUS_ORDER[newStatus] || 0) <= (FLOOR_STATUS_ORDER[floorItem.status] || 0)) {
     return ok('status not advancing');
   }
@@ -1845,6 +1865,7 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
 
   if (newStatus === 'cooked') { sql += ', cooked_at = ?'; params.push(now); }
   if (newStatus === 'at_counter') { sql += ', at_counter_at = ?'; params.push(now); }
+  if (newStatus === 'picked_up') { sql += ', picked_up_at = ?'; params.push(now); }
 
   sql += ' WHERE id = ?';
   params.push(floorItem.id);
@@ -1890,6 +1911,35 @@ async function validateFloorToken(db, token, requireRole, t) {
   return staff;
 }
 
+// ── Auto-assign order to lowest-load on-shift waiter ──
+async function autoAssignOrder(db, orderId, t = '') {
+  // Check if order is already assigned
+  const order = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(orderId).first();
+  if (!order || order.waiter_id) return false; // already assigned or not found
+
+  // Find on-shift waiters, sorted by load then idle time
+  const waiters = await db.prepare(
+    `SELECT * FROM ${t}floor_staff WHERE is_active = 1 AND can_waiter = 1 AND on_shift = 1
+     ORDER BY current_load ASC, last_delivery_at ASC NULLS FIRST`
+  ).all();
+
+  if (!waiters.results || waiters.results.length === 0) {
+    console.log(`AutoAssign${t ? '[TEST]' : ''}: no on-shift waiters for order ${orderId}`);
+    return false; // No on-shift waiters — captain will see unassigned alert
+  }
+
+  const waiter = waiters.results[0]; // lowest load, longest idle
+  const now = new Date().toISOString();
+
+  await db.prepare(
+    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', auto_assigned = 1, updated_at = ? WHERE id = ?`
+  ).bind(waiter.id, now, now, orderId).run();
+  await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter.id).run();
+
+  console.log(`AutoAssign${t ? '[TEST]' : ''}: order ${orderId} → ${waiter.name} (load: ${waiter.current_load + 1})`);
+  return true;
+}
+
 // ── Router for all floor-* actions ──
 async function handleFloorAction(context, action, corsHeaders) {
   const db = context.env.DB;
@@ -1921,7 +1971,7 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({
       token, name: staff.name, role: staff.role,
       can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
-      staff_id: staff.id
+      staff_id: staff.id, on_shift: !!staff.on_shift
     });
   }
 
@@ -1998,8 +2048,47 @@ async function handleFloorAction(context, action, corsHeaders) {
   // ── List staff (Captain) ──
   if (action === 'floor-staff' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
-    const staffList = await db.prepare(`SELECT id, name, role, can_captain, can_waiter, is_active, current_load, last_seen_at FROM ${t}floor_staff ORDER BY name`).all();
+    const staffList = await db.prepare(
+      `SELECT id, name, role, can_captain, can_waiter, is_active, current_load, on_shift, shift_started_at, shift_ended_at, last_delivery_at, last_seen_at FROM ${t}floor_staff ORDER BY name`
+    ).all();
     return json({ staff: staffList.results });
+  }
+
+  // ── Start shift (any staff) ──
+  if (action === 'floor-start-shift' && method === 'POST') {
+    const now = new Date().toISOString();
+    await db.prepare(
+      `UPDATE ${t}floor_staff SET on_shift = 1, shift_started_at = ?, shift_ended_at = NULL WHERE id = ?`
+    ).bind(now, staff.id).run();
+    return json({ ok: true, on_shift: true, shift_started_at: now });
+  }
+
+  // ── End shift (any staff) ──
+  if (action === 'floor-end-shift' && method === 'POST') {
+    const now = new Date().toISOString();
+    await db.prepare(
+      `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE id = ?`
+    ).bind(now, staff.id).run();
+    return json({ ok: true, on_shift: false, shift_ended_at: now });
+  }
+
+  // ── Force start/end shift for any staff (Captain only) ──
+  if (action === 'floor-force-shift' && method === 'POST') {
+    if (!staff.can_captain) return err('Captain access required', 403);
+    const body = await context.request.json();
+    const { staff_id, on_shift } = body;
+    if (!staff_id || on_shift === undefined) return err('staff_id and on_shift required');
+    const now = new Date().toISOString();
+    if (on_shift) {
+      await db.prepare(
+        `UPDATE ${t}floor_staff SET on_shift = 1, shift_started_at = ?, shift_ended_at = NULL WHERE id = ?`
+      ).bind(now, staff_id).run();
+    } else {
+      await db.prepare(
+        `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE id = ?`
+      ).bind(now, staff_id).run();
+    }
+    return json({ ok: true, staff_id, on_shift: !!on_shift });
   }
 
   return err('Unknown floor action');
@@ -2127,9 +2216,12 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
       // Handle cancelled orders
       if (order.state === 'cancel') { cancelled++; continue; }
 
-      // Create floor_order + items
+      // Create floor_order + items, then auto-assign to on-shift waiter
       const result = await createFloorOrderFromOdoo(context, order.id, 6, cfg);
-      if (result) created++;
+      if (result) {
+        created++;
+        await autoAssignOrder(db, result.id, t);
+      }
     }
   }
 
@@ -2180,32 +2272,38 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
     `SELECT fo.*, fs.name as waiter_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC`
   ).all();
 
-  // Waiter loads
+  // Waiter data with shift info + today's served count
   const waiters = await db.prepare(
-    `SELECT fs.id, fs.name, fs.role, fs.can_captain, fs.can_waiter, fs.current_load, fs.last_seen_at,
+    `SELECT fs.id, fs.name, fs.role, fs.can_captain, fs.can_waiter, fs.current_load,
+      fs.on_shift, fs.shift_started_at, fs.shift_ended_at, fs.last_delivery_at, fs.last_seen_at,
       (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders,
-      (SELECT COALESCE(SUM(items_ready - items_delivered), 0) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as ready_items
+      (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status = 'served' AND DATE(updated_at) = DATE(?)) as served_today
      FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.can_waiter = 1 ORDER BY fs.name`
-  ).all();
+  ).bind(now).all();
 
   // Shift stats
   const stats = await db.prepare(
     `SELECT
        COUNT(*) as total_orders,
        SUM(CASE WHEN waiter_id IS NULL AND status = 'new' THEN 1 ELSE 0 END) as unassigned,
-       SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN items_ready - items_delivered ELSE 0 END) as items_ready,
+       SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN 1 ELSE 0 END) as active,
        SUM(CASE WHEN status = 'served' THEN 1 ELSE 0 END) as served
      FROM ${t}floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)`
   ).bind(now).first();
 
-  // Get items for active orders
-  const activeIds = active.results.map(o => o.id);
+  // On-shift waiter count
+  const onShiftCount = await db.prepare(
+    `SELECT COUNT(*) as cnt FROM ${t}floor_staff WHERE is_active = 1 AND can_waiter = 1 AND on_shift = 1`
+  ).first();
+
+  // Get items for active orders + unassigned orders
+  const allOrderIds = [...active.results.map(o => o.id), ...unassigned.results.map(o => o.id)];
   let itemsByOrder = {};
-  if (activeIds.length > 0) {
-    const placeholders = activeIds.map(() => '?').join(',');
+  if (allOrderIds.length > 0) {
+    const placeholders = allOrderIds.map(() => '?').join(',');
     const items = await db.prepare(
       `SELECT * FROM ${t}floor_items WHERE floor_order_id IN (${placeholders}) ORDER BY id`
-    ).bind(...activeIds).all();
+    ).bind(...allOrderIds).all();
     for (const item of items.results) {
       if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
       itemsByOrder[item.floor_order_id].push(item);
@@ -2213,10 +2311,10 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
   }
 
   return json({
-    unassigned: unassigned.results,
+    unassigned: unassigned.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
     active: active.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
     waiters: waiters.results,
-    stats: stats || { total_orders: 0, unassigned: 0, items_ready: 0, served: 0 },
+    stats: { ...(stats || { total_orders: 0, unassigned: 0, active: 0, served: 0 }), on_shift_waiters: onShiftCount?.cnt || 0 },
     staff_id: staff.id
   });
 }
@@ -2267,7 +2365,7 @@ async function handleFloorReassign(db, body, json, err, t = '') {
   return json({ ok: true, order_id, old_waiter: order.waiter_id, new_waiter: waiter_id });
 }
 
-// ── Waiter's orders with batching intelligence ──
+// ── Waiter's orders (v2: My Orders + Deliver batches by table) ──
 async function handleFloorMyOrders(db, staff, json, t = '') {
   // Get all active orders assigned to this waiter
   const orders = await db.prepare(
@@ -2275,7 +2373,11 @@ async function handleFloorMyOrders(db, staff, json, t = '') {
   ).bind(staff.id).all();
 
   if (orders.results.length === 0) {
-    return json({ orders: [], ready_batches: [], cooking_summary: {} });
+    return json({
+      orders: [], deliver_batches: [],
+      cooking_count: 0, ready_count: 0, picked_up_count: 0,
+      on_shift: !!staff.on_shift
+    });
   }
 
   // Get all items for these orders
@@ -2285,53 +2387,37 @@ async function handleFloorMyOrders(db, staff, json, t = '') {
     `SELECT fi.*, fo.table_number FROM ${t}floor_items fi JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id WHERE fi.floor_order_id IN (${placeholders}) ORDER BY fi.id`
   ).bind(...orderIds).all();
 
-  // Build ready batches (group at_counter items by counter)
-  const readyByCounter = {};
-  const cookingSummary = {};
+  // Count items by status
+  let cookingCount = 0, readyCount = 0, pickedUpCount = 0;
+
+  // Build deliver batches: picked_up items grouped by table
+  const deliverByTable = {};
 
   for (const item of items.results) {
-    if (item.status === 'at_counter') {
-      const counter = item.counter || 'Unknown';
-      if (!readyByCounter[counter]) readyByCounter[counter] = { counter, items: [], tables: new Set(), oldest_at: null };
-      readyByCounter[counter].items.push(item);
-      if (item.table_number) readyByCounter[counter].tables.add(item.table_number);
-      const readyTime = item.at_counter_at || item.updated_at;
-      if (!readyByCounter[counter].oldest_at || readyTime < readyByCounter[counter].oldest_at) {
-        readyByCounter[counter].oldest_at = readyTime;
-      }
-    } else if (item.status === 'cooking' || item.status === 'cooked') {
-      const counter = item.counter || 'Unknown';
-      cookingSummary[counter] = (cookingSummary[counter] || 0) + 1;
+    if (item.status === 'cooking' || item.status === 'cooked') cookingCount++;
+    else if (item.status === 'at_counter') readyCount++;
+    else if (item.status === 'picked_up') {
+      pickedUpCount++;
+      const table = item.table_number || 'Unknown';
+      if (!deliverByTable[table]) deliverByTable[table] = { table_number: table, items: [] };
+      deliverByTable[table].items.push({
+        id: item.id, product_name: item.product_name, quantity: item.quantity,
+        counter: item.counter, picked_up_at: item.picked_up_at, floor_order_id: item.floor_order_id
+      });
     }
   }
 
-  // Convert to sorted array with urgency
-  const now = Date.now();
-  const readyBatches = Object.values(readyByCounter).map(batch => ({
-    counter: batch.counter,
+  // Convert deliver batches to sorted array
+  const deliverBatches = Object.values(deliverByTable).map(batch => ({
+    table_number: batch.table_number,
     item_count: batch.items.length,
-    tables: [...batch.tables].sort(),
-    items: batch.items.map(i => ({
-      id: i.id, product_name: i.product_name, quantity: i.quantity,
-      table_number: i.table_number, floor_order_id: i.floor_order_id,
-      at_counter_at: i.at_counter_at
-    })),
-    oldest_ready_minutes: batch.oldest_at ? Math.round((now - new Date(batch.oldest_at).getTime()) / 60000) : 0,
-    urgent: batch.oldest_at ? (now - new Date(batch.oldest_at).getTime()) > 5 * 60000 : false, // >5 min
-  }));
-
-  // Sort: urgent first, then by item count descending
-  readyBatches.sort((a, b) => {
-    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
-    return b.item_count - a.item_count;
+    items: batch.items
+  })).sort((a, b) => {
+    // Sort by table number (numeric)
+    const an = parseInt(a.table_number) || 999;
+    const bn = parseInt(b.table_number) || 999;
+    return an - bn;
   });
-
-  // Multi-counter trip suggestion (sorted by physical adjacency)
-  const multiCounterRoute = readyBatches.length > 1
-    ? readyBatches
-        .map(b => b.counter)
-        .sort((a, b) => COUNTER_ADJACENCY.indexOf(a) - COUNTER_ADJACENCY.indexOf(b))
-    : null;
 
   // Group items by order for "My Orders" view
   const itemsByOrder = {};
@@ -2346,13 +2432,15 @@ async function handleFloorMyOrders(db, staff, json, t = '') {
       items: (itemsByOrder[o.id] || []).map(i => ({
         id: i.id, product_name: i.product_name, quantity: i.quantity,
         counter: i.counter, status: i.status,
-        at_counter_at: i.at_counter_at, picked_up_at: i.picked_up_at, delivered_at: i.delivered_at
+        cooked_at: i.cooked_at, at_counter_at: i.at_counter_at,
+        picked_up_at: i.picked_up_at, delivered_at: i.delivered_at
       }))
     })),
-    ready_batches: readyBatches,
-    cooking_summary: cookingSummary,
-    multi_counter_route: multiCounterRoute,
-    total_ready: readyBatches.reduce((sum, b) => sum + b.item_count, 0)
+    deliver_batches: deliverBatches,
+    cooking_count: cookingCount,
+    ready_count: readyCount,
+    picked_up_count: pickedUpCount,
+    on_shift: !!staff.on_shift
   });
 }
 
@@ -2395,23 +2483,34 @@ async function handleFloorPickup(db, staff, body, json, err, t = '') {
   return json({ ok: true, trip_id: tripId, picked_up: validItems.length, tables, counters });
 }
 
-// ── Mark items as delivered to table ──
+// ── Mark items as delivered to table (v2: accepts table_number OR item_ids) ──
 async function handleFloorDeliver(db, staff, body, json, err, t = '') {
-  const { item_ids, trip_id } = body;
-  if (!item_ids || !Array.isArray(item_ids) || item_ids.length === 0) return err('item_ids array required');
-
+  const { item_ids, table_number, trip_id } = body;
   const now = new Date().toISOString();
-  const placeholders = item_ids.map(() => '?').join(',');
+  let validItems;
 
-  // Verify items belong to this waiter and are picked_up
-  const items = await db.prepare(
-    `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
-     JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
-     WHERE fi.id IN (${placeholders})`
-  ).bind(...item_ids).all();
+  if (table_number) {
+    // v2: Deliver ALL picked_up items for this table (one-tap-per-table)
+    const items = await db.prepare(
+      `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
+       JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
+       WHERE fo.waiter_id = ? AND fo.table_number = ? AND fi.status = 'picked_up'`
+    ).bind(staff.id, String(table_number)).all();
+    validItems = items.results;
+  } else if (item_ids && Array.isArray(item_ids) && item_ids.length > 0) {
+    // v1 fallback: deliver specific item_ids
+    const placeholders = item_ids.map(() => '?').join(',');
+    const items = await db.prepare(
+      `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
+       JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
+       WHERE fi.id IN (${placeholders})`
+    ).bind(...item_ids).all();
+    validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'picked_up');
+  } else {
+    return err('table_number or item_ids required');
+  }
 
-  const validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'picked_up');
-  if (validItems.length === 0) return err('No valid items to deliver');
+  if (!validItems || validItems.length === 0) return err('No valid items to deliver');
 
   // Update items to delivered
   const affectedOrders = new Set();
@@ -2453,6 +2552,9 @@ async function handleFloorDeliver(db, staff, body, json, err, t = '') {
   if (trip_id) {
     await db.prepare(`UPDATE ${t}pickup_trips SET completed_at = ? WHERE id = ?`).bind(now, trip_id).run();
   }
+
+  // Update waiter's last_delivery_at for auto-assign load balancing
+  await db.prepare(`UPDATE ${t}floor_staff SET last_delivery_at = ? WHERE id = ?`).bind(now, staff.id).run();
 
   return json({ ok: true, delivered: validItems.length, orders_served: [...affectedOrders].length });
 }

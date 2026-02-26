@@ -12,7 +12,7 @@
     .mono{font-family:'JetBrains Mono',monospace}
 
     /* Header */
-    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:34px;z-index:100}
     .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
     .header h1 .accent{width:4px;height:20px;background:var(--green);border-radius:2px}
     .header-right{display:flex;align-items:center;gap:8px}
@@ -23,11 +23,12 @@
     @keyframes blink{50%{opacity:.3}}
 
     /* Tabs */
-    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:99}
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:87px;z-index:99}
     .tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
     .tab.active{color:var(--green);border-bottom-color:var(--green)}
     .tab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--green);color:#000;border-radius:9px;font-size:11px;font-weight:700;margin-left:4px;padding:0 5px}
     .tab .badge.urgent{background:var(--red);color:#fff}
+    .tab .badge.blue{background:var(--blue);color:#fff}
 
     /* Screens */
     .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:100px}
@@ -46,53 +47,19 @@
     .pin-key:active{background:var(--border)}
     .pin-key.del{font-size:14px;color:var(--text2)}
 
-    /* Counter batch cards */
-    .batch-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;position:relative;transition:all .15s}
-    .batch-card.urgent{animation:pulse-urgent 1.5s infinite}
-    @keyframes pulse-urgent{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
-    .batch-card.kp{border-color:var(--amber)}
-    .batch-card.juice{border-color:var(--green)}
-    .batch-card.bm{border-color:var(--blue)}
-    .batch-card.shawarma{border-color:var(--orange)}
-    .batch-card.grill{border-color:var(--red)}
-    .batch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .batch-counter{font-size:16px;font-weight:700}
-    .batch-count{font-size:22px;font-weight:700}
-    .batch-meta{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;gap:10px}
-    .batch-items{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
-    .batch-item{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
-    .batch-item .tbl{color:var(--text2);font-size:11px}
+    /* Shift Screen */
+    #shift-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .shift-greeting{font-size:24px;font-weight:700;margin-bottom:8px}
+    .shift-sub{color:var(--text2);font-size:15px;margin-bottom:40px;text-align:center}
+    .shift-btn{width:200px;height:200px;border-radius:50%;border:3px solid var(--green);background:var(--green-dim);color:var(--green);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .shift-btn:active{transform:scale(.95);background:var(--green);color:#000}
+    .shift-btn .shift-icon{font-size:48px}
+    .shift-btn.end{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+    .shift-btn.end:active{background:var(--red);color:#fff}
+    .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
+    .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
 
-    .go-btn{width:100%;padding:14px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
-    .go-btn:active{opacity:.8}
-    .go-btn.blue{background:var(--blue);color:#fff}
-
-    /* Pickup mode */
-    .pickup-header{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;font-weight:600;text-align:center}
-    .pickup-group{margin-bottom:16px}
-    .pickup-group .table-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
-    .pickup-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
-    .pickup-item.checked{border-color:var(--green);background:var(--green-dim)}
-    .pickup-item .check{width:24px;height:24px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:14px}
-    .pickup-item.checked .check{border-color:var(--green);background:var(--green);color:#000}
-    .pickup-item .item-info{flex:1}
-    .pickup-item .item-name{font-size:14px;font-weight:500}
-    .pickup-item .item-qty{font-size:12px;color:var(--text2)}
-
-    .confirm-pickup{width:100%;padding:16px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px}
-    .confirm-pickup:disabled{background:var(--border);color:var(--text2);cursor:default}
-    .confirm-pickup:active:not(:disabled){opacity:.8}
-
-    /* Delivery mode */
-    .deliver-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-    .deliver-card .table-info{flex:1}
-    .deliver-card .table-num{font-size:20px;font-weight:700}
-    .deliver-card .item-count{font-size:13px;color:var(--text2)}
-    .deliver-btn{padding:12px 24px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
-    .deliver-btn:active{opacity:.8}
-    .deliver-btn.done{background:var(--green);color:#000}
-
-    /* My Orders tab */
+    /* Order cards */
     .order-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
     .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
     .order-table{font-size:16px;font-weight:700}
@@ -100,18 +67,29 @@
     .order-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
     .item-chip{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
     .item-chip.cooking{border-color:var(--orange);color:var(--orange)}
-    .item-chip.cooked{border-color:var(--amber);color:var(--amber)}
+    .item-chip.cooked{border-color:var(--yellow);color:var(--yellow)}
     .item-chip.at_counter{border-color:var(--green);color:var(--green);font-weight:600}
     .item-chip.picked_up{border-color:var(--blue);color:var(--blue)}
-    .item-chip.delivered{color:var(--text2);opacity:.5}
+    .item-chip.delivered{color:var(--text2);opacity:.5;text-decoration:line-through}
 
-    /* Route suggestion */
-    .route-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
-    .route-bar .arrow{color:var(--green)}
+    /* Status summary bar */
+    .status-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .stat-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;text-align:center}
+    .stat-chip .num{font-size:20px;font-weight:700}
+    .stat-chip .label{font-size:10px;color:var(--text2);margin-top:2px}
+    .stat-chip.orange .num{color:var(--orange)}
+    .stat-chip.green .num{color:var(--green)}
+    .stat-chip.blue .num{color:var(--blue)}
 
-    /* Cooking summary */
-    .cooking-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:12px;-webkit-overflow-scrolling:touch}
-    .cooking-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;white-space:nowrap;color:var(--text2);flex-shrink:0}
+    /* Deliver cards */
+    .deliver-card{background:var(--card);border:2px solid var(--blue);border-radius:14px;padding:16px;margin-bottom:12px}
+    .deliver-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .deliver-table{font-size:22px;font-weight:700}
+    .deliver-count{font-size:14px;color:var(--text2)}
+    .deliver-items{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
+    .deliver-item{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+    .served-btn{width:100%;padding:16px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+    .served-btn:active{opacity:.8;transform:scale(.98)}
 
     /* Empty */
     .empty-state{text-align:center;padding:40px 20px}
@@ -119,7 +97,7 @@
     .empty-state p{color:var(--text2);font-size:14px}
 
     /* Toast */
-    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
     .toast.show{opacity:1}
     .toast.error{border-color:var(--red);color:var(--red)}
     .toast.success{border-color:var(--green);color:var(--green)}
@@ -151,6 +129,18 @@
   </div>
 </div>
 
+<!-- Shift Screen (shown after login if not on shift) -->
+<div id="shift-screen">
+  <div class="shift-greeting" id="shift-greeting">Hello!</div>
+  <div class="shift-sub">Tap the button to start your shift<br>and begin receiving orders</div>
+  <button class="shift-btn" id="shift-btn" onclick="toggleShift()">
+    <span class="shift-icon">&#x25B6;</span>
+    Start Shift
+  </button>
+  <div class="shift-time" id="shift-time"></div>
+  <div class="shift-logout" onclick="logout()">Logout</div>
+</div>
+
 <!-- Main App -->
 <div id="app" style="display:none">
   <div class="header">
@@ -159,30 +149,21 @@
       <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
       <div class="conn-dot" id="conn-dot"></div>
       <button class="icon-btn" onclick="refresh()" title="Refresh">&#x21bb;</button>
+      <button class="icon-btn" onclick="showEndShift()" title="End Shift" style="color:var(--red)">&#x23F9;</button>
     </div>
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="ready" onclick="switchTab('ready')">Ready<span class="badge" id="ready-badge" style="display:none">0</span></div>
-    <div class="tab" data-tab="orders" onclick="switchTab('orders')">My Orders<span class="badge" id="orders-badge" style="display:none">0</span></div>
+    <div class="tab active" data-tab="orders" onclick="switchTab('orders')">My Orders<span class="badge" id="orders-badge" style="display:none">0</span></div>
+    <div class="tab" data-tab="deliver" onclick="switchTab('deliver')">Deliver<span class="badge blue" id="deliver-badge" style="display:none">0</span></div>
   </div>
 
-  <!-- Ready Batches Screen (default) -->
-  <div class="screen active" id="screen-ready">
-    <div id="ready-content"></div>
-  </div>
-
-  <!-- My Orders Screen -->
-  <div class="screen" id="screen-orders">
+  <!-- My Orders Screen (default) -->
+  <div class="screen active" id="screen-orders">
     <div id="orders-content"></div>
   </div>
 
-  <!-- Pickup Mode (overlay) -->
-  <div class="screen" id="screen-pickup">
-    <div id="pickup-content"></div>
-  </div>
-
-  <!-- Delivery Mode (overlay) -->
+  <!-- Deliver Screen -->
   <div class="screen" id="screen-deliver">
     <div id="deliver-content"></div>
   </div>
@@ -193,23 +174,14 @@
 
 <script>
 const API_BASE = '/api/whatsapp';
-    const ENV_SUFFIX = '&env=test';
+const ENV_SUFFIX = '&env=test';
 let token = localStorage.getItem('floor_waiter_test_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_test_staff') || 'null');
 let myData = null;
 let prevReadyCount = 0;
+let prevPickedUpCount = 0;
 let pollInterval = null;
-let currentMode = 'ready'; // ready | orders | pickup | deliver
-
-// Counter color class mapping
-const COUNTER_CLASS = {
-  'Kitchen Pass': 'kp', 'Juice Counter': 'juice', 'Bane Marie': 'bm',
-  'Shawarma Counter': 'shawarma', 'Grill Counter': 'grill'
-};
-const COUNTER_COLOR = {
-  'Kitchen Pass': 'amber', 'Juice Counter': 'green', 'Bane Marie': 'blue',
-  'Shawarma Counter': 'orange', 'Grill Counter': 'red'
-};
+let currentTab = 'orders';
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -238,7 +210,10 @@ async function api(action, method = 'GET', body = null) {
     document.getElementById('conn-dot').className = 'conn-dot';
     return data;
   } catch (e) {
-    if (e.message !== 'Session expired') document.getElementById('conn-dot').className = 'conn-dot offline';
+    if (e.message !== 'Session expired') {
+      const dot = document.getElementById('conn-dot');
+      if (dot) dot.className = 'conn-dot offline';
+    }
     throw e;
   }
 }
@@ -271,7 +246,7 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
       staffInfo = data;
       localStorage.setItem('floor_waiter_test_token', token);
       localStorage.setItem('floor_waiter_test_staff', JSON.stringify(data));
-      enterApp();
+      afterLogin();
     } catch (e) {
       document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
       toast(e.message, 'error');
@@ -290,14 +265,66 @@ function logout() {
   localStorage.removeItem('floor_waiter_test_staff');
   clearInterval(pollInterval);
   document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('pin-screen').style.display = 'flex';
   pinBuffer = '';
   document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
 }
 
-// ── Enter App ──
+// ── After Login: check shift state ──
+function afterLogin() {
+  document.getElementById('pin-screen').style.display = 'none';
+  if (staffInfo.on_shift) {
+    enterApp();
+  } else {
+    showShiftScreen();
+  }
+}
+
+// ── Shift Screen ──
+function showShiftScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'flex';
+  document.getElementById('shift-greeting').textContent = `Hello, ${staffInfo.name}!`;
+  document.getElementById('shift-time').textContent = '';
+  const btn = document.getElementById('shift-btn');
+  btn.className = 'shift-btn';
+  btn.innerHTML = '<span class="shift-icon">&#x25B6;</span>Start Shift';
+}
+
+async function toggleShift() {
+  try {
+    const r = await api('floor-start-shift', 'POST');
+    staffInfo.on_shift = true;
+    localStorage.setItem('floor_waiter_test_staff', JSON.stringify(staffInfo));
+    vibrate([200]);
+    toast('Shift started!');
+    enterApp();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showEndShift() {
+  if (confirm('End your shift? You will stop receiving new orders.')) {
+    endShift();
+  }
+}
+
+async function endShift() {
+  try {
+    await api('floor-end-shift', 'POST');
+    staffInfo.on_shift = false;
+    localStorage.setItem('floor_waiter_test_staff', JSON.stringify(staffInfo));
+    clearInterval(pollInterval);
+    vibrate([100]);
+    toast('Shift ended');
+    showShiftScreen();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Enter Main App ──
 function enterApp() {
   document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('staff-name').textContent = staffInfo.name;
   refresh();
@@ -306,7 +333,7 @@ function enterApp() {
 
 // ── Tab switching ──
 function switchTab(tab) {
-  currentMode = tab;
+  currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + tab).classList.add('active');
@@ -314,275 +341,143 @@ function switchTab(tab) {
 
 // ── Main refresh ──
 async function refresh() {
-  if (currentMode === 'pickup' || currentMode === 'deliver') return; // Don't refresh during active workflow
   try {
     myData = await api('floor-my-orders');
-    renderReady();
     renderOrders();
+    renderDeliver();
     checkNotifications();
   } catch (e) { console.error('Refresh error:', e); }
 }
 
-// ── Notifications (compare ready counts) ──
+// ── Notifications ──
 function checkNotifications() {
   if (!myData) return;
-  const newReady = myData.total_ready || 0;
-  if (newReady > prevReadyCount && prevReadyCount > 0) {
-    // New items became ready
+  const newReady = myData.ready_count || 0;
+  const newPickedUp = myData.picked_up_count || 0;
+
+  // New items at counter
+  if (newReady > prevReadyCount && prevReadyCount >= 0) {
     vibrate([200, 100, 200]);
   }
-  const hasUrgent = myData.ready_batches.some(b => b.urgent);
-  if (hasUrgent) {
-    vibrate([400, 200, 400, 200, 400]);
+  // New items picked up (counter confirmed collection) → needs delivery
+  if (newPickedUp > prevPickedUpCount && prevPickedUpCount >= 0) {
+    vibrate([300, 100, 300]);
+    if (currentTab !== 'deliver') {
+      toast('Items ready to deliver!');
+    }
   }
   prevReadyCount = newReady;
-}
-
-// ── Ready Batches Screen ──
-function renderReady() {
-  const d = myData;
-  if (!d) return;
-
-  // Update badge
-  const badge = document.getElementById('ready-badge');
-  if (d.total_ready > 0) {
-    badge.style.display = '';
-    badge.textContent = d.total_ready;
-    badge.className = 'badge' + (d.ready_batches.some(b => b.urgent) ? ' urgent' : '');
-  } else {
-    badge.style.display = 'none';
-  }
-
-  // Update orders badge
-  const oBadge = document.getElementById('orders-badge');
-  if (d.orders.length > 0) {
-    oBadge.style.display = '';
-    oBadge.textContent = d.orders.length;
-  } else {
-    oBadge.style.display = 'none';
-  }
-
-  const div = document.getElementById('ready-content');
-  if (d.ready_batches.length === 0) {
-    let html = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No items ready for pickup</p></div>';
-    if (Object.keys(d.cooking_summary).length > 0) {
-      html += '<div class="cooking-bar">' +
-        Object.entries(d.cooking_summary).map(([c, n]) =>
-          `<div class="cooking-chip">${c}: ${n} cooking</div>`
-        ).join('') + '</div>';
-    }
-    div.innerHTML = html;
-    return;
-  }
-
-  let html = '';
-
-  // Multi-counter route suggestion
-  if (d.multi_counter_route && d.multi_counter_route.length > 1) {
-    html += `<div class="route-bar">Route: ${d.multi_counter_route.map(c =>
-      `<span style="color:var(--${COUNTER_COLOR[c] || 'text'})">${c}</span>`
-    ).join(' <span class="arrow">&#x2192;</span> ')} (${d.total_ready} items)</div>`;
-  }
-
-  // Batch cards
-  html += d.ready_batches.map(b => {
-    const cls = COUNTER_CLASS[b.counter] || '';
-    const color = COUNTER_COLOR[b.counter] || 'text';
-    return `<div class="batch-card ${cls}${b.urgent ? ' urgent' : ''}">
-      <div class="batch-header">
-        <span class="batch-counter" style="color:var(--${color})">${b.counter}</span>
-        <span class="batch-count">${b.item_count}</span>
-      </div>
-      <div class="batch-meta">
-        <span>Tables: ${b.tables.join(', ') || '?'}</span>
-        <span>${b.oldest_ready_minutes}m waiting</span>
-      </div>
-      <div class="batch-items">${b.items.map(i =>
-        `<span class="batch-item"><span class="tbl">T${i.table_number || '?'}</span> ${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
-      ).join('')}</div>
-      <button class="go-btn" onclick='enterPickupMode(${JSON.stringify(b)})'>GO &#x2192;</button>
-    </div>`;
-  }).join('');
-
-  // Cooking summary
-  if (Object.keys(d.cooking_summary).length > 0) {
-    html += '<div class="cooking-bar">' +
-      Object.entries(d.cooking_summary).map(([c, n]) =>
-        `<div class="cooking-chip">${c}: ${n}</div>`
-      ).join('') + '</div>';
-  }
-
-  div.innerHTML = html;
+  prevPickedUpCount = newPickedUp;
 }
 
 // ── My Orders Screen ──
 function renderOrders() {
   const d = myData;
   if (!d) return;
+
+  // Update badges
+  const oBadge = document.getElementById('orders-badge');
+  const orderCount = d.orders.length;
+  if (orderCount > 0) {
+    oBadge.style.display = '';
+    oBadge.textContent = orderCount;
+  } else {
+    oBadge.style.display = 'none';
+  }
+
+  const dBadge = document.getElementById('deliver-badge');
+  const deliverCount = d.deliver_batches.reduce((s, b) => s + b.item_count, 0);
+  if (deliverCount > 0) {
+    dBadge.style.display = '';
+    dBadge.textContent = deliverCount;
+  } else {
+    dBadge.style.display = 'none';
+  }
+
   const div = document.getElementById('orders-content');
 
   if (d.orders.length === 0) {
-    div.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No orders assigned to you</p></div>';
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No orders assigned to you</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">New orders will appear here automatically</p></div>';
     return;
   }
 
-  div.innerHTML = d.orders.map(o => {
-    const readyCount = (o.items || []).filter(i => i.status === 'at_counter').length;
-    const deliveredCount = (o.items || []).filter(i => i.status === 'delivered').length;
+  // Status summary bar
+  let html = '<div class="status-bar">';
+  html += `<div class="stat-chip orange"><div class="num">${d.cooking_count}</div><div class="label">Cooking</div></div>`;
+  html += `<div class="stat-chip green"><div class="num">${d.ready_count}</div><div class="label">At Counter</div></div>`;
+  html += `<div class="stat-chip blue"><div class="num">${d.picked_up_count}</div><div class="label">Picked Up</div></div>`;
+  html += '</div>';
+
+  // Order cards
+  html += d.orders.map(o => {
+    const items = o.items || [];
+    const cooking = items.filter(i => i.status === 'cooking' || i.status === 'cooked').length;
+    const ready = items.filter(i => i.status === 'at_counter').length;
+    const pickedUp = items.filter(i => i.status === 'picked_up').length;
+    const delivered = items.filter(i => i.status === 'delivered').length;
+
     return `<div class="order-card">
       <div class="order-top">
         <span class="order-table">${o.table_number ? 'Table ' + o.table_number : 'No Table'}</span>
         <span class="order-name">${o.odoo_order_name || ''}</span>
       </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:4px">
-        ${o.total_items} items | ${readyCount} ready | ${deliveredCount} delivered
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;display:flex;gap:10px">
+        ${cooking > 0 ? `<span style="color:var(--orange)">${cooking} cooking</span>` : ''}
+        ${ready > 0 ? `<span style="color:var(--green)">${ready} ready</span>` : ''}
+        ${pickedUp > 0 ? `<span style="color:var(--blue)">${pickedUp} picked up</span>` : ''}
+        ${delivered > 0 ? `<span style="color:var(--text2)">${delivered} delivered</span>` : ''}
       </div>
-      <div class="order-items">${(o.items || []).map(i =>
+      <div class="order-items">${items.map(i =>
         `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
       ).join('')}</div>
     </div>`;
   }).join('');
+
+  div.innerHTML = html;
 }
 
-// ── Pickup Mode ──
-let pickupBatch = null;
-let checkedItems = new Set();
-
-function enterPickupMode(batch) {
-  pickupBatch = batch;
-  checkedItems = new Set();
-  currentMode = 'pickup';
-
-  // Hide other screens, show pickup
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-pickup').classList.add('active');
-
-  renderPickup();
-}
-
-function renderPickup() {
-  const b = pickupBatch;
-  const color = COUNTER_COLOR[b.counter] || 'green';
-
-  // Group items by table
-  const byTable = {};
-  for (const item of b.items) {
-    const t = item.table_number || '?';
-    if (!byTable[t]) byTable[t] = [];
-    byTable[t].push(item);
-  }
-
-  let html = `<div class="pickup-header" style="border-color:var(--${color});color:var(--${color})">PICKING UP at ${b.counter}</div>`;
-
-  for (const [table, items] of Object.entries(byTable)) {
-    html += `<div class="pickup-group">
-      <div class="table-label">Table ${table}</div>
-      ${items.map(i => `<div class="pickup-item${checkedItems.has(i.id) ? ' checked' : ''}" onclick="togglePickupItem(${i.id})">
-        <div class="check">${checkedItems.has(i.id) ? '&#x2713;' : ''}</div>
-        <div class="item-info">
-          <div class="item-name">${i.product_name}</div>
-          ${i.quantity > 1 ? `<div class="item-qty">x${i.quantity}</div>` : ''}
-        </div>
-      </div>`).join('')}
-    </div>`;
-  }
-
-  const allChecked = b.items.every(i => checkedItems.has(i.id));
-  html += `<button class="confirm-pickup" onclick="confirmPickup()" ${allChecked ? '' : 'disabled'}>&#x2713; ALL PICKED UP (${checkedItems.size}/${b.items.length})</button>`;
-  html += `<button style="width:100%;margin-top:8px;padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit" onclick="cancelPickup()">Cancel</button>`;
-
-  document.getElementById('pickup-content').innerHTML = html;
-}
-
-function togglePickupItem(id) {
-  if (checkedItems.has(id)) checkedItems.delete(id); else checkedItems.add(id);
-  renderPickup();
-  vibrate([50]);
-}
-
-function cancelPickup() {
-  currentMode = 'ready';
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-ready').classList.add('active');
-}
-
-async function confirmPickup() {
-  const itemIds = pickupBatch.items.map(i => i.id);
-  try {
-    const r = await api('floor-pickup', 'POST', { item_ids: itemIds, counter: pickupBatch.counter });
-    vibrate([100]);
-    toast(`Picked up ${r.picked_up} items`);
-
-    // Enter delivery mode
-    if (r.tables && r.tables.length > 0) {
-      enterDeliverMode(r, itemIds);
-    } else {
-      currentMode = 'ready';
-      switchTab('ready');
-      refresh();
-    }
-  } catch (e) { toast(e.message, 'error'); }
-}
-
-// ── Delivery Mode ──
-let deliverData = null;
-let deliveredTables = new Set();
-
-function enterDeliverMode(pickupResult, itemIds) {
-  deliverData = { ...pickupResult, item_ids: itemIds };
-  deliveredTables = new Set();
-  currentMode = 'deliver';
-
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-deliver').classList.add('active');
-
-  renderDeliver();
-}
-
+// ── Deliver Screen ──
 function renderDeliver() {
-  const d = deliverData;
-  let html = `<div class="pickup-header" style="border-color:var(--blue);color:var(--blue)">DELIVERING</div>`;
+  const d = myData;
+  if (!d) return;
+  const div = document.getElementById('deliver-content');
 
-  for (const table of d.tables) {
-    const isDone = deliveredTables.has(table);
-    html += `<div class="deliver-card${isDone ? ' delivered' : ''}" style="${isDone ? 'opacity:.4;border-color:var(--green)' : ''}">
-      <div class="table-info">
-        <div class="table-num">Table ${table}</div>
+  if (d.deliver_batches.length === 0) {
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x1F6CD;</div><p>No items to deliver</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">When the counter confirms pickup,<br>items will appear here for delivery</p></div>';
+    return;
+  }
+
+  let html = d.deliver_batches.map(batch => {
+    return `<div class="deliver-card">
+      <div class="deliver-top">
+        <span class="deliver-table">Table ${batch.table_number}</span>
+        <span class="deliver-count">${batch.item_count} item${batch.item_count > 1 ? 's' : ''}</span>
       </div>
-      <button class="deliver-btn${isDone ? ' done' : ''}" onclick="deliverTable('${table}')" ${isDone ? 'disabled' : ''}>
-        ${isDone ? '&#x2713; Done' : 'DELIVERED &#x2713;'}
+      <div class="deliver-items">${batch.items.map(i =>
+        `<span class="deliver-item">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('')}</div>
+      <button class="served-btn" onclick="serveTable('${batch.table_number}')">
+        &#x2713; Served to Table ${batch.table_number}
       </button>
     </div>`;
-  }
+  }).join('');
 
-  document.getElementById('deliver-content').innerHTML = html;
+  div.innerHTML = html;
 }
 
-async function deliverTable(table) {
-  // Find items for this table
-  const tableItems = pickupBatch.items.filter(i => String(i.table_number) === String(table));
-  const itemIds = tableItems.map(i => i.id);
-
+// ── Serve Table (one-tap) ──
+async function serveTable(tableNumber) {
   try {
-    await api('floor-deliver', 'POST', { item_ids: itemIds, trip_id: deliverData.trip_id });
+    const r = await api('floor-deliver', 'POST', { table_number: tableNumber });
     vibrate([100]);
-    deliveredTables.add(table);
-
-    // Check if all tables delivered
-    if (deliveredTables.size >= deliverData.tables.length) {
-      toast('All delivered!');
-      currentMode = 'ready';
-      switchTab('ready');
-      refresh();
-    } else {
-      renderDeliver();
-    }
+    toast(`Delivered to Table ${tableNumber}!`);
+    refresh();
   } catch (e) { toast(e.message, 'error'); }
 }
 
 // ── Init ──
 if (token && staffInfo) {
-  enterApp();
+  afterLogin();
 } else {
   document.getElementById('pin-screen').style.display = 'flex';
 }
