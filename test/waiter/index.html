@@ -258,7 +258,7 @@ async function api(action, method = 'GET', body = null) {
     const res = await fetch(`${API_BASE}?action=${action}${ENV_SUFFIX}`, opts);
     const data = await res.json();
     if (!res.ok) {
-      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      if (res.status === 401) { toast('Session expired — please log in again', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
       throw new Error(data.error || 'Request failed');
     }
     document.getElementById('conn-dot').className = 'conn-dot';
@@ -442,11 +442,23 @@ function renderTables() {
   const d = myData;
   if (!d) return;
 
-  // Update badges
+  // Group orders by table_number → one card per table
+  const tableMap = {};
+  for (const o of d.orders) {
+    const tbl = o.table_number || 'none';
+    if (!tableMap[tbl]) tableMap[tbl] = { table_number: o.table_number, orders: [], allItems: [] };
+    tableMap[tbl].orders.push(o);
+    for (const item of (o.items || [])) {
+      tableMap[tbl].allItems.push(item);
+    }
+  }
+  const tables = Object.values(tableMap);
+
+  // Update badges (count unique tables, not orders)
   const tBadge = document.getElementById('tables-badge');
-  if (d.orders.length > 0) {
+  if (tables.length > 0) {
     tBadge.style.display = '';
-    tBadge.textContent = d.orders.length;
+    tBadge.textContent = tables.length;
   } else {
     tBadge.style.display = 'none';
   }
@@ -462,21 +474,22 @@ function renderTables() {
 
   const div = document.getElementById('tables-content');
 
-  if (d.orders.length === 0) {
+  if (tables.length === 0) {
     div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No tables assigned to you</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">New orders will appear here automatically</p></div>';
     return;
   }
 
   // Status summary bar
   let html = '<div class="status-bar">';
-  html += `<div class="stat-chip orange"><div class="num">${d.cooking_count}</div><div class="label">Cooking</div></div>`;
+  html += `<div class="stat-chip orange"><div class="num">${d.cooking_count}</div><div class="label">Preparing</div></div>`;
   html += `<div class="stat-chip green"><div class="num">${d.ready_count}</div><div class="label">Ready</div></div>`;
   html += `<div class="stat-chip blue"><div class="num">${d.picked_up_count}</div><div class="label">Collected</div></div>`;
   html += '</div>';
 
-  // One card per table/order
-  html += d.orders.map(o => {
-    const items = o.items || [];
+  // One card per table (merged orders)
+  html += tables.map(tbl => {
+    const items = tbl.allItems;
+    const orderNames = tbl.orders.map(o => o.odoo_order_name).filter(Boolean).join(', ');
 
     // Group items by counter
     const byCounter = {};
@@ -489,8 +502,8 @@ function renderTables() {
     // Build card
     let card = '<div class="table-card">';
     card += `<div class="table-card-header">
-      <span class="tbl">${o.table_number ? 'Table ' + o.table_number : 'No Table'}</span>
-      <span class="ord">${o.odoo_order_name || ''}</span>
+      <span class="tbl">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}</span>
+      <span class="ord">${orderNames}</span>
     </div>`;
     card += '<div class="table-card-body">';
 

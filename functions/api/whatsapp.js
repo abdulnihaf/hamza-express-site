@@ -2066,7 +2066,24 @@ async function handleFloorAction(context, action, corsHeaders) {
     await db.prepare(
       `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE id = ?`
     ).bind(now, staff.id).run();
-    return json({ ok: true, on_shift: false, shift_ended_at: now });
+    // Unassign active orders from this waiter and try to re-auto-assign
+    const activeOrders = await db.prepare(
+      `SELECT id FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress')`
+    ).bind(staff.id).all();
+    let reassigned = 0, unassigned = 0;
+    if (activeOrders.results.length > 0) {
+      await db.prepare(
+        `UPDATE ${t}floor_orders SET waiter_id = NULL, status = 'new', updated_at = ? WHERE waiter_id = ? AND status IN ('assigned', 'in_progress')`
+      ).bind(now, staff.id).run();
+      await db.prepare(
+        `UPDATE ${t}floor_staff SET current_load = 0 WHERE id = ?`
+      ).bind(staff.id).run();
+      for (const o of activeOrders.results) {
+        const ok = await autoAssignOrder(db, o.id, t);
+        if (ok) reassigned++; else unassigned++;
+      }
+    }
+    return json({ ok: true, on_shift: false, shift_ended_at: now, orders_reassigned: reassigned, orders_unassigned: unassigned });
   }
 
   // ── Force start/end shift for any staff (Captain only) ──
@@ -2084,6 +2101,21 @@ async function handleFloorAction(context, action, corsHeaders) {
       await db.prepare(
         `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE id = ?`
       ).bind(now, staff_id).run();
+      // Unassign active orders from this staff and try to re-auto-assign
+      const activeOrders = await db.prepare(
+        `SELECT id FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress')`
+      ).bind(staff_id).all();
+      if (activeOrders.results.length > 0) {
+        await db.prepare(
+          `UPDATE ${t}floor_orders SET waiter_id = NULL, status = 'new', updated_at = ? WHERE waiter_id = ? AND status IN ('assigned', 'in_progress')`
+        ).bind(now, staff_id).run();
+        await db.prepare(
+          `UPDATE ${t}floor_staff SET current_load = 0 WHERE id = ?`
+        ).bind(staff_id).run();
+        for (const o of activeOrders.results) {
+          await autoAssignOrder(db, o.id, t);
+        }
+      }
     }
     return json({ ok: true, staff_id, on_shift: !!on_shift });
   }
@@ -2275,7 +2307,7 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
       fs.on_shift, fs.shift_started_at, fs.shift_ended_at, fs.last_delivery_at, fs.last_seen_at,
       (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders,
       (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status = 'served' AND DATE(updated_at) = DATE(?)) as served_today
-     FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.can_waiter = 1 ORDER BY fs.name`
+     FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.role = 'waiter' ORDER BY fs.name`
   ).bind(now).all();
 
   // Shift stats
@@ -2290,7 +2322,7 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
 
   // On-shift waiter count
   const onShiftCount = await db.prepare(
-    `SELECT COUNT(*) as cnt FROM ${t}floor_staff WHERE is_active = 1 AND can_waiter = 1 AND on_shift = 1`
+    `SELECT COUNT(*) as cnt FROM ${t}floor_staff WHERE is_active = 1 AND role = 'waiter' AND on_shift = 1`
   ).first();
 
   // Get items for active orders + unassigned orders
@@ -2391,7 +2423,7 @@ async function handleFloorMyOrders(db, staff, json, t = '') {
   const deliverByTable = {};
 
   for (const item of items.results) {
-    if (item.status === 'cooking' || item.status === 'cooked') cookingCount++;
+    if (item.status === 'cooking') cookingCount++;
     else if (item.status === 'at_counter') readyCount++;
     else if (item.status === 'picked_up') {
       pickedUpCount++;

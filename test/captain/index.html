@@ -282,7 +282,7 @@ async function api(action, method = 'GET', body = null) {
     const res = await fetch(`${API_BASE}?action=${action}${ENV_SUFFIX}`, opts);
     const data = await res.json();
     if (!res.ok) {
-      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      if (res.status === 401) { toast('Session expired — please log in again', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
       throw new Error(data.error || 'Request failed');
     }
     document.getElementById('conn-dot').className = 'conn-dot';
@@ -471,11 +471,21 @@ function renderDashboard() {
     usec.innerHTML = '';
   }
 
-  // Active orders (assigned)
+  // Active orders (assigned) — grouped by table
   const aDiv = document.getElementById('active-orders');
   const assigned = d.active.filter(o => o.waiter_id);
   if (assigned.length > 0) {
-    aDiv.innerHTML = assigned.map(o => renderActiveCard(o)).join('');
+    // Group by table_number
+    const tableMap = {};
+    for (const o of assigned) {
+      const tbl = o.table_number || 'none';
+      if (!tableMap[tbl]) tableMap[tbl] = { table_number: o.table_number, orders: [], allItems: [] };
+      tableMap[tbl].orders.push(o);
+      for (const item of (o.items || [])) {
+        tableMap[tbl].allItems.push(item);
+      }
+    }
+    aDiv.innerHTML = Object.values(tableMap).map(tbl => renderActiveTableCard(tbl)).join('');
   } else if (d.unassigned.length === 0) {
     aDiv.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No active orders</p><p style="margin-top:6px;font-size:12px;color:var(--text2)">Orders auto-assigned to on-shift waiters</p></div>';
   } else {
@@ -518,14 +528,20 @@ function renderUnassignedCard(order) {
   </div>`;
 }
 
-function renderActiveCard(order) {
-  const age = Math.round((Date.now() - new Date(order.created_at).getTime()) / 60000);
-  const items = order.items || [];
-  const cooking = items.filter(i => i.status === 'cooking' || i.status === 'cooked').length;
+function renderActiveTableCard(tbl) {
+  const items = tbl.allItems;
+  const orderNames = tbl.orders.map(o => o.odoo_order_name).filter(Boolean).join(', ');
+  const waiterNames = [...new Set(tbl.orders.map(o => o.waiter_name).filter(Boolean))].join(', ');
+  const autoAssigned = tbl.orders.some(o => o.auto_assigned);
+  const oldestAge = Math.round((Date.now() - Math.min(...tbl.orders.map(o => new Date(o.created_at).getTime()))) / 60000);
+  // First order id for reassign (reassign applies to individual orders)
+  const firstOrderId = tbl.orders[0]?.id;
+
+  const cooking = items.filter(i => i.status === 'cooking').length;
   const ready = items.filter(i => i.status === 'at_counter').length;
   const pickedUp = items.filter(i => i.status === 'picked_up').length;
   const delivered = items.filter(i => i.status === 'delivered').length;
-  const total = items.length || order.total_items || 1;
+  const total = items.length || 1;
   const progressPct = Math.round((delivered / total) * 100);
   const pClass = progressPct < 33 ? 'low' : progressPct < 66 ? 'mid' : 'high';
 
@@ -537,20 +553,20 @@ function renderActiveCard(order) {
 
   return `<div class="order-card">
     <div class="order-top">
-      <span class="table-num">${order.table_number ? 'Table ' + order.table_number : 'No Table'}</span>
+      <span class="table-num">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <span class="order-name">${order.odoo_order_name || ''}</span>
-        <button class="reassign-btn" onclick="openReassignModal(${order.id})">&#x21C4;</button>
+        <span class="order-name">${orderNames}</span>
+        <button class="reassign-btn" onclick="openReassignModal(${firstOrderId})">&#x21C4;</button>
       </div>
     </div>
     <div class="order-meta">
-      <span>${age}m ago</span>
-      ${cooking > 0 ? `<span style="color:var(--orange)">${cooking} cooking</span>` : ''}
+      <span>${oldestAge}m ago</span>
+      ${cooking > 0 ? `<span style="color:var(--orange)">${cooking} preparing</span>` : ''}
       ${ready > 0 ? `<span style="color:var(--green)">${ready} ready</span>` : ''}
-      ${pickedUp > 0 ? `<span style="color:var(--blue)">${pickedUp} picked up</span>` : ''}
+      ${pickedUp > 0 ? `<span style="color:var(--blue)">${pickedUp} collected</span>` : ''}
       ${delivered > 0 ? `<span style="color:var(--text2)">${delivered} served</span>` : ''}
-      <span class="waiter-tag">${order.waiter_name || '?'}</span>
-      ${order.auto_assigned ? '<span class="auto-tag">auto</span>' : ''}
+      <span class="waiter-tag">${waiterNames || '?'}</span>
+      ${autoAssigned ? '<span class="auto-tag">auto</span>' : ''}
     </div>
     ${itemsHtml}
     <div class="progress-bar"><div class="fill ${pClass}" style="width:${progressPct}%"></div></div>
