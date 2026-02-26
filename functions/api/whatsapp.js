@@ -1759,9 +1759,24 @@ const TEST_FLOOR_STAGE_MAP = {
 };
 
 // Category → counter mapping for floor items
+// Includes both parent categories (22-30) and new subcategories (70-90)
 const FLOOR_COUNTER_MAP = {
+  // Parent categories
   22: 'Kitchen Pass', 24: 'Kitchen Pass', 25: 'Kitchen Pass', 26: 'Kitchen Pass',
   27: 'Juice Counter', 28: 'Bane Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
+  // Snacks & Chai
+  47: 'Kitchen Pass', 48: 'Kitchen Pass',
+  // FC subcategories (parent 26)
+  70: 'Kitchen Pass', 71: 'Kitchen Pass', 72: 'Kitchen Pass', 73: 'Kitchen Pass',
+  74: 'Kitchen Pass', 75: 'Kitchen Pass', 76: 'Kitchen Pass',
+  // Indian subcategories (parent 22)
+  77: 'Kitchen Pass', 78: 'Kitchen Pass', 79: 'Kitchen Pass', 80: 'Kitchen Pass',
+  81: 'Kitchen Pass', 82: 'Kitchen Pass',
+  // Chinese subcategories (parent 24)
+  83: 'Kitchen Pass', 84: 'Kitchen Pass', 85: 'Kitchen Pass', 86: 'Kitchen Pass',
+  87: 'Kitchen Pass', 88: 'Kitchen Pass',
+  // Tandoor subcategories (parent 25)
+  89: 'Kitchen Pass', 90: 'Kitchen Pass',
 };
 
 // Get floor config based on env=test query param
@@ -2077,20 +2092,29 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
 
   // Get last poll time
   const pollState = await db.prepare(`SELECT value FROM ${t}floor_poll_state WHERE key = 'last_poll_time'`).first();
-  const lastPollTime = pollState?.value || '2026-02-26T00:00:00';
+  const lastPollTime = pollState?.value || '2026-02-26 00:00:00';
+
+  // Convert stored time to Odoo datetime format: YYYY-MM-DD HH:MM:SS (no T, no Z, no ms)
+  const odooLastPoll = lastPollTime.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
 
   // Query Odoo for new config 6 dine-in orders since last poll
   const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
-    [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', lastPollTime.replace('T', ' ')], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+    [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', odooLastPoll], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
     { fields: ['id', 'name', 'config_id', 'tracking_number', 'table_id', 'lines', 'note', 'preset_id', 'date_order', 'state'], order: 'date_order asc' },
     odooUrl
   );
 
-  const now = new Date().toISOString();
+  // Odoo-compatible datetime: YYYY-MM-DD HH:MM:SS
+  const now = new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
   let created = 0;
   let cancelled = 0;
+  let odooError = false;
 
-  if (newOrders && newOrders.length > 0) {
+  if (newOrders === null) {
+    // Odoo RPC failed — do NOT advance poll cursor
+    odooError = true;
+    console.error(`Floor${t ? '[TEST]' : ''} poll: Odoo RPC failed, not advancing poll time (last: ${odooLastPoll})`);
+  } else if (newOrders.length > 0) {
     for (const order of newOrders) {
       // Check if we already have this order
       const existing = await db.prepare(`SELECT id FROM ${t}floor_orders WHERE odoo_order_id = ?`).bind(order.id).first();
@@ -2100,8 +2124,8 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
       if (order.state === 'cancel') { cancelled++; continue; }
 
       // Create floor_order + items
-      await createFloorOrderFromOdoo(context, order.id, 6, cfg);
-      created++;
+      const result = await createFloorOrderFromOdoo(context, order.id, 6, cfg);
+      if (result) created++;
     }
   }
 
@@ -2130,10 +2154,12 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     }
   }
 
-  // Update last poll time
-  await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
+  // Only advance poll cursor if Odoo call succeeded
+  if (!odooError) {
+    await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
+  }
 
-  return json({ ok: true, created, cancelled, polled_at: now });
+  return json({ ok: true, created, cancelled, polled_at: now, odoo_error: odooError || undefined });
 }
 
 // ── Captain Dashboard ──
