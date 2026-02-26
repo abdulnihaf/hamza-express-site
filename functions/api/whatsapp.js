@@ -1917,15 +1917,23 @@ async function autoAssignOrder(db, orderId, t = '') {
   const order = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(orderId).first();
   if (!order || order.waiter_id) return false; // already assigned or not found
 
-  // Find on-shift waiters, sorted by load then idle time
-  const waiters = await db.prepare(
-    `SELECT * FROM ${t}floor_staff WHERE is_active = 1 AND can_waiter = 1 AND on_shift = 1
+  // Find on-shift waiters (role=waiter first, captain only as fallback)
+  let waiters = await db.prepare(
+    `SELECT * FROM ${t}floor_staff WHERE is_active = 1 AND role = 'waiter' AND on_shift = 1
      ORDER BY current_load ASC, last_delivery_at ASC NULLS FIRST`
   ).all();
 
+  // Fallback: if no waiter-role staff on shift, try captains who can_waiter
+  if (!waiters.results || waiters.results.length === 0) {
+    waiters = await db.prepare(
+      `SELECT * FROM ${t}floor_staff WHERE is_active = 1 AND role = 'captain' AND can_waiter = 1 AND on_shift = 1
+       ORDER BY current_load ASC, last_delivery_at ASC NULLS FIRST`
+    ).all();
+  }
+
   if (!waiters.results || waiters.results.length === 0) {
     console.log(`AutoAssign${t ? '[TEST]' : ''}: no on-shift waiters for order ${orderId}`);
-    return false; // No on-shift waiters — captain will see unassigned alert
+    return false; // No on-shift staff — captain will see unassigned alert
   }
 
   const waiter = waiters.results[0]; // lowest load, longest idle
