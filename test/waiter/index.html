@@ -222,25 +222,24 @@ function getStatusLabel(counter, status) {
   if (counter === 'Kitchen Pass') {
     switch (status) {
       case 'cooking':    return 'Cooking';
-      case 'cooked':     return 'Ready';
       case 'at_counter': return 'Packed';
       case 'picked_up':  return 'Collected';
       case 'delivered':  return 'Served';
+      default:           return status;
     }
   }
   if (counter === 'Bane Marie') {
     switch (status) {
       case 'cooking':    return 'Preparing';
-      case 'cooked':     return 'Ready';
       case 'at_counter': return 'Prepared';
       case 'picked_up':  return 'Collected';
       case 'delivered':  return 'Served';
+      default:           return status;
     }
   }
   // Default for other/future counters
   switch (status) {
     case 'cooking':    return 'Cooking';
-    case 'cooked':     return 'Ready';
     case 'at_counter': return 'Ready';
     case 'picked_up':  return 'Collected';
     case 'delivered':  return 'Served';

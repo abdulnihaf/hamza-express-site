@@ -1749,27 +1749,16 @@ const FLOOR_STAGE_MAP = {
 
 const FLOOR_STATUS_ORDER = { cooking: 0, cooked: 1, at_counter: 2, picked_up: 3, delivered: 4 };
 
-// Test stage IDs (differ for station Prepared stages only; KP + counter stages same as prod)
+// Test stage map — only Kitchen Pass + Bain Marie (the two serving counters)
+// We do NOT track individual cooking stations (Indian, Chinese, Tandoor, FC).
+// Items jump from cooking → at_counter when Kitchen Pass marks "Packed".
 const TEST_FLOOR_STAGE_MAP = {
-  // Station Done (test-specific IDs)
-  83: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done (test)
-  84: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done (test)
-  89: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done (test)
-  92: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done (test)
-  // KP Packed (stage 74) → at_counter
+  // Kitchen Pass: Packed → at_counter (strikethrough), Completed → picked_up
   74: { counter: 'Kitchen Pass', status: 'at_counter' },
-  // KP Completed (stage 63) → picked_up
   63: { counter: 'Kitchen Pass', status: 'picked_up' },
-  // Counter Ready → at_counter
-  47: { counter: 'Juice Counter', status: 'at_counter' },
+  // Bain Marie: Prepared → at_counter (strikethrough), Completed → picked_up
   50: { counter: 'Bane Marie', status: 'at_counter' },
-  53: { counter: 'Shawarma Counter', status: 'at_counter' },
-  56: { counter: 'Grill Counter', status: 'at_counter' },
-  // Counter Completed → picked_up
-  48: { counter: 'Juice Counter', status: 'picked_up' },
   51: { counter: 'Bane Marie', status: 'picked_up' },
-  54: { counter: 'Shawarma Counter', status: 'picked_up' },
-  57: { counter: 'Grill Counter', status: 'picked_up' },
 };
 
 // Category → counter mapping for floor items
