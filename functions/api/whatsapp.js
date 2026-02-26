@@ -2113,7 +2113,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
   if (newOrders === null) {
     // Odoo RPC failed — do NOT advance poll cursor
     odooError = true;
-    console.error(`Floor${t ? '[TEST]' : ''} poll: Odoo RPC failed, not advancing poll time (last: ${odooLastPoll})`);
+    console.error(`Floor${t ? '[TEST]' : ''} poll: Odoo RPC failed, not advancing poll time (last: ${odooLastPoll}), error: ${odooRPC._lastError}`);
   } else if (newOrders.length > 0) {
     for (const order of newOrders) {
       // Check if we already have this order
@@ -2159,7 +2159,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
   }
 
-  return json({ ok: true, created, cancelled, polled_at: now, odoo_error: odooError || undefined });
+  return json({ ok: true, created, cancelled, polled_at: now, odoo_error: odooError || undefined, odoo_error_detail: odooError ? (odooRPC._lastError || 'unknown') : undefined });
 }
 
 // ── Captain Dashboard ──
@@ -2775,6 +2775,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function odooRPC(apiKey, model, method, args, kwargs, odooUrl) {
+  const targetUrl = odooUrl || ODOO_URL;
   const payload = {
     jsonrpc: '2.0', method: 'call', id: 1,
     params: {
@@ -2782,18 +2783,33 @@ async function odooRPC(apiKey, model, method, args, kwargs, odooUrl) {
       args: [ODOO_DB, ODOO_UID, apiKey, model, method, args, kwargs || {}],
     },
   };
-  const res = await fetch(odooUrl || ODOO_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (data.error) {
-    console.error('Odoo RPC error:', JSON.stringify(data.error.data?.message || data.error.message));
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      console.error(`Odoo RPC HTTP error: ${res.status} ${res.statusText} (${targetUrl})`);
+      odooRPC._lastError = `HTTP ${res.status} ${res.statusText}`;
+      return null;
+    }
+    const data = await res.json();
+    if (data.error) {
+      const errMsg = data.error.data?.message || data.error.message || JSON.stringify(data.error);
+      console.error(`Odoo RPC error (${targetUrl}): ${errMsg}`);
+      odooRPC._lastError = errMsg;
+      return null;
+    }
+    odooRPC._lastError = null;
+    return data.result;
+  } catch (e) {
+    console.error(`Odoo RPC fetch error (${targetUrl}): ${e.message}`);
+    odooRPC._lastError = `fetch: ${e.message}`;
     return null;
   }
-  return data.result;
 }
+odooRPC._lastError = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // RAZORPAY PAYMENT LINK (fallback when native order_details fails)
