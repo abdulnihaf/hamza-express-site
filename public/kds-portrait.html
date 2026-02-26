@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920,height=1080">
+<title>KDS Portrait Wrapper</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  iframe {
+    /* Portrait dimensions: swap width/height */
+    width: 100vh;   /* 1080px on a 1920x1080 screen */
+    height: 100vw;  /* 1920px on a 1920x1080 screen */
+    border: none;
+    /* Rotate 270deg CW (= 90deg CCW) so content appears upright
+       on a TV mounted with right edge up (90deg CW physical rotation) */
+    transform: rotate(-90deg);
+  }
+</style>
+</head>
+<body>
+<iframe
+  src=""
+  id="kds-frame"
+  allow="autoplay; fullscreen"
+  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+></iframe>
+<script>
+  // Read the target URL from the query parameter
+  // Usage: /kds-portrait.html?url=https://ops.hamzahotel.com/pos-order-tracking/...
+  const params = new URLSearchParams(window.location.search);
+  const targetUrl = params.get('url');
+  if (targetUrl) {
+    document.getElementById('kds-frame').src = targetUrl;
+  } else {
+    document.body.innerHTML = '<p style="color:white;font-size:24px;text-align:center;margin-top:40vh;">No URL provided. Use ?url=YOUR_KDS_URL</p>';
+  }
+</script>
+</body>
+</html>
