@@ -127,6 +127,16 @@
     .btn-primary{background:var(--amber);color:#000;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%}
     .btn-primary:active{opacity:.8}
 
+    /* Shift Screen */
+    #shift-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .shift-greeting{font-size:24px;font-weight:700;margin-bottom:8px}
+    .shift-sub{color:var(--text2);font-size:15px;margin-bottom:40px;text-align:center}
+    .shift-btn{width:200px;height:200px;border-radius:50%;border:3px solid var(--amber);background:var(--amber-dim);color:var(--amber);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .shift-btn:active{transform:scale(.95);background:var(--amber);color:#000}
+    .shift-btn .shift-icon{font-size:48px}
+    .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
+    .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
+
     /* Empty */
     .empty-state{text-align:center;padding:40px 20px}
     .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
@@ -170,6 +180,18 @@
   </div>
 </div>
 
+<!-- Shift Screen (shown after login if not on shift) -->
+<div id="shift-screen">
+  <div class="shift-greeting" id="shift-greeting">Hello!</div>
+  <div class="shift-sub">Tap the button to start your shift</div>
+  <button class="shift-btn" id="shift-btn" onclick="startShift()">
+    <span class="shift-icon">&#x25B6;</span>
+    Start Shift
+  </button>
+  <div class="shift-time" id="shift-time"></div>
+  <div class="shift-logout" onclick="logout()">Logout</div>
+</div>
+
 <!-- Main App -->
 <div id="app" style="display:none">
   <div class="header">
@@ -179,6 +201,7 @@
       <div class="conn-dot" id="conn-dot"></div>
       <button class="icon-btn" onclick="pollOdoo()" title="Poll Odoo">+</button>
       <button class="icon-btn" onclick="refreshDashboard()" title="Refresh">&#x21bb;</button>
+      <button class="icon-btn" onclick="showEndShift()" title="End Shift" style="color:var(--red)">&#x23F9;</button>
     </div>
   </div>
 
@@ -298,7 +321,7 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
       staffInfo = data;
       localStorage.setItem('floor_test_token', token);
       localStorage.setItem('floor_test_staff', JSON.stringify(data));
-      enterApp();
+      afterLogin();
     } catch (e) {
       document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
       toast(e.message, 'error');
@@ -318,14 +341,62 @@ function logout() {
   clearInterval(dashboardInterval);
   clearInterval(pollInterval);
   document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('pin-screen').style.display = 'flex';
   pinBuffer = '';
   document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
 }
 
+// ── After Login: check shift state ──
+function afterLogin() {
+  document.getElementById('pin-screen').style.display = 'none';
+  if (staffInfo.on_shift) {
+    enterApp();
+  } else {
+    showShiftScreen();
+  }
+}
+
+// ── Shift Screen ──
+function showShiftScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'flex';
+  document.getElementById('shift-greeting').textContent = `Hello, ${staffInfo.name}!`;
+  document.getElementById('shift-time').textContent = '';
+}
+
+async function startShift() {
+  try {
+    await api('floor-start-shift', 'POST');
+    staffInfo.on_shift = true;
+    localStorage.setItem('floor_test_staff', JSON.stringify(staffInfo));
+    toast('Shift started!');
+    enterApp();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showEndShift() {
+  if (confirm('End your shift?')) {
+    endShift();
+  }
+}
+
+async function endShift() {
+  try {
+    await api('floor-end-shift', 'POST');
+    staffInfo.on_shift = false;
+    localStorage.setItem('floor_test_staff', JSON.stringify(staffInfo));
+    clearInterval(dashboardInterval);
+    clearInterval(pollInterval);
+    toast('Shift ended');
+    showShiftScreen();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
 // ── Enter App ──
 function enterApp() {
   document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('staff-name').textContent = staffInfo.name;
   refreshDashboard();
@@ -617,7 +688,7 @@ async function removeStaff(id) {
 
 // ── Init ──
 if (token && staffInfo) {
-  enterApp();
+  afterLogin();
 } else {
   document.getElementById('pin-screen').style.display = 'flex';
 }

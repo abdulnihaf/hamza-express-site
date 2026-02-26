@@ -59,19 +59,6 @@
     .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
     .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
 
-    /* Order cards */
-    .order-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-    .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-    .order-table{font-size:16px;font-weight:700}
-    .order-name{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace}
-    .order-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-    .item-chip{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
-    .item-chip.cooking{border-color:var(--orange);color:var(--orange)}
-    .item-chip.cooked{border-color:var(--yellow);color:var(--yellow)}
-    .item-chip.at_counter{border-color:var(--green);color:var(--green);font-weight:600}
-    .item-chip.picked_up{border-color:var(--blue);color:var(--blue)}
-    .item-chip.delivered{color:var(--text2);opacity:.5;text-decoration:line-through}
-
     /* Status summary bar */
     .status-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
     .stat-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;text-align:center}
@@ -80,6 +67,38 @@
     .stat-chip.orange .num{color:var(--orange)}
     .stat-chip.green .num{color:var(--green)}
     .stat-chip.blue .num{color:var(--blue)}
+
+    /* ── Table card (one per table) ── */
+    .table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
+    .table-card-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+    .table-card-header .tbl{font-size:18px;font-weight:700}
+    .table-card-header .ord{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .table-card-body{padding:6px 0}
+
+    /* Station section inside table card */
+    .station-section{padding:0 14px 8px}
+    .station-section:last-child{padding-bottom:12px}
+    .station-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 4px;display:flex;align-items:center;gap:6px}
+    .station-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+    /* Item row inside station */
+    .stn-item{display:flex;justify-content:space-between;align-items:center;padding:7px 8px;margin:3px 0;border-radius:8px;background:var(--bg2);border:1px solid transparent}
+    .stn-item .item-name{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .stn-item .item-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:4px;flex-shrink:0;margin-left:8px}
+
+    /* Strikethrough states (at_counter and beyond) */
+    .stn-item.struck .item-name{text-decoration:line-through;color:var(--text2)}
+    .stn-item.struck{border-color:var(--border)}
+    .stn-item.collected .item-name{text-decoration:line-through;color:var(--blue);opacity:.6}
+    .stn-item.served-item .item-name{text-decoration:line-through;color:var(--text2);opacity:.35}
+    .stn-item.served-item .item-status{opacity:.35}
+
+    /* Status colors */
+    .st-cooking{color:var(--orange);background:var(--orange-dim)}
+    .st-ready{color:var(--amber);background:var(--amber-dim)}
+    .st-done{color:var(--green);background:var(--green-dim)}
+    .st-collected{color:var(--blue);background:var(--blue-dim)}
+    .st-served{color:var(--text2);background:var(--bg)}
 
     /* Deliver cards */
     .deliver-card{background:var(--card);border:2px solid var(--blue);border-radius:14px;padding:16px;margin-bottom:12px}
@@ -154,13 +173,13 @@
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="orders" onclick="switchTab('orders')">My Orders<span class="badge" id="orders-badge" style="display:none">0</span></div>
+    <div class="tab active" data-tab="tables" onclick="switchTab('tables')">My Tables<span class="badge" id="tables-badge" style="display:none">0</span></div>
     <div class="tab" data-tab="deliver" onclick="switchTab('deliver')">Deliver<span class="badge blue" id="deliver-badge" style="display:none">0</span></div>
   </div>
 
-  <!-- My Orders Screen (default) -->
-  <div class="screen active" id="screen-orders">
-    <div id="orders-content"></div>
+  <!-- My Tables Screen (default) -->
+  <div class="screen active" id="screen-tables">
+    <div id="tables-content"></div>
   </div>
 
   <!-- Deliver Screen -->
@@ -178,10 +197,67 @@ const ENV_SUFFIX = '&env=test';
 let token = localStorage.getItem('floor_waiter_test_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_test_staff') || 'null');
 let myData = null;
-let prevReadyCount = 0;
+let prevAtCounterIds = new Set();   // track item IDs at_counter for vibration
 let prevPickedUpCount = 0;
 let pollInterval = null;
-let currentTab = 'orders';
+let currentTab = 'tables';
+
+// ── Counter display names & colors ──
+const COUNTER_DISPLAY = {
+  'Kitchen Pass': 'Kitchen Counter',
+  'Bane Marie': 'Bain Marie Counter'
+};
+const COUNTER_COLOR = {
+  'Kitchen Pass': 'amber',
+  'Bane Marie': 'blue',
+  'Juice Counter': 'green',
+  'Shawarma Counter': 'orange',
+  'Grill Counter': 'red'
+};
+// Fixed display order for stations
+const COUNTER_ORDER = ['Kitchen Pass', 'Bane Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
+
+// ── Station-specific status labels ──
+function getStatusLabel(counter, status) {
+  if (counter === 'Kitchen Pass') {
+    switch (status) {
+      case 'cooking':    return 'Cooking';
+      case 'cooked':     return 'Ready';
+      case 'at_counter': return 'Packed';
+      case 'picked_up':  return 'Collected';
+      case 'delivered':  return 'Served';
+    }
+  }
+  if (counter === 'Bane Marie') {
+    switch (status) {
+      case 'cooking':    return 'Preparing';
+      case 'cooked':     return 'Ready';
+      case 'at_counter': return 'Prepared';
+      case 'picked_up':  return 'Collected';
+      case 'delivered':  return 'Served';
+    }
+  }
+  // Default for other/future counters
+  switch (status) {
+    case 'cooking':    return 'Cooking';
+    case 'cooked':     return 'Ready';
+    case 'at_counter': return 'Ready';
+    case 'picked_up':  return 'Collected';
+    case 'delivered':  return 'Served';
+    default:           return status;
+  }
+}
+
+function getStatusClass(status) {
+  switch (status) {
+    case 'cooking':    return 'st-cooking';
+    case 'cooked':     return 'st-ready';
+    case 'at_counter': return 'st-done';
+    case 'picked_up':  return 'st-collected';
+    case 'delivered':  return 'st-served';
+    default:           return '';
+  }
+}
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -343,46 +419,58 @@ function switchTab(tab) {
 async function refresh() {
   try {
     myData = await api('floor-my-orders');
-    renderOrders();
+    renderTables();
     renderDeliver();
     checkNotifications();
   } catch (e) { console.error('Refresh error:', e); }
 }
 
-// ── Notifications ──
+// ── Notifications: per-item vibration tracking ──
 function checkNotifications() {
   if (!myData) return;
-  const newReady = myData.ready_count || 0;
-  const newPickedUp = myData.picked_up_count || 0;
 
-  // New items at counter
-  if (newReady > prevReadyCount && prevReadyCount >= 0) {
+  // Build current set of at_counter item IDs
+  const currentAtCounter = new Set();
+  for (const order of myData.orders) {
+    for (const item of (order.items || [])) {
+      if (item.status === 'at_counter') currentAtCounter.add(item.id);
+    }
+  }
+
+  // Check for NEW items reaching at_counter (not seen before)
+  let newReady = false;
+  for (const id of currentAtCounter) {
+    if (!prevAtCounterIds.has(id)) { newReady = true; break; }
+  }
+  if (newReady && prevAtCounterIds.size > 0) {
+    // Only vibrate after first load (not on initial page load)
     vibrate([200, 100, 200]);
   }
-  // New items picked up (counter confirmed collection) → needs delivery
-  if (newPickedUp > prevPickedUpCount && prevPickedUpCount >= 0) {
+  prevAtCounterIds = currentAtCounter;
+
+  // Check for new picked_up items (counter confirmed collection → needs delivery)
+  const newPickedUp = myData.picked_up_count || 0;
+  if (newPickedUp > prevPickedUpCount && prevPickedUpCount > 0) {
     vibrate([300, 100, 300]);
     if (currentTab !== 'deliver') {
       toast('Items ready to deliver!');
     }
   }
-  prevReadyCount = newReady;
   prevPickedUpCount = newPickedUp;
 }
 
-// ── My Orders Screen ──
-function renderOrders() {
+// ── My Tables Screen ──
+function renderTables() {
   const d = myData;
   if (!d) return;
 
   // Update badges
-  const oBadge = document.getElementById('orders-badge');
-  const orderCount = d.orders.length;
-  if (orderCount > 0) {
-    oBadge.style.display = '';
-    oBadge.textContent = orderCount;
+  const tBadge = document.getElementById('tables-badge');
+  if (d.orders.length > 0) {
+    tBadge.style.display = '';
+    tBadge.textContent = d.orders.length;
   } else {
-    oBadge.style.display = 'none';
+    tBadge.style.display = 'none';
   }
 
   const dBadge = document.getElementById('deliver-badge');
@@ -394,46 +482,83 @@ function renderOrders() {
     dBadge.style.display = 'none';
   }
 
-  const div = document.getElementById('orders-content');
+  const div = document.getElementById('tables-content');
 
   if (d.orders.length === 0) {
-    div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No orders assigned to you</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">New orders will appear here automatically</p></div>';
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No tables assigned to you</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">New orders will appear here automatically</p></div>';
     return;
   }
 
   // Status summary bar
   let html = '<div class="status-bar">';
   html += `<div class="stat-chip orange"><div class="num">${d.cooking_count}</div><div class="label">Cooking</div></div>`;
-  html += `<div class="stat-chip green"><div class="num">${d.ready_count}</div><div class="label">At Counter</div></div>`;
-  html += `<div class="stat-chip blue"><div class="num">${d.picked_up_count}</div><div class="label">Picked Up</div></div>`;
+  html += `<div class="stat-chip green"><div class="num">${d.ready_count}</div><div class="label">Ready</div></div>`;
+  html += `<div class="stat-chip blue"><div class="num">${d.picked_up_count}</div><div class="label">Collected</div></div>`;
   html += '</div>';
 
-  // Order cards
+  // One card per table/order
   html += d.orders.map(o => {
     const items = o.items || [];
-    const cooking = items.filter(i => i.status === 'cooking' || i.status === 'cooked').length;
-    const ready = items.filter(i => i.status === 'at_counter').length;
-    const pickedUp = items.filter(i => i.status === 'picked_up').length;
-    const delivered = items.filter(i => i.status === 'delivered').length;
 
-    return `<div class="order-card">
-      <div class="order-top">
-        <span class="order-table">${o.table_number ? 'Table ' + o.table_number : 'No Table'}</span>
-        <span class="order-name">${o.odoo_order_name || ''}</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;display:flex;gap:10px">
-        ${cooking > 0 ? `<span style="color:var(--orange)">${cooking} cooking</span>` : ''}
-        ${ready > 0 ? `<span style="color:var(--green)">${ready} ready</span>` : ''}
-        ${pickedUp > 0 ? `<span style="color:var(--blue)">${pickedUp} picked up</span>` : ''}
-        ${delivered > 0 ? `<span style="color:var(--text2)">${delivered} delivered</span>` : ''}
-      </div>
-      <div class="order-items">${items.map(i =>
-        `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
-      ).join('')}</div>
+    // Group items by counter
+    const byCounter = {};
+    for (const item of items) {
+      const counter = item.counter || 'Other';
+      if (!byCounter[counter]) byCounter[counter] = [];
+      byCounter[counter].push(item);
+    }
+
+    // Build card
+    let card = '<div class="table-card">';
+    card += `<div class="table-card-header">
+      <span class="tbl">${o.table_number ? 'Table ' + o.table_number : 'No Table'}</span>
+      <span class="ord">${o.odoo_order_name || ''}</span>
     </div>`;
+    card += '<div class="table-card-body">';
+
+    // Render stations in fixed order, then any remaining
+    const rendered = new Set();
+    for (const counterKey of COUNTER_ORDER) {
+      if (!byCounter[counterKey]) continue;
+      card += renderStation(counterKey, byCounter[counterKey]);
+      rendered.add(counterKey);
+    }
+    // Render any counter not in the fixed order (future-proof)
+    for (const counterKey of Object.keys(byCounter)) {
+      if (rendered.has(counterKey)) continue;
+      card += renderStation(counterKey, byCounter[counterKey]);
+    }
+
+    card += '</div></div>';
+    return card;
   }).join('');
 
   div.innerHTML = html;
+}
+
+function renderStation(counterKey, items) {
+  const displayName = COUNTER_DISPLAY[counterKey] || counterKey;
+  const color = COUNTER_COLOR[counterKey] || 'text2';
+
+  let html = '<div class="station-section">';
+  html += `<div class="station-label" style="color:var(--${color})"><span class="station-dot" style="background:var(--${color})"></span>${displayName}</div>`;
+
+  for (const item of items) {
+    const isStruck = item.status === 'at_counter' || item.status === 'picked_up' || item.status === 'delivered';
+    const isCollected = item.status === 'picked_up';
+    const isServed = item.status === 'delivered';
+    const label = getStatusLabel(counterKey, item.status);
+    const stClass = getStatusClass(item.status);
+    const rowClass = isServed ? 'stn-item served-item' : isCollected ? 'stn-item collected' : isStruck ? 'stn-item struck' : 'stn-item';
+
+    html += `<div class="${rowClass}">
+      <span class="item-name">${item.quantity > 1 ? item.quantity + 'x ' : ''}${item.product_name}</span>
+      <span class="item-status ${stClass}">${isStruck && !isCollected && !isServed ? '&#x2713; ' : ''}${label}</span>
+    </div>`;
+  }
+
+  html += '</div>';
+  return html;
 }
 
 // ── Deliver Screen ──
