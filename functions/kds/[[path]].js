@@ -64,7 +64,7 @@ html, body, body.o_web_client {
 `;
 
 // ─── Portrait-only URL rewriting script (no header rebuild) ─────────────────────
-const PORTRAIT_OVERRIDE_SCRIPT = \`<script>
+const PORTRAIT_OVERRIDE_SCRIPT = `<script>
 (function(){
   var OO='__ODOO_ORIGIN__';
   function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
@@ -105,7 +105,7 @@ const PORTRAIT_OVERRIDE_SCRIPT = \`<script>
   window.WebSocket.CLOSING=_WS.CLOSING;
   window.WebSocket.CLOSED=_WS.CLOSED;
 })();
-</script>\`;
+</script>`;
 
 // ─── Brand CSS ─────────────────────────────────────────────────────────────────
 const BRAND_CSS = `
