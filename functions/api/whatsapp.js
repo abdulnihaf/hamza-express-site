@@ -490,6 +490,17 @@ export async function onRequest(context) {
     return handleKdsWebhook(context, url, corsHeaders);
   }
 
+  // KP Printer — packing slip print queue (no auth, local network polling)
+  if (action === 'kp-print-poll' && context.request.method === 'GET') {
+    return handleKPPrintPoll(context, corsHeaders);
+  }
+  if (action === 'kp-print-done' && context.request.method === 'POST') {
+    return handleKPPrintDone(context, url, corsHeaders);
+  }
+  if (action === 'kp-print-release' && context.request.method === 'POST') {
+    return handleKPPrintRelease(context, url, corsHeaders);
+  }
+
   // Floor operations — Captain/Waiter coordination (PIN-gated, no X-API-Key)
   if (action && action.startsWith('floor-')) {
     return handleFloorAction(context, action, corsHeaders);
@@ -1640,6 +1651,13 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       }, floorCfg);
     }
 
+    // Route 3: Cash Counter Takeaway — Kitchen Pass packing slip
+    if (configId === 5 && presetId === 2) {
+      return handleKdsWebhookKPPrint(context, corsHeaders, {
+        stage_id, todo, prep_line_id, posOrderId, trackingNumber
+      }, isTestWebhook);
+    }
+
     return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant config' }), { headers: corsHeaders });
 
   } catch (error) {
@@ -1875,6 +1893,157 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
 
   console.log(`KDS→Floor${t ? '[TEST]' : ''}: item ${floorItem.id} (${floorItem.product_name}) → ${newStatus} at ${stageInfo.counter} (order ${floorOrder.odoo_order_name})`);
   return ok(`item ${floorItem.id} → ${newStatus}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KP PRINT — Kitchen Pass Packing Slip for Cash Counter Takeaway
+// ═══════════════════════════════════════════════════════════════════
+
+const KP_PACKED_STAGE = 74;  // Kitchen Pass → Packed
+const KP_READY_STAGE = 44;   // Kitchen Pass → Ready (not yet packed)
+
+async function handleKdsWebhookKPPrint(context, corsHeaders, data, isTest) {
+  const { stage_id, todo, prep_line_id, posOrderId, trackingNumber } = data;
+  const ok = (msg) => new Response(JSON.stringify({ ok: true, kp_print: msg }), { headers: corsHeaders });
+
+  // Only trigger on KP Packed (stage 74)
+  if (stage_id !== KP_PACKED_STAGE) return ok('not KP packed stage');
+
+  const apiKey = context.env.ODOO_API_KEY;
+  const odooUrl = isTest ? TEST_ODOO_URL : undefined;
+  const db = context.env.DB;
+
+  // Dedup: check if print job already exists for this order
+  const existing = await db.prepare('SELECT id FROM kp_print_jobs WHERE odoo_order_id = ?')
+    .bind(posOrderId).first();
+  if (existing) return ok('print job already queued');
+
+  // Get all prep_order_ids for this pos_order
+  const prepOrders = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
+    [[['pos_order_id', '=', posOrderId]]], { fields: ['id'] }, odooUrl);
+  if (!prepOrders || prepOrders.length === 0) return ok('no prep orders');
+
+  const prepOrderIds = prepOrders.map(po => po.id);
+
+  // Get all prep lines with their current stage_id
+  const allPrepLines = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+    [[['prep_order_id', 'in', prepOrderIds]]], { fields: ['id', 'stage_id'] }, odooUrl);
+  if (!allPrepLines || allPrepLines.length === 0) return ok('no prep lines');
+
+  // Filter to KP items only (stages 44=Ready or 74=Packed belong to Kitchen Pass)
+  const kpLines = allPrepLines.filter(l => {
+    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
+    return sid === KP_READY_STAGE || sid === KP_PACKED_STAGE;
+  });
+  if (kpLines.length === 0) return ok('no KP items in this order');
+
+  // Check: any KP items still at Ready (stage 44)? If so, not all packed yet
+  const remainingReady = kpLines.filter(l => {
+    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
+    return sid === KP_READY_STAGE;
+  }).length;
+  if (remainingReady > 0) return ok(`${remainingReady} items still at KP Ready`);
+
+  // Verify at least 1 item actually reached KP Packed
+  const packedCount = kpLines.filter(l => {
+    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
+    return sid === KP_PACKED_STAGE;
+  }).length;
+  if (packedCount === 0) return ok('no KP packed items');
+
+  // ALL items packed — fetch order details for the packing slip
+  const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
+    [[['id', '=', posOrderId]]], { fields: ['name', 'tracking_number'] }, odooUrl);
+  const orderName = posOrder?.[0]?.name || `Order #${posOrderId}`;
+  const token = posOrder?.[0]?.tracking_number || trackingNumber || null;
+
+  const orderLines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
+    [[['order_id', '=', posOrderId], ['product_id', '!=', false]]], {
+      fields: ['full_product_name', 'product_id', 'qty']
+    }, odooUrl);
+  if (!orderLines || orderLines.length === 0) return ok('no order lines');
+
+  const items = orderLines.map(l => ({
+    name: l.full_product_name || l.product_id[1],
+    qty: l.qty,
+  }));
+
+  // Insert print job (UNIQUE on odoo_order_id handles race conditions)
+  const now = new Date().toISOString();
+  try {
+    await db.prepare(
+      `INSERT INTO kp_print_jobs (odoo_order_id, odoo_order_name, tracking_number, items, status, created_at)
+       VALUES (?, ?, ?, ?, 'pending', ?)`
+    ).bind(posOrderId, orderName, token, JSON.stringify(items), now).run();
+  } catch (e) {
+    if (e.message?.includes('UNIQUE')) return ok('duplicate insert blocked');
+    throw e;
+  }
+
+  console.log(`KP Print: queued packing slip for ${orderName} (${items.length} items, token ${token})`);
+  return ok(`queued: ${orderName}`);
+}
+
+// Poll for pending KP print jobs — atomically claims them to prevent duplicate prints
+async function handleKPPrintPoll(context, corsHeaders) {
+  const db = context.env.DB;
+  const now = new Date().toISOString();
+
+  // Reaper: unclaim jobs stuck in 'claimed' for > 60 seconds (tab crashed mid-print)
+  await db.prepare(
+    `UPDATE kp_print_jobs SET status = 'pending', claimed_at = NULL
+     WHERE status = 'claimed' AND claimed_at < datetime('now', '-60 seconds')`
+  ).run();
+
+  // Cleanup: delete printed jobs older than 24 hours
+  await db.prepare(
+    `DELETE FROM kp_print_jobs WHERE status = 'printed' AND printed_at < datetime('now', '-24 hours')`
+  ).run();
+
+  // Atomically claim pending jobs — prevents two tabs from getting the same job
+  await db.prepare(
+    `UPDATE kp_print_jobs SET status = 'claimed', claimed_at = ?
+     WHERE id IN (SELECT id FROM kp_print_jobs WHERE status = 'pending' ORDER BY id ASC LIMIT 5)`
+  ).bind(now).run();
+
+  // Return the jobs we just claimed
+  const jobs = await db.prepare(
+    `SELECT * FROM kp_print_jobs WHERE status = 'claimed' AND claimed_at = ? ORDER BY id ASC`
+  ).bind(now).all();
+
+  return new Response(JSON.stringify({ jobs: jobs.results || [] }), { headers: corsHeaders });
+}
+
+// Mark a KP print job as printed (with validation)
+async function handleKPPrintDone(context, url, corsHeaders) {
+  const db = context.env.DB;
+  const jobId = url.searchParams.get('job_id');
+  if (!jobId) {
+    return new Response(JSON.stringify({ error: 'job_id required' }), { status: 400, headers: corsHeaders });
+  }
+  const id = parseInt(jobId);
+  if (isNaN(id)) {
+    return new Response(JSON.stringify({ error: 'invalid job_id' }), { status: 400, headers: corsHeaders });
+  }
+  const now = new Date().toISOString();
+  // Only mark claimed/pending jobs as printed (idempotent — already printed is ok)
+  await db.prepare(
+    `UPDATE kp_print_jobs SET status = 'printed', printed_at = ? WHERE id = ? AND status IN ('pending', 'claimed')`
+  ).bind(now, id).run();
+  return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+}
+
+// Release a claimed job back to pending (browser couldn't print it)
+async function handleKPPrintRelease(context, url, corsHeaders) {
+  const db = context.env.DB;
+  const jobId = url.searchParams.get('job_id');
+  if (!jobId) {
+    return new Response(JSON.stringify({ error: 'job_id required' }), { status: 400, headers: corsHeaders });
+  }
+  await db.prepare(
+    `UPDATE kp_print_jobs SET status = 'pending', claimed_at = NULL WHERE id = ? AND status = 'claimed'`
+  ).bind(parseInt(jobId)).run();
+  return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
 }
 
 // ═══════════════════════════════════════════════════════════════════
