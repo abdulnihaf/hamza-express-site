@@ -181,14 +181,14 @@ html, body, body.o_web_client {
   mask-size: contain !important;
   mask-repeat: no-repeat !important;
 }
-/* Kitchen Pass sizes — compact, counter name is the hero */
+/* Kitchen Pass sizes — minimal, counter name is the hero */
 .he-logo-text .he-text-hamza {
-  width: 64px !important;
-  height: 15px !important;
+  width: 50px !important;
+  height: 12px !important;
 }
 .he-logo-text .he-text-express {
-  width: 64px !important;
-  height: 7px !important;
+  width: 50px !important;
+  height: 5px !important;
 }
 /* Bain Marie sizes — subtle, counter name is the hero */
 .he-bm-logo-text .he-text-hamza {
@@ -223,8 +223,9 @@ html, body, body.o_web_client {
   flex-shrink: 0 !important;
 }
 .he-title {
-  font-size: clamp(24px, 2.4vw, 48px) !important;
-  letter-spacing: 6px !important;
+  font-size: clamp(30px, 3vw, 56px) !important;
+  font-weight: 900 !important;
+  letter-spacing: 8px !important;
 }
 .he-bm-title {
   font-size: clamp(18px, 2.8vw, 36px) !important;
