@@ -57,10 +57,22 @@ html, body, body.o_web_client {
   position: relative !important;
 }
 
-/* ── Gold Frame Border — REMOVED per design feedback ─────── */
-.o_tracking_display_main::before,
+/* ── Gold Frame Border ───────────────────────────────────── */
+.o_tracking_display_main::before {
+  content: '' !important;
+  position: fixed !important;
+  inset: 6px !important;
+  border: 2px solid rgba(201,169,110,0.22) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
 .o_tracking_display_main::after {
-  display: none !important;
+  content: '' !important;
+  position: fixed !important;
+  inset: 10px !important;
+  border: 1px solid rgba(201,169,110,0.08) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
