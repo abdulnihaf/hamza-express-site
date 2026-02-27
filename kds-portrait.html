@@ -31,7 +31,6 @@
   src=""
   id="kds-frame"
   allow="autoplay; fullscreen"
-  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
 ></iframe>
 <script>
   // Read the target URL from the query parameter
@@ -39,16 +38,8 @@
   const params = new URLSearchParams(window.location.search);
   let targetUrl = params.get('url');
   if (targetUrl) {
-    // Auto-route through brand proxy for Odoo KDS URLs
-    try {
-      const u = new URL(targetUrl);
-      if (u.host === 'ops.hamzahotel.com') {
-        targetUrl = '/kds' + u.pathname + u.search;
-      } else if (u.host === 'test.hamzahotel.com') {
-        const sep = u.search ? '&' : '?';
-        targetUrl = '/kds' + u.pathname + u.search + sep + 'env=test';
-      }
-    } catch (e) { /* use original URL */ }
+    // Direct URL — branding is now injected via Odoo QWeb template (v4.0)
+    // No proxy needed; the Odoo page includes all brand CSS/JS natively
     document.getElementById('kds-frame').src = targetUrl;
   } else {
     document.body.innerHTML = '<p style="color:white;font-size:24px;text-align:center;margin-top:40vh;">No URL provided. Use ?url=YOUR_KDS_URL</p>';
