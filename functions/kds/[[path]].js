@@ -15,8 +15,8 @@ const TEST_ORIGIN = 'https://test.hamzahotel.com';
 const PORTRAIT_CSS = `
 /* ═══════════════════════════════════════════════════════════════════════
    Portrait Mode — CSS rotation for vertically-mounted TV
-   Fire Stick: 1920×1080 HDMI → TV physically rotated 90° CW
-   Content rotated -90° (CCW) to appear upright
+   Fire Stick: 1920×1080 HDMI → TV mounted with LEFT edge up (90° CCW)
+   Content rotated -90° to appear upright on the vertical display
    ═══════════════════════════════════════════════════════════════════════ */
 
 html, body, body.o_web_client {
@@ -28,7 +28,7 @@ html, body, body.o_web_client {
   background: #110804 !important;
 }
 
-/* Rotate the main KDS container */
+/* Rotate the main KDS container to portrait */
 .o_tracking_display_main,
 .o_tracking_display_main.vh-100,
 .o_tracking_display_main.vh-100.text-bg-700 {
@@ -38,25 +38,51 @@ html, body, body.o_web_client {
   width: 100vh !important;    /* 1080px — portrait width */
   height: 100vw !important;   /* 1920px — portrait height */
   max-height: none !important;
-  transform: translate(-50%, -50%) rotate(90deg) !important;
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
   overflow: hidden !important;
 }
 
-/* Override Bootstrap grid: force 2 columns for portrait
-   (media queries see 1920px viewport, but container is only 1080px wide) */
+/* ── Header: scale down to fit 1080px portrait width ── */
+#he-bm-header-bar, #he-header-bar {
+  padding: 10px 16px !important;
+  gap: 10px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+.he-bm-title, .he-title {
+  font-size: clamp(20px, 3.5vmin, 36px) !important;
+  letter-spacing: 3px !important;
+}
+.he-bm-logo-icon, .he-logo-icon {
+  height: 46px !important;
+  width: 46px !important;
+}
+.he-bm-logo-text .he-text-hamza, .he-logo-text .he-text-hamza {
+  width: 60px !important;
+  height: 14px !important;
+}
+.he-bm-logo-text .he-text-express, .he-logo-text .he-text-express {
+  width: 60px !important;
+  height: 7px !important;
+}
+.he-header-divider {
+  height: 36px !important;
+}
+
+/* ── Override Bootstrap grid: 2 columns for portrait ── */
 .o_tracking_display_main .row.row-cols-lg-4 > .col,
 .o_tracking_display_main .row.row-cols-xxl-5 > .col {
   flex: 0 0 50% !important;
   max-width: 50% !important;
 }
 
-/* Slightly larger cards for portrait readability */
+/* ── Cards: sized for portrait readability ── */
 .o_tracking_display_main .o_tracking_display_number {
   font-size: clamp(32px, 5vmin, 64px) !important;
   padding: 16px 12px !important;
 }
 
-/* Hide Odoo watermark/footer to reclaim space */
+/* ── Hide Odoo watermark/footer ── */
 .o_tracking_display_main .o_tracking_display_logo,
 .o_tracking_display_main .o_tracking_display_fadeOut {
   display: none !important;
