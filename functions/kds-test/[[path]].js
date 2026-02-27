@@ -1,7 +1,6 @@
-// KDS Brand Proxy — Cloudflare Pages Function
+// KDS Brand Proxy — Cloudflare Pages Function (TEST)
 // Reverse-proxies the Odoo pos-order-tracking page and injects Hamza Express brand CSS
-// Routes: /kds/* → ops.hamzahotel.com/* (production)
-//         /kds/*?env=test → test.hamzahotel.com/* (test)
+// Routes: /kds-test/* → test.hamzahotel.com/* (always test)
 // Preserves 100% of KDS behaviour — only adds visual branding
 
 const PROD_ORIGIN = 'https://ops.hamzahotel.com';
@@ -83,15 +82,20 @@ html, body, body.o_web_client {
     rgba(17,8,4,0.97) 0%,
     rgba(42,14,8,0.95) 100%) !important;
   border-bottom: 2.5px solid var(--he-gold) !important;
-  padding: 10px 36px !important;
-  display: flex !important;
+  padding: 8px 36px !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
   align-items: center !important;
-  justify-content: center !important;
-  gap: 28px !important;
+  gap: 24px !important;
   position: relative !important;
   z-index: 100 !important;
   box-shadow: 0 6px 30px rgba(0,0,0,0.6) !important;
+  overflow: visible !important; /* Let emblem break out */
 }
+/* Grid positioning — logo left, title center, tagline right */
+#he-header-bar .he-logo-wrap { justify-self: start !important; }
+#he-header-bar .he-title { justify-self: center !important; }
+#he-header-bar .he-tagline { justify-self: end !important; align-self: center !important; }
 /* subtle gold glow line */
 #he-header-bar::after {
   content: '' !important;
@@ -111,7 +115,7 @@ html, body, body.o_web_client {
     rgba(17,8,4,0.97) 0%,
     rgba(42,14,8,0.95) 100%) !important;
   border-bottom: 2.5px solid var(--he-gold) !important;
-  padding: 14px 20px !important;
+  padding: 14px 20px 10px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -120,6 +124,7 @@ html, body, body.o_web_client {
   position: relative !important;
   z-index: 100 !important;
   box-shadow: 0 6px 30px rgba(0,0,0,0.6) !important;
+  overflow: visible !important; /* Let emblem break out */
 }
 #he-bm-header-bar::after {
   content: '' !important;
@@ -138,12 +143,18 @@ html, body, body.o_web_client {
   flex-shrink: 0 !important;
 }
 .he-logo {
-  height: 72px !important;
-  width: 72px !important;
+  height: 90px !important;
+  width: 90px !important;
   object-fit: cover !important;
   border-radius: 50% !important;
   border: 2.5px solid var(--he-gold) !important;
-  box-shadow: 0 0 22px rgba(201,169,110,0.3) !important;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.5),
+    0 0 30px rgba(201,169,110,0.2) !important;
+  position: relative !important;
+  z-index: 101 !important;
+  margin-top: -4px !important;
+  margin-bottom: -28px !important; /* Extends below header bar */
 }
 .he-bm-logo {
   height: 46px !important;
@@ -194,6 +205,10 @@ html, body, body.o_web_client {
    ══════════════════════════════════════════════════════════════ */
 .o_tracking_display_main > .container-fluid {
   padding: 14px 22px 8px !important;
+}
+/* First section needs extra top padding to clear the overflowing emblem */
+.o_tracking_display_main > .container-fluid:first-of-type {
+  padding-top: 34px !important;
 }
 
 /* ── Section Headers: READY / PREPARING ───────────────────── */
@@ -357,9 +372,15 @@ html, body, body.o_web_client {
   gap: 10px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo {
-  height: 100px !important;
-  width: 100px !important;
+  height: 110px !important;
+  width: 110px !important;
   border-width: 3px !important;
+  box-shadow:
+    0 4px 28px rgba(0,0,0,0.5),
+    0 0 35px rgba(201,169,110,0.2) !important;
+  position: relative !important;
+  z-index: 101 !important;
+  margin-bottom: -30px !important; /* Extends below header bar */
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-bm-title {
   font-size: 48px !important;
