@@ -151,21 +151,42 @@ html, body, body.o_web_client {
   width: 56px !important;
 }
 
-/* ── Text logo ("Hamza EXPRESS") ──────────────────────────── */
+/* ── Text logo ("Hamza EXPRESS") — HTML text with brand colors ── */
 .he-logo-text, .he-bm-logo-text {
-  object-fit: contain !important;
-  /* Original text is dark brown on transparent —
-     filter chain: invert to white, then sepia+hue to gold/cream */
-  filter: invert(1) brightness(1.6) sepia(0.25) saturate(0.6) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  line-height: 1 !important;
   flex-shrink: 0 !important;
 }
-.he-logo-text {
-  height: 34px !important;
-  width: auto !important;
+.he-logo-text .he-name-hamza, .he-bm-logo-text .he-name-hamza {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 700 !important;
+  color: #FAF3E3 !important;  /* Off-White */
+  letter-spacing: 3px !important;
+  text-transform: none !important;
 }
-.he-bm-logo-text {
-  height: 34px !important;
-  width: auto !important;
+.he-logo-text .he-name-express, .he-bm-logo-text .he-name-express {
+  font-family: 'Cinzel', serif !important;
+  font-weight: 600 !important;
+  color: #D2B48C !important;  /* Tan */
+  letter-spacing: 4px !important;
+  text-transform: uppercase !important;
+  margin-top: -2px !important;
+}
+/* Kitchen Pass sizes */
+.he-logo-text .he-name-hamza {
+  font-size: 22px !important;
+}
+.he-logo-text .he-name-express {
+  font-size: 11px !important;
+}
+/* Bain Marie sizes (portrait) */
+.he-bm-logo-text .he-name-hamza {
+  font-size: 22px !important;
+}
+.he-bm-logo-text .he-name-express {
+  font-size: 11px !important;
 }
 
 /* ── Divider between brand group and counter name ────────── */
@@ -376,8 +397,11 @@ html, body, body.o_web_client {
   width: 70px !important;
   border-width: 2.5px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text {
-  height: 40px !important;
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-name-hamza {
+  font-size: 28px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-name-express {
+  font-size: 14px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-header-divider {
   height: 50px !important;
@@ -527,10 +551,9 @@ const OVERRIDE_SCRIPT = `<script>
       icon.className='he-logo-icon';
       icon.src='/assets/brand/he-icon.png';
       icon.alt='Hamza Express';
-      var txt=document.createElement('img');
+      var txt=document.createElement('div');
       txt.className='he-logo-text';
-      txt.src='/assets/brand/he-text.png';
-      txt.alt='Hamza Express';
+      txt.innerHTML='<span class="he-name-hamza">Hamza</span><span class="he-name-express">Express</span>';
       bg.appendChild(icon);
       bg.appendChild(txt);
       var div=document.createElement('div');
@@ -557,10 +580,9 @@ const OVERRIDE_SCRIPT = `<script>
       icon2.className='he-bm-logo-icon';
       icon2.src='/assets/brand/he-icon.png';
       icon2.alt='Hamza Express';
-      var txt2=document.createElement('img');
+      var txt2=document.createElement('div');
       txt2.className='he-bm-logo-text';
-      txt2.src='/assets/brand/he-text.png';
-      txt2.alt='Hamza Express';
+      txt2.innerHTML='<span class="he-name-hamza">Hamza</span><span class="he-name-express">Express</span>';
       bg2.appendChild(icon2);
       bg2.appendChild(txt2);
       var div2=document.createElement('div');
