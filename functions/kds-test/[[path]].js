@@ -221,9 +221,8 @@ html, body, body.o_web_client {
   flex-shrink: 0 !important;
 }
 .he-title {
-  font-size: clamp(30px, 3vw, 56px) !important;
-  font-weight: 900 !important;
-  letter-spacing: 8px !important;
+  font-size: clamp(18px, 2.4vw, 36px) !important;
+  letter-spacing: 5px !important;
 }
 .he-bm-title {
   font-size: clamp(18px, 2.8vw, 36px) !important;
@@ -353,28 +352,15 @@ html, body, body.o_web_client {
    43" TV horizontal • 37.5" × 21.1" frame
    NO SCROLLING — entire display fills fixed 1920×1080 exactly
    ══════════════════════════════════════════════════════════════ */
-.o_tracking_display_main:has(#he-header-bar) {
-  display: flex !important;
-  flex-direction: column !important;
+/* KP: fill viewport, no scroll, sections auto-size by content */
+.he-kp-layout {
   height: 100vh !important;
   max-height: 100vh !important;
   overflow: hidden !important;
 }
-.o_tracking_display_main:has(#he-header-bar) > .container-fluid {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-.o_tracking_display_main:has(#he-header-bar) .container-fluid > .row {
-  flex: 1 !important;
-  overflow: hidden !important;
-  align-content: start !important;
-}
 /* Hide footer elements — reclaim space for cards */
-.o_tracking_display_main:has(#he-header-bar) .o_tracking_display_logo,
-.o_tracking_display_main:has(#he-header-bar) .o_tracking_display_fadeOut {
+.he-kp-layout .o_tracking_display_logo,
+.he-kp-layout .o_tracking_display_fadeOut {
   display: none !important;
 }
 
@@ -386,90 +372,74 @@ html, body, body.o_web_client {
    NO SCROLLING — entire display fills fixed space exactly
    ══════════════════════════════════════════════════════════════ */
 
-/* Full-viewport flex column — absolutely no scroll */
-.o_tracking_display_main:has(#he-bm-header-bar) {
-  display: flex !important;
-  flex-direction: column !important;
+/* BM: fill viewport, no scroll, sections auto-size by content */
+.he-bm-layout {
   height: 100vh !important;
   max-height: 100vh !important;
   overflow: hidden !important;
   padding: 0 !important;
 }
 
-/* ── BM Header — portrait-specific overrides ─────────────── */
-.o_tracking_display_main:has(#he-bm-header-bar) > #he-bm-header-bar {
-  flex-shrink: 0 !important;
-  padding: 16px 24px !important;
-  gap: 16px !important;
+/* ── BM Header — portrait-specific overrides for 1080×1920 ─── */
+.he-bm-layout > #he-bm-header-bar {
+  padding: 20px 28px !important;
+  gap: 18px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-icon {
-  height: 70px !important;
-  width: 70px !important;
-  border-width: 2.5px !important;
+.he-bm-layout .he-bm-logo-icon {
+  height: 80px !important;
+  width: 80px !important;
+  border-width: 3px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-hamza {
-  width: 110px !important;
-  height: 26px !important;
+.he-bm-layout .he-bm-logo-text .he-text-hamza {
+  width: 130px !important;
+  height: 30px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-express {
-  width: 110px !important;
-  height: 12px !important;
+.he-bm-layout .he-bm-logo-text .he-text-express {
+  width: 130px !important;
+  height: 14px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-header-divider {
-  height: 50px !important;
+.he-bm-layout .he-header-divider {
+  height: 60px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-title {
-  font-size: 36px !important;
-  letter-spacing: 8px !important;
-}
-
-/* ── BM Sections — fill remaining 1920px height equally ── */
-.o_tracking_display_main:has(#he-bm-header-bar) > .container-fluid {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  padding: 10px 14px 6px !important;
-  display: flex !important;
-  flex-direction: column !important;
+.he-bm-layout .he-bm-title {
+  font-size: 52px !important;
+  font-weight: 700 !important;
+  letter-spacing: 6px !important;
 }
 
 /* ── BM Section headers — bigger for portrait TV ──────── */
-.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > .mb-2.fw-bolder,
-.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > div.mb-2.fs-6.fw-bolder {
+.he-bm-layout .container-fluid > .mb-2.fw-bolder,
+.he-bm-layout .container-fluid > div.mb-2.fs-6.fw-bolder {
   font-size: 28px !important;
-  padding: 12px 28px !important;
+  padding: 14px 32px !important;
   letter-spacing: 6px !important;
-  margin-bottom: 10px !important;
-  flex-shrink: 0 !important;
+  margin-bottom: 14px !important;
 }
 
-/* ── BM Card grid — fill remaining section space ──────── */
-.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > .row {
-  flex: 1 !important;
-  overflow: hidden !important;
-  align-content: start !important;
-  --bs-gutter-x: 14px !important;
-  --bs-gutter-y: 14px !important;
+/* ── BM Card grid — wider gaps for portrait ──────── */
+.he-bm-layout .container-fluid > .row {
+  --bs-gutter-x: 16px !important;
+  --bs-gutter-y: 16px !important;
 }
 
 /* ── BM Cards — large order numbers for distance reading ── */
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number.text-bg-700,
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number.text-bg-600 {
-  font-size: 72px !important;
-  padding: 16px 10px !important;
-  border-radius: 14px !important;
-  min-height: 70px !important;
+.he-bm-layout .o_tracking_display_number.text-bg-700,
+.he-bm-layout .o_tracking_display_number.text-bg-600 {
+  font-size: 80px !important;
+  padding: 20px 12px !important;
+  border-radius: 16px !important;
+  min-height: 80px !important;
   border-width: 3px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number > div,
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number div[style] {
-  font-size: 18px !important;
+.he-bm-layout .o_tracking_display_number > div,
+.he-bm-layout .o_tracking_display_number div[style] {
+  font-size: 20px !important;
   letter-spacing: 2px !important;
 }
 
 /* ── BM Hide footer/watermark — reclaim precious space ─── */
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_logo,
-.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_fadeOut {
+.he-bm-layout .o_tracking_display_logo,
+.he-bm-layout .o_tracking_display_fadeOut {
   display: none !important;
 }
 
@@ -553,8 +523,10 @@ const OVERRIDE_SCRIPT = `<script>
     var kh=document.getElementById('he-header-bar');
     if(kh && !kh.dataset.rebuilt){
       kh.dataset.rebuilt='1';
-      // Move header inside main so :has() CSS selectors match
+      // Move header inside main & add layout class for CSS targeting
       if(main && kh.parentElement!==main) main.insertBefore(kh,main.firstChild);
+      if(main) main.classList.add('he-kp-layout');
+      // Find existing elements
       var logoWrap=kh.querySelector('.he-logo-wrap');
       var title=kh.querySelector('.he-title');
       var tagline=kh.querySelector('.he-tagline');
@@ -586,13 +558,16 @@ const OVERRIDE_SCRIPT = `<script>
     var bh=document.getElementById('he-bm-header-bar');
     if(bh && !bh.dataset.rebuilt){
       bh.dataset.rebuilt='1';
-      // Move header inside main so :has() CSS selectors match
+      // Move header inside main & add layout class for CSS targeting
       if(main && bh.parentElement!==main) main.insertBefore(bh,main.firstChild);
+      if(main) main.classList.add('he-bm-layout');
       var logoWrap2=bh.querySelector('.he-bm-logo-wrap');
       var title2=bh.querySelector('.he-bm-title');
       var est=bh.querySelector('.he-bm-est');
       if(logoWrap2) logoWrap2.remove();
       if(est) est.remove();
+      // Shorten long Odoo name to just "BAIN MARIE"
+      if(title2) title2.textContent='BAIN MARIE';
       var bg2=document.createElement('div');
       bg2.className='he-brand-group';
       var icon2=document.createElement('img');
