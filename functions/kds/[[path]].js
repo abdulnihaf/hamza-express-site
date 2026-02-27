@@ -2,10 +2,110 @@
 // Reverse-proxies the Odoo pos-order-tracking page and injects Hamza Express brand CSS
 // Routes: /kds/* → ops.hamzahotel.com/* (production)
 //         /kds/*?env=test → test.hamzahotel.com/* (test)
+//         /kds/*?portrait=1 → portrait mode (CSS rotation for vertical TV, no brand overlay)
 // Preserves 100% of KDS behaviour — only adds visual branding
 
 const PROD_ORIGIN = 'https://ops.hamzahotel.com';
 const TEST_ORIGIN = 'https://test.hamzahotel.com';
+
+// ─── Portrait Rotation CSS ──────────────────────────────────────────────────────
+// For vertically-mounted TVs: Fire Stick outputs 1920×1080 landscape HDMI
+// CSS rotates content -90° so it appears upright on a TV mounted 90° CW
+// Odoo's own QWeb branding is used (no proxy brand overlay to avoid double-branding)
+const PORTRAIT_CSS = `
+/* ═══════════════════════════════════════════════════════════════════════
+   Portrait Mode — CSS rotation for vertically-mounted TV
+   Fire Stick: 1920×1080 HDMI → TV physically rotated 90° CW
+   Content rotated -90° (CCW) to appear upright
+   ═══════════════════════════════════════════════════════════════════════ */
+
+html, body, body.o_web_client {
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #110804 !important;
+}
+
+/* Rotate the main KDS container */
+.o_tracking_display_main,
+.o_tracking_display_main.vh-100,
+.o_tracking_display_main.vh-100.text-bg-700 {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 100vh !important;    /* 1080px — portrait width */
+  height: 100vw !important;   /* 1920px — portrait height */
+  max-height: none !important;
+  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  overflow: hidden !important;
+}
+
+/* Override Bootstrap grid: force 2 columns for portrait
+   (media queries see 1920px viewport, but container is only 1080px wide) */
+.o_tracking_display_main .row.row-cols-lg-4 > .col,
+.o_tracking_display_main .row.row-cols-xxl-5 > .col {
+  flex: 0 0 50% !important;
+  max-width: 50% !important;
+}
+
+/* Slightly larger cards for portrait readability */
+.o_tracking_display_main .o_tracking_display_number {
+  font-size: clamp(32px, 5vmin, 64px) !important;
+  padding: 16px 12px !important;
+}
+
+/* Hide Odoo watermark/footer to reclaim space */
+.o_tracking_display_main .o_tracking_display_logo,
+.o_tracking_display_main .o_tracking_display_fadeOut {
+  display: none !important;
+}
+`;
+
+// ─── Portrait-only URL rewriting script (no header rebuild) ─────────────────────
+const PORTRAIT_OVERRIDE_SCRIPT = \`<script>
+(function(){
+  var OO='__ODOO_ORIGIN__';
+  function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
+  var _f=window.fetch;
+  window.fetch=function(u,o){
+    if(typeof u==='string'){u=rw(u);}
+    else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
+    return _f.call(this,u,o);
+  };
+  var _x=XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open=function(){
+    arguments[1]=rw(arguments[1]);
+    return _x.apply(this,arguments);
+  };
+  var _ce=document.createElement.bind(document);
+  document.createElement=function(tag){
+    var el=_ce(tag);
+    if(tag==='script'||tag==='link'||tag==='img'){
+      var _sa=el.setAttribute.bind(el);
+      el.setAttribute=function(n,v){
+        if(n==='src'||n==='href')v=rw(v);
+        return _sa(n,v);
+      };
+    }
+    return el;
+  };
+  var _WS=window.WebSocket;
+  window.WebSocket=function(url,protocols){
+    if(typeof url==='string'){
+      if(url.charAt(0)==='/'&&url.indexOf('/kds/')!==0&&url.charAt(1)!=='/'){url='/kds'+url;}
+      else{try{var p=new URL(url);if(p.host===location.host&&!p.pathname.startsWith('/kds/')){p.pathname='/kds'+p.pathname;url=p.toString();}}catch(e){}}
+    }
+    return protocols?new _WS(url,protocols):new _WS(url);
+  };
+  window.WebSocket.prototype=_WS.prototype;
+  window.WebSocket.CONNECTING=_WS.CONNECTING;
+  window.WebSocket.OPEN=_WS.OPEN;
+  window.WebSocket.CLOSING=_WS.CLOSING;
+  window.WebSocket.CLOSED=_WS.CLOSED;
+})();
+</script>\`;
 
 // ─── Brand CSS ─────────────────────────────────────────────────────────────────
 const BRAND_CSS = `
@@ -502,18 +602,19 @@ html, body, body.o_web_client {
 // Rewrites all root-relative URLs (e.g. /web/assets/...) to go through the proxy
 const OVERRIDE_SCRIPT = `<script>
 (function(){
+  var OO='__ODOO_ORIGIN__';
+  function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
   // Override fetch()
   var _f=window.fetch;
   window.fetch=function(u,o){
-    if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/'){u='/kds'+u;}
-    else if(u instanceof Request){try{var p=new URL(u.url);if(p.origin===location.origin&&p.pathname.charAt(0)==='/'&&p.pathname.indexOf('/kds/')!==0){u=new Request('/kds'+p.pathname+p.search+p.hash,u);}}catch(e){}}
+    if(typeof u==='string'){u=rw(u);}
+    else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
     return _f.call(this,u,o);
   };
   // Override XMLHttpRequest.open()
   var _x=XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open=function(){
-    var u=arguments[1];
-    if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/'){arguments[1]='/kds'+u;}
+    arguments[1]=rw(arguments[1]);
     return _x.apply(this,arguments);
   };
   // Override dynamic script/link creation
@@ -523,12 +624,28 @@ const OVERRIDE_SCRIPT = `<script>
     if(tag==='script'||tag==='link'||tag==='img'){
       var _sa=el.setAttribute.bind(el);
       el.setAttribute=function(n,v){
-        if((n==='src'||n==='href')&&typeof v==='string'&&v.charAt(0)==='/'&&v.indexOf('/kds/')!==0&&v.charAt(1)!=='/'){v='/kds'+v;}
+        if(n==='src'||n==='href')v=rw(v);
         return _sa(n,v);
       };
     }
     return el;
   };
+  // Override WebSocket to route through proxy (preserves session cookies)
+  var _WS=window.WebSocket;
+  window.WebSocket=function(url,protocols){
+    if(typeof url==='string'){
+      // Bare paths: /websocket → /kds/websocket
+      if(url.charAt(0)==='/'&&url.indexOf('/kds/')!==0&&url.charAt(1)!=='/'){url='/kds'+url;}
+      // Full URLs on same host: wss://hamzaexpress.in/websocket → wss://hamzaexpress.in/kds/websocket
+      else{try{var p=new URL(url);if(p.host===location.host&&!p.pathname.startsWith('/kds/')){p.pathname='/kds'+p.pathname;url=p.toString();}}catch(e){}}
+    }
+    return protocols?new _WS(url,protocols):new _WS(url);
+  };
+  window.WebSocket.prototype=_WS.prototype;
+  window.WebSocket.CONNECTING=_WS.CONNECTING;
+  window.WebSocket.OPEN=_WS.OPEN;
+  window.WebSocket.CLOSING=_WS.CLOSING;
+  window.WebSocket.CLOSED=_WS.CLOSED;
   // Rebuild header with icon + text logo side by side (like the restaurant board)
   function rebuildHeader(){
     var main=document.querySelector('.o_tracking_display_main');
@@ -632,6 +749,8 @@ export async function onRequest(context) {
   // Determine target Odoo origin (production vs test)
   const isTest = url.searchParams.get('env') === 'test';
   const odooOrigin = isTest ? TEST_ORIGIN : PROD_ORIGIN;
+  // Portrait mode: CSS rotation for vertically-mounted TV (no brand overlay)
+  const isPortrait = url.searchParams.get('portrait') === '1';
 
   // Strip /kds prefix to reconstruct the Odoo path
   const odooPath = url.pathname.replace(/^\/kds/, '') || '/';
@@ -639,6 +758,19 @@ export async function onRequest(context) {
   odooUrl.search = url.search;
   // Remove our custom params so they don't leak to Odoo
   odooUrl.searchParams.delete('env');
+  odooUrl.searchParams.delete('portrait');
+
+  // ── Handle WebSocket upgrade — proxy transparently to Odoo ──
+  // Cloudflare Workers natively support WebSocket proxying via fetch()
+  if (context.request.headers.get('Upgrade')?.toLowerCase() === 'websocket') {
+    const wsHeaders = new Headers(context.request.headers);
+    wsHeaders.set('Host', odooUrl.host);
+    wsHeaders.set('Origin', odooOrigin);
+    for (const h of ['cf-connecting-ip','cf-ray','cf-visitor','cf-ipcountry','cdn-loop','cf-worker']) {
+      wsHeaders.delete(h);
+    }
+    return fetch(odooUrl.toString(), { headers: wsHeaders });
+  }
 
   // Build request headers — forward most, fix Host
   const reqHeaders = new Headers(context.request.headers);
@@ -678,9 +810,14 @@ export async function onRequest(context) {
         const redir = new URL(loc, odooUrl);
         if (redir.host === odooUrl.host) {
           const newLoc = '/kds' + redir.pathname + redir.search;
+          const redirHeaders = new Headers({ 'Location': newLoc });
+          // Forward cookies from redirect response (strip Domain for proxy)
+          for (const c of (odooResp.headers.getAll('set-cookie') || [])) {
+            redirHeaders.append('set-cookie', c.replace(/;\s*domain=[^;]*/gi, ''));
+          }
           return new Response(null, {
             status: odooResp.status,
-            headers: { 'Location': newLoc },
+            headers: redirHeaders,
           });
         }
       } catch (e) { /* fall through */ }
@@ -699,6 +836,14 @@ export async function onRequest(context) {
   respHeaders.set('Access-Control-Allow-Origin', '*');
   respHeaders.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   respHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+  // Rewrite Set-Cookie — strip Domain so browser stores for proxy domain (hamzaexpress.in)
+  const setCookies = respHeaders.getAll('set-cookie');
+  if (setCookies.length) {
+    respHeaders.delete('set-cookie');
+    for (const c of setCookies) {
+      respHeaders.append('set-cookie', c.replace(/;\s*domain=[^;]*/gi, ''));
+    }
+  }
 
   // ── Handle OPTIONS (CORS preflight) ──
   if (context.request.method === 'OPTIONS') {
@@ -710,12 +855,19 @@ export async function onRequest(context) {
   // ── HTML response: inject brand CSS + URL rewriting ──
   if (contentType.includes('text/html')) {
     const rewriter = new HTMLRewriter()
-      // Inject font + override script at START of <head>
+      // Inject scripts + CSS at START/END of <head>
       .on('head', {
         element(el) {
-          el.prepend(FONT_TAGS + OVERRIDE_SCRIPT, { html: true });
-          // Inject brand CSS at END of <head> (wins cascade priority)
-          el.append(`<style id="he-brand-css">${BRAND_CSS}</style>`, { html: true });
+          if (isPortrait) {
+            // Portrait mode: URL rewriting only (no brand fonts/header rebuild)
+            // Odoo QWeb provides its own branding — avoids double-branding
+            el.prepend(PORTRAIT_OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
+            el.append(`<style id="he-portrait-css">${PORTRAIT_CSS}</style>`, { html: true });
+          } else {
+            // Standard mode: full brand overlay with fonts + header rebuild
+            el.prepend(FONT_TAGS + OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
+            el.append(`<style id="he-brand-css">${BRAND_CSS}</style>`, { html: true });
+          }
         }
       })
       // Rewrite <script src="/..."> → <script src="/kds/...">
