@@ -181,23 +181,23 @@ html, body, body.o_web_client {
   mask-size: contain !important;
   mask-repeat: no-repeat !important;
 }
-/* Kitchen Pass sizes */
+/* Kitchen Pass sizes — subtle, counter name is the hero */
 .he-logo-text .he-text-hamza {
-  width: 120px !important;
-  height: 28px !important;
+  width: 80px !important;
+  height: 19px !important;
 }
 .he-logo-text .he-text-express {
-  width: 120px !important;
-  height: 13px !important;
+  width: 80px !important;
+  height: 9px !important;
 }
-/* Bain Marie sizes */
+/* Bain Marie sizes — subtle, counter name is the hero */
 .he-bm-logo-text .he-text-hamza {
-  width: 120px !important;
-  height: 28px !important;
+  width: 80px !important;
+  height: 19px !important;
 }
 .he-bm-logo-text .he-text-express {
-  width: 120px !important;
-  height: 13px !important;
+  width: 80px !important;
+  height: 9px !important;
 }
 
 /* ── Divider between brand group and counter name ────────── */
@@ -409,12 +409,12 @@ html, body, body.o_web_client {
   border-width: 2.5px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-hamza {
-  width: 156px !important;
-  height: 36px !important;
+  width: 110px !important;
+  height: 26px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-express {
-  width: 156px !important;
-  height: 17px !important;
+  width: 110px !important;
+  height: 12px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-header-divider {
   height: 50px !important;
