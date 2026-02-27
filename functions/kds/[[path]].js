@@ -854,10 +854,13 @@ export async function onRequest(context) {
 
   // ── HTML response: inject brand CSS + URL rewriting ──
   if (contentType.includes('text/html')) {
+    let headInjected = false;
     const rewriter = new HTMLRewriter()
-      // Inject scripts + CSS at START/END of <head>
+      // Inject scripts + CSS at START/END of <head> (only the first one)
       .on('head', {
         element(el) {
+          if (headInjected) return;  // Odoo HTML has 2 <head> tags — only inject once
+          headInjected = true;
           if (isPortrait) {
             // Portrait mode: URL rewriting only (no brand fonts/header rebuild)
             // Odoo QWeb provides its own branding — avoids double-branding
