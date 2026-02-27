@@ -38,7 +38,7 @@ html, body, body.o_web_client {
   width: 100vh !important;    /* 1080px — portrait width */
   height: 100vw !important;   /* 1920px — portrait height */
   max-height: none !important;
-  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
   overflow: hidden !important;
 }
 
