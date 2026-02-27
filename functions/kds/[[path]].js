@@ -130,7 +130,7 @@ html, body, body.o_web_client {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 14px !important;
+  gap: 10px !important;
   flex-shrink: 0 !important;
 }
 
@@ -145,8 +145,8 @@ html, body, body.o_web_client {
   flex-shrink: 0 !important;
 }
 .he-logo-icon {
-  height: 56px !important;
-  width: 56px !important;
+  height: 40px !important;
+  width: 40px !important;
 }
 .he-bm-logo-icon {
   height: 56px !important;
@@ -181,14 +181,14 @@ html, body, body.o_web_client {
   mask-size: contain !important;
   mask-repeat: no-repeat !important;
 }
-/* Kitchen Pass sizes — subtle, counter name is the hero */
+/* Kitchen Pass sizes — compact, counter name is the hero */
 .he-logo-text .he-text-hamza {
-  width: 80px !important;
-  height: 19px !important;
+  width: 64px !important;
+  height: 15px !important;
 }
 .he-logo-text .he-text-express {
-  width: 80px !important;
-  height: 9px !important;
+  width: 64px !important;
+  height: 7px !important;
 }
 /* Bain Marie sizes — subtle, counter name is the hero */
 .he-bm-logo-text .he-text-hamza {
