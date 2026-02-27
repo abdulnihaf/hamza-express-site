@@ -88,17 +88,10 @@ html, body, body.o_web_client {
   background: linear-gradient(90deg, transparent, rgba(201,169,110,0.35), transparent) !important;
 }
 
-/* Force all header children out of Odoo's absolute + transform centering */
-#he-header-bar > *, #he-bm-header-bar > * {
-  position: static !important;
-  transform: none !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-}
-
 /* ══════════════════════════════════════════════════════════════
    HEADER — Kitchen Counter (landscape 1920×1080)
+   Counter name stays CENTERED (Odoo's default absolute positioning).
+   Brand group (icon+text) added to the LEFT CORNER alongside it.
    ══════════════════════════════════════════════════════════════ */
 #he-header-bar {
   display: flex !important;
@@ -106,11 +99,16 @@ html, body, body.o_web_client {
   align-items: center !important;
   justify-content: flex-start !important;
   padding: 10px 36px !important;
-  gap: 20px !important;
+  gap: 14px !important;
+}
+/* Kitchen Pass: hide the divider — title is centered independently */
+#he-header-bar > .he-header-divider {
+  display: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
    HEADER — Bain Marie Counter (portrait 1080×1920)
+   Brand group + divider + counter name in a LEFT-ALIGNED row.
    ══════════════════════════════════════════════════════════════ */
 #he-bm-header-bar {
   display: flex !important;
@@ -119,6 +117,12 @@ html, body, body.o_web_client {
   justify-content: flex-start !important;
   padding: 14px 20px !important;
   gap: 16px !important;
+}
+/* Bain Marie: reset Odoo's absolute+transform centering on title */
+#he-bm-header-bar > .he-bm-title {
+  position: static !important;
+  transform: none !important;
+  left: auto !important;
 }
 
 /* ── Brand Group: icon + text logo container ─────────────── */
