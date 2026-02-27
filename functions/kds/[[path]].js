@@ -548,10 +548,13 @@ const OVERRIDE_SCRIPT = `<script>
   };
   // Rebuild header with icon + text logo side by side (like the restaurant board)
   function rebuildHeader(){
+    var main=document.querySelector('.o_tracking_display_main');
     // Kitchen Pass header
     var kh=document.getElementById('he-header-bar');
     if(kh && !kh.dataset.rebuilt){
       kh.dataset.rebuilt='1';
+      // Move header inside main so :has() CSS selectors match
+      if(main && kh.parentElement!==main) main.insertBefore(kh,main.firstChild);
       // Find existing elements
       var logoWrap=kh.querySelector('.he-logo-wrap');
       var title=kh.querySelector('.he-title');
@@ -588,6 +591,8 @@ const OVERRIDE_SCRIPT = `<script>
     var bh=document.getElementById('he-bm-header-bar');
     if(bh && !bh.dataset.rebuilt){
       bh.dataset.rebuilt='1';
+      // Move header inside main so :has() CSS selectors match
+      if(main && bh.parentElement!==main) main.insertBefore(bh,main.firstChild);
       var logoWrap2=bh.querySelector('.he-bm-logo-wrap');
       var title2=bh.querySelector('.he-bm-title');
       var est=bh.querySelector('.he-bm-est');
