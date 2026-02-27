@@ -28,45 +28,26 @@ html, body, body.o_web_client {
   background: #110804 !important;
 }
 
-/* Rotate the main KDS container to portrait */
+/* Rotate the main KDS container to portrait.
+   Container stays at full viewport (100vh × 100vw = 1080 × 1920px) so Odoo
+   layout renders naturally. scale(0.92) then shrinks the visual output uniformly,
+   creating an exact 4% TV-safe margin on every edge:
+     • Long edges (header/footer direction): (1920 − 1766.4) ÷ 2 = 76.8px (4.0%)
+     • Short edges (left/right for viewer):  (1080 − 993.6)  ÷ 2 = 43.2px (4.0%)
+   Header (element top) → HDMI left → viewer TOP → 76.8px margin.
+   Handles up to 4% TV overscan without any content clipping. */
 .o_tracking_display_main,
 .o_tracking_display_main.vh-100,
 .o_tracking_display_main.vh-100.text-bg-700 {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
-  width: 100vh !important;    /* 1080px — portrait width */
-  height: 100vw !important;   /* 1920px — portrait height */
+  width: 100vh !important;    /* 1080px — full viewport height (portrait width) */
+  height: 100vw !important;   /* 1920px — full viewport width (portrait height) */
   max-height: none !important;
-  transform: translate(-50%, -50%) rotate(-90deg) !important;
+  transform: translate(-50%, -50%) rotate(-90deg) scale(0.92) !important;
   overflow: hidden !important;
-}
-
-/* ── Header: scale down to fit 1080px portrait width ── */
-#he-bm-header-bar, #he-header-bar {
-  padding: 10px 16px !important;
-  gap: 10px !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-.he-bm-title, .he-title {
-  font-size: clamp(20px, 3.5vmin, 36px) !important;
-  letter-spacing: 3px !important;
-}
-.he-bm-logo-icon, .he-logo-icon {
-  height: 46px !important;
-  width: 46px !important;
-}
-.he-bm-logo-text .he-text-hamza, .he-logo-text .he-text-hamza {
-  width: 60px !important;
-  height: 14px !important;
-}
-.he-bm-logo-text .he-text-express, .he-logo-text .he-text-express {
-  width: 60px !important;
-  height: 7px !important;
-}
-.he-header-divider {
-  height: 36px !important;
+  border-radius: 4px !important;
 }
 
 /* ── Override Bootstrap grid: 2 columns for portrait ── */
