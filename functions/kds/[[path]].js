@@ -409,14 +409,7 @@ html, body, body.o_web_client {
   letter-spacing: 6px !important;
 }
 
-/* ── BM Section headers — bigger for portrait TV ──────── */
-.he-bm-layout .container-fluid > .mb-2.fw-bolder,
-.he-bm-layout .container-fluid > div.mb-2.fs-6.fw-bolder {
-  font-size: 28px !important;
-  padding: 14px 32px !important;
-  letter-spacing: 6px !important;
-  margin-bottom: 14px !important;
-}
+/* ── BM Section headers — same base badge style as Kitchen Pass ──────── */
 
 /* ── BM Card grid — wider gaps for portrait ──────── */
 .he-bm-layout .container-fluid > .row {
