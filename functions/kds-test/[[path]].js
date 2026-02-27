@@ -86,9 +86,13 @@ html, body, body.o_web_client {
   background: linear-gradient(90deg, transparent, rgba(201,169,110,0.35), transparent) !important;
 }
 
-/* Force all header children out of absolute positioning (Odoo default) */
+/* Force all header children out of Odoo's absolute + transform centering */
 #he-header-bar > *, #he-bm-header-bar > * {
   position: static !important;
+  transform: none !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
