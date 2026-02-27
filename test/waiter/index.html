@@ -205,22 +205,22 @@ let currentTab = 'tables';
 // ── Counter display names & colors ──
 const COUNTER_DISPLAY = {
   'Kitchen Pass': 'Kitchen Counter',
-  'Bane Marie': 'Bain Marie Counter'
+  'Bain Marie': 'Bain Marie Counter'
 };
 const COUNTER_COLOR = {
   'Kitchen Pass': 'amber',
-  'Bane Marie': 'blue',
+  'Bain Marie': 'blue',
   'Juice Counter': 'green',
   'Shawarma Counter': 'orange',
   'Grill Counter': 'red'
 };
 // Fixed display order for stations
-const COUNTER_ORDER = ['Kitchen Pass', 'Bane Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
+const COUNTER_ORDER = ['Kitchen Pass', 'Bain Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
 
 // ── Status labels: simple — Preparing → Ready/Prepared ──
 function getStatusLabel(counter, status) {
   if (status === 'cooking')    return 'Preparing';
-  if (status === 'at_counter') return counter === 'Bane Marie' ? 'Prepared' : 'Ready';
+  if (status === 'at_counter') return counter === 'Bain Marie' ? 'Prepared' : 'Ready';
   if (status === 'picked_up')  return 'Collected';
   if (status === 'delivered')  return 'Served';
   return status;

@@ -19,7 +19,7 @@ const CAT_DESCRIPTIONS = {
   22: 'Indian',
   24: 'Chinese',
   23: 'Biryani & Rice',
-  28: 'Bane Marie',
+  28: 'Bain Marie',
   27: 'Juices & Desserts',
   29: 'Shawarma',
   30: 'Grill',

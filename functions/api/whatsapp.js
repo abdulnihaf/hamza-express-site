@@ -182,7 +182,7 @@ const PRODUCTS = {
   'HE-1367': { name: 'Shawarma Roll',              price: 76,  odooId: 1385, catId: 26 },
   'HE-1373': { name: 'Soft Drink',                 price: 38,  odooId: 1391, catId: 26 },
 
-  // ── Bane Marie (cat 28) — counter service items ──
+  // ── Bain Marie (cat 28) — counter service items ──
   'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
   'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
   'HE-1205': { name: 'Ghee Rice',                  price: 95,  odooId: 1223, catId: 28 },
@@ -198,7 +198,7 @@ const KITCHEN_CATS = new Set([22, 24, 25, 26]); // Indian, Chinese, Tandoor, FC 
 const KITCHEN_COUNTER_LABEL = 'Kitchen Counter'; // Customer-facing name (internal: Kitchen Pass)
 const COUNTER_CATS = {
   27: 'Juice Counter',
-  28: 'Bane Marie Counter',
+  28: 'Bain Marie Counter',
   29: 'Shawarma Counter',
   30: 'Grill Counter',
 };
@@ -208,13 +208,13 @@ const STAGE_COUNTER_MAP = {
   // PREPARING stages
   44: KITCHEN_COUNTER_LABEL,  // KDS 15 Kitchen Pass → Ready (all station items done)
   62: 'Juice Counter',        // KDS 16 Juice → Preparing
-  64: 'Bane Marie Counter',   // KDS 17 Bane Marie → Preparing
+  64: 'Bain Marie Counter',   // KDS 17 Bain Marie → Preparing
   65: 'Shawarma Counter',     // KDS 18 Shawarma → Preparing
   66: 'Grill Counter',        // KDS 19 Grill → Preparing
   // READY stages
   76: KITCHEN_COUNTER_LABEL,  // KDS 21 Kitchen Pass TV → InProgress (packed, ready for pickup)
   47: 'Juice Counter',        // KDS 16 Juice → Ready
-  50: 'Bane Marie Counter',   // KDS 17 Bane Marie → Ready
+  50: 'Bain Marie Counter',   // KDS 17 Bain Marie → Ready
   53: 'Shawarma Counter',     // KDS 18 Shawarma → Ready
   56: 'Grill Counter',        // KDS 19 Grill → Ready
 };
@@ -398,9 +398,9 @@ const MEAL_INTENT_CATEGORIES = {
 // Customer scans QR at counter → sees ONLY that counter's items → orders → pays → collects there
 const COUNTER_MENUS = {
   bm_counter: {
-    title: 'Bane Marie Counter',
-    counter: 'Bane Marie Counter',
-    greeting: 'Order from the Bane Marie counter — Biryani, Rice & Curry!',
+    title: 'Bain Marie Counter',
+    counter: 'Bain Marie Counter',
+    greeting: 'Order from the Bain Marie counter — Biryani, Rice & Curry!',
     sections: [
       { title: 'Biryani & Rice', items: ['HE-1201','HE-1200','HE-1205'] },
       { title: 'Curry & Starters', items: ['HE-1397','HE-1398','HE-1164','HE-1399','HE-1400'] },
@@ -1569,7 +1569,7 @@ h1{color:#713520;font-size:1.3rem}</style></head>
 const PREPARING_STAGES = new Set([
   44,   // KDS 15 Kitchen Pass → Ready (all station items done, KP collecting)
   62,   // KDS 16 Juice → Preparing
-  64,   // KDS 17 Bane Marie → Preparing
+  64,   // KDS 17 Bain Marie → Preparing
   65,   // KDS 18 Shawarma → Preparing
   66,   // KDS 19 Grill → Preparing
 ]);
@@ -1578,17 +1578,25 @@ const PREPARING_STAGES = new Set([
 const READY_STAGES = new Set([
   76,   // KDS 21 Kitchen Pass TV → InProgress (packed, ready for pickup)
   47,   // KDS 16 Juice → Ready
-  50,   // KDS 17 Bane Marie → Ready
+  50,   // KDS 17 Bain Marie → Ready
   53,   // KDS 18 Shawarma → Ready
   56,   // KDS 19 Grill → Ready
 ]);
 
 async function handleKdsWebhook(context, url, corsHeaders) {
+  // Debug log BEFORE auth check (temporary)
+  const db = context.env.DB;
+  const debugLog = async (msg) => {
+    try { await db.prepare('INSERT INTO kp_debug_log (ts, data) VALUES (?, ?)').bind(new Date().toISOString(), msg).run(); } catch(e) {}
+  };
+  await debugLog(`WEBHOOK_HIT: url=${url.search}`);
+
   try {
     // Verify shared secret
     const secret = url.searchParams.get('secret');
     const expectedSecret = context.env.KDS_WEBHOOK_SECRET;
     if (expectedSecret && secret !== expectedSecret) {
+      await debugLog(`AUTH_FAIL: got=${secret}, expected=${expectedSecret?.slice(0,10)}...`);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
     }
 
@@ -1599,9 +1607,12 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const body = await context.request.json();
     const { stage_id, todo, prep_line_id } = body;
 
+    await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, env=${isTestWebhook?'test':'prod'}`);
+
     // Resolve: prep_line_id → pos.prep.order → pos.order → config_id
     const apiKey = context.env.ODOO_API_KEY;
     if (!apiKey || !prep_line_id) {
+      await debugLog('SKIP: no api key or prep_line_id');
       return new Response(JSON.stringify({ ok: true, skipped: 'no api key or prep_line_id' }), { headers: corsHeaders });
     }
 
@@ -1609,6 +1620,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
       [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 }, webhookOdooUrl);
     if (!prepLine || !prepLine[0]?.prep_order_id) {
+      await debugLog(`SKIP: prep line not found (prepLine=${JSON.stringify(prepLine)})`);
       return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
     }
     const prepOrderId = prepLine[0].prep_order_id[0];
@@ -1618,6 +1630,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
       [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 }, webhookOdooUrl);
     if (!prepOrder || !prepOrder[0]?.pos_order_id) {
+      await debugLog(`SKIP: prep order not found (prepOrder=${JSON.stringify(prepOrder)})`);
       return new Response(JSON.stringify({ ok: true, skipped: 'prep order not found' }), { headers: corsHeaders });
     }
     const posOrderId = prepOrder[0].pos_order_id[0];
@@ -1626,11 +1639,14 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
       [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
     if (!posOrder || !posOrder[0]) {
+      await debugLog(`SKIP: pos order not found (posOrder=${JSON.stringify(posOrder)})`);
       return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
     }
     const configId = posOrder[0].config_id[0];
     const presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
     const trackingNumber = posOrder[0].tracking_number || null;
+
+    await debugLog(`RESOLVED: configId=${configId}, presetId=${presetId}, posOrderId=${posOrderId}, stage=${stage_id}`);
 
     // Route by config
     if (configId === POS_CONFIG_ID && !isTestWebhook) {
@@ -1755,12 +1771,12 @@ const FLOOR_STAGE_MAP = {
   63: { counter: 'Kitchen Pass', status: 'picked_up' },
   // Counter Ready → at_counter (waiter READY signal)
   47: { counter: 'Juice Counter', status: 'at_counter' },
-  50: { counter: 'Bane Marie', status: 'at_counter' },
+  50: { counter: 'Bain Marie', status: 'at_counter' },
   53: { counter: 'Shawarma Counter', status: 'at_counter' },
   56: { counter: 'Grill Counter', status: 'at_counter' },
   // Counter Completed → picked_up (counter confirms waiter collected)
   48: { counter: 'Juice Counter', status: 'picked_up' },
-  51: { counter: 'Bane Marie', status: 'picked_up' },
+  51: { counter: 'Bain Marie', status: 'picked_up' },
   54: { counter: 'Shawarma Counter', status: 'picked_up' },
   57: { counter: 'Grill Counter', status: 'picked_up' },
 };
@@ -1775,8 +1791,8 @@ const TEST_FLOOR_STAGE_MAP = {
   74: { counter: 'Kitchen Pass', status: 'at_counter' },
   63: { counter: 'Kitchen Pass', status: 'picked_up' },
   // Bain Marie: Prepared → at_counter (strikethrough), Completed → picked_up
-  50: { counter: 'Bane Marie', status: 'at_counter' },
-  51: { counter: 'Bane Marie', status: 'picked_up' },
+  50: { counter: 'Bain Marie', status: 'at_counter' },
+  51: { counter: 'Bain Marie', status: 'picked_up' },
 };
 
 // Category → counter mapping for floor items
@@ -1784,7 +1800,7 @@ const TEST_FLOOR_STAGE_MAP = {
 const FLOOR_COUNTER_MAP = {
   // Parent categories
   22: 'Kitchen Pass', 24: 'Kitchen Pass', 25: 'Kitchen Pass', 26: 'Kitchen Pass',
-  27: 'Juice Counter', 28: 'Bane Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
+  27: 'Juice Counter', 28: 'Bain Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
   // Snacks & Chai
   47: 'Kitchen Pass', 48: 'Kitchen Pass',
   // FC subcategories (parent 26)
@@ -1899,19 +1915,29 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
 // KP PRINT — Kitchen Pass Packing Slip for Cash Counter Takeaway
 // ═══════════════════════════════════════════════════════════════════
 
-const KP_PACKED_STAGE = 74;  // Kitchen Pass → Packed
-const KP_READY_STAGE = 44;   // Kitchen Pass → Ready (not yet packed)
+const KP_PACKED_STAGE = 74;      // Kitchen Pass → Packed
+const KP_READY_STAGE_PROD = 44;  // Kitchen Pass → Ready (production)
+const KP_READY_STAGE_TEST = 68;  // Kitchen Pass → Ready (test)
+const KP_READY_STAGES = new Set([44, 68]);  // Both prod + test Ready stages
 
 async function handleKdsWebhookKPPrint(context, corsHeaders, data, isTest) {
   const { stage_id, todo, prep_line_id, posOrderId, trackingNumber } = data;
   const ok = (msg) => new Response(JSON.stringify({ ok: true, kp_print: msg }), { headers: corsHeaders });
+  const db = context.env.DB;
+  const debugLog = async (msg) => {
+    try { await db.prepare('INSERT INTO kp_debug_log (ts, data) VALUES (?, ?)').bind(new Date().toISOString(), msg).run(); } catch(e) {}
+  };
 
-  // Only trigger on KP Packed (stage 74)
-  if (stage_id !== KP_PACKED_STAGE) return ok('not KP packed stage');
+  await debugLog(`KP_PRINT: stage=${stage_id}, orderId=${posOrderId}, isTest=${isTest}`);
+
+  // Only trigger on KP Ready stages (44=prod, 68=test)
+  if (!KP_READY_STAGES.has(stage_id)) {
+    await debugLog(`KP_PRINT SKIP: stage ${stage_id} not in KP_READY_STAGES`);
+    return ok('not KP ready stage');
+  }
 
   const apiKey = context.env.ODOO_API_KEY;
   const odooUrl = isTest ? TEST_ODOO_URL : undefined;
-  const db = context.env.DB;
 
   // Dedup: check if print job already exists for this order
   const existing = await db.prepare('SELECT id FROM kp_print_jobs WHERE odoo_order_id = ?')
@@ -1925,31 +1951,37 @@ async function handleKdsWebhookKPPrint(context, corsHeaders, data, isTest) {
 
   const prepOrderIds = prepOrders.map(po => po.id);
 
-  // Get all prep lines with their current stage_id
+  // Get all prep lines for this order
   const allPrepLines = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
-    [[['prep_order_id', 'in', prepOrderIds]]], { fields: ['id', 'stage_id'] }, odooUrl);
+    [[['prep_order_id', 'in', prepOrderIds]]], { fields: ['id'] }, odooUrl);
   if (!allPrepLines || allPrepLines.length === 0) return ok('no prep lines');
 
-  // Filter to KP items only (stages 44=Ready or 74=Packed belong to Kitchen Pass)
-  const kpLines = allPrepLines.filter(l => {
-    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
-    return sid === KP_READY_STAGE || sid === KP_PACKED_STAGE;
+  const allPrepLineIds = allPrepLines.map(pl => pl.id);
+
+  // Get all pos.prep.state records for these prep lines on KP display
+  // Each prep_line has one pos.prep.state per display it appears on
+  const kpStates = await odooRPC(apiKey, 'pos.prep.state', 'search_read',
+    [[['prep_line_id', 'in', allPrepLineIds], ['stage_id', 'in', [KP_READY_STAGE_PROD, KP_READY_STAGE_TEST, KP_PACKED_STAGE]]]],
+    { fields: ['id', 'prep_line_id', 'stage_id'] }, odooUrl);
+  await debugLog(`KP_PRINT: kpStates=${JSON.stringify(kpStates?.map(s => ({pl: s.prep_line_id[0], st: s.stage_id[0]})))}`);
+
+  if (!kpStates || kpStates.length === 0) return ok('no KP states for this order');
+
+  // Check: are ALL KP items at Ready (44/68) or beyond (74)?
+  // Items still at cooking stations won't have KP Ready/Packed states
+  const readyOrPacked = kpStates.filter(s => {
+    const sid = Array.isArray(s.stage_id) ? s.stage_id[0] : s.stage_id;
+    return KP_READY_STAGES.has(sid) || sid === KP_PACKED_STAGE;
   });
-  if (kpLines.length === 0) return ok('no KP items in this order');
+  const atReady = readyOrPacked.filter(s => {
+    const sid = Array.isArray(s.stage_id) ? s.stage_id[0] : s.stage_id;
+    return KP_READY_STAGES.has(sid);
+  });
 
-  // Check: any KP items still at Ready (stage 44)? If so, not all packed yet
-  const remainingReady = kpLines.filter(l => {
-    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
-    return sid === KP_READY_STAGE;
-  }).length;
-  if (remainingReady > 0) return ok(`${remainingReady} items still at KP Ready`);
+  await debugLog(`KP_PRINT: total_kp=${readyOrPacked.length}, at_ready=${atReady.length}`);
 
-  // Verify at least 1 item actually reached KP Packed
-  const packedCount = kpLines.filter(l => {
-    const sid = Array.isArray(l.stage_id) ? l.stage_id[0] : l.stage_id;
-    return sid === KP_PACKED_STAGE;
-  }).length;
-  if (packedCount === 0) return ok('no KP packed items');
+  // Verify at least 1 item is at KP Ready
+  if (atReady.length === 0) return ok('no items at KP Ready');
 
   // ALL items packed — fetch order details for the packing slip
   const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
@@ -2051,7 +2083,7 @@ async function handleKPPrintRelease(context, url, corsHeaders) {
 // ═══════════════════════════════════════════════════════════════════
 
 // Counter adjacency for multi-counter trip suggestions (physical layout from stairs)
-const COUNTER_ADJACENCY = ['Kitchen Pass', 'Bane Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
+const COUNTER_ADJACENCY = ['Kitchen Pass', 'Bain Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
 
 // ── Auth helper: validate session token ──
 async function validateFloorToken(db, token, requireRole, t) {

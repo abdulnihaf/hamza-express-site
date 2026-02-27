@@ -57,48 +57,28 @@ html, body, body.o_web_client {
   position: relative !important;
 }
 
-/* ── Gold Frame Border ───────────────────────────────────── */
-.o_tracking_display_main::before {
-  content: '' !important;
-  position: fixed !important;
-  inset: 6px !important;
-  border: 2px solid rgba(201,169,110,0.22) !important;
-  pointer-events: none !important;
-  z-index: 9999 !important;
-}
+/* ── Gold Frame Border — REMOVED per design feedback ─────── */
+.o_tracking_display_main::before,
 .o_tracking_display_main::after {
-  content: '' !important;
-  position: fixed !important;
-  inset: 10px !important;
-  border: 1px solid rgba(201,169,110,0.08) !important;
-  pointer-events: none !important;
-  z-index: 9999 !important;
+  display: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
-   HEADER — Kitchen Counter (landscape)
+   HEADER — Shared base styles (both Kitchen Pass & Bain Marie)
+   Icon + "Hamza EXPRESS" text logo side by side, like the board
    ══════════════════════════════════════════════════════════════ */
-#he-header-bar {
+#he-header-bar, #he-bm-header-bar {
   background: linear-gradient(180deg,
     rgba(17,8,4,0.97) 0%,
     rgba(42,14,8,0.95) 100%) !important;
   border-bottom: 2.5px solid var(--he-gold) !important;
-  padding: 8px 36px !important;
-  display: grid !important;
-  grid-template-columns: auto 1fr auto !important;
-  align-items: center !important;
-  gap: 24px !important;
   position: relative !important;
   z-index: 100 !important;
   box-shadow: 0 6px 30px rgba(0,0,0,0.6) !important;
-  overflow: visible !important; /* Let emblem break out */
+  overflow: hidden !important;
 }
-/* Grid positioning — logo left, title center, tagline right */
-#he-header-bar .he-logo-wrap { justify-self: start !important; }
-#he-header-bar .he-title { justify-self: center !important; }
-#he-header-bar .he-tagline { justify-self: end !important; align-self: center !important; }
-/* subtle gold glow line */
-#he-header-bar::after {
+/* subtle gold glow line under both headers */
+#he-header-bar::after, #he-bm-header-bar::after {
   content: '' !important;
   position: absolute !important;
   bottom: -4px !important;
@@ -109,96 +89,108 @@ html, body, body.o_web_client {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   HEADER — Bain Marie Counter (portrait / vertical TV)
+   HEADER — Kitchen Counter (landscape 1920×1080)
    ══════════════════════════════════════════════════════════════ */
-#he-bm-header-bar {
-  background: linear-gradient(180deg,
-    rgba(17,8,4,0.97) 0%,
-    rgba(42,14,8,0.95) 100%) !important;
-  border-bottom: 2.5px solid var(--he-gold) !important;
-  padding: 14px 20px 10px !important;
+#he-header-bar {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  position: relative !important;
-  z-index: 100 !important;
-  box-shadow: 0 6px 30px rgba(0,0,0,0.6) !important;
-  overflow: visible !important; /* Let emblem break out */
-}
-#he-bm-header-bar::after {
-  content: '' !important;
-  position: absolute !important;
-  bottom: -4px !important;
-  left: 15% !important;
-  right: 15% !important;
-  height: 1px !important;
-  background: linear-gradient(90deg, transparent, rgba(201,169,110,0.35), transparent) !important;
+  padding: 10px 36px !important;
+  gap: 20px !important;
 }
 
-/* ── Logo ─────────────────────────────────────────────────── */
-.he-logo-wrap, .he-bm-logo-wrap {
+/* ══════════════════════════════════════════════════════════════
+   HEADER — Bain Marie Counter (portrait 1080×1920)
+   ══════════════════════════════════════════════════════════════ */
+#he-bm-header-bar {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
+  justify-content: center !important;
+  padding: 14px 20px !important;
+  gap: 16px !important;
+}
+
+/* ── Brand Group: icon + text logo container ─────────────── */
+.he-brand-group {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 14px !important;
   flex-shrink: 0 !important;
 }
-.he-logo {
-  height: 90px !important;
-  width: 90px !important;
-  object-fit: cover !important;
-  border-radius: 50% !important;
-  border: 2.5px solid var(--he-gold) !important;
-  box-shadow:
-    0 4px 24px rgba(0,0,0,0.5),
-    0 0 30px rgba(201,169,110,0.2) !important;
-  position: relative !important;
-  z-index: 101 !important;
-  margin-top: -4px !important;
-  margin-bottom: -28px !important; /* Extends below header bar */
-}
-.he-bm-logo {
-  height: 46px !important;
-  width: 46px !important;
-  object-fit: cover !important;
+
+/* ── Icon logo (circular emblem) ─────────────────────────── */
+.he-logo-icon, .he-bm-logo-icon {
+  object-fit: contain !important;
   border-radius: 50% !important;
   border: 2px solid var(--he-gold) !important;
-  box-shadow: 0 0 18px rgba(201,169,110,0.25) !important;
+  box-shadow:
+    0 3px 16px rgba(0,0,0,0.45),
+    0 0 20px rgba(201,169,110,0.15) !important;
+  flex-shrink: 0 !important;
+}
+.he-logo-icon {
+  height: 56px !important;
+  width: 56px !important;
+}
+.he-bm-logo-icon {
+  height: 56px !important;
+  width: 56px !important;
+}
+
+/* ── Text logo ("Hamza EXPRESS") ──────────────────────────── */
+.he-logo-text, .he-bm-logo-text {
+  object-fit: contain !important;
+  /* Original text is dark brown on transparent —
+     filter chain: invert to white, then sepia+hue to gold/cream */
+  filter: invert(1) brightness(1.6) sepia(0.25) saturate(0.6) !important;
+  flex-shrink: 0 !important;
+}
+.he-logo-text {
+  height: 34px !important;
+  width: auto !important;
+}
+.he-bm-logo-text {
+  height: 34px !important;
+  width: auto !important;
+}
+
+/* ── Divider between brand group and counter name ────────── */
+.he-header-divider {
+  width: 1.5px !important;
+  height: 40px !important;
+  background: linear-gradient(180deg, transparent, var(--he-gold), transparent) !important;
+  opacity: 0.5 !important;
+  flex-shrink: 0 !important;
+  margin: 0 8px !important;
 }
 
 /* ── Counter Name (MUST STAND OUT) ────────────────────────── */
-.he-title {
+.he-title, .he-bm-title {
   font-family: 'Cinzel', serif !important;
   font-weight: 700 !important;
-  font-size: clamp(28px, 2.8vw, 56px) !important;
   color: var(--he-gold-lt) !important;
   text-transform: uppercase !important;
-  letter-spacing: 6px !important;
   text-shadow:
     0 0 25px rgba(212,165,116,0.25),
     0 2px 4px rgba(0,0,0,0.6) !important;
   white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+.he-title {
+  font-size: clamp(24px, 2.4vw, 48px) !important;
+  letter-spacing: 6px !important;
 }
 .he-bm-title {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 700 !important;
-  font-size: clamp(22px, 3.2vw, 42px) !important;
-  color: var(--he-gold-lt) !important;
-  text-transform: uppercase !important;
+  font-size: clamp(18px, 2.8vw, 36px) !important;
   letter-spacing: 5px !important;
-  text-shadow:
-    0 0 25px rgba(212,165,116,0.25),
-    0 2px 4px rgba(0,0,0,0.6) !important;
 }
 
-/* ── Est. 1918 ────────────────────────────────────────────── */
+/* ── Est. 1918 — hidden now; counter name is enough ──────── */
 .he-tagline, .he-bm-est {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 400 !important;
-  font-size: clamp(10px, 0.85vw, 16px) !important;
-  color: var(--he-gold) !important;
-  letter-spacing: 3px !important;
-  opacity: 0.65 !important;
+  display: none !important;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -206,10 +198,6 @@ html, body, body.o_web_client {
    ══════════════════════════════════════════════════════════════ */
 .o_tracking_display_main > .container-fluid {
   padding: 14px 22px 8px !important;
-}
-/* First section needs extra top padding to clear the overflowing emblem */
-.o_tracking_display_main > .container-fluid:first-of-type {
-  padding-top: 34px !important;
 }
 
 /* ── Section Headers: READY / PREPARING ───────────────────── */
@@ -366,30 +354,26 @@ html, body, body.o_web_client {
   padding: 0 !important;
 }
 
-/* ── BM Header — large & prominent for portrait ────────── */
+/* ── BM Header — portrait-specific overrides ─────────────── */
 .o_tracking_display_main:has(#he-bm-header-bar) > #he-bm-header-bar {
   flex-shrink: 0 !important;
-  padding: 24px 24px 18px !important;
-  gap: 10px !important;
+  padding: 16px 24px !important;
+  gap: 16px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo {
-  height: 110px !important;
-  width: 110px !important;
-  border-width: 3px !important;
-  box-shadow:
-    0 4px 28px rgba(0,0,0,0.5),
-    0 0 35px rgba(201,169,110,0.2) !important;
-  position: relative !important;
-  z-index: 101 !important;
-  margin-bottom: -30px !important; /* Extends below header bar */
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-icon {
+  height: 70px !important;
+  width: 70px !important;
+  border-width: 2.5px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text {
+  height: 40px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-header-divider {
+  height: 50px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-bm-title {
-  font-size: 48px !important;
-  letter-spacing: 10px !important;
-}
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-est {
-  font-size: 16px !important;
-  letter-spacing: 5px !important;
+  font-size: 36px !important;
+  letter-spacing: 8px !important;
 }
 
 /* ── BM Sections — fill remaining 1920px height equally ── */
@@ -440,14 +424,6 @@ html, body, body.o_web_client {
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_logo,
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_fadeOut {
   display: none !important;
-}
-
-/* ── BM Gold frame adjusted for portrait ──────────────── */
-.o_tracking_display_main:has(#he-bm-header-bar)::before {
-  inset: 5px !important;
-}
-.o_tracking_display_main:has(#he-bm-header-bar)::after {
-  inset: 9px !important;
 }
 
 /* ── Card entrance animation ──────────────────────────────── */
@@ -522,15 +498,77 @@ const OVERRIDE_SCRIPT = `<script>
     }
     return el;
   };
-  // Replace logo images with HE emblem (served from /assets/brand/)
-  function swapLogos(){
-    document.querySelectorAll('.he-logo,.he-bm-logo').forEach(function(img){
-      if(img.src.indexOf('he-emblem.png')===-1) img.src='/assets/brand/he-emblem.png';
-    });
+  // Rebuild header with icon + text logo side by side (like the restaurant board)
+  function rebuildHeader(){
+    // Kitchen Pass header
+    var kh=document.getElementById('he-header-bar');
+    if(kh && !kh.dataset.rebuilt){
+      kh.dataset.rebuilt='1';
+      // Find existing elements
+      var logoWrap=kh.querySelector('.he-logo-wrap');
+      var title=kh.querySelector('.he-title');
+      var tagline=kh.querySelector('.he-tagline');
+      // Remove old logo wrap and tagline
+      if(logoWrap) logoWrap.remove();
+      if(tagline) tagline.remove();
+      // Create brand group: icon + text
+      var bg=document.createElement('div');
+      bg.className='he-brand-group';
+      var icon=document.createElement('img');
+      icon.className='he-logo-icon';
+      icon.src='/assets/brand/he-icon.png';
+      icon.alt='Hamza Express';
+      var txt=document.createElement('img');
+      txt.className='he-logo-text';
+      txt.src='/assets/brand/he-text.png';
+      txt.alt='Hamza Express';
+      bg.appendChild(icon);
+      bg.appendChild(txt);
+      // Create divider
+      var div=document.createElement('div');
+      div.className='he-header-divider';
+      // Insert brand group + divider before title
+      if(title){
+        kh.insertBefore(bg,title);
+        kh.insertBefore(div,title);
+      } else {
+        kh.appendChild(bg);
+      }
+    }
+    // Bain Marie header
+    var bh=document.getElementById('he-bm-header-bar');
+    if(bh && !bh.dataset.rebuilt){
+      bh.dataset.rebuilt='1';
+      var logoWrap2=bh.querySelector('.he-bm-logo-wrap');
+      var title2=bh.querySelector('.he-bm-title');
+      var est=bh.querySelector('.he-bm-est');
+      if(logoWrap2) logoWrap2.remove();
+      if(est) est.remove();
+      var bg2=document.createElement('div');
+      bg2.className='he-brand-group';
+      var icon2=document.createElement('img');
+      icon2.className='he-bm-logo-icon';
+      icon2.src='/assets/brand/he-icon.png';
+      icon2.alt='Hamza Express';
+      var txt2=document.createElement('img');
+      txt2.className='he-bm-logo-text';
+      txt2.src='/assets/brand/he-text.png';
+      txt2.alt='Hamza Express';
+      bg2.appendChild(icon2);
+      bg2.appendChild(txt2);
+      var div2=document.createElement('div');
+      div2.className='he-header-divider';
+      if(title2){
+        bh.insertBefore(bg2,title2);
+        bh.insertBefore(div2,title2);
+      } else {
+        bh.appendChild(bg2);
+      }
+    }
   }
   document.addEventListener('DOMContentLoaded',function(){
-    swapLogos();
-    new MutationObserver(swapLogos).observe(document.documentElement,{childList:true,subtree:true});
+    rebuildHeader();
+    new MutationObserver(rebuildHeader).observe(document.documentElement,{childList:true,subtree:true});
   });
 })();
 </script>`;

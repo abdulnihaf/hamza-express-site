@@ -559,7 +559,7 @@ async function loadWaiterView() {
     if (data.ready_batches.length > 0) {
       html += '<div class="section-title" style="margin-top:0;color:var(--green)">READY FOR PICKUP</div>';
       html += data.ready_batches.map(b => {
-        const counterColor = { 'Kitchen Pass': 'amber', 'Juice Counter': 'green', 'Bane Marie': 'blue', 'Shawarma Counter': 'orange', 'Grill Counter': 'red' }[b.counter] || 'text2';
+        const counterColor = { 'Kitchen Pass': 'amber', 'Juice Counter': 'green', 'Bain Marie': 'blue', 'Shawarma Counter': 'orange', 'Grill Counter': 'red' }[b.counter] || 'text2';
         return `<div class="order-card" style="border-color:var(--${counterColor})${b.urgent ? ';animation:pulse-border 1s infinite' : ''}">
           <div class="order-top">
             <span class="table-num" style="color:var(--${counterColor})">${b.counter}</span>
