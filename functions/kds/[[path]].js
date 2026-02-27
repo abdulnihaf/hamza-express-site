@@ -153,42 +153,51 @@ html, body, body.o_web_client {
   width: 56px !important;
 }
 
-/* ── Text logo ("Hamza EXPRESS") — HTML text with brand colors ── */
+/* ── Text logo — CSS mask-image with exact brand font + colors ── */
 .he-logo-text, .he-bm-logo-text {
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
-  line-height: 1 !important;
+  align-items: flex-start !important;
+  gap: 2px !important;
   flex-shrink: 0 !important;
 }
-.he-logo-text .he-name-hamza, .he-bm-logo-text .he-name-hamza {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 700 !important;
-  color: #FAF3E3 !important;  /* Off-White */
-  letter-spacing: 3px !important;
-  text-transform: none !important;
+/* "Hamza" — Off-White #FAF3E3 via mask */
+.he-text-hamza {
+  background-color: #FAF3E3 !important;
+  -webkit-mask-image: url(/assets/brand/he-text-hamza.png) !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-image: url(/assets/brand/he-text-hamza.png) !important;
+  mask-size: contain !important;
+  mask-repeat: no-repeat !important;
 }
-.he-logo-text .he-name-express, .he-bm-logo-text .he-name-express {
-  font-family: 'Cinzel', serif !important;
-  font-weight: 600 !important;
-  color: #D2B48C !important;  /* Tan */
-  letter-spacing: 4px !important;
-  text-transform: uppercase !important;
-  margin-top: -2px !important;
+/* "EXPRESS" — Tan #D2B48C via mask */
+.he-text-express {
+  background-color: #D2B48C !important;
+  -webkit-mask-image: url(/assets/brand/he-text-express.png) !important;
+  -webkit-mask-size: contain !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-image: url(/assets/brand/he-text-express.png) !important;
+  mask-size: contain !important;
+  mask-repeat: no-repeat !important;
 }
 /* Kitchen Pass sizes */
-.he-logo-text .he-name-hamza {
-  font-size: 22px !important;
+.he-logo-text .he-text-hamza {
+  width: 120px !important;
+  height: 28px !important;
 }
-.he-logo-text .he-name-express {
-  font-size: 11px !important;
+.he-logo-text .he-text-express {
+  width: 120px !important;
+  height: 13px !important;
 }
-/* Bain Marie sizes (portrait) */
-.he-bm-logo-text .he-name-hamza {
-  font-size: 22px !important;
+/* Bain Marie sizes */
+.he-bm-logo-text .he-text-hamza {
+  width: 120px !important;
+  height: 28px !important;
 }
-.he-bm-logo-text .he-name-express {
-  font-size: 11px !important;
+.he-bm-logo-text .he-text-express {
+  width: 120px !important;
+  height: 13px !important;
 }
 
 /* ── Divider between brand group and counter name ────────── */
@@ -399,11 +408,13 @@ html, body, body.o_web_client {
   width: 70px !important;
   border-width: 2.5px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-name-hamza {
-  font-size: 28px !important;
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-hamza {
+  width: 156px !important;
+  height: 36px !important;
 }
-.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-name-express {
-  font-size: 14px !important;
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo-text .he-text-express {
+  width: 156px !important;
+  height: 17px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .he-header-divider {
   height: 50px !important;
@@ -557,7 +568,9 @@ const OVERRIDE_SCRIPT = `<script>
       icon.alt='Hamza Express';
       var txt=document.createElement('div');
       txt.className='he-logo-text';
-      txt.innerHTML='<span class="he-name-hamza">Hamza</span><span class="he-name-express">Express</span>';
+      var th=document.createElement('div');th.className='he-text-hamza';
+      var te=document.createElement('div');te.className='he-text-express';
+      txt.appendChild(th);txt.appendChild(te);
       bg.appendChild(icon);
       bg.appendChild(txt);
       // Create divider
@@ -588,7 +601,9 @@ const OVERRIDE_SCRIPT = `<script>
       icon2.alt='Hamza Express';
       var txt2=document.createElement('div');
       txt2.className='he-bm-logo-text';
-      txt2.innerHTML='<span class="he-name-hamza">Hamza</span><span class="he-name-express">Express</span>';
+      var th2=document.createElement('div');th2.className='he-text-hamza';
+      var te2=document.createElement('div');te2.className='he-text-express';
+      txt2.appendChild(th2);txt2.appendChild(te2);
       bg2.appendChild(icon2);
       bg2.appendChild(txt2);
       var div2=document.createElement('div');
