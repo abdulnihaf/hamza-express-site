@@ -384,51 +384,58 @@ html, body, body.o_web_client {
 
 /* ── BM Header — portrait-specific overrides for 1080×1920 ─── */
 .he-bm-layout > #he-bm-header-bar {
-  padding: 20px 28px !important;
-  gap: 18px !important;
+  padding: 30px 36px !important;
+  gap: 22px !important;
 }
 .he-bm-layout .he-bm-logo-icon {
-  height: 80px !important;
-  width: 80px !important;
+  height: 90px !important;
+  width: 90px !important;
   border-width: 3px !important;
 }
 .he-bm-layout .he-bm-logo-text .he-text-hamza {
-  width: 130px !important;
-  height: 30px !important;
+  width: 140px !important;
+  height: 33px !important;
 }
 .he-bm-layout .he-bm-logo-text .he-text-express {
-  width: 130px !important;
-  height: 14px !important;
+  width: 140px !important;
+  height: 15px !important;
 }
 .he-bm-layout .he-header-divider {
-  height: 60px !important;
+  height: 70px !important;
 }
 .he-bm-layout .he-bm-title {
-  font-size: 52px !important;
+  font-size: 56px !important;
   font-weight: 700 !important;
   letter-spacing: 6px !important;
 }
 
-/* ── BM Section headers — same base badge style as Kitchen Pass ──────── */
+/* ── BM Section headers — scaled for portrait frame ──────── */
+.he-bm-layout .container-fluid > .mb-2.fw-bolder,
+.he-bm-layout .container-fluid > div.mb-2.fs-6.fw-bolder {
+  font-size: 22px !important;
+  padding: 12px 28px !important;
+  letter-spacing: 5px !important;
+  margin-bottom: 14px !important;
+}
 
 /* ── BM Card grid — wider gaps for portrait ──────── */
 .he-bm-layout .container-fluid > .row {
-  --bs-gutter-x: 16px !important;
-  --bs-gutter-y: 16px !important;
+  --bs-gutter-x: 18px !important;
+  --bs-gutter-y: 18px !important;
 }
 
 /* ── BM Cards — large order numbers for distance reading ── */
 .he-bm-layout .o_tracking_display_number.text-bg-700,
 .he-bm-layout .o_tracking_display_number.text-bg-600 {
-  font-size: 80px !important;
-  padding: 20px 12px !important;
+  font-size: 90px !important;
+  padding: 24px 16px !important;
   border-radius: 16px !important;
-  min-height: 80px !important;
+  min-height: 100px !important;
   border-width: 3px !important;
 }
 .he-bm-layout .o_tracking_display_number > div,
 .he-bm-layout .o_tracking_display_number div[style] {
-  font-size: 20px !important;
+  font-size: 22px !important;
   letter-spacing: 2px !important;
 }
 
