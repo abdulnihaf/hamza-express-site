@@ -10,7 +10,7 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: #000;
+    background: #110804;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,8 +37,18 @@
   // Read the target URL from the query parameter
   // Usage: /kds-portrait.html?url=https://ops.hamzahotel.com/pos-order-tracking/...
   const params = new URLSearchParams(window.location.search);
-  const targetUrl = params.get('url');
+  let targetUrl = params.get('url');
   if (targetUrl) {
+    // Auto-route through brand proxy for Odoo KDS URLs
+    try {
+      const u = new URL(targetUrl);
+      if (u.host === 'ops.hamzahotel.com') {
+        targetUrl = '/kds' + u.pathname + u.search;
+      } else if (u.host === 'test.hamzahotel.com') {
+        const sep = u.search ? '&' : '?';
+        targetUrl = '/kds' + u.pathname + u.search + sep + 'env=test';
+      }
+    } catch (e) { /* use original URL */ }
     document.getElementById('kds-frame').src = targetUrl;
   } else {
     document.body.innerHTML = '<p style="color:white;font-size:24px;text-align:center;margin-top:40vh;">No URL provided. Use ?url=YOUR_KDS_URL</p>';
