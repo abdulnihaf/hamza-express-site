@@ -88,6 +88,11 @@ html, body, body.o_web_client {
   background: linear-gradient(90deg, transparent, rgba(201,169,110,0.35), transparent) !important;
 }
 
+/* Force all header children out of absolute positioning (Odoo default) */
+#he-header-bar > *, #he-bm-header-bar > * {
+  position: static !important;
+}
+
 /* ══════════════════════════════════════════════════════════════
    HEADER — Kitchen Counter (landscape 1920×1080)
    ══════════════════════════════════════════════════════════════ */
@@ -95,7 +100,7 @@ html, body, body.o_web_client {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   padding: 10px 36px !important;
   gap: 20px !important;
 }
@@ -107,7 +112,7 @@ html, body, body.o_web_client {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: flex-start !important;
   padding: 14px 20px !important;
   gap: 16px !important;
 }
