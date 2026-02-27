@@ -138,12 +138,12 @@ html, body, body.o_web_client {
   flex-shrink: 0 !important;
 }
 .he-logo {
-  height: 52px !important;
-  width: 52px !important;
+  height: 72px !important;
+  width: 72px !important;
   object-fit: cover !important;
   border-radius: 50% !important;
-  border: 2px solid var(--he-gold) !important;
-  box-shadow: 0 0 18px rgba(201,169,110,0.25) !important;
+  border: 2.5px solid var(--he-gold) !important;
+  box-shadow: 0 0 22px rgba(201,169,110,0.3) !important;
 }
 .he-bm-logo {
   height: 46px !important;
@@ -212,18 +212,18 @@ html, body, body.o_web_client {
   text-transform: uppercase !important;
 }
 
-/* READY header — emerald bar */
-.o_tracking_display_main > .container-fluid:not(.mb-5) > .mb-2.fw-bolder,
-.o_tracking_display_main > .container-fluid:not(.mb-5) > div.mb-2.fs-6.fw-bolder {
+/* READY header — emerald bar  (.mb-5 = READY section in Odoo DOM) */
+.o_tracking_display_main > .container-fluid.mb-5 > .mb-2.fw-bolder,
+.o_tracking_display_main > .container-fluid.mb-5 > div.mb-2.fs-6.fw-bolder {
   background: linear-gradient(90deg, var(--he-green-dk), var(--he-green), var(--he-green-dk)) !important;
   color: #d4f5e2 !important;
   border-left: 4px solid var(--he-gold) !important;
   box-shadow: 0 2px 12px rgba(23,105,74,0.25) !important;
 }
 
-/* PREPARING header — amber bar */
-.o_tracking_display_main > .container-fluid.mb-5 > .mb-2.fw-bolder,
-.o_tracking_display_main > .container-fluid.mb-5 > div.mb-2.fs-6.fw-bolder {
+/* PREPARING header — amber bar  (no .mb-5 = PREPARING section in Odoo DOM) */
+.o_tracking_display_main > .container-fluid:not(.mb-5) > .mb-2.fw-bolder,
+.o_tracking_display_main > .container-fluid:not(.mb-5) > div.mb-2.fs-6.fw-bolder {
   background: linear-gradient(90deg, var(--he-amber-dk), var(--he-amber), var(--he-amber-dk)) !important;
   color: #fff5d4 !important;
   border-left: 4px solid var(--he-gold) !important;
@@ -302,18 +302,130 @@ html, body, body.o_web_client {
   text-transform: uppercase !important;
 }
 
-/* ── Bain Marie: larger cards for portrait layout ─────────── */
-/* Uses :has() for modern browsers, with media-query fallback */
+/* ══════════════════════════════════════════════════════════════
+   KITCHEN PASS — LANDSCAPE LAYOUT (1920×1080 viewport)
+   43" TV horizontal • 37.5" × 21.1" frame
+   NO SCROLLING — entire display fills fixed 1920×1080 exactly
+   ══════════════════════════════════════════════════════════════ */
+.o_tracking_display_main:has(#he-header-bar) {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+.o_tracking_display_main:has(#he-header-bar) > .container-fluid {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.o_tracking_display_main:has(#he-header-bar) .container-fluid > .row {
+  flex: 1 !important;
+  overflow: hidden !important;
+  align-content: start !important;
+}
+/* Hide footer elements — reclaim space for cards */
+.o_tracking_display_main:has(#he-header-bar) .o_tracking_display_logo,
+.o_tracking_display_main:has(#he-header-bar) .o_tracking_display_fadeOut {
+  display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BAIN MARIE — PORTRAIT LAYOUT (1080×1920 viewport)
+   43" TV mounted vertically • 21.1" wide × 37.5" tall
+   Fire Stick outputs 1920×1080 → CSS-rotated via kds-portrait.html
+   Effective iframe viewport: exactly 1080px × 1920px
+   NO SCROLLING — entire display fills fixed space exactly
+   ══════════════════════════════════════════════════════════════ */
+
+/* Full-viewport flex column — absolutely no scroll */
+.o_tracking_display_main:has(#he-bm-header-bar) {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+/* ── BM Header — large & prominent for portrait ────────── */
+.o_tracking_display_main:has(#he-bm-header-bar) > #he-bm-header-bar {
+  flex-shrink: 0 !important;
+  padding: 24px 24px 18px !important;
+  gap: 10px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-logo {
+  height: 100px !important;
+  width: 100px !important;
+  border-width: 3px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-title {
+  font-size: 48px !important;
+  letter-spacing: 10px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar) .he-bm-est {
+  font-size: 16px !important;
+  letter-spacing: 5px !important;
+}
+
+/* ── BM Sections — fill remaining 1920px height equally ── */
+.o_tracking_display_main:has(#he-bm-header-bar) > .container-fluid {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 10px 14px 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ── BM Section headers — bigger for portrait TV ──────── */
+.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > .mb-2.fw-bolder,
+.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > div.mb-2.fs-6.fw-bolder {
+  font-size: 28px !important;
+  padding: 12px 28px !important;
+  letter-spacing: 6px !important;
+  margin-bottom: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+/* ── BM Card grid — fill remaining section space ──────── */
+.o_tracking_display_main:has(#he-bm-header-bar) .container-fluid > .row {
+  flex: 1 !important;
+  overflow: hidden !important;
+  align-content: start !important;
+  --bs-gutter-x: 14px !important;
+  --bs-gutter-y: 14px !important;
+}
+
+/* ── BM Cards — large order numbers for distance reading ── */
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number.text-bg-700,
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number.text-bg-600 {
-  font-size: clamp(36px, 7vw, 100px) !important;
-  padding: 20px 12px !important;
+  font-size: 72px !important;
+  padding: 16px 10px !important;
   border-radius: 14px !important;
-  min-height: 90px !important;
+  min-height: 70px !important;
+  border-width: 3px !important;
 }
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number > div,
 .o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_number div[style] {
-  font-size: 0.25em !important;
+  font-size: 18px !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── BM Hide footer/watermark — reclaim precious space ─── */
+.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_logo,
+.o_tracking_display_main:has(#he-bm-header-bar) .o_tracking_display_fadeOut {
+  display: none !important;
+}
+
+/* ── BM Gold frame adjusted for portrait ──────────────── */
+.o_tracking_display_main:has(#he-bm-header-bar)::before {
+  inset: 5px !important;
+}
+.o_tracking_display_main:has(#he-bm-header-bar)::after {
+  inset: 9px !important;
 }
 
 /* ── Card entrance animation ──────────────────────────────── */
@@ -388,6 +500,16 @@ const OVERRIDE_SCRIPT = `<script>
     }
     return el;
   };
+  // Replace logo images with HE emblem (served from /assets/brand/)
+  function swapLogos(){
+    document.querySelectorAll('.he-logo,.he-bm-logo').forEach(function(img){
+      if(img.src.indexOf('he-emblem.png')===-1) img.src='/assets/brand/he-emblem.png';
+    });
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    swapLogos();
+    new MutationObserver(swapLogos).observe(document.documentElement,{childList:true,subtree:true});
+  });
 })();
 </script>`;
 
