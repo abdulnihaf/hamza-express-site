@@ -899,6 +899,14 @@ export async function onRequest(context) {
           }
         }
       })
+      // Portrait: also inject CSS at END of body (overrides Odoo QWeb inline styles)
+      .on('body', {
+        element(el) {
+          if (isPortrait) {
+            el.append(`<style id="he-portrait-final">${PORTRAIT_CSS}</style>`, { html: true });
+          }
+        }
+      })
       // Rewrite <script src="/..."> → <script src="/kds/...">
       .on('script[src]', {
         element(el) {
