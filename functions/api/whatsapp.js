@@ -601,6 +601,19 @@ async function processWebhook(context, body) {
   const message = value.messages[0];
   const waId = message.from;
 
+  // Skip ordering bot for hiring campaign candidates — their messages are
+  // forwarded to hnhotels.in/api/hiring for the hiring inbox instead
+  if (context.env.HIRING_DB) {
+    try {
+      const hiringPhone = waId.replace(/\D/g, '').slice(-10);
+      const isHiringCandidate = await context.env.HIRING_DB
+        .prepare('SELECT 1 FROM messages WHERE phone = ? LIMIT 1')
+        .bind(hiringPhone)
+        .first();
+      if (isHiringCandidate) return; // Let hiring dashboard handle this
+    } catch (e) { /* ignore — fall through to ordering bot */ }
+  }
+
   // Mark as read
   await sendWhatsApp(phoneId, token, {
     messaging_product: 'whatsapp',

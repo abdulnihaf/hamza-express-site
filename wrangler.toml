@@ -23,3 +23,8 @@ ODOO_UID = "2"
 binding = "DB"
 database_name = "he-whatsapp"
 database_id = "679aeb00-5afa-42a3-b24a-66821db05360"
+
+[[d1_databases]]
+binding = "HIRING_DB"
+database_name = "hn-hiring"
+database_id = "a0107321-790a-4d46-ac3c-a54a676c6bcb"
