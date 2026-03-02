@@ -494,6 +494,9 @@ export async function onRequest(context) {
   if (action === 'kp-print-poll' && context.request.method === 'GET') {
     return handleKPPrintPoll(context, corsHeaders);
   }
+  if (action === 'kp-sync' && context.request.method === 'GET') {
+    return handleKPSync(context, corsHeaders);
+  }
   if (action === 'kp-print-done' && context.request.method === 'POST') {
     return handleKPPrintDone(context, url, corsHeaders);
   }
@@ -528,6 +531,17 @@ export async function onRequest(context) {
       // NCH forwarding disabled — NCH phone (970365416152029) now serves HE
       // When HE gets its own phone, re-enable: check incomingPhoneId and forward NCH messages
       await processWebhook(context, body);
+
+      // Forward webhook to HN Hotels hiring dashboard (non-blocking)
+      // This lets the hiring campaign tracker receive status updates + candidate replies
+      context.waitUntil(
+        fetch('https://hnhotels.in/api/hiring', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }).catch(() => {}) // Silently ignore forwarding failures
+      );
+
       return new Response('OK', { status: 200 });
     } catch (error) {
       console.error('Webhook error:', error.message);
@@ -1760,11 +1774,11 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
 
 // Stage → {counter, status} mapping for floor item tracking
 const FLOOR_STAGE_MAP = {
-  // Station Done → cooked (item finished at cooking station)
-  78: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Done
-  81: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Done
-  84: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Done
-  87: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Done
+  // Station Prepared → cooked (item finished at cooking station)
+  78: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Prepared
+  79: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Prepared
+  80: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Prepared
+  81: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Prepared
   // KP Packed (stage 74) → at_counter (waiter READY signal: items packed for pickup)
   74: { counter: 'Kitchen Pass', status: 'at_counter' },
   // KP Completed (stage 63) → picked_up (counter confirms waiter collected)
@@ -1776,7 +1790,6 @@ const FLOOR_STAGE_MAP = {
   56: { counter: 'Grill Counter', status: 'at_counter' },
   // Counter Completed → picked_up (counter confirms waiter collected)
   48: { counter: 'Juice Counter', status: 'picked_up' },
-  51: { counter: 'Bain Marie', status: 'picked_up' },
   54: { counter: 'Shawarma Counter', status: 'picked_up' },
   57: { counter: 'Grill Counter', status: 'picked_up' },
 };
@@ -1790,9 +1803,8 @@ const TEST_FLOOR_STAGE_MAP = {
   // Kitchen Pass: Packed → at_counter (strikethrough), Completed → picked_up
   74: { counter: 'Kitchen Pass', status: 'at_counter' },
   63: { counter: 'Kitchen Pass', status: 'picked_up' },
-  // Bain Marie: Prepared → at_counter (strikethrough), Completed → picked_up
+  // Bain Marie: Packed → at_counter (no Completed stage on BM)
   50: { counter: 'Bain Marie', status: 'at_counter' },
-  51: { counter: 'Bain Marie', status: 'picked_up' },
 };
 
 // Category → counter mapping for floor items
@@ -1989,15 +2001,15 @@ async function handleKdsWebhookKPPrint(context, corsHeaders, data, isTest) {
   const orderName = posOrder?.[0]?.name || `Order #${posOrderId}`;
   const token = posOrder?.[0]?.tracking_number || trackingNumber || null;
 
-  const orderLines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
-    [[['order_id', '=', posOrderId], ['product_id', '!=', false]]], {
-      fields: ['full_product_name', 'product_id', 'qty']
-    }, odooUrl);
-  if (!orderLines || orderLines.length === 0) return ok('no order lines');
+  // Get only KP prep lines (not Bain Marie) using the KP state prep_line_ids
+  const kpPrepLineIds = readyOrPacked.map(s => Array.isArray(s.prep_line_id) ? s.prep_line_id[0] : s.prep_line_id);
+  const kpPrepLines = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+    [[['id', 'in', kpPrepLineIds]]], { fields: ['product_id', 'quantity'] }, odooUrl);
+  if (!kpPrepLines || kpPrepLines.length === 0) return ok('no KP prep lines');
 
-  const items = orderLines.map(l => ({
-    name: l.full_product_name || l.product_id[1],
-    qty: l.qty,
+  const items = kpPrepLines.map(l => ({
+    name: Array.isArray(l.product_id) ? l.product_id[1] : l.product_id,
+    qty: l.quantity,
   }));
 
   // Insert print job (UNIQUE on odoo_order_id handles race conditions)
@@ -2076,6 +2088,123 @@ async function handleKPPrintRelease(context, url, corsHeaders) {
     `UPDATE kp_print_jobs SET status = 'pending', claimed_at = NULL WHERE id = ? AND status = 'claimed'`
   ).bind(parseInt(jobId)).run();
   return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KP SYNC — Odoo polling fallback for when webhooks can't reach us
+// Called by KP Printer tab every 15s; finds unprinted KP Ready orders
+// ═══════════════════════════════════════════════════════════════════
+
+async function handleKPSync(context, corsHeaders) {
+  const db = context.env.DB;
+  const apiKey = context.env.ODOO_API_KEY;
+  const debug = [];
+  const log = (msg) => debug.push(`[${new Date().toISOString()}] ${msg}`);
+  const ok = (obj) => new Response(JSON.stringify({ ...obj, debug }), { headers: corsHeaders });
+  if (!apiKey) return ok({ synced: 0 });
+
+  try {
+    // Find recent Cash Counter Takeaway orders (config=5, preset=2, last 2 hours)
+    // State is 'paid' during session, 'done' after session close
+    const cutoff = new Date(Date.now() - 7200000).toISOString().replace('T', ' ').slice(0, 19);
+    log(`Query: config=5, preset=2, state in [paid,done], since ${cutoff}`);
+    const orders = await odooRPC(apiKey, 'pos.order', 'search_read',
+      [[['config_id', '=', 5], ['preset_id', '=', 2], ['state', 'in', ['paid', 'done']],
+        ['create_date', '>=', cutoff]]],
+      { fields: ['id', 'name', 'tracking_number'] });
+    log(`Found ${orders ? orders.length : 0} orders: ${JSON.stringify((orders||[]).map(o=>o.id))}`);
+    if (!orders || orders.length === 0) return ok({ synced: 0, checked: 0 });
+
+    // Filter out orders that already have print jobs
+    const orderIds = orders.map(o => o.id);
+    const placeholders = orderIds.map(() => '?').join(',');
+    const existingJobs = await db.prepare(
+      `SELECT odoo_order_id FROM kp_print_jobs WHERE odoo_order_id IN (${placeholders})`
+    ).bind(...orderIds).all();
+    const existingSet = new Set((existingJobs.results || []).map(j => j.odoo_order_id));
+    log(`Existing print jobs: ${JSON.stringify([...existingSet])}`);
+    const newOrders = orders.filter(o => !existingSet.has(o.id));
+    log(`New orders (no print job): ${JSON.stringify(newOrders.map(o=>({id:o.id,name:o.name})))}`);
+    if (newOrders.length === 0) return ok({ synced: 0, checked: orders.length });
+
+    // Batch: get all prep_orders → prep_lines → KP Ready states
+    const newOrderIds = newOrders.map(o => o.id);
+    const prepOrders = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
+      [[['pos_order_id', 'in', newOrderIds]]], { fields: ['id', 'pos_order_id'] });
+    log(`Prep orders: ${JSON.stringify((prepOrders||[]).map(p=>({id:p.id,posId:p.pos_order_id})))}`);
+    if (!prepOrders || prepOrders.length === 0) { log('STOP: no prep_orders'); return ok({ synced: 0, checked: orders.length }); }
+
+    const poIds = prepOrders.map(p => p.id);
+    const prepLines = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+      [[['prep_order_id', 'in', poIds]]], { fields: ['id', 'prep_order_id'] });
+    log(`Prep lines: ${(prepLines||[]).length} lines for ${poIds.length} prep_orders`);
+    if (!prepLines || prepLines.length === 0) { log('STOP: no prep_lines'); return ok({ synced: 0, checked: orders.length }); }
+
+    const plIds = prepLines.map(p => p.id);
+    // Check for KP Ready (44), Packed (74), or Completed (63) — items may have already passed Ready
+    const KP_DONE_STAGES = [KP_READY_STAGE_PROD, KP_PACKED_STAGE, 63];
+    const kpReadyStates = await odooRPC(apiKey, 'pos.prep.state', 'search_read',
+      [[['prep_line_id', 'in', plIds], ['stage_id', 'in', KP_DONE_STAGES]]],
+      { fields: ['prep_line_id'] });
+    log(`KP Ready/Packed/Done states (stages=${JSON.stringify(KP_DONE_STAGES)}): ${(kpReadyStates||[]).length} found`);
+    if (!kpReadyStates || kpReadyStates.length === 0) { log('STOP: no KP Ready states yet'); return ok({ synced: 0, checked: orders.length }); }
+
+    // Trace back: ready state → prep_line → prep_order → pos_order
+    const readyLineIds = new Set(kpReadyStates.map(s =>
+      Array.isArray(s.prep_line_id) ? s.prep_line_id[0] : s.prep_line_id));
+    const lineToOrder = {};
+    for (const pl of prepLines) {
+      lineToOrder[pl.id] = Array.isArray(pl.prep_order_id) ? pl.prep_order_id[0] : pl.prep_order_id;
+    }
+    const prepToPosOrder = {};
+    for (const po of prepOrders) {
+      prepToPosOrder[po.id] = Array.isArray(po.pos_order_id) ? po.pos_order_id[0] : po.pos_order_id;
+    }
+    const readyPosOrderIds = new Set();
+    for (const lineId of readyLineIds) {
+      const poId = lineToOrder[lineId];
+      if (poId && prepToPosOrder[poId]) readyPosOrderIds.add(prepToPosOrder[poId]);
+    }
+    log(`Ready POS order IDs: ${JSON.stringify([...readyPosOrderIds])}`);
+
+    // Queue print jobs for orders with KP Ready items (KP items only, not Bain Marie)
+    // Build set of KP prep_line_ids (lines that have KP Ready/Packed/Completed states)
+    const kpPrepLineIds = [...readyLineIds];
+    let synced = 0;
+    for (const order of newOrders) {
+      if (!readyPosOrderIds.has(order.id)) { log(`Order ${order.id} not KP-ready yet, skip`); continue; }
+
+      // Get KP-specific prep lines (only items routed to Kitchen Pass, NOT Bain Marie)
+      const orderPrepLineIds = kpPrepLineIds.filter(lineId => {
+        const poId = lineToOrder[lineId];
+        return poId && prepToPosOrder[poId] === order.id;
+      });
+      const kpLines = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+        [[['id', 'in', orderPrepLineIds]]],
+        { fields: ['product_id', 'quantity'] });
+      if (!kpLines || kpLines.length === 0) { log(`Order ${order.id}: no KP lines`); continue; }
+
+      const items = kpLines.map(l => ({
+        name: Array.isArray(l.product_id) ? l.product_id[1] : l.product_id,
+        qty: l.quantity,
+      }));
+      log(`Order ${order.id} (${order.name}): ${items.length} KP items (excluded BM) → queuing print job`);
+
+      try {
+        await db.prepare(
+          `INSERT INTO kp_print_jobs (odoo_order_id, odoo_order_name, tracking_number, items, status, created_at)
+           VALUES (?, ?, ?, ?, 'pending', ?)`
+        ).bind(order.id, order.name, order.tracking_number || '', JSON.stringify(items), new Date().toISOString()).run();
+        synced++;
+        log(`Order ${order.id}: print job CREATED`);
+      } catch(e) { log(`Order ${order.id}: insert error (dup?) ${e.message}`); }
+    }
+
+    return ok({ synced, checked: orders.length });
+  } catch(e) {
+    log(`ERROR: ${e.message}`);
+    return ok({ synced: 0, error: e.message });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
