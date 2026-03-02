@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HE Settlement</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;--cyan:#06b6d4;--orange:#f97316;--pink:#ec4899}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .container{max-width:900px;margin:0 auto;padding:20px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+    .header h1{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px}
+    .header h1::before{content:'';width:5px;height:24px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:3px}
+    .user-badge{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px}
+    .user-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .btn{padding:8px 16px;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+    .btn-primary{background:linear-gradient(135deg,var(--orange),var(--yellow));color:#fff}
+    .btn-danger{background:var(--red);color:#fff}
+    .btn-ghost{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+    .btn-ghost:hover{border-color:var(--orange);color:var(--text)}
+    .btn-green{background:var(--green);color:#fff}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* PIN Screen */
+    #pinScreen{display:flex;align-items:center;justify-content:center;min-height:80vh;flex-direction:column;gap:20px}
+    .pin-title{font-size:20px;font-weight:700}
+    .pin-dots{display:flex;gap:12px;margin:10px 0}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--orange);border-color:var(--orange)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .pin-key:hover{border-color:var(--orange)}
+    .pin-key.clear{font-size:14px;color:var(--muted)}
+    .pin-error{color:var(--red);font-size:13px;min-height:20px}
+
+    /* Dashboard */
+    #dashboard{display:none}
+    .points-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+    .point-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s}
+    .point-card:hover{border-color:var(--orange)}
+    .point-card.selected{border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,115,22,.2)}
+    .point-card .p-name{font-size:14px;font-weight:600;margin-bottom:6px}
+    .point-card .p-last{font-size:11px;color:var(--muted)}
+    .point-card.counter{border-left:4px solid var(--blue)}
+    .point-card.captain{border-left:4px solid var(--purple)}
+
+    /* Section panels */
+    .section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+    .section-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .section-title::before{content:'';width:3px;height:14px;background:var(--orange);border-radius:2px}
+
+    /* Summary rows */
+    .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+    .summary-row:last-child{border-bottom:none}
+    .summary-row .label{font-size:13px;color:var(--text2)}
+    .summary-row .value{font-size:15px;font-weight:600}
+    .summary-row .value.mono{font-family:'JetBrains Mono',monospace}
+    .summary-row .value.green{color:var(--green)}
+    .summary-row .value.red{color:var(--red)}
+    .summary-row .value.yellow{color:var(--yellow)}
+
+    /* Input rows */
+    .input-group{margin-bottom:14px}
+    .input-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
+    .input-group input,.input-group textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;font-family:'JetBrains Mono',monospace}
+    .input-group input:focus,.input-group textarea:focus{outline:none;border-color:var(--orange)}
+    .input-group textarea{resize:vertical;min-height:60px;font-family:'Plus Jakarta Sans',sans-serif}
+
+    /* Variance badge */
+    .variance{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600}
+    .variance.ok{background:rgba(16,185,129,.15);color:var(--green)}
+    .variance.warn{background:rgba(239,68,68,.15);color:var(--red)}
+    .variance.neutral{background:rgba(100,116,139,.15);color:var(--muted)}
+
+    /* Tabs */
+    .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+    .tab{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer}
+    .tab.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+
+    /* History list */
+    .history-item{background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:8px}
+    .history-item .h-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .history-item .h-name{font-size:13px;font-weight:600}
+    .history-item .h-time{font-size:11px;color:var(--muted)}
+    .history-item .h-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);padding:2px 0}
+
+    /* Loading overlay */
+    .overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,15,26,.8);z-index:50;align-items:center;justify-content:center}
+    .overlay.show{display:flex}
+    .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Toast */
+    .toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:100;transform:translateY(-100px);transition:transform .3s;max-width:350px}
+    .toast.show{transform:translateY(0)}
+    .toast.success{background:var(--green);color:#fff}
+    .toast.error{background:var(--red);color:#fff}
+
+    @media(max-width:640px){.container{padding:14px}.points-grid{grid-template-columns:1fr 1fr}.pin-pad{grid-template-columns:repeat(3,64px)}.pin-key{width:64px;height:50px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"><div class="spinner"></div></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- PIN Screen -->
+  <div id="pinScreen">
+    <div class="pin-title">Hamza Express Settlement</div>
+    <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key clear" onclick="pinClear()">CLR</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key clear" onclick="pinBack()">DEL</div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="container">
+    <header class="header">
+      <h1>Settlement</h1>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="user-badge"><div class="dot"></div><span id="userName"></span></div>
+        <button class="btn btn-ghost" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('settle',this)">Settle</div>
+      <div class="tab" onclick="switchTab('expenses',this)">Expenses</div>
+      <div class="tab" onclick="switchTab('collect',this)" id="collectTab" style="display:none">Collect</div>
+      <div class="tab" onclick="switchTab('history',this)">History</div>
+    </div>
+
+    <!-- Settle Tab -->
+    <div id="tab-settle">
+      <div class="points-grid" id="pointsGrid"></div>
+      <div id="pointDetail" style="display:none">
+        <div class="section">
+          <div class="section-title" id="detailTitle">Loading...</div>
+          <div id="detailContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expenses Tab -->
+    <div id="tab-expenses" style="display:none">
+      <div class="section">
+        <div class="section-title">Record Expense</div>
+        <div class="input-group"><label>Amount</label><input type="number" id="expAmount" placeholder="0" inputmode="numeric"></div>
+        <div class="input-group"><label>Reason</label><input type="text" id="expReason" placeholder="e.g. Milk, Sugar, Cleaning"></div>
+        <div class="input-group"><label>Notes (optional)</label><textarea id="expNotes" placeholder="Additional details..."></textarea></div>
+        <button class="btn btn-primary" onclick="submitExpense()">Record Expense</button>
+      </div>
+      <div class="section">
+        <div class="section-title">Recent Expenses</div>
+        <div id="expenseList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- Collect Tab -->
+    <div id="tab-collect" style="display:none">
+      <div class="section">
+        <div class="section-title">Counter Balance</div>
+        <div id="balanceContent"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Collect Cash</div>
+        <div class="input-group"><label>Cash Taking</label><input type="number" id="colAmount" placeholder="Amount to take" inputmode="numeric"></div>
+        <div class="input-group"><label>Petty Cash Left</label><input type="number" id="colPetty" placeholder="Amount left at counter" inputmode="numeric"></div>
+        <div class="input-group"><label>Notes</label><textarea id="colNotes" placeholder="e.g. End of day"></textarea></div>
+        <button class="btn btn-green" onclick="submitCollection()">Collect Cash</button>
+      </div>
+      <div class="section">
+        <div class="section-title">Collection History</div>
+        <div id="collectionList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="tab-history" style="display:none">
+      <div class="section">
+        <div class="section-title">Settlement History</div>
+        <div id="historyList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/settlement';
+    let currentUser = null, currentPin = '', selectedPoint = null;
+    const $ = id => document.getElementById(id);
+    const fmt = n => '₹' + Math.round(n).toLocaleString('en-IN');
+    const fmtTime = t => t ? new Date(t).toLocaleString('en-IN', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true}) : 'Never';
+
+    // ── PIN ──────────────────────────────────────────────────────────────────
+    let pinBuf = '';
+    function pinKey(d) {
+      if (pinBuf.length >= 4) return;
+      pinBuf += d;
+      updateDots();
+      if (pinBuf.length === 4) setTimeout(checkPin, 200);
+    }
+    function pinBack() { pinBuf = pinBuf.slice(0, -1); updateDots(); $('pinError').textContent = ''; }
+    function pinClear() { pinBuf = ''; updateDots(); $('pinError').textContent = ''; }
+    function updateDots() { for (let i = 0; i < 4; i++) $('d' + i).classList.toggle('filled', i < pinBuf.length); }
+
+    async function checkPin() {
+      try {
+        const res = await fetch(API + '?action=verify-pin&pin=' + pinBuf);
+        const data = await res.json();
+        if (!data.success) { $('pinError').textContent = 'Invalid PIN'; pinBuf = ''; updateDots(); return; }
+        currentUser = data;
+        currentPin = pinBuf;
+        $('userName').textContent = data.user + (data.isCollector ? ' (Collector)' : '');
+        $('pinScreen').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        if (data.isCollector) $('collectTab').style.display = '';
+        loadDashboard();
+      } catch (e) { $('pinError').textContent = 'Network error'; pinBuf = ''; updateDots(); }
+    }
+
+    function logout() {
+      currentUser = null; currentPin = ''; pinBuf = ''; selectedPoint = null;
+      $('dashboard').style.display = 'none';
+      $('pinScreen').style.display = '';
+      $('collectTab').style.display = 'none';
+      updateDots();
+      switchTab('settle', document.querySelector('.tab'));
+    }
+
+    // ── Dashboard ────────────────────────────────────────────────────────────
+    const POINTS = [
+      { id: 'counter', name: 'Cash Counter', cls: 'counter' },
+      { id: 'captain_1', name: 'Captain 1', cls: 'captain' },
+      { id: 'captain_2', name: 'Captain 2', cls: 'captain' },
+      { id: 'captain_3', name: 'Captain 3', cls: 'captain' },
+    ];
+
+    async function loadDashboard() {
+      // Load last settlement timestamps
+      const res = await fetch(API + '?action=history&limit=50');
+      const data = await res.json();
+      const lastByPoint = {};
+      for (const s of (data.settlements || [])) {
+        if (!lastByPoint[s.point]) lastByPoint[s.point] = s.settled_at;
+      }
+      $('pointsGrid').innerHTML = POINTS.map(p =>
+        '<div class="point-card ' + p.cls + '" onclick="selectPoint(\'' + p.id + '\',this)" id="pc-' + p.id + '">' +
+        '<div class="p-name">' + p.name + '</div>' +
+        '<div class="p-last">Last: ' + fmtTime(lastByPoint[p.id]) + '</div></div>'
+      ).join('');
+    }
+
+    async function selectPoint(pointId, el) {
+      document.querySelectorAll('.point-card').forEach(c => c.classList.remove('selected'));
+      if (el) el.classList.add('selected');
+      selectedPoint = pointId;
+      $('pointDetail').style.display = '';
+      $('detailTitle').textContent = 'Loading...';
+      $('detailContent').innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="margin:0 auto"></div></div>';
+
+      const res = await fetch(API + '?action=point-summary&point=' + pointId);
+      const data = await res.json();
+      if (!data.success) { $('detailContent').innerHTML = '<div style="color:var(--red)">' + data.error + '</div>'; return; }
+
+      const d = data;
+      $('detailTitle').textContent = d.pointName + ' — Since ' + fmtTime(d.period.from);
+
+      const upiVar = d.upiVariance;
+      const upiCls = Math.abs(upiVar) < 5 ? 'ok' : 'warn';
+      const isCaptain = pointId !== 'counter';
+
+      let html = '<div class="summary-row"><span class="label">Orders</span><span class="value mono">' + d.odoo.orderCount + '</span></div>';
+      html += '<div class="summary-row"><span class="label">Total Sales</span><span class="value mono green">' + fmt(d.odoo.total) + '</span></div>';
+      html += '<div class="summary-row"><span class="label">Cash (Odoo)</span><span class="value mono">' + fmt(d.odoo.cash) + '</span></div>';
+      html += '<div class="summary-row"><span class="label">UPI (Odoo)</span><span class="value mono">' + fmt(d.odoo.upi) + '</span></div>';
+      html += '<div class="summary-row"><span class="label">UPI (Razorpay)</span><span class="value mono">' + fmt(d.razorpay.upi) + '</span></div>';
+      html += '<div class="summary-row"><span class="label">UPI Variance</span><span class="variance ' + upiCls + '">' + (upiVar >= 0 ? '+' : '') + fmt(upiVar) + '</span></div>';
+      if (d.odoo.card) html += '<div class="summary-row"><span class="label">Card</span><span class="value mono">' + fmt(d.odoo.card) + '</span></div>';
+      if (d.odoo.comp) html += '<div class="summary-row"><span class="label">Complimentary</span><span class="value mono" style="color:var(--pink)">' + fmt(d.odoo.comp) + '</span></div>';
+
+      if (isCaptain) {
+        // Captain settlement: enter cash collected
+        html += '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0">';
+        html += '<div class="input-group"><label>Cash Collected from ' + d.pointName + '</label>';
+        html += '<input type="number" id="settleCash" placeholder="Enter physical cash amount" inputmode="numeric"></div>';
+        html += '<div class="input-group"><label>Notes (optional)</label><textarea id="settleNotes" placeholder="Any notes..."></textarea></div>';
+        html += '<button class="btn btn-primary" onclick="submitSettle()" style="width:100%">Settle ' + d.pointName + '</button>';
+      } else {
+        // Counter settlement: cash expected = Odoo cash
+        html += '<hr style="border:none;border-top:1px solid var(--border);margin:14px 0">';
+        html += '<div class="summary-row"><span class="label">Cash Expected</span><span class="value mono green">' + fmt(d.cashExpected) + '</span></div>';
+        html += '<div class="input-group"><label>Cash in Register</label>';
+        html += '<input type="number" id="settleCash" placeholder="Count physical cash" inputmode="numeric"></div>';
+        html += '<div class="input-group"><label>Notes (optional)</label><textarea id="settleNotes" placeholder="Any notes..."></textarea></div>';
+        html += '<button class="btn btn-primary" onclick="submitSettle()" style="width:100%">Settle Counter</button>';
+      }
+
+      $('detailContent').innerHTML = html;
+      // Store summary for submission
+      window._summary = d;
+    }
+
+    async function submitSettle() {
+      const d = window._summary;
+      const cash = parseFloat($('settleCash')?.value) || 0;
+      const notes = $('settleNotes')?.value || '';
+
+      if (!cash && selectedPoint === 'counter') { toast('Enter cash amount', 'error'); return; }
+
+      show(true);
+      const res = await fetch(API + '?action=settle', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pin: currentPin,
+          point: selectedPoint,
+          period_start: d.period.fromRaw,
+          period_end: new Date().toISOString(),
+          cash_expected: d.cashExpected,
+          cash_collected: cash,
+          upi_odoo: d.odoo.upi,
+          upi_razorpay: d.razorpay.upi,
+          card_amount: d.odoo.card,
+          comp_amount: d.odoo.comp,
+          total_sales: d.odoo.total,
+          notes,
+        }),
+      });
+      const data = await res.json();
+      show(false);
+      if (data.success) {
+        toast(data.message, 'success');
+        selectedPoint = null;
+        $('pointDetail').style.display = 'none';
+        loadDashboard();
+      } else {
+        toast(data.error || 'Failed', 'error');
+      }
+    }
+
+    // ── Expenses ─────────────────────────────────────────────────────────────
+    async function submitExpense() {
+      const amount = parseFloat($('expAmount').value);
+      const reason = $('expReason').value.trim();
+      if (!amount || !reason) { toast('Enter amount and reason', 'error'); return; }
+
+      show(true);
+      const res = await fetch(API + '?action=record-expense', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: currentPin, amount, reason, notes: $('expNotes').value }),
+      });
+      const data = await res.json();
+      show(false);
+      if (data.success) {
+        toast(data.message, 'success');
+        $('expAmount').value = ''; $('expReason').value = ''; $('expNotes').value = '';
+        loadExpenses();
+      } else { toast(data.error, 'error'); }
+    }
+
+    async function loadExpenses() {
+      const res = await fetch(API + '?action=expense-history&limit=20');
+      const data = await res.json();
+      const list = data.expenses || [];
+      $('expenseList').innerHTML = list.length ? list.map(e =>
+        '<div class="history-item"><div class="h-top"><span class="h-name">' + e.reason + '</span><span class="h-time">' + fmtTime(e.recorded_at) + '</span></div>' +
+        '<div class="h-row"><span>Amount</span><span class="mono" style="color:var(--red)">' + fmt(e.amount) + '</span></div>' +
+        '<div class="h-row"><span>Recorded by</span><span>' + e.recorded_by + '</span></div>' +
+        (e.notes ? '<div class="h-row"><span>Notes</span><span>' + e.notes + '</span></div>' : '') +
+        '</div>'
+      ).join('') : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No expenses recorded</div>';
+    }
+
+    // ── Collection ───────────────────────────────────────────────────────────
+    async function loadBalance() {
+      const res = await fetch(API + '?action=counter-balance');
+      const data = await res.json();
+      if (!data.success) { $('balanceContent').innerHTML = '<div style="color:var(--red)">' + data.error + '</div>'; return; }
+      const b = data.balance;
+      $('balanceContent').innerHTML =
+        '<div class="summary-row"><span class="label">Petty Cash (carried)</span><span class="value mono">' + fmt(b.pettyCash) + '</span></div>' +
+        '<div class="summary-row"><span class="label">Cash Settled (' + b.settlementCount + ' settlements)</span><span class="value mono">' + fmt(b.totalSettledCash) + '</span></div>' +
+        '<div class="summary-row"><span class="label">Expenses (' + b.expenseCount + ')</span><span class="value mono red">' + fmt(b.totalExpenses) + '</span></div>' +
+        '<div class="summary-row" style="border-top:2px solid var(--border);padding-top:10px"><span class="label" style="font-weight:600;color:var(--text)">Expected at Counter</span><span class="value mono green" style="font-size:20px">' + fmt(b.expected) + '</span></div>';
+    }
+
+    async function submitCollection() {
+      const amount = parseFloat($('colAmount').value);
+      const petty = parseFloat($('colPetty').value) || 0;
+      if (!amount) { toast('Enter collection amount', 'error'); return; }
+
+      show(true);
+      const res = await fetch(API + '?action=collect', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: currentPin, amount, petty_cash: petty, notes: $('colNotes').value }),
+      });
+      const data = await res.json();
+      show(false);
+      if (data.success) {
+        let msg = data.message;
+        if (Math.abs(data.discrepancy) > 5) msg += ' | Discrepancy: ' + fmt(data.discrepancy);
+        toast(msg, 'success');
+        $('colAmount').value = ''; $('colPetty').value = ''; $('colNotes').value = '';
+        loadBalance();
+        loadCollections();
+      } else { toast(data.error, 'error'); }
+    }
+
+    async function loadCollections() {
+      const res = await fetch(API + '?action=collection-history&limit=10');
+      const data = await res.json();
+      const list = data.collections || [];
+      $('collectionList').innerHTML = list.length ? list.map(c => {
+        const discCls = Math.abs(c.discrepancy) < 5 ? 'ok' : 'warn';
+        return '<div class="history-item"><div class="h-top"><span class="h-name">' + c.collected_by + '</span><span class="h-time">' + fmtTime(c.collected_at) + '</span></div>' +
+          '<div class="h-row"><span>Collected</span><span class="mono" style="color:var(--green)">' + fmt(c.amount) + '</span></div>' +
+          '<div class="h-row"><span>Petty Left</span><span class="mono">' + fmt(c.petty_cash) + '</span></div>' +
+          '<div class="h-row"><span>Expected</span><span class="mono">' + fmt(c.expected) + '</span></div>' +
+          '<div class="h-row"><span>Discrepancy</span><span class="variance ' + discCls + '">' + (c.discrepancy >= 0 ? '+' : '') + fmt(c.discrepancy) + '</span></div>' +
+          (c.notes ? '<div class="h-row"><span>Notes</span><span>' + c.notes + '</span></div>' : '') +
+          '</div>';
+      }).join('') : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No collections yet</div>';
+    }
+
+    // ── History ──────────────────────────────────────────────────────────────
+    async function loadHistory() {
+      const res = await fetch(API + '?action=history&limit=30');
+      const data = await res.json();
+      const list = data.settlements || [];
+      $('historyList').innerHTML = list.length ? list.map(s => {
+        const varCls = Math.abs(s.cash_variance) < 5 ? 'ok' : (s.cash_variance < 0 ? 'warn' : 'ok');
+        return '<div class="history-item"><div class="h-top"><span class="h-name">' + s.point_name + '</span><span class="h-time">' + fmtTime(s.settled_at) + '</span></div>' +
+          '<div class="h-row"><span>Cash Collected</span><span class="mono">' + fmt(s.cash_collected) + '</span></div>' +
+          '<div class="h-row"><span>UPI (Odoo/Rzp)</span><span class="mono">' + fmt(s.upi_odoo) + ' / ' + fmt(s.upi_razorpay) + '</span></div>' +
+          (s.card_amount ? '<div class="h-row"><span>Card</span><span class="mono">' + fmt(s.card_amount) + '</span></div>' : '') +
+          (s.comp_amount ? '<div class="h-row"><span>Complimentary</span><span class="mono" style="color:var(--pink)">' + fmt(s.comp_amount) + '</span></div>' : '') +
+          '<div class="h-row"><span>Cash Variance</span><span class="variance ' + varCls + '">' + (s.cash_variance >= 0 ? '+' : '') + fmt(s.cash_variance) + '</span></div>' +
+          '<div class="h-row"><span>Settled by</span><span>' + s.settled_by + '</span></div>' +
+          (s.notes ? '<div class="h-row"><span>Notes</span><span>' + s.notes + '</span></div>' : '') +
+          '</div>';
+      }).join('') : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No settlements yet</div>';
+    }
+
+    // ── Tab switching ────────────────────────────────────────────────────────
+    function switchTab(tab, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (el) el.classList.add('active');
+      ['settle', 'expenses', 'collect', 'history'].forEach(t => {
+        const panel = $('tab-' + t);
+        if (panel) panel.style.display = t === tab ? '' : 'none';
+      });
+      if (tab === 'expenses') loadExpenses();
+      if (tab === 'collect') { loadBalance(); loadCollections(); }
+      if (tab === 'history') loadHistory();
+    }
+
+    // ── Utilities ────────────────────────────────────────────────────────────
+    function show(loading) { $('overlay').classList.toggle('show', loading); }
+    function toast(msg, type) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+  </script>
+</body>
+</html>
