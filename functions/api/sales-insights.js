@@ -34,8 +34,9 @@ export async function onRequest(context) {
 
   const fromOdoo = fromUTC.toISOString().slice(0, 19).replace('T', ' ');
   const toOdoo = toUTC.toISOString().slice(0, 19).replace('T', ' ');
-  const fromIST = new Date(fromUTC.getTime() + 5.5 * 60 * 60 * 1000);
-  const toIST = new Date(toUTC.getTime() + 5.5 * 60 * 60 * 1000);
+  // Return IST times as plain strings (no Z suffix) so browsers don't double-convert
+  const fromISTStr = new Date(fromUTC.getTime() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 19);
+  const toISTStr = new Date(toUTC.getTime() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 19);
 
   try {
     // Phase 1: Orders + static reference data in parallel
@@ -55,7 +56,7 @@ export async function onRequest(context) {
     if (orderIds.length === 0) {
       return new Response(JSON.stringify({
         success: true, timestamp: new Date().toISOString(),
-        query: { from: fromIST.toISOString(), to: toIST.toISOString() },
+        query: { from: fromISTStr, to: toISTStr },
         data: emptyData()
       }), { headers: corsHeaders });
     }
@@ -73,7 +74,7 @@ export async function onRequest(context) {
     const insights = processInsights(orders, lines, payments, categories, paymentMethods, products);
     return new Response(JSON.stringify({
       success: true, timestamp: new Date().toISOString(),
-      query: { from: fromIST.toISOString(), to: toIST.toISOString() },
+      query: { from: fromISTStr, to: toISTStr },
       data: insights
     }), { headers: corsHeaders });
   } catch (error) {
