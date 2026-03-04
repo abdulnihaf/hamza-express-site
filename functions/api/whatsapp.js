@@ -671,6 +671,11 @@ async function processWebhook(context, body) {
   const message = value.messages[0];
   const waId = message.from;
 
+  // ── CTWA Attribution: capture referral from Meta Click-to-WhatsApp ads ──
+  const referral = message.referral || null;
+  const ctwaClid = referral?.ctwa_clid || null;
+  const ctwaSource = referral ? 'meta_ctwa' : null;
+
   // Skip ordering bot for hiring campaign candidates — their messages are
   // forwarded to hnhotels.in/api/hiring for the hiring inbox instead
   if (context.env.HIRING_DB) {
@@ -695,9 +700,15 @@ async function processWebhook(context, body) {
   let session = await db.prepare('SELECT * FROM wa_sessions WHERE wa_id = ?').bind(waId).first();
   if (!session) {
     const now = new Date().toISOString();
-    await db.prepare('INSERT INTO wa_sessions (wa_id, state, cart, cart_total, updated_at) VALUES (?, ?, ?, ?, ?)')
-      .bind(waId, 'idle', '[]', 0, now).run();
-    session = { wa_id: waId, state: 'idle', cart: '[]', cart_total: 0, updated_at: now };
+    await db.prepare('INSERT INTO wa_sessions (wa_id, state, cart, cart_total, ctwa_clid, ad_source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(waId, 'idle', '[]', 0, ctwaClid, ctwaSource, now).run();
+    session = { wa_id: waId, state: 'idle', cart: '[]', cart_total: 0, ctwa_clid: ctwaClid, ad_source: ctwaSource, updated_at: now };
+  } else if (ctwaClid && !session.ctwa_clid) {
+    // Update existing session with CTWA attribution if this is a new ad click
+    await db.prepare('UPDATE wa_sessions SET ctwa_clid = ?, ad_source = ? WHERE wa_id = ?')
+      .bind(ctwaClid, 'meta_ctwa', waId).run();
+    session.ctwa_clid = ctwaClid;
+    session.ad_source = 'meta_ctwa';
   }
 
   // Check session expiry
@@ -720,9 +731,11 @@ async function processWebhook(context, body) {
   if (!user) {
     const now = new Date().toISOString();
     const name = value.contacts?.[0]?.profile?.name || '';
-    await db.prepare('INSERT INTO wa_users (wa_id, name, phone, created_at, last_active_at) VALUES (?, ?, ?, ?, ?)')
-      .bind(waId, name, waId, now, now).run();
-    user = { wa_id: waId, name, phone: waId, total_orders: 0, total_spent: 0, last_order_id: null };
+    // Determine acquisition source: CTWA ad > station QR > GMB link > organic
+    const firstSource = ctwaSource || session?.ad_source || 'organic';
+    await db.prepare('INSERT INTO wa_users (wa_id, name, phone, first_source, created_at, last_active_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(waId, name, waId, firstSource, now, now).run();
+    user = { wa_id: waId, name, phone: waId, total_orders: 0, total_spent: 0, last_order_id: null, first_source: firstSource };
   } else {
     await db.prepare('UPDATE wa_users SET last_active_at = ? WHERE wa_id = ?')
       .bind(new Date().toISOString(), waId).run();
@@ -803,7 +816,28 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     // Counter-specific entry (QR code scan — "BM Counter", "Juice Counter", etc.)
     const counterKey = detectCounterKeyword(text);
     if (counterKey) {
+      // Station QR = ad_source 'station_qr'
+      if (!session.ad_source) {
+        await db.prepare('UPDATE wa_sessions SET ad_source = ? WHERE wa_id = ?').bind('station_qr', waId).run();
+        session.ad_source = 'station_qr';
+        // Set first_source on user if not yet set
+        if (!user.first_source) {
+          await db.prepare('UPDATE wa_users SET first_source = ? WHERE wa_id = ?').bind('station_qr', waId).run();
+        }
+      }
       return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db);
+    }
+
+    // CTWA pre-filled text detection (from Meta Ads)
+    if (text === 'ramadan menu' || text === 'ramadan special') {
+      if (!session.ad_source) {
+        await db.prepare('UPDATE wa_sessions SET ad_source = ? WHERE wa_id = ?').bind('meta_ctwa', waId).run();
+        session.ad_source = 'meta_ctwa';
+        if (!user.first_source) {
+          await db.prepare('UPDATE wa_users SET first_source = ? WHERE wa_id = ?').bind('meta_ctwa', waId).run();
+        }
+      }
+      return handleShowMenu(context, user, waId, phoneId, token, db);
     }
 
     // Keyword shortcuts — jump to meal intent or direct category MPM
@@ -981,7 +1015,8 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
     console.log('catalog_message failed (status:', resp?.status, '), falling back to list menu');
     return handleShowMenuList(context, user, waId, phoneId, token, db);
   }
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+  // Clear counter_source — full menu orders must NOT skip confirmation
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
 async function handleShowMenuList(context, user, waId, phoneId, token, db) {
@@ -1026,7 +1061,8 @@ async function handleShowMenuList(context, user, waId, phoneId, token, db) {
   };
 
   await sendWhatsApp(phoneId, token, listMsg);
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+  // Clear counter_source — full menu orders must NOT skip confirmation
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
 async function handleShowFullMenu(context, user, waId, phoneId, token, db) {
@@ -1458,13 +1494,15 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
   const orderCode = `HE-${datePrefix}-${String(todayCount).padStart(4, '0')}`;
 
   // Create order in DB with payment_pending status (store summary string for reference)
+  // Include CTWA attribution for Meta Conversions API feedback loop
   const result = await db.prepare(
     `INSERT INTO wa_orders (order_code, wa_id, items, subtotal, total, payment_method, payment_status,
-     collection_point, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     collection_point, acquisition_source, ctwa_clid, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     orderCode, waId, JSON.stringify(cart), total, total, 'upi', 'pending',
-    collection.summary, 'payment_pending', now, now
+    collection.summary, session.ad_source || 'organic', session.ctwa_clid || null,
+    'payment_pending', now, now
   ).run();
   const orderId = result.meta?.last_row_id;
 
@@ -3186,6 +3224,15 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
       .bind(odooResult.id, odooResult.name, odooResult.trackingNumber, order.id).run();
   }
 
+  // ── Meta Conversions API: send Purchase event for CTWA attribution ──
+  if (order.ctwa_clid) {
+    try {
+      await sendMetaConversionEvent(context, order);
+    } catch (e) {
+      console.error('Meta CAPI error (non-blocking):', e.message);
+    }
+  }
+
   // Build confirmation message — adaptive based on customer tier
   const trackingNum = odooResult?.trackingNumber || order.order_code;
   const collection = determineCollectionPoints(cart);
@@ -3621,6 +3668,69 @@ async function updateSession(db, waId, state, cart, cartTotal, counterSource) {
 // ═══════════════════════════════════════════════════════════════════
 // PAYMENT ERROR MESSAGES
 // ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+// META CONVERSIONS API — closes CTWA attribution loop
+// ═══════════════════════════════════════════════════════════════════
+
+async function sendMetaConversionEvent(context, order) {
+  const accessToken = context.env.WA_ACCESS_TOKEN;
+  // Dataset ID = the WABA Business ID's dataset (same as pixel for messaging)
+  const datasetId = context.env.META_DATASET_ID;
+  if (!datasetId || !accessToken) {
+    console.log('Meta CAPI: Missing META_DATASET_ID or access token, skipping');
+    return;
+  }
+
+  // SHA-256 hash the phone number (Meta requires hashed PII)
+  const encoder = new TextEncoder();
+  const phoneNormalized = order.wa_id.replace(/\D/g, '');
+  const phoneHash = [...new Uint8Array(
+    await crypto.subtle.digest('SHA-256', encoder.encode(phoneNormalized))
+  )].map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const payload = {
+    data: [{
+      event_name: 'Purchase',
+      event_time: Math.floor(Date.now() / 1000),
+      action_source: 'business_messaging',
+      messaging_channel: 'whatsapp',
+      user_data: {
+        phones: [phoneHash],
+      },
+      custom_data: {
+        value: order.total,
+        currency: 'INR',
+        order_id: order.order_code,
+      },
+      original_event_data: {
+        event_source: 'business_messaging',
+        messaging_channel: 'whatsapp',
+      },
+      attribution_data: {
+        attribution_type: 'click_through',
+        attribution_share: 1.0,
+        ctwa_clid: order.ctwa_clid,
+      },
+    }],
+  };
+
+  const response = await fetch(
+    `https://graph.facebook.com/v21.0/${datasetId}/events?access_token=${accessToken}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error('Meta CAPI failed:', response.status, errText);
+  } else {
+    console.log(`Meta CAPI: Purchase event sent for ${order.order_code}, ctwa_clid: ${order.ctwa_clid}`);
+  }
+}
 
 function getPaymentErrorMessage(reason) {
   const messages = {
