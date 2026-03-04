@@ -584,19 +584,30 @@ export async function onRequest(context) {
   if (context.request.method === 'POST') {
     try {
       const body = await context.request.json();
-      // NCH forwarding disabled — NCH phone (970365416152029) now serves HE
-      // When HE gets its own phone, re-enable: check incomingPhoneId and forward NCH messages
       await processWebhook(context, body);
 
-      // Forward webhook to HN Hotels hiring dashboard (non-blocking)
-      // This lets the hiring campaign tracker receive status updates + candidate replies
-      context.waitUntil(
-        fetch('https://hnhotels.in/api/hiring', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }).catch(() => {}) // Silently ignore forwarding failures
-      );
+      // Forward ONLY hiring candidate messages to HN Hotels hiring dashboard
+      // Check if sender is a hiring candidate before forwarding
+      const fwdMsg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+      if (fwdMsg && context.env.HIRING_DB) {
+        const fwdPhone = fwdMsg.from?.replace(/\D/g, '').slice(-10);
+        if (fwdPhone) {
+          context.waitUntil((async () => {
+            try {
+              const isCandidate = await context.env.HIRING_DB
+                .prepare('SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM candidates WHERE phone = ? LIMIT 1')
+                .bind(fwdPhone, fwdPhone).first();
+              if (isCandidate) {
+                await fetch('https://hnhotels.in/api/hiring', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                });
+              }
+            } catch (_) {}
+          })());
+        }
+      }
 
       return new Response('OK', { status: 200 });
     } catch (error) {
