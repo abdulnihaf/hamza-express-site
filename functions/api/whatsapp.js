@@ -974,47 +974,136 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
   return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
+// Bestsellers MPM — 30 items across 8 sections covering a full meal in ONE view.
+// Ordered by popularity (matching physical menu order). This is the PRIMARY menu experience.
+const BESTSELLERS_MPM = {
+  sections: [
+    { title: 'Biryani & Rice', items: [
+      'HE-1201', // Chicken Biryani
+      'HE-1200', // Mutton Biryani
+      'HE-1389', // Chicken Boneless Biryani
+      'HE-1204', // Egg Biryani
+      'HE-1203', // Biryani Rice
+      'HE-1205', // Ghee Rice
+    ]},
+    { title: 'Starters', items: [
+      'HE-1393', // Irani Chicken ★
+      'HE-1163', // Chicken Kabab
+      'HE-1135', // Tandoori Chicken
+      'HE-1166', // Chicken 65
+      'HE-1142', // Malai Tikka
+    ]},
+    { title: 'Chicken Gravy', items: [
+      'HE-1149', // Butter Chicken
+      'HE-1155', // Kadai Chicken
+      'HE-1148', // Hyderabadi Chicken
+      'HE-1160', // Hamza Special
+    ]},
+    { title: 'Mutton Gravy', items: [
+      'HE-1190', // Mutton Hamza Special
+      'HE-1177', // Mutton Rogan Josh
+      'HE-1188', // Mutton Kassa
+    ]},
+    { title: 'Vegetarian', items: [
+      'HE-1226', // Paneer Butter Masala
+      'HE-1225', // Dal Fry
+      'HE-1227', // Kadai Paneer
+    ]},
+    { title: 'Indian Breads', items: [
+      'HE-1212', // Kerala Paratha
+      'HE-1220', // Butter Naan
+      'HE-1222', // Garlic Naan
+      'HE-1218', // Roomali Roti
+    ]},
+    { title: 'Chinese', items: [
+      'HE-1235', // Chicken Fried Rice
+      'HE-1236', // Chicken Noodles
+      'HE-1164', // Chilly Chicken
+    ]},
+    { title: 'Drinks', items: [
+      'HE-J001', // Fresh Orange Juice
+      'HE-J005', // Buttermilk
+    ]},
+  ],
+};
+
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
-  // Send catalog_message — opens visual catalog browser with images, categories, prices, built-in cart.
-  // NOTE: catalog_message API quirks:
-  //   - Body text MUST NOT contain exclamation marks (!) — causes silent API failure
-  //   - Footer and thumbnail_product_retailer_id params also cause failures
-  //   - Keep payload minimal: body + action only
+  // Primary menu: ONE MPM with 30 bestsellers across 8 categories.
+  // Covers a typical customer's full meal in a single view.
+  // Followed by a "browse more" list for customers who want the full 150+ items.
   const tier = getCustomerTier(user.total_orders || 0);
+  const displayName = user.name ? user.name.split(' ')[0] : '';
 
   let bodyText;
   if (tier === 'new') {
-    bodyText = user.name
-      ? `Hi ${user.name}, welcome to Hamza Express. Tap below to browse our full menu — add items to cart, pay via UPI, and collect at the counter.`
-      : 'Welcome to Hamza Express. Tap below to browse our full menu, add items to cart, pay via UPI and collect at the counter.';
+    bodyText = displayName
+      ? `Hi ${displayName}, welcome to Hamza Express.\nAdd items to cart, tap Send, pay UPI — collect at the counter.`
+      : 'Welcome to Hamza Express.\nAdd items to cart, tap Send, pay UPI — collect at the counter.';
   } else if (tier === 'regular') {
-    bodyText = `Hey ${user.name || 'there'}, tap below to order.`;
+    bodyText = displayName
+      ? `Hey ${displayName}, here are your favourites.`
+      : 'Here are the popular picks.';
   } else {
-    bodyText = user.name
-      ? `Hi ${user.name}, tap below to browse our menu.`
-      : 'Tap below to browse our menu and order.';
+    bodyText = displayName
+      ? `Hi ${displayName}, our most popular items.`
+      : 'Our most popular items — add to cart and Send.';
   }
 
-  const catalogMsg = {
+  const sections = BESTSELLERS_MPM.sections.map(s => ({
+    title: s.title,
+    product_items: s.items.map(rid => ({ product_retailer_id: rid })),
+  }));
+
+  const mpm = {
     messaging_product: 'whatsapp',
-    recipient_type: 'individual',
     to: waId,
     type: 'interactive',
     interactive: {
-      type: 'catalog_message',
+      type: 'product_list',
+      header: { type: 'text', text: 'Hamza Express Menu' },
       body: { text: bodyText },
+      footer: { text: 'All prices inclusive of GST' },
+      action: { catalog_id: CATALOG_ID, sections },
+    },
+  };
+
+  const resp = await sendWhatsApp(phoneId, token, mpm);
+  if (!resp || !resp.ok) {
+    console.log('Bestsellers MPM failed, falling back to list menu');
+    return handleShowMenuList(context, user, waId, phoneId, token, db);
+  }
+
+  // Follow up with "browse more" for the full menu
+  const moreRows = [
+    { id: 'intent_meals', title: 'All Curries & Biryani', description: 'Full chicken, mutton, veg + breads' },
+    { id: 'intent_starters', title: 'All Starters', description: '24 tandoori, chicken & mutton starters' },
+    { id: 'intent_chinese', title: 'All Chinese', description: 'Fried rice, noodles, shezwan, rolls' },
+    { id: 'intent_krispy', title: 'Fried Chicken', description: 'Combos, burgers, wings, popcorn' },
+    { id: 'cat_full_menu', title: 'Browse by Category', description: 'All 9 categories separately' },
+  ];
+
+  let moreText;
+  if (tier === 'new') {
+    moreText = 'Want to see more items? Pick a category below.\nYour cart stays intact across menus.';
+  } else {
+    moreText = 'More items:';
+  }
+
+  const listMsg = {
+    messaging_product: 'whatsapp',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: moreText },
       action: {
-        name: 'catalog_message',
+        button: 'See Full Menu',
+        sections: [{ title: 'Categories', rows: moreRows }],
       },
     },
   };
 
-  const resp = await sendWhatsApp(phoneId, token, catalogMsg);
-  if (!resp || !resp.ok) {
-    // Fallback: if catalog_message fails, send the meal-intent list instead
-    console.log('catalog_message failed (status:', resp?.status, '), falling back to list menu');
-    return handleShowMenuList(context, user, waId, phoneId, token, db);
-  }
+  await sendWhatsApp(phoneId, token, listMsg);
   // Clear counter_source — full menu orders must NOT skip confirmation
   await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
