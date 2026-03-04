@@ -191,6 +191,34 @@ const PRODUCTS = {
   'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1416, catId: 28 },
   'HE-1399': { name: 'Singapore Chicken (BM)',     price: 210, odooId: 1417, catId: 28 },
   'HE-1400': { name: 'Lemon Chicken (BM)',         price: 219, odooId: 1418, catId: 28 },
+
+  // ── Juice Counter (cat 27) ──
+  'HE-J001': { name: 'Fresh Orange Juice',          price: 76,  odooId: 1424, catId: 27 },
+  'HE-J002': { name: 'Watermelon Juice',            price: 67,  odooId: 1425, catId: 27 },
+  'HE-J003': { name: 'Mixed Fruit Juice',           price: 86,  odooId: 1426, catId: 27 },
+  'HE-J004': { name: 'Mango Lassi',                 price: 76,  odooId: 1427, catId: 27 },
+  'HE-J005': { name: 'Buttermilk',                  price: 38,  odooId: 1428, catId: 27 },
+  'HE-J006': { name: 'Lime Soda',                   price: 48,  odooId: 1429, catId: 27 },
+
+  // ── Shawarma Counter (cat 29) ──
+  'HE-S001': { name: 'Chicken Shawarma Plate',      price: 171, odooId: 1430, catId: 29 },
+  'HE-S002': { name: 'Chicken Shawarma Roll',       price: 114, odooId: 1431, catId: 29 },
+  'HE-S003': { name: 'Mutton Shawarma Plate',       price: 210, odooId: 1432, catId: 29 },
+  'HE-S004': { name: 'Mutton Shawarma Roll',        price: 143, odooId: 1433, catId: 29 },
+  'HE-S005': { name: 'Shawarma Fries',              price: 95,  odooId: 1434, catId: 29 },
+
+  // ── Grill Counter (cat 30) ──
+  'HE-G001': { name: 'Grilled Chicken',             price: 238, odooId: 1435, catId: 30 },
+  'HE-G002': { name: 'Chicken Tikka',               price: 190, odooId: 1436, catId: 30 },
+  'HE-G003': { name: 'Tandoori Chicken',            price: 267, odooId: 1437, catId: 30 },
+  'HE-G004': { name: 'Chicken Seekh Kebab',         price: 152, odooId: 1438, catId: 30 },
+  'HE-G005': { name: 'Mutton Seekh Kebab',          price: 190, odooId: 1439, catId: 30 },
+
+  // ── Sheek Kabab (cat 30, same KDS as Grill) ──
+  'HE-K001': { name: 'Sheek Kabab (4 pcs)',         price: 171, odooId: 1440, catId: 30 },
+  'HE-K002': { name: 'Mutton Sheek Kabab (4 pcs)',  price: 210, odooId: 1441, catId: 30 },
+  'HE-K003': { name: 'Sheek Kabab Roll',            price: 114, odooId: 1442, catId: 30 },
+  'HE-K004': { name: 'Sheek Kabab Platter',         price: 333, odooId: 1443, catId: 30 },
 };
 
 // ── Category → collection point mapping ──
@@ -400,10 +428,37 @@ const COUNTER_MENUS = {
   bm_counter: {
     title: 'Bain Marie Counter',
     counter: 'Bain Marie Counter',
-    greeting: 'Order from the Bain Marie counter — Biryani, Rice & Curry!',
     sections: [
       { title: 'Biryani & Rice', items: ['HE-1201','HE-1200','HE-1205'] },
       { title: 'Curry & Starters', items: ['HE-1397','HE-1398','HE-1164','HE-1399','HE-1400'] },
+    ],
+  },
+  juice_counter: {
+    title: 'Juice Counter',
+    counter: 'Juice Counter',
+    sections: [
+      { title: 'Juices & Drinks', items: ['HE-J001','HE-J002','HE-J003','HE-J004','HE-J005','HE-J006'] },
+    ],
+  },
+  shawarma_counter: {
+    title: 'Shawarma Counter',
+    counter: 'Shawarma Counter',
+    sections: [
+      { title: 'Shawarma', items: ['HE-S001','HE-S002','HE-S003','HE-S004','HE-S005'] },
+    ],
+  },
+  grill_counter: {
+    title: 'Grill Counter',
+    counter: 'Grill Counter',
+    sections: [
+      { title: 'Grill', items: ['HE-G001','HE-G002','HE-G003','HE-G004','HE-G005'] },
+    ],
+  },
+  sheek_counter: {
+    title: 'Sheek Kabab',
+    counter: 'Sheek Kabab Counter',
+    sections: [
+      { title: 'Sheek Kabab', items: ['HE-K001','HE-K002','HE-K003','HE-K004'] },
     ],
   },
 };
@@ -411,10 +466,11 @@ const COUNTER_MENUS = {
 // ── Detect counter keyword from QR code text (e.g. "BM Counter") ──
 function detectCounterKeyword(text) {
   const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (normalized === 'bm counter' || normalized === 'bm_counter') return 'bm_counter';
-  if (normalized === 'juice counter' || normalized === 'juice_counter') return 'juice_counter';
-  if (normalized === 'shawarma counter' || normalized === 'shawarma_counter') return 'shawarma_counter';
-  if (normalized === 'grill counter' || normalized === 'grill_counter') return 'grill_counter';
+  if (normalized === 'bm counter' || normalized === 'bm_counter' || normalized === 'bain marie') return 'bm_counter';
+  if (normalized === 'juice counter' || normalized === 'juice_counter' || normalized === 'juice') return 'juice_counter';
+  if (normalized === 'shawarma counter' || normalized === 'shawarma_counter' || normalized === 'shawarma') return 'shawarma_counter';
+  if (normalized === 'grill counter' || normalized === 'grill_counter' || normalized === 'grill') return 'grill_counter';
+  if (normalized === 'sheek kabab' || normalized === 'sheek_counter' || normalized === 'sheek counter' || normalized === 'seekh kabab') return 'sheek_counter';
   return null;
 }
 
@@ -607,8 +663,8 @@ async function processWebhook(context, body) {
     try {
       const hiringPhone = waId.replace(/\D/g, '').slice(-10);
       const isHiringCandidate = await context.env.HIRING_DB
-        .prepare('SELECT 1 FROM messages WHERE phone = ? LIMIT 1')
-        .bind(hiringPhone)
+        .prepare('SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM candidates WHERE phone = ? LIMIT 1')
+        .bind(hiringPhone, hiringPhone)
         .first();
       if (isHiringCandidate) return; // Let hiring dashboard handle this
     } catch (e) { /* ignore — fall through to ordering bot */ }
@@ -637,7 +693,8 @@ async function processWebhook(context, body) {
     session.state = 'idle';
     session.cart = '[]';
     session.cart_total = 0;
-    await updateSession(db, waId, 'idle', '[]', 0);
+    session.counter_source = null;
+    await updateSession(db, waId, 'idle', '[]', 0, null);
     if (hadCart) {
       await sendWhatsApp(phoneId, token, buildText(waId,
         'Your previous session expired. No worries — let\'s start fresh!\n\nSend *"menu"* to see our full menu.'));
@@ -758,6 +815,16 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     }
   }
 
+  // Re-order / new-order button taps (station QR quick re-order flow)
+  if (msg.type === 'button_reply' && msg.id.startsWith('reorder_')) {
+    const counterKey = msg.id.replace('reorder_', '');
+    return handleReorderConfirm(context, session, user, counterKey, waId, phoneId, token, db);
+  }
+  if (msg.type === 'button_reply' && msg.id.startsWith('neworder_')) {
+    const counterKey = msg.id.replace('neworder_', '');
+    return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, true);
+  }
+
   // Ice breaker button taps
   if (msg.type === 'button_reply') {
     if (msg.id === 'order_food' || msg.id === 'view_menu') {
@@ -787,6 +854,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 
     case 'awaiting_upi_payment':
       return handleAwaitingUpiPayment(context, session, user, msg, waId, phoneId, token, db);
+
+    case 'awaiting_reorder':
+      return handleAwaitingReorder(context, session, user, msg, waId, phoneId, token, db);
 
     default:
       return handleShowMenu(context, user, waId, phoneId, token, db);
@@ -1072,13 +1142,55 @@ async function handleMealIntent(context, user, intentKey, waId, phoneId, token, 
   await updateSession(db, waId, 'awaiting_menu', '[]', 0);
 }
 
-async function handleCounterMenu(context, user, counterKey, waId, phoneId, token, db) {
+async function handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, skipReorder) {
   const counterMenu = COUNTER_MENUS[counterKey];
   if (!counterMenu || counterMenu.sections.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
       `Sorry, ${counterMenu?.title || 'this counter'} menu isn\'t available for WhatsApp ordering yet.\n\n` +
       `Send *"menu"* to browse our full menu.`));
     return;
+  }
+
+  const tier = getCustomerTier(user.total_orders || 0);
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+
+  // Regular customers (10+ orders): check for recent order at this counter for quick re-order
+  if (tier === 'regular' && !skipReorder) {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const lastOrder = await db.prepare(
+      `SELECT items, total FROM wa_orders WHERE wa_id = ? AND collection_point LIKE ? AND payment_status = 'paid' AND created_at > ? ORDER BY id DESC LIMIT 1`
+    ).bind(waId, `%${counterMenu.counter}%`, sevenDaysAgo).first();
+
+    if (lastOrder) {
+      const lastItems = JSON.parse(lastOrder.items);
+      const itemSummary = lastItems.map(c => `${c.qty}x ${c.name}`).join(', ');
+
+      const body = displayName
+        ? `Same as last time, ${displayName}?\n${itemSummary} — Rs.${lastOrder.total}`
+        : `Same as last time?\n${itemSummary} — Rs.${lastOrder.total}`;
+
+      const buttons = [
+        { type: 'reply', reply: { id: `reorder_${counterKey}`, title: 'Reorder & Pay' } },
+        { type: 'reply', reply: { id: `neworder_${counterKey}`, title: 'New Order' } },
+      ];
+
+      await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+      // Save last order items in cart for quick reorder
+      await updateSession(db, waId, 'awaiting_reorder', lastOrder.items, lastOrder.total, counterKey);
+      return;
+    }
+  }
+
+  // Tier-adaptive MPM body text — action-first, no branding
+  let bodyText;
+  if (tier === 'new') {
+    bodyText = `Tap 'View items' → pick → Send → pay UPI → collect here`;
+  } else if (tier === 'learning') {
+    bodyText = displayName
+      ? `Hi ${displayName}! Add items, tap Send to order.`
+      : `Add items, tap Send to order.`;
+  } else {
+    bodyText = displayName ? `${displayName}!` : `Pick and order!`;
   }
 
   // Build and send single MPM for this counter's items
@@ -1094,14 +1206,14 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
     interactive: {
       type: 'product_list',
       header: { type: 'text', text: counterMenu.title },
-      body: { text: counterMenu.greeting + '\n\nAdd items to cart, then tap Send!' },
-      footer: { text: 'All prices inclusive of GST | Collect at this counter' },
+      body: { text: bodyText },
+      footer: { text: 'Collect at this counter' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };
 
   await sendWhatsApp(phoneId, token, mpm);
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, counterKey);
 }
 
 async function handleMenuState(context, session, user, msg, waId, phoneId, token, db) {
@@ -1135,8 +1247,11 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
 
-  // If user doesn't have a name, ask first and save cart
-  if (!user.name) {
+  const isStationOrder = !!session.counter_source;
+
+  // For station QR orders: skip name check (use profile name silently)
+  // For general orders: ask for name if missing
+  if (!user.name && !isStationOrder) {
     const cart = buildCartFromItems(orderItems);
     await updateSession(db, waId, 'awaiting_name', JSON.stringify(cart.items), cart.total);
     await sendWhatsApp(phoneId, token, buildText(waId,
@@ -1151,7 +1266,16 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
     return;
   }
 
-  // Determine collection points (may be multiple for mixed orders)
+  // Station QR orders → skip confirmation, go directly to payment
+  if (isStationOrder) {
+    await updateSession(db, waId, 'awaiting_upi_payment', JSON.stringify(cart.items), cart.total, session.counter_source);
+    // Temporarily set session cart for initiateUpiPayment to use
+    session.cart = JSON.stringify(cart.items);
+    session.cart_total = cart.total;
+    return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
+  }
+
+  // General orders → show confirmation with "Pay Now" button
   const collection = determineCollectionPoints(cart.items);
   const tier = getCustomerTier(user.total_orders || 0);
 
@@ -1331,7 +1455,11 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
   const orderId = result.meta?.last_row_id;
 
   // Try native WhatsApp payment (order_details with Razorpay gateway)
-  const orderDetailsMsg = buildOrderDetailsPayment(waId, orderCode, cart, total);
+  const counterKey = session.counter_source;
+  const counterMenu = counterKey ? COUNTER_MENUS[counterKey] : null;
+  const counterName = counterMenu?.counter || null;
+  const tier = getCustomerTier(user.total_orders || 0);
+  const orderDetailsMsg = buildOrderDetailsPayment(waId, orderCode, cart, total, counterName, tier);
   const payResponse = await sendWhatsApp(phoneId, token, orderDetailsMsg);
 
   if (!payResponse || !payResponse.ok) {
@@ -1394,9 +1522,43 @@ async function handleCancelOrder(context, session, user, waId, phoneId, token, d
       .bind('cancelled', 'cancelled', new Date().toISOString(), order.id).run();
   }
 
-  await updateSession(db, waId, 'idle', '[]', 0);
+  await updateSession(db, waId, 'idle', '[]', 0, null);
   await sendWhatsApp(phoneId, token, buildText(waId,
     'Order cancelled. Send *"menu"* whenever you\'re ready to order again.'));
+}
+
+// ── Station QR re-order handlers ──
+
+async function handleReorderConfirm(context, session, user, counterKey, waId, phoneId, token, db) {
+  // Cart was saved in session during handleCounterMenu re-order prompt
+  const cart = JSON.parse(session.cart || '[]');
+  if (cart.length === 0) {
+    return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, true);
+  }
+
+  // Go directly to payment with the saved cart
+  await updateSession(db, waId, 'awaiting_upi_payment', session.cart, session.cart_total, counterKey);
+  return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
+}
+
+async function handleAwaitingReorder(context, session, user, msg, waId, phoneId, token, db) {
+  // Handle text commands while in re-order state
+  if (msg.type === 'text') {
+    if (msg.text === 'menu' || msg.text === '/menu') {
+      await updateSession(db, waId, 'idle', '[]', 0);
+      return handleShowMenu(context, user, waId, phoneId, token, db);
+    }
+    if (msg.text === 'cancel') {
+      await updateSession(db, waId, 'idle', '[]', 0);
+      await sendWhatsApp(phoneId, token, buildText(waId,
+        'No worries! Send *"menu"* to browse the full menu.'));
+      return;
+    }
+  }
+
+  // Any other message — remind about the re-order prompt
+  await sendWhatsApp(phoneId, token, buildText(waId,
+    'Tap *Reorder & Pay* above to repeat your last order, or *New Order* to browse the menu.'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3011,67 +3173,53 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   }
 
   // Build confirmation message — adaptive based on customer tier
-  const itemLines = cart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
   const trackingNum = odooResult?.trackingNumber || order.order_code;
   const collection = determineCollectionPoints(cart);
+  const isSingleCounter = collection.points.length === 1;
+  const counterName = isSingleCounter ? collection.points[0].counter : null;
 
+  // Station QR orders (single counter) get terse confirmations — customer is AT the counter
+  // General/multi-counter orders get full guidance
   let confirmMsg;
-  if (tier === 'new') {
-    // First order ever — full welcome + guidance
-    let collectionGuide;
-    if (collection.points.length === 1) {
-      collectionGuide = `*Collect from:* ${collection.points[0].counter}\n` +
-        `_Look for the "${collection.points[0].counter}" board above the counter._`;
+  if (isSingleCounter) {
+    // Single counter order (station QR or single-station general order)
+    if (tier === 'new') {
+      confirmMsg = `*Paid!* Token ${trackingNum}\nCollect at ${counterName}\n_We'll message when ready_`;
+    } else if (tier === 'regular') {
+      confirmMsg = `*${trackingNum}* | ${counterName}`;
     } else {
-      const lines = collection.points.map(p =>
-        `• *${p.counter}* — ${p.items.join(', ')}`
-      ).join('\n');
-      collectionGuide = `*Collect from:*\n${lines}\n` +
-        `_Look for the counter name boards above each station._`;
+      confirmMsg = `*Paid!* Token ${trackingNum} | ${counterName}\n_We'll message when ready_`;
     }
-
-    confirmMsg = `*Order confirmed! Payment received.*\n\n` +
-      `*Order:* ${order.order_code}\n` +
-      `*Token:* ${trackingNum}\n\n` +
-      `${itemLines}\n` +
-      `*Total: Rs.${order.total}* (UPI Paid)\n\n` +
-      `${collectionGuide}\n\n` +
-      `We'll send you a message when your food is being prepared, and another when it's ready.\n\n` +
-      `_Show your token number at the counter._`;
-
-  } else if (tier === 'regular') {
-    // 10+ orders — minimal, fast
-    const collectionText = collection.points.length === 1
-      ? collection.points[0].counter
-      : collection.points.map(p => p.counter).join(' + ');
-
-    confirmMsg = `*Confirmed!* ${order.order_code}\n` +
-      `Token: ${trackingNum} | Rs.${order.total}\n` +
-      `Collect: ${collectionText}`;
-
   } else {
-    // Learning (1-2) or Familiar (3-9) — balanced
-    let collectionText;
-    if (collection.points.length === 1) {
-      collectionText = `*Collect from:* ${collection.points[0].counter}`;
+    // Multi-counter order — needs collection guidance
+    const itemLines = cart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
+    if (tier === 'new') {
+      const lines = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+
+      confirmMsg = `*Order confirmed!*\n\n` +
+        `*Token:* ${trackingNum}\n\n` +
+        `${itemLines}\n` +
+        `*Total: Rs.${order.total}*\n\n` +
+        `*Collect from:*\n${lines}\n` +
+        `_Look for counter name boards above each station._\n\n` +
+        `_We'll message when each item is ready._`;
+    } else if (tier === 'regular') {
+      const counters = collection.points.map(p => p.counter).join(' + ');
+      confirmMsg = `*${trackingNum}* | Rs.${order.total}\nCollect: ${counters}`;
     } else {
       const lines = collection.points.map(p =>
         `• *${p.counter}* — ${p.items.join(', ')}`
       ).join('\n');
-      collectionText = `*Collect from:*\n${lines}`;
+      confirmMsg = `*Order confirmed!* Token ${trackingNum}\n\n` +
+        `*Collect from:*\n${lines}\n\n` +
+        `_Show token at counter._`;
     }
-
-    confirmMsg = `*Order confirmed!*\n\n` +
-      `*Order:* ${order.order_code}\n` +
-      `*Token:* ${trackingNum}\n\n` +
-      `${itemLines}\n` +
-      `*Total: Rs.${order.total}* (UPI Paid)\n` +
-      `${collectionText}\n\n` +
-      `_Show token at counter._`;
   }
 
   await sendWhatsApp(phoneId, token, buildText(order.wa_id, confirmMsg));
-  await updateSession(db, order.wa_id, 'idle', '[]', 0);
+  await updateSession(db, order.wa_id, 'idle', '[]', 0, null);
 
   console.log(`Order confirmed: ${order.order_code}, Odoo: ${odooResult?.name || 'N/A'}, Tier: ${tier}`);
 }
@@ -3342,7 +3490,7 @@ async function createRazorpayPaymentLink(context, { amount, orderCode, orderId, 
 // WHATSAPP ORDER_DETAILS PAYMENT (native Razorpay in-app)
 // ═══════════════════════════════════════════════════════════════════
 
-function buildOrderDetailsPayment(to, orderCode, cart, total) {
+function buildOrderDetailsPayment(to, orderCode, cart, total, counterName, tier) {
   const items = cart.map(c => ({
     retailer_id: c.code,
     name: c.name,
@@ -3352,13 +3500,28 @@ function buildOrderDetailsPayment(to, orderCode, cart, total) {
 
   const subtotal = cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
 
+  // Station-aware body text — concise, action-mapped
+  let bodyText;
+  if (counterName) {
+    if (tier === 'new') {
+      bodyText = `Order ${orderCode} | ${counterName}\nTap below to pay Rs.${total}`;
+    } else if (tier === 'regular') {
+      bodyText = `${orderCode} | Rs.${total}`;
+    } else {
+      bodyText = `${orderCode} | ${counterName} | Rs.${total}`;
+    }
+    bodyText += '\n_Reply "cancel" to cancel_';
+  } else {
+    bodyText = `Order ${orderCode}\n\nTap below to pay Rs.${total}`;
+  }
+
   return {
     messaging_product: 'whatsapp',
     to,
     type: 'interactive',
     interactive: {
       type: 'order_details',
-      body: { text: `Order ${orderCode}\n\nTap below to pay Rs.${total}` },
+      body: { text: bodyText },
       footer: { text: 'Hamza Express • HKP Road, Shivajinagar' },
       action: {
         name: 'review_and_pay',
@@ -3428,11 +3591,17 @@ async function sendWhatsApp(phoneId, token, payload) {
 // SESSION HELPER
 // ═══════════════════════════════════════════════════════════════════
 
-async function updateSession(db, waId, state, cart, cartTotal) {
+async function updateSession(db, waId, state, cart, cartTotal, counterSource) {
   const now = new Date().toISOString();
-  await db.prepare(
-    'INSERT INTO wa_sessions (wa_id, state, cart, cart_total, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(wa_id) DO UPDATE SET state = ?, cart = ?, cart_total = ?, updated_at = ?'
-  ).bind(waId, state, cart, cartTotal, now, state, cart, cartTotal, now).run();
+  if (counterSource !== undefined) {
+    await db.prepare(
+      'INSERT INTO wa_sessions (wa_id, state, cart, cart_total, counter_source, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(wa_id) DO UPDATE SET state = ?, cart = ?, cart_total = ?, counter_source = ?, updated_at = ?'
+    ).bind(waId, state, cart, cartTotal, counterSource, now, state, cart, cartTotal, counterSource, now).run();
+  } else {
+    await db.prepare(
+      'INSERT INTO wa_sessions (wa_id, state, cart, cart_total, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(wa_id) DO UPDATE SET state = ?, cart = ?, cart_total = ?, updated_at = ?'
+    ).bind(waId, state, cart, cartTotal, now, state, cart, cartTotal, now).run();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
