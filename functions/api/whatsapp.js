@@ -675,18 +675,17 @@ async function processWebhook(context, body) {
   const ctwaClid = referral?.ctwa_clid || null;
   const ctwaSource = referral ? 'meta_ctwa' : null;
 
-  // Skip ordering bot for ALL hiring campaign numbers — candidates, messaged, or conversed.
-  // These are forwarded to hnhotels.in/api/hiring for the hiring inbox instead.
-  // Covers: candidates table (2500+ sourced), messages table (sent outreach), conversations table (replies).
-  // Admin/owner numbers are excluded — they always go through the ordering bot.
+  // Skip ordering bot for hiring campaign numbers (candidates sourced or outreach sent).
+  // conversations table is excluded — it's a chat log where non-hiring numbers can land accidentally.
+  // Admin/owner numbers bypass the filter entirely as a safety net.
   const HIRING_FILTER_EXCLUDED = new Set(['7010426808', '8008002049']);
   if (context.env.HIRING_DB) {
     try {
       const hiringPhone = waId.replace(/\D/g, '').slice(-10);
       if (!HIRING_FILTER_EXCLUDED.has(hiringPhone)) {
         const isHiringNumber = await context.env.HIRING_DB
-          .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM conversations WHERE phone = ? LIMIT 1')
-          .bind(hiringPhone, hiringPhone, hiringPhone)
+          .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? LIMIT 1')
+          .bind(hiringPhone, hiringPhone)
           .first();
         if (isHiringNumber) return; // Let hiring dashboard handle this
       }
