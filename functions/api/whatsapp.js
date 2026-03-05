@@ -188,9 +188,9 @@ const PRODUCTS = {
   'HE-1205': { name: 'Ghee Rice',                  price: 95,  odooId: 1223, catId: 28 },
   'HE-1164': { name: 'Chilli Chicken',             price: 190, odooId: 1182, catId: 28 },
   'HE-1397': { name: 'Butter Chicken (BM)',        price: 200, odooId: 1415, catId: 28 },
-  'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1416, catId: 28 },
-  'HE-1399': { name: 'Singapore Chicken (BM)',     price: 210, odooId: 1417, catId: 28 },
-  'HE-1400': { name: 'Lemon Chicken (BM)',         price: 219, odooId: 1418, catId: 28 },
+  'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1444, catId: 28 },
+  'HE-1399': { name: 'Singapore Chicken (BM)',     price: 210, odooId: 1445, catId: 28 },
+  'HE-1400': { name: 'Lemon Chicken (BM)',         price: 219, odooId: 1446, catId: 28 },
 
   // ── Juice Counter (cat 27) ──
   'HE-J001': { name: 'Fresh Orange Juice',          price: 76,  odooId: 1424, catId: 27 },
@@ -466,11 +466,13 @@ const COUNTER_MENUS = {
 // ── Detect counter keyword from QR code text (e.g. "BM Counter") ──
 function detectCounterKeyword(text) {
   const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
-  if (normalized === 'bm counter' || normalized === 'bm_counter' || normalized === 'bain marie') return 'bm_counter';
-  if (normalized === 'juice counter' || normalized === 'juice_counter' || normalized === 'juice') return 'juice_counter';
-  if (normalized === 'shawarma counter' || normalized === 'shawarma_counter' || normalized === 'shawarma') return 'shawarma_counter';
-  if (normalized === 'grill counter' || normalized === 'grill_counter' || normalized === 'grill') return 'grill_counter';
-  if (normalized === 'sheek kabab' || normalized === 'sheek_counter' || normalized === 'sheek counter' || normalized === 'seekh kabab') return 'sheek_counter';
+  // Current QR pre-fills: "order from X counter"
+  // Legacy QR pre-fills: "bm counter", "juice counter", etc.
+  if (normalized === 'order from bain marie counter' || normalized === 'bm counter' || normalized === 'bm_counter' || normalized === 'bain marie') return 'bm_counter';
+  if (normalized === 'order from juice counter' || normalized === 'juice counter' || normalized === 'juice_counter' || normalized === 'juice') return 'juice_counter';
+  if (normalized === 'order from shawarma counter' || normalized === 'shawarma counter' || normalized === 'shawarma_counter' || normalized === 'shawarma') return 'shawarma_counter';
+  if (normalized === 'order from grill counter' || normalized === 'grill counter' || normalized === 'grill_counter' || normalized === 'grill') return 'grill_counter';
+  if (normalized === 'order from sheek kabab counter' || normalized === 'sheek kabab' || normalized === 'sheek_counter' || normalized === 'sheek counter' || normalized === 'seekh kabab') return 'sheek_counter';
   return null;
 }
 
@@ -720,7 +722,7 @@ async function processWebhook(context, body) {
     await updateSession(db, waId, 'idle', '[]', 0, null);
     if (hadCart) {
       await sendWhatsApp(phoneId, token, buildText(waId,
-        'Your previous session expired. No worries — let\'s start fresh!\n\nSend *"menu"* to see our full menu.'));
+        'Your cart expired. Send *"menu"* to start a new order.'));
     }
   }
 
@@ -914,61 +916,18 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 // ═══════════════════════════════════════════════════════════════════
 
 async function handleIdle(context, session, user, msg, waId, phoneId, token, db) {
-  // If user has a name, go straight to menu
-  if (user.name) {
-    return handleShowMenu(context, user, waId, phoneId, token, db);
-  }
-  // Ask for name — first-time welcome with context about the ordering flow
-  await sendWhatsApp(phoneId, token, buildText(waId,
-    'Welcome to *Hamza Express*! Biryani & More Since 1918.\n\n' +
-    'Order from your phone, pay via UPI, and collect at the counter — skip the queue!\n\n' +
-    'What\'s your name?'));
-  await updateSession(db, waId, 'awaiting_name', '[]', 0);
+  // Always go straight to menu — never ask for name
+  return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
 async function handleNameEntry(context, session, user, msg, waId, phoneId, token, db) {
-  if (msg.type !== 'text' || msg.text.length < 2) {
-    await sendWhatsApp(phoneId, token, buildText(waId, 'Please enter your name (at least 2 characters):'));
-    return;
-  }
-
-  // Capitalize first letter of each word
-  const name = msg.text.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  await db.prepare('UPDATE wa_users SET name = ? WHERE wa_id = ?').bind(name, waId).run();
-  user.name = name;
-
-  // If there's a saved cart from a pre-name order, resume the order flow
+  // Legacy fallback: old sessions stuck in awaiting_name → redirect to menu
+  // If there's a saved cart, go directly to payment
   const savedCart = JSON.parse(session.cart || '[]');
   if (Array.isArray(savedCart) && savedCart.length > 0 && session.cart_total > 0) {
-    const collection = determineCollectionPoints(savedCart);
-    await updateSession(db, waId, 'awaiting_payment', session.cart, session.cart_total);
-
-    const itemLines = savedCart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
-    let collectionText;
-    if (collection.points.length === 1) {
-      collectionText = `*Collect from:* ${collection.points[0].counter}`;
-    } else {
-      const lines = collection.points.map(p =>
-        `• *${p.counter}* — ${p.items.join(', ')}`
-      ).join('\n');
-      collectionText = `*Collect from:*\n${lines}`;
-    }
-
-    const body = `Thanks, *${name}*!\n\n*Your Order:*\n${itemLines}\n\n` +
-      `*Total: Rs.${session.cart_total}* (incl. GST)\n` +
-      `${collectionText}\n\n` +
-      `Tap *Pay Now* to pay via UPI.`;
-
-    const buttons = [
-      { type: 'reply', reply: { id: 'pay_upi', title: 'Pay Now (UPI)' } },
-      { type: 'reply', reply: { id: 'pay_cancel', title: 'Cancel' } },
-    ];
-    await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
-    return;
+    await updateSession(db, waId, 'awaiting_upi_payment', session.cart, session.cart_total);
+    return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
   }
-
-  await sendWhatsApp(phoneId, token, buildText(waId,
-    `Great, *${name}*! Let's get you some amazing food.`));
   return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
@@ -1035,16 +994,16 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
   let bodyText;
   if (tier === 'new') {
     bodyText = displayName
-      ? `Hi ${displayName}, welcome to Hamza Express.\nAdd items to cart, tap Send, pay UPI — collect at the counter.`
-      : 'Welcome to Hamza Express.\nAdd items to cart, tap Send, pay UPI — collect at the counter.';
+      ? `Hi ${displayName}, pick items below, tap Send, pay UPI — collect at the counter.`
+      : 'Pick items below, tap Send, pay UPI — collect at the counter.';
   } else if (tier === 'regular') {
     bodyText = displayName
-      ? `Hey ${displayName}, here are your favourites.`
-      : 'Here are the popular picks.';
+      ? `${displayName}, the usual?`
+      : 'The usual?';
   } else {
     bodyText = displayName
-      ? `Hi ${displayName}, our most popular items.`
-      : 'Our most popular items — add to cart and Send.';
+      ? `Hi ${displayName}, here are our popular picks.`
+      : 'Here are our popular picks — add to cart and Send.';
   }
 
   const sections = BESTSELLERS_MPM.sections.map(s => ({
@@ -1060,7 +1019,7 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
       type: 'product_list',
       header: { type: 'text', text: 'Hamza Express Menu' },
       body: { text: bodyText },
-      footer: { text: 'All prices inclusive of GST' },
+      footer: { text: 'Prices include GST | 150+ items in See Full Menu' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };
@@ -1082,7 +1041,7 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
 
   let moreText;
   if (tier === 'new') {
-    moreText = 'Want to see more items? Pick a category below.\nYour cart stays intact across menus.';
+    moreText = 'Want more? Your cart stays intact — browse any category below.';
   } else {
     moreText = 'More items:';
   }
@@ -1110,25 +1069,26 @@ async function handleShowMenuList(context, user, waId, phoneId, token, db) {
   // Fallback: Send WhatsApp List message with 5 meal-intent options
   // Used when catalog_message fails or when triggered via keyword "menu list"
   const tier = getCustomerTier(user.total_orders || 0);
+  const displayName = user.name ? user.name.split(' ')[0] : '';
   const rows = [
-    { id: 'intent_meals', title: '🍛 Meals', description: 'Curry + Bread + Rice + Veg — all in one go' },
-    { id: 'intent_starters', title: '🔥 Starters', description: 'Tandoori, Chinese dry, Kababs' },
-    { id: 'intent_krispy', title: '🍗 Krispy Eats', description: 'Fried Chicken, Burgers, Combos' },
-    { id: 'intent_chinese', title: '🍜 Chinese', description: 'Fried rice, noodles, gravy, rolls & seafood' },
-    { id: 'cat_full_menu', title: '📋 Full Menu', description: 'Browse all 9 categories separately' },
+    { id: 'intent_meals', title: 'Meals', description: 'Curry + Bread + Rice + Veg — all in one go' },
+    { id: 'intent_starters', title: 'Starters', description: 'Tandoori, Chinese dry, Kababs' },
+    { id: 'intent_krispy', title: 'Krispy Eats', description: 'Fried Chicken, Burgers, Combos' },
+    { id: 'intent_chinese', title: 'Chinese', description: 'Fried rice, noodles, gravy, rolls & seafood' },
+    { id: 'cat_full_menu', title: 'Full Menu', description: 'Browse all 9 categories separately' },
   ];
 
   let bodyText;
   if (tier === 'new') {
-    bodyText = user.name
-      ? `Hi ${user.name}! Welcome to Hamza Express.\n\nPick what you're in the mood for — add items to cart, pay via UPI, and collect at the counter!`
-      : 'Welcome to Hamza Express!\n\nPick what you\'re in the mood for, add items to cart, pay via UPI — and collect from the counter!';
+    bodyText = displayName
+      ? `Hi ${displayName}, pick what you're in the mood for — add to cart, pay UPI, collect at the counter.`
+      : 'Pick what you\'re in the mood for — add to cart, pay UPI, collect at the counter.';
   } else if (tier === 'regular') {
-    bodyText = `Hey ${user.name || 'there'}! What'll it be today?`;
+    bodyText = displayName ? `${displayName}, what'll it be?` : 'What\'ll it be?';
   } else {
-    bodyText = user.name
-      ? `Hi ${user.name}! What are you in the mood for?`
-      : 'What are you in the mood for? Pick below.';
+    bodyText = displayName
+      ? `Hi ${displayName}, what'll it be?`
+      : 'What\'ll it be? Pick below.';
   }
 
   const listMsg = {
@@ -1139,9 +1099,9 @@ async function handleShowMenuList(context, user, waId, phoneId, token, db) {
       type: 'list',
       header: { type: 'text', text: 'Hamza Express Menu' },
       body: { text: bodyText },
-      footer: { text: 'Biryani & More Since 1918 | All prices incl. GST' },
+      footer: { text: 'Est. 1918 | All prices include GST' },
       action: {
-        button: 'What\'s Cooking?',
+        button: 'See Menu',
         sections: [{ title: 'Order By', rows }],
       },
     },
@@ -1214,9 +1174,9 @@ async function handleCategorySelection(context, user, categoryKey, waId, phoneId
       type: 'product_list',
       header: { type: 'text', text: category.title },
       body: {
-        text: 'Add items to your cart, then tap Send.\nSend *"menu"* to browse other categories.',
+        text: 'Add items, tap Send. Say *"menu"* for other categories.',
       },
-      footer: { text: 'All prices inclusive of GST' },
+      footer: { text: 'Your cart keeps items from other menus' },
       action: {
         catalog_id: CATALOG_ID,
         sections,
@@ -1321,13 +1281,13 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
   // Tier-adaptive MPM body text — action-first, no branding
   let bodyText;
   if (tier === 'new') {
-    bodyText = `Tap 'View items' → pick → Send → pay UPI → collect here`;
+    bodyText = 'Pick items below, tap Send, pay UPI — done.';
   } else if (tier === 'learning') {
     bodyText = displayName
-      ? `Hi ${displayName}! Add items, tap Send to order.`
-      : `Add items, tap Send to order.`;
+      ? `Hi ${displayName}! Pick items and tap Send.`
+      : 'Pick items and tap Send.';
   } else {
-    bodyText = displayName ? `${displayName}!` : `Pick and order!`;
+    bodyText = displayName ? `Hey ${displayName}!` : 'Hey there!';
   }
 
   // Build and send single MPM for this counter's items
@@ -1344,7 +1304,7 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
       type: 'product_list',
       header: { type: 'text', text: counterMenu.title },
       body: { text: bodyText },
-      footer: { text: 'Collect at this counter' },
+      footer: { text: 'Collect right here after payment' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };
@@ -1369,7 +1329,7 @@ async function handleMenuState(context, session, user, msg, waId, phoneId, token
 
   // Any text that's not a global command — prompt to use the picker
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'Tap *What\'s Cooking?* above to pick a category, or send *"menu"* to see the menu again.'));
+    'Tap *See Full Menu* above to browse, or say *"menu"* to start over.'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1380,26 +1340,16 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
   const orderItems = msg.items;
   if (!orderItems || orderItems.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
-      'We couldn\'t read your order. Please try again from the menu.'));
-    return handleShowMenu(context, user, waId, phoneId, token, db);
+      'Hmm, that didn\'t come through. Say *"menu"* to try again.'));
+    return;
   }
 
   const isStationOrder = !!session.counter_source;
 
-  // For station QR orders: skip name check (use profile name silently)
-  // For general orders: ask for name if missing
-  if (!user.name && !isStationOrder) {
-    const cart = buildCartFromItems(orderItems);
-    await updateSession(db, waId, 'awaiting_name', JSON.stringify(cart.items), cart.total);
-    await sendWhatsApp(phoneId, token, buildText(waId,
-      'Before we confirm your order, what\'s your name?'));
-    return;
-  }
-
   const cart = buildCartFromItems(orderItems);
   if (cart.items.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
-      'Sorry, we couldn\'t process those items. Please try ordering again.'));
+      'Some items couldn\'t be added. Say *"menu"* to start fresh.'));
     return;
   }
 
@@ -1412,47 +1362,36 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
     return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
   }
 
-  // General orders → show confirmation with "Pay Now" button
+  // General orders → direct to payment (same as station QR)
   const collection = determineCollectionPoints(cart.items);
   const tier = getCustomerTier(user.total_orders || 0);
 
-  // Save cart and move to payment
-  await updateSession(db, waId, 'awaiting_payment', JSON.stringify(cart.items), cart.total);
+  await updateSession(db, waId, 'awaiting_upi_payment', JSON.stringify(cart.items), cart.total);
+  session.cart = JSON.stringify(cart.items);
+  session.cart_total = cart.total;
 
-  // Build order summary
-  const itemLines = cart.items.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
-
-  // Build collection point text
-  let collectionText;
-  if (collection.points.length === 1) {
-    collectionText = `*Collect from:* ${collection.points[0].counter}`;
-  } else {
-    const lines = collection.points.map(p =>
-      `• *${p.counter}* — ${p.items.join(', ')}`
-    ).join('\n');
-    collectionText = `*Collect from:*\n${lines}`;
+  // Multi-counter: send collection guidance before payment card
+  if (collection.points.length > 1) {
+    let guidanceText;
+    if (tier === 'new') {
+      const bulletedList = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+      guidanceText = `*Your items come from ${collection.points.length} counters:*\n${bulletedList}\n\n` +
+        `_Look for counter name boards above each station._\n\nPayment card is below.`;
+    } else if (tier === 'regular') {
+      const counterList = collection.points.map(p => p.counter).join(' + ');
+      guidanceText = `Collect: ${counterList}`;
+    } else {
+      const bulletedList = collection.points.map(p =>
+        `• *${p.counter}* — ${p.items.join(', ')}`
+      ).join('\n');
+      guidanceText = `*Collect from:*\n${bulletedList}`;
+    }
+    await sendWhatsApp(phoneId, token, buildText(waId, guidanceText));
   }
 
-  let body;
-  if (tier === 'new') {
-    body = `*Your Order:*\n${itemLines}\n\n` +
-      `*Total: Rs.${cart.total}* (incl. GST)\n\n` +
-      `${collectionText}\n\n` +
-      `_Look for the counter name boards above each station._\n\n` +
-      `Tap *Pay Now* to pay via UPI and confirm your order.`;
-  } else {
-    body = `*Your Order:*\n${itemLines}\n\n` +
-      `*Total: Rs.${cart.total}* (incl. GST)\n` +
-      `${collectionText}\n\n` +
-      `Tap *Pay Now* to pay via UPI.`;
-  }
-
-  const buttons = [
-    { type: 'reply', reply: { id: 'pay_upi', title: 'Pay Now (UPI)' } },
-    { type: 'reply', reply: { id: 'pay_cancel', title: 'Cancel' } },
-  ];
-
-  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+  return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
 }
 
 function buildCartFromItems(orderItems) {
@@ -1517,12 +1456,13 @@ function determineCollectionPoints(cartItems) {
 // ═══════════════════════════════════════════════════════════════════
 
 async function handlePaymentSelection(context, session, user, msg, waId, phoneId, token, db) {
+  // Legacy fallback: old sessions in awaiting_payment state
   // Cancel
   if ((msg.type === 'button_reply' && msg.id === 'pay_cancel') ||
       (msg.type === 'text' && msg.text === 'cancel')) {
     await updateSession(db, waId, 'idle', '[]', 0);
     await sendWhatsApp(phoneId, token, buildText(waId,
-      'Order cancelled. Send *"menu"* whenever you\'re ready to order again.'));
+      'Order cancelled. Say *"menu"* anytime to order again.'));
     return;
   }
 
@@ -1559,8 +1499,8 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
       { fields: ['id'], limit: 1 });
     if (!sessionRes || sessionRes.length === 0) {
       await sendWhatsApp(phoneId, token, buildText(waId,
-        'Sorry, Hamza Express WhatsApp ordering is currently unavailable. ' +
-        'Please visit us in person or try again later.\n\nSend *"menu"* to try again.'));
+        'WhatsApp ordering is temporarily closed. We\'ll be back shortly!\n' +
+        'Visit us at the counter or try again in a few minutes.'));
       await updateSession(db, waId, 'idle', '[]', 0);
       return;
     }
@@ -1646,8 +1586,7 @@ async function handleAwaitingUpiPayment(context, session, user, msg, waId, phone
 
   // Any other message while waiting for payment
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'We\'re waiting for your payment. Please complete the UPI payment above.\n\n' +
-    'Reply *"cancel"* to cancel the order.'));
+    'Complete the UPI payment above to confirm your order.\n_Reply "cancel" to cancel._'));
 }
 
 async function handleCancelOrder(context, session, user, waId, phoneId, token, db) {
@@ -1663,7 +1602,7 @@ async function handleCancelOrder(context, session, user, waId, phoneId, token, d
 
   await updateSession(db, waId, 'idle', '[]', 0, null);
   await sendWhatsApp(phoneId, token, buildText(waId,
-    'Order cancelled. Send *"menu"* whenever you\'re ready to order again.'));
+    'Order cancelled. Say *"menu"* anytime to order again.'));
 }
 
 // ── Station QR re-order handlers ──
@@ -1737,13 +1676,12 @@ async function handlePaymentStatus(context, status, phoneId, token, db) {
     const reason = errorInfo?.reason || 'unknown';
     const friendlyReason = getPaymentErrorMessage(reason);
 
-    let failMsg = `Payment failed for order ${order.order_code}\n\n` +
-      `Reason: ${friendlyReason}\n\n`;
+    let failMsg = `Payment didn't go through — ${friendlyReason}.\n\n`;
 
     if (paymentStatus === 'pending') {
-      failMsg += 'You can tap *"Review and Pay"* again to retry.\n\n';
+      failMsg += 'Tap *"Review and Pay"* above to try again.\n';
     }
-    failMsg += '_Reply "cancel" to cancel the order_';
+    failMsg += '_Reply "cancel" to cancel._';
 
     await sendWhatsApp(phoneId, token, buildText(order.wa_id, failMsg));
     return;
@@ -3332,11 +3270,11 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   if (isSingleCounter) {
     // Single counter order (station QR or single-station general order)
     if (tier === 'new') {
-      confirmMsg = `*Paid!* Token ${trackingNum}\nCollect at ${counterName}\n_We'll message when ready_`;
+      confirmMsg = `*Paid!* Token *${trackingNum}*\nCollect at ${counterName} when called.`;
     } else if (tier === 'regular') {
       confirmMsg = `*${trackingNum}* | ${counterName}`;
     } else {
-      confirmMsg = `*Paid!* Token ${trackingNum} | ${counterName}\n_We'll message when ready_`;
+      confirmMsg = `*Paid!* *${trackingNum}* | ${counterName}`;
     }
   } else {
     // Multi-counter order — needs collection guidance
@@ -3346,13 +3284,12 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
         `• *${p.counter}* — ${p.items.join(', ')}`
       ).join('\n');
 
-      confirmMsg = `*Order confirmed!*\n\n` +
-        `*Token:* ${trackingNum}\n\n` +
+      confirmMsg = `*Order confirmed!* Token *${trackingNum}*\n\n` +
         `${itemLines}\n` +
         `*Total: Rs.${order.total}*\n\n` +
         `*Collect from:*\n${lines}\n` +
         `_Look for counter name boards above each station._\n\n` +
-        `_We'll message when each item is ready._`;
+        `We'll message you when each item is ready.`;
     } else if (tier === 'regular') {
       const counters = collection.points.map(p => p.counter).join(' + ');
       confirmMsg = `*${trackingNum}* | Rs.${order.total}\nCollect: ${counters}`;
@@ -3360,9 +3297,9 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
       const lines = collection.points.map(p =>
         `• *${p.counter}* — ${p.items.join(', ')}`
       ).join('\n');
-      confirmMsg = `*Order confirmed!* Token ${trackingNum}\n\n` +
+      confirmMsg = `*Order confirmed!* *${trackingNum}*\n\n` +
         `*Collect from:*\n${lines}\n\n` +
-        `_Show token at counter._`;
+        `_We'll message when ready._`;
     }
   }
 
@@ -3383,7 +3320,7 @@ async function handleTrackOrder(context, user, waId, phoneId, token, db) {
 
   if (!order) {
     await sendWhatsApp(phoneId, token, buildText(waId,
-      'No active orders found. Send *"menu"* to place a new order.'));
+      'No active orders. Say *"menu"* to order something!'));
     return;
   }
 
@@ -3396,28 +3333,23 @@ async function handleTrackOrder(context, user, waId, phoneId, token, db) {
     ready: 'Ready for pickup!',
   };
 
-  const trackMsg = `*Order ${order.order_code}*\n` +
-    (order.tracking_number ? `*Token:* ${order.tracking_number}\n\n` : '\n') +
+  const trackMsg = `*${order.order_code}*` +
+    (order.tracking_number ? ` | Token *${order.tracking_number}*\n\n` : '\n\n') +
     `${itemLines}\n\n` +
     `*Status:* ${statusEmoji[order.status] || order.status}\n` +
-    `*Collect from:* ${order.collection_point || KITCHEN_COUNTER_LABEL}\n` +
-    `*Total:* Rs.${order.total}`;
+    `*Collect:* ${order.collection_point || KITCHEN_COUNTER_LABEL}`;
 
   await sendWhatsApp(phoneId, token, buildText(waId, trackMsg));
 }
 
 async function handleHelp(waId, phoneId, token) {
   await sendWhatsApp(phoneId, token, buildText(waId,
-    '*Hamza Express*\n' +
-    'Biryani & More Since 1918\n\n' +
-    '*Commands:*\n' +
-    'Send *"menu"* — Browse our full menu\n' +
-    'Send *"track"* — Track your current order\n' +
-    'Send *"cancel"* — Cancel a pending order\n\n' +
-    '*Visit us:*\n' +
-    '151-154, H.K.P. Road, Shivajinagar\n' +
-    'Bangalore 560051\n\n' +
-    '*Need help?* Call us at +91 80080 02045'));
+    '*Hamza Express* — Est. 1918\n\n' +
+    '*"menu"* — Browse & order\n' +
+    '*"track"* — Check your order status\n' +
+    '*"cancel"* — Cancel a pending order\n\n' +
+    '151-154, HKP Road, Shivajinagar\n' +
+    '*Call:* +91 80080 02045'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3648,19 +3580,29 @@ function buildOrderDetailsPayment(to, orderCode, cart, total, counterName, tier)
 
   const subtotal = cart.reduce((sum, c) => sum + (c.price * c.qty), 0);
 
-  // Station-aware body text — concise, action-mapped
+  // Tier-adaptive body text with cancel instruction
   let bodyText;
+  let footerText;
   if (counterName) {
+    // Station order — customer is physically present
     if (tier === 'new') {
-      bodyText = `Order ${orderCode} | ${counterName}\nTap below to pay Rs.${total}`;
+      bodyText = `${orderCode} | ${counterName}\nTap "Review and Pay" below\n_Reply "cancel" to cancel_`;
     } else if (tier === 'regular') {
-      bodyText = `${orderCode} | Rs.${total}`;
+      bodyText = `${orderCode} | Rs.${total}\n_"cancel" to cancel_`;
     } else {
-      bodyText = `${orderCode} | ${counterName} | Rs.${total}`;
+      bodyText = `${orderCode} | ${counterName}\n_Reply "cancel" to cancel_`;
     }
-    bodyText += '\n_Reply "cancel" to cancel_';
+    footerText = 'Hamza Express';
   } else {
-    bodyText = `Order ${orderCode}\n\nTap below to pay Rs.${total}`;
+    // Full menu order
+    if (tier === 'new') {
+      bodyText = `${orderCode}\nTap "Review and Pay" below\n_Reply "cancel" to cancel_`;
+    } else if (tier === 'regular') {
+      bodyText = `${orderCode} | Rs.${total}\n_"cancel" to cancel_`;
+    } else {
+      bodyText = `${orderCode} | Rs.${total}\n_Reply "cancel" to cancel_`;
+    }
+    footerText = 'Hamza Express \u2022 HKP Road, Shivajinagar';
   }
 
   return {
@@ -3670,7 +3612,7 @@ function buildOrderDetailsPayment(to, orderCode, cart, total, counterName, tier)
     interactive: {
       type: 'order_details',
       body: { text: bodyText },
-      footer: { text: 'Hamza Express • HKP Road, Shivajinagar' },
+      footer: { text: footerText },
       action: {
         name: 'review_and_pay',
         parameters: {
@@ -3821,13 +3763,13 @@ async function sendMetaConversionEvent(context, order) {
 
 function getPaymentErrorMessage(reason) {
   const messages = {
-    'INSUFFICIENT_FUNDS': 'Insufficient balance in your account',
-    'INCORRECT_PIN': 'Incorrect UPI PIN entered',
-    'TRANSACTION_LIMIT_EXCEEDED': 'Transaction limit exceeded',
-    'EXPIRED': 'Payment session expired',
-    'USER_DECLINED': 'Payment was declined',
-    'BANK_TIMEOUT': 'Bank server timeout — please try again',
-    'UNKNOWN': 'Payment could not be processed',
+    'INSUFFICIENT_FUNDS': 'low balance in your account',
+    'INCORRECT_PIN': 'wrong UPI PIN entered',
+    'TRANSACTION_LIMIT_EXCEEDED': 'your bank\'s transaction limit was hit',
+    'EXPIRED': 'the payment timed out',
+    'USER_DECLINED': 'the payment was declined',
+    'BANK_TIMEOUT': 'your bank took too long to respond',
+    'UNKNOWN': 'something went wrong',
   };
   return messages[reason] || messages['UNKNOWN'];
 }
