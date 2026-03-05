@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "HE Swiggy Auto-Push",
+  "version": "1.0.0",
+  "description": "Auto-pushes Swiggy orders to Hamza Express Assembly KDS via Odoo POS",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://partner.swiggy.com/*",
+    "https://vhc-composer.swiggy.com/*",
+    "https://hamzaexpress.in/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://partner.swiggy.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
