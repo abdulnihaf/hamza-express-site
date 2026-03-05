@@ -1917,6 +1917,10 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     // Route by config
     if (configId === POS_CONFIG_ID && !isTestWebhook) {
       // WABA order (config 10) — existing WhatsApp notification flow (production only)
+      // Also update assembly tracking (non-blocking, for delivery order assembly KDS)
+      handleKdsWebhookAssembly(context, stage_id, prep_line_id, posOrderId, productId).catch(e =>
+        console.error('Assembly webhook error (non-blocking):', e.message)
+      );
       return handleKdsWebhookWABA(context, corsHeaders, {
         stage_id, todo, prep_line_id, posOrderId, trackingNumber
       });
@@ -2090,6 +2094,89 @@ function getFloorConfig(url) {
     stageMap: isTest ? TEST_FLOOR_STAGE_MAP : FLOOR_STAGE_MAP,
     t, // table prefix: '' for prod, 'test_' for test
   };
+}
+
+// ─── Assembly KDS Webhook (delivery order station tracking) ────
+// Updates assembly_items status when KDS stages change.
+// Non-blocking — called alongside WABA notifications for config 10 orders.
+const ASSEMBLY_READY_STAGES = new Set([
+  76,   // Kitchen Pass TV → InProgress (packed)
+  47,   // Juice → Ready
+  50,   // Bain Marie → Ready
+  53,   // Shawarma → Ready
+  56,   // Grill → Ready
+]);
+const ASSEMBLY_STAGE_STATION = {
+  76: 'Kitchen Pass', 44: 'Kitchen Pass',
+  62: 'Juice Counter', 47: 'Juice Counter',
+  64: 'Bain Marie', 50: 'Bain Marie',
+  65: 'Shawarma Counter', 53: 'Shawarma Counter',
+  66: 'Grill Counter', 56: 'Grill Counter',
+};
+
+async function handleKdsWebhookAssembly(context, stageId, prepLineId, posOrderId, productId) {
+  const db = context.env.DB;
+
+  // Only process stages we care about for assembly
+  if (!ASSEMBLY_READY_STAGES.has(stageId)) return;
+
+  // Check if this order is tracked in assembly_orders
+  const assemblyOrder = await db.prepare(
+    'SELECT id, total_items, items_ready, stations_total FROM assembly_orders WHERE odoo_order_id = ? AND status = ?'
+  ).bind(posOrderId, 'preparing').first();
+  if (!assemblyOrder) return; // Not a delivery assembly order
+
+  // Try to find assembly_item by prep_line_id (if already bound)
+  let item = await db.prepare(
+    'SELECT * FROM assembly_items WHERE prep_line_id = ? AND assembly_order_id = ?'
+  ).bind(prepLineId, assemblyOrder.id).first();
+
+  // If not bound, try to bind by product_id match
+  if (!item && productId) {
+    item = await db.prepare(
+      'SELECT * FROM assembly_items WHERE assembly_order_id = ? AND odoo_product_id = ? AND prep_line_id IS NULL AND status = ? LIMIT 1'
+    ).bind(assemblyOrder.id, productId, 'preparing').first();
+
+    if (item) {
+      // Bind this prep_line_id to the item
+      await db.prepare('UPDATE assembly_items SET prep_line_id = ? WHERE id = ?')
+        .bind(prepLineId, item.id).run();
+    }
+  }
+
+  if (!item || item.status === 'ready') return; // Already ready or no match
+
+  // Mark item as ready
+  const now = new Date().toISOString().slice(0, 19);
+  await db.prepare('UPDATE assembly_items SET status = ?, ready_at = ? WHERE id = ?')
+    .bind('ready', now, item.id).run();
+
+  // Recalculate order readiness
+  const readyCount = await db.prepare(
+    'SELECT COUNT(*) as cnt FROM assembly_items WHERE assembly_order_id = ? AND status = ?'
+  ).bind(assemblyOrder.id, 'ready').first();
+
+  const totalCount = await db.prepare(
+    'SELECT COUNT(*) as cnt FROM assembly_items WHERE assembly_order_id = ?'
+  ).bind(assemblyOrder.id).first();
+
+  // Count distinct ready stations
+  const readyStations = await db.prepare(
+    `SELECT COUNT(DISTINCT station) as cnt FROM assembly_items
+     WHERE assembly_order_id = ? AND status = ?`
+  ).bind(assemblyOrder.id, 'ready').first();
+
+  const allReady = readyCount.cnt >= totalCount.cnt;
+
+  await db.prepare(`
+    UPDATE assembly_orders SET items_ready = ?, stations_ready = ?, updated_at = ?
+    ${allReady ? ", status = 'assembled', assembled_at = ?" : ''}
+    WHERE id = ?
+  `).bind(
+    ...(allReady
+      ? [readyCount.cnt, readyStations.cnt, now, now, assemblyOrder.id]
+      : [readyCount.cnt, readyStations.cnt, now, assemblyOrder.id])
+  ).run();
 }
 
 async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
@@ -3247,6 +3334,42 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   if (odooResult) {
     await db.prepare('UPDATE wa_orders SET odoo_order_id = ?, odoo_order_name = ?, tracking_number = ? WHERE id = ?')
       .bind(odooResult.id, odooResult.name, odooResult.trackingNumber, order.id).run();
+
+    // Auto-push to assembly tracking (for Assembly KDS)
+    try {
+      const ASSEMBLY_CAT_STATION = {
+        22: 'Kitchen Pass', 24: 'Kitchen Pass', 25: 'Kitchen Pass', 26: 'Kitchen Pass',
+        27: 'Juice Counter', 28: 'Bain Marie', 29: 'Shawarma Counter', 30: 'Grill Counter',
+      };
+      const assemblyItems = cart.map(item => ({
+        station: ASSEMBLY_CAT_STATION[item.catId] || 'Kitchen Pass',
+        category_id: item.catId,
+      }));
+      const stationSet = new Set(assemblyItems.map(i => i.station));
+      const totalItems = cart.reduce((s, i) => s + (i.qty || 1), 0);
+      const waUser = await db.prepare('SELECT name FROM wa_users WHERE wa_id = ?').bind(order.wa_id).first();
+      const now = new Date().toISOString().slice(0, 19);
+
+      const aoResult = await db.prepare(`
+        INSERT INTO assembly_orders (source, source_order_id, odoo_order_id, odoo_order_name,
+          tracking_number, customer_name, total_items, stations_total, status, created_at, updated_at)
+        VALUES ('waba', ?, ?, ?, ?, ?, ?, ?, 'preparing', ?, ?)
+      `).bind(order.order_code, odooResult.id, odooResult.name, odooResult.trackingNumber,
+        waUser?.name || null, totalItems, stationSet.size, now, now).run();
+
+      const aoId = aoResult.meta.last_row_id;
+      for (const item of cart) {
+        const station = ASSEMBLY_CAT_STATION[item.catId] || 'Kitchen Pass';
+        await db.prepare(`
+          INSERT INTO assembly_items (assembly_order_id, product_name, odoo_product_id,
+            quantity, category_id, station, status, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?)
+        `).bind(aoId, item.name, item.odooId || null, item.qty || 1, item.catId || null, station, now).run();
+      }
+      console.log(`Assembly auto-push: WABA ${order.order_code} → assembly_order #${aoId}`);
+    } catch (e) {
+      console.error('Assembly auto-push error (non-blocking):', e.message);
+    }
   }
 
   // ── Meta Conversions API: send Purchase event for CTWA attribution ──
