@@ -678,14 +678,18 @@ async function processWebhook(context, body) {
   // Skip ordering bot for ALL hiring campaign numbers — candidates, messaged, or conversed.
   // These are forwarded to hnhotels.in/api/hiring for the hiring inbox instead.
   // Covers: candidates table (2500+ sourced), messages table (sent outreach), conversations table (replies).
+  // Admin/owner numbers are excluded — they always go through the ordering bot.
+  const HIRING_FILTER_EXCLUDED = new Set(['7010426808', '8008002049']);
   if (context.env.HIRING_DB) {
     try {
       const hiringPhone = waId.replace(/\D/g, '').slice(-10);
-      const isHiringNumber = await context.env.HIRING_DB
-        .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM conversations WHERE phone = ? LIMIT 1')
-        .bind(hiringPhone, hiringPhone, hiringPhone)
-        .first();
-      if (isHiringNumber) return; // Let hiring dashboard handle this
+      if (!HIRING_FILTER_EXCLUDED.has(hiringPhone)) {
+        const isHiringNumber = await context.env.HIRING_DB
+          .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM conversations WHERE phone = ? LIMIT 1')
+          .bind(hiringPhone, hiringPhone, hiringPhone)
+          .first();
+        if (isHiringNumber) return; // Let hiring dashboard handle this
+      }
     } catch (e) { /* ignore — fall through to ordering bot */ }
   }
 
