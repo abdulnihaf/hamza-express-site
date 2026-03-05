@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HE Ops</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--orange:#f97316;--yellow:#f59e0b}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .container{max-width:440px;width:100%;padding:20px}
+    h1{font-size:22px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+    h1::before{content:'';width:5px;height:24px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:3px}
+    .grid{display:flex;flex-direction:column;gap:10px}
+    a{text-decoration:none;display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:all .15s}
+    a:hover{border-color:var(--orange);transform:translateX(4px)}
+    .label{font-size:15px;font-weight:600;color:var(--text)}
+    .desc{font-size:12px;color:var(--muted);margin-top:2px}
+    .arrow{color:var(--muted);font-size:18px}
+    a:hover .arrow{color:var(--orange)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HE Ops</h1>
+    <div class="grid">
+      <a href="/ops/captain/">
+        <div><div class="label">Captain</div><div class="desc">Floor captain POS dashboard</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/waiter/">
+        <div><div class="label">Waiter</div><div class="desc">Floor waiter operations</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/settlement/">
+        <div><div class="label">Settlement</div><div class="desc">Cash settlement + collection</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/sales/">
+        <div><div class="label">Sales</div><div class="desc">Sales insights dashboard</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/item-counter/">
+        <div><div class="label">Item Counter</div><div class="desc">Mobile item count tracker</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/inventory/">
+        <div><div class="label">Inventory</div><div class="desc">Stock management</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/receive/">
+        <div><div class="label">Receiving</div><div class="desc">Stock receiving + RGP</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/kp-printer/">
+        <div><div class="label">KP Printer</div><div class="desc">Kitchen printer config</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+      <a href="/ops/qr-links/">
+        <div><div class="label">QR Links</div><div class="desc">Station QR redirect manager</div></div>
+        <div class="arrow">&rsaquo;</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
