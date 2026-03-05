@@ -433,35 +433,32 @@ const COUNTER_MENUS = {
       { title: 'Curry & Starters', items: ['HE-1397','HE-1398','HE-1164','HE-1399','HE-1400'] },
     ],
   },
-  // TEMPORARY: Using existing catalog products until new station products are approved by Meta
-  // (Meta catalog processing takes up to 24h for new products — image_fetch_status: FETCH_FAILED)
-  // TODO: Swap back to HE-J/S/G/K products once Meta processes them
   juice_counter: {
     title: 'Juice Counter',
     counter: 'Juice Counter',
     sections: [
-      { title: 'Juices & Drinks', items: ['HE-1373','HE-1357','HE-1358','HE-1359'] },
+      { title: 'Juices & Drinks', items: ['HE-J001','HE-J002','HE-J003','HE-J004','HE-J005','HE-J006'] },
     ],
   },
   shawarma_counter: {
     title: 'Shawarma Counter',
     counter: 'Shawarma Counter',
     sections: [
-      { title: 'Shawarma', items: ['HE-1201','HE-1200','HE-1205','HE-1164','HE-1397'] },
+      { title: 'Shawarma', items: ['HE-S001','HE-S002','HE-S003','HE-S004','HE-S005'] },
     ],
   },
   grill_counter: {
     title: 'Grill Counter',
     counter: 'Grill Counter',
     sections: [
-      { title: 'Grill', items: ['HE-1135','HE-1141','HE-1142','HE-1143','HE-1163'] },
+      { title: 'Grill', items: ['HE-G001','HE-G002','HE-G003','HE-G004','HE-G005'] },
     ],
   },
   sheek_counter: {
     title: 'Sheek Kabab',
     counter: 'Sheek Kabab Counter',
     sections: [
-      { title: 'Sheek Kabab', items: ['HE-1195','HE-1211','HE-1138','HE-1145'] },
+      { title: 'Sheek Kabab', items: ['HE-K001','HE-K002','HE-K003','HE-K004'] },
     ],
   },
 };
