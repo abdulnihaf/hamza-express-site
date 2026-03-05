@@ -586,18 +586,18 @@ export async function onRequest(context) {
       const body = await context.request.json();
       await processWebhook(context, body);
 
-      // Forward ONLY hiring candidate messages to HN Hotels hiring dashboard
-      // Check if sender is a hiring candidate before forwarding
+      // Forward hiring number messages to HN Hotels hiring dashboard
+      // Check all 3 hiring tables: candidates (sourced), messages (outreach sent), conversations (replies)
       const fwdMsg = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       if (fwdMsg && context.env.HIRING_DB) {
         const fwdPhone = fwdMsg.from?.replace(/\D/g, '').slice(-10);
         if (fwdPhone) {
           context.waitUntil((async () => {
             try {
-              const isCandidate = await context.env.HIRING_DB
-                .prepare('SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM candidates WHERE phone = ? LIMIT 1')
-                .bind(fwdPhone, fwdPhone).first();
-              if (isCandidate) {
+              const isHiringNumber = await context.env.HIRING_DB
+                .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM conversations WHERE phone = ? LIMIT 1')
+                .bind(fwdPhone, fwdPhone, fwdPhone).first();
+              if (isHiringNumber) {
                 await fetch('https://hnhotels.in/api/hiring', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -673,16 +673,17 @@ async function processWebhook(context, body) {
   const ctwaClid = referral?.ctwa_clid || null;
   const ctwaSource = referral ? 'meta_ctwa' : null;
 
-  // Skip ordering bot for hiring campaign candidates — their messages are
-  // forwarded to hnhotels.in/api/hiring for the hiring inbox instead
+  // Skip ordering bot for ALL hiring campaign numbers — candidates, messaged, or conversed.
+  // These are forwarded to hnhotels.in/api/hiring for the hiring inbox instead.
+  // Covers: candidates table (2500+ sourced), messages table (sent outreach), conversations table (replies).
   if (context.env.HIRING_DB) {
     try {
       const hiringPhone = waId.replace(/\D/g, '').slice(-10);
-      const isHiringCandidate = await context.env.HIRING_DB
-        .prepare('SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM candidates WHERE phone = ? LIMIT 1')
-        .bind(hiringPhone, hiringPhone)
+      const isHiringNumber = await context.env.HIRING_DB
+        .prepare('SELECT 1 FROM candidates WHERE phone = ? UNION SELECT 1 FROM messages WHERE phone = ? UNION SELECT 1 FROM conversations WHERE phone = ? LIMIT 1')
+        .bind(hiringPhone, hiringPhone, hiringPhone)
         .first();
-      if (isHiringCandidate) return; // Let hiring dashboard handle this
+      if (isHiringNumber) return; // Let hiring dashboard handle this
     } catch (e) { /* ignore — fall through to ordering bot */ }
   }
 
