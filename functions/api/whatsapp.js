@@ -185,7 +185,7 @@ const PRODUCTS = {
   // ── Bain Marie (cat 28) — counter service items ──
   'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
   'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
-  'HE-1205': { name: 'Ghee Rice',                  price: 95,  odooId: 1223, catId: 28 },
+  'HE-1205': { name: 'Ghee Rice',                  price: 1,   odooId: 1223, catId: 28 }, // TEST ₹1 (was 95)
   'HE-1164': { name: 'Chilli Chicken',             price: 190, odooId: 1182, catId: 28 },
   'HE-1397': { name: 'Butter Chicken (BM)',        price: 200, odooId: 1415, catId: 28 },
   'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1444, catId: 28 },
@@ -197,7 +197,7 @@ const PRODUCTS = {
   'HE-J002': { name: 'Watermelon Juice',            price: 67,  odooId: 1425, catId: 27 },
   'HE-J003': { name: 'Mixed Fruit Juice',           price: 86,  odooId: 1426, catId: 27 },
   'HE-J004': { name: 'Mango Lassi',                 price: 76,  odooId: 1427, catId: 27 },
-  'HE-J005': { name: 'Buttermilk',                  price: 38,  odooId: 1428, catId: 27 },
+  'HE-J005': { name: 'Buttermilk',                  price: 1,   odooId: 1428, catId: 27 }, // TEST ₹1 (was 38)
   'HE-J006': { name: 'Lime Soda',                   price: 48,  odooId: 1429, catId: 27 },
 
   // ── Shawarma Counter (cat 29) ──
@@ -205,19 +205,19 @@ const PRODUCTS = {
   'HE-S002': { name: 'Chicken Shawarma Roll',       price: 114, odooId: 1431, catId: 29 },
   'HE-S003': { name: 'Mutton Shawarma Plate',       price: 210, odooId: 1432, catId: 29 },
   'HE-S004': { name: 'Mutton Shawarma Roll',        price: 143, odooId: 1433, catId: 29 },
-  'HE-S005': { name: 'Shawarma Fries',              price: 95,  odooId: 1434, catId: 29 },
+  'HE-S005': { name: 'Shawarma Fries',              price: 1,   odooId: 1434, catId: 29 }, // TEST ₹1 (was 95)
 
   // ── Grill Counter (cat 30) ──
   'HE-G001': { name: 'Grilled Chicken',             price: 238, odooId: 1435, catId: 30 },
   'HE-G002': { name: 'Chicken Tikka',               price: 190, odooId: 1436, catId: 30 },
   'HE-G003': { name: 'Tandoori Chicken',            price: 267, odooId: 1437, catId: 30 },
-  'HE-G004': { name: 'Chicken Seekh Kebab',         price: 152, odooId: 1438, catId: 30 },
+  'HE-G004': { name: 'Chicken Seekh Kebab',         price: 1,   odooId: 1438, catId: 30 }, // TEST ₹1 (was 152)
   'HE-G005': { name: 'Mutton Seekh Kebab',          price: 190, odooId: 1439, catId: 30 },
 
   // ── Sheek Kabab (cat 30, same KDS as Grill) ──
   'HE-K001': { name: 'Sheek Kabab (4 pcs)',         price: 171, odooId: 1440, catId: 30 },
   'HE-K002': { name: 'Mutton Sheek Kabab (4 pcs)',  price: 210, odooId: 1441, catId: 30 },
-  'HE-K003': { name: 'Sheek Kabab Roll',            price: 114, odooId: 1442, catId: 30 },
+  'HE-K003': { name: 'Sheek Kabab Roll',            price: 1,   odooId: 1442, catId: 30 }, // TEST ₹1 (was 114)
   'HE-K004': { name: 'Sheek Kabab Platter',         price: 333, odooId: 1443, catId: 30 },
 };
 
