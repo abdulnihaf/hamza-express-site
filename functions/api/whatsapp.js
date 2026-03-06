@@ -1187,7 +1187,18 @@ async function handleCategorySelection(context, user, categoryKey, waId, phoneId
     },
   };
 
-  await sendWhatsApp(phoneId, token, mpm);
+  const catResp = await sendWhatsApp(phoneId, token, mpm);
+  if (!catResp || !catResp.ok) {
+    console.error(`Category MPM failed for ${categoryKey}, sending text fallback`);
+    const allItems = category.sections.flatMap(s => s.items);
+    const lines = allItems.map(rid => {
+      const p = PRODUCTS[rid];
+      return p ? `• ${p.name} — ₹${Math.round(p.price * 1.05)}` : null;
+    }).filter(Boolean);
+    const fallbackText = `*${category.title}*\n\n${lines.join('\n')}\n\n` +
+      `_Say *"menu"* for other categories._`;
+    await sendWhatsApp(phoneId, token, buildText(waId, fallbackText));
+  }
   // Stay in awaiting_menu state so customer can browse more categories or send order
   await updateSession(db, waId, 'awaiting_menu', '[]', 0);
 }
@@ -1312,7 +1323,21 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
     },
   };
 
-  await sendWhatsApp(phoneId, token, mpm);
+  const mpmResponse = await sendWhatsApp(phoneId, token, mpm);
+
+  // Fallback: if MPM fails (Meta API error/glitch), send a text-based menu so customer isn't stuck
+  if (!mpmResponse || !mpmResponse.ok) {
+    console.error(`Station MPM failed for ${counterKey}, sending text fallback`);
+    const allItems = counterMenu.sections.flatMap(s => s.items);
+    const lines = allItems.map(rid => {
+      const p = PRODUCTS[rid];
+      return p ? `• ${p.name} — ₹${Math.round(p.price * 1.05)}` : null;
+    }).filter(Boolean);
+    const fallbackText = `*${counterMenu.title}*\n\n${lines.join('\n')}\n\n` +
+      `_Tap "menu" to browse, or tell us what you'd like to order._`;
+    await sendWhatsApp(phoneId, token, buildText(waId, fallbackText));
+  }
+
   await updateSession(db, waId, 'awaiting_menu', '[]', 0, counterKey);
 }
 
