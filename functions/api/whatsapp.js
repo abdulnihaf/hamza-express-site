@@ -889,6 +889,20 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     }
   }
 
+  // Unsupported message types (voice notes, images, stickers, locations, documents)
+  // Customer gets a helpful nudge instead of silence
+  const SUPPORTED_TYPES = new Set(['text', 'button_reply', 'list_reply', 'order', 'nfm_reply']);
+  if (!SUPPORTED_TYPES.has(msg.type)) {
+    if (session.state === 'awaiting_upi_payment') {
+      await sendWhatsApp(phoneId, token, buildText(waId,
+        'Complete UPI payment above, or send *"cancel"* to start over.'));
+    } else {
+      await sendWhatsApp(phoneId, token, buildText(waId,
+        'Send *"menu"* to browse our menu and order.'));
+    }
+    return;
+  }
+
   // State-specific routing
   switch (session.state) {
     case 'idle':
@@ -1153,7 +1167,7 @@ async function handleShowFullMenu(context, user, waId, phoneId, token, db) {
   };
 
   await sendWhatsApp(phoneId, token, listMsg);
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
 async function handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db) {
@@ -1250,7 +1264,7 @@ async function handleMealIntent(context, user, intentKey, waId, phoneId, token, 
       'Send *"menu"* to browse other categories too — your cart stays intact.'));
   }
 
-  await updateSession(db, waId, 'awaiting_menu', '[]', 0);
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
 async function handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, skipReorder) {
@@ -1372,13 +1386,28 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
     return;
   }
 
-  const isStationOrder = !!session.counter_source;
+  let isStationOrder = !!session.counter_source;
 
   const cart = buildCartFromItems(orderItems);
   if (cart.items.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
       'Some items couldn\'t be added. Say *"menu"* to start fresh.'));
     return;
+  }
+
+  // If station order, verify all cart items belong to this station's menu
+  // If customer added items from outside the station, treat as general order
+  if (isStationOrder) {
+    const counterMenu = COUNTER_MENUS[session.counter_source];
+    if (counterMenu) {
+      const stationItems = new Set(counterMenu.sections.flatMap(s => s.items));
+      const allMatch = cart.items.every(item => stationItems.has(item.code));
+      if (!allMatch) {
+        isStationOrder = false;
+        session.counter_source = null;
+        // Don't await — just clear the flag, general flow below handles the rest
+      }
+    }
   }
 
   // Station QR orders → skip confirmation, go directly to payment
@@ -1394,7 +1423,7 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
   const collection = determineCollectionPoints(cart.items);
   const tier = getCustomerTier(user.total_orders || 0);
 
-  await updateSession(db, waId, 'awaiting_upi_payment', JSON.stringify(cart.items), cart.total);
+  await updateSession(db, waId, 'awaiting_upi_payment', JSON.stringify(cart.items), cart.total, null);
   session.cart = JSON.stringify(cart.items);
   session.cart_total = cart.total;
 
@@ -1488,7 +1517,7 @@ async function handlePaymentSelection(context, session, user, msg, waId, phoneId
   // Cancel
   if ((msg.type === 'button_reply' && msg.id === 'pay_cancel') ||
       (msg.type === 'text' && msg.text === 'cancel')) {
-    await updateSession(db, waId, 'idle', '[]', 0);
+    await updateSession(db, waId, 'idle', '[]', 0, null);
     await sendWhatsApp(phoneId, token, buildText(waId,
       'Order cancelled. Say *"menu"* anytime to order again.'));
     return;
@@ -1529,7 +1558,7 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
       await sendWhatsApp(phoneId, token, buildText(waId,
         'WhatsApp ordering is temporarily closed. We\'ll be back shortly!\n' +
         'Visit us at the counter or try again in a few minutes.'));
-      await updateSession(db, waId, 'idle', '[]', 0);
+      await updateSession(db, waId, 'idle', '[]', 0, null);
       return;
     }
   }
@@ -1598,7 +1627,7 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
         .bind('failed', new Date().toISOString(), orderId).run();
       await sendWhatsApp(phoneId, token, buildText(waId,
         'Sorry, we couldn\'t set up payment right now. Please try again in a few minutes or visit our counter directly.\n\nSend *"menu"* to try again.'));
-      await updateSession(db, waId, 'idle', '[]', 0);
+      await updateSession(db, waId, 'idle', '[]', 0, null);
       return;
     }
   }
@@ -1642,8 +1671,29 @@ async function handleReorderConfirm(context, session, user, counterKey, waId, ph
     return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, true);
   }
 
-  // Go directly to payment with the saved cart
-  await updateSession(db, waId, 'awaiting_upi_payment', session.cart, session.cart_total, counterKey);
+  // Validate items still exist in PRODUCTS and refresh prices
+  const validItems = [];
+  let newTotal = 0;
+  for (const item of cart) {
+    const product = PRODUCTS[item.code];
+    if (!product) continue; // Product removed since last order
+    const priceInclGst = Math.round(product.price * 1.05 * 100) / 100;
+    validItems.push({ ...item, price: priceInclGst, priceExclGst: product.price, odooId: product.odooId, catId: product.catId });
+    newTotal += priceInclGst * (item.qty || 1);
+  }
+  newTotal = Math.round(newTotal * 100) / 100;
+
+  if (validItems.length === 0) {
+    await sendWhatsApp(phoneId, token, buildText(waId,
+      'Some items from your last order aren\'t available right now. Let\'s pick fresh!'));
+    return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, true);
+  }
+
+  // Go directly to payment with the validated cart
+  const cartJson = JSON.stringify(validItems);
+  await updateSession(db, waId, 'awaiting_upi_payment', cartJson, newTotal, counterKey);
+  session.cart = cartJson;
+  session.cart_total = newTotal;
   return initiateUpiPayment(context, session, user, waId, phoneId, token, db);
 }
 
@@ -1651,11 +1701,11 @@ async function handleAwaitingReorder(context, session, user, msg, waId, phoneId,
   // Handle text commands while in re-order state
   if (msg.type === 'text') {
     if (msg.text === 'menu' || msg.text === '/menu') {
-      await updateSession(db, waId, 'idle', '[]', 0);
+      await updateSession(db, waId, 'idle', '[]', 0, null);
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
     if (msg.text === 'cancel') {
-      await updateSession(db, waId, 'idle', '[]', 0);
+      await updateSession(db, waId, 'idle', '[]', 0, null);
       await sendWhatsApp(phoneId, token, buildText(waId,
         'No worries! Send *"menu"* to browse the full menu.'));
       return;
@@ -3338,6 +3388,13 @@ async function handleFloorManageStaff(db, body, json, err, t = '') {
 // ═══════════════════════════════════════════════════════════════════
 
 async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, db) {
+  // Idempotency guard — prevent double confirmation from racing webhooks
+  const freshOrder = await db.prepare('SELECT payment_status FROM wa_orders WHERE id = ?').bind(order.id).first();
+  if (freshOrder?.payment_status === 'paid') {
+    console.log(`confirmOrder: order ${order.id} already paid, skipping duplicate`);
+    return;
+  }
+
   const now = new Date().toISOString();
 
   // Load user for tier (before incrementing total_orders — this order not counted yet)
@@ -3357,7 +3414,19 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
 
   // Create Odoo POS order → triggers KDS routing
   const cart = JSON.parse(order.items);
-  const odooResult = await createOdooOrder(context, order.order_code, cart, order.total, order.wa_id);
+  let odooResult = await createOdooOrder(context, order.order_code, cart, order.total, order.wa_id);
+
+  // Retry once if Odoo fails (POS session might have been briefly closed)
+  if (!odooResult) {
+    console.log(`Odoo order creation failed for ${order.order_code}, retrying once...`);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    odooResult = await createOdooOrder(context, order.order_code, cart, order.total, order.wa_id);
+    if (!odooResult) {
+      console.error(`Odoo order creation failed permanently for ${order.order_code}`);
+      await db.prepare('UPDATE wa_orders SET status = ?, updated_at = ? WHERE id = ?')
+        .bind('odoo_failed', new Date().toISOString(), order.id).run();
+    }
+  }
 
   if (odooResult) {
     await db.prepare('UPDATE wa_orders SET odoo_order_id = ?, odoo_order_name = ?, tracking_number = ? WHERE id = ?')
@@ -3452,6 +3521,11 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
         `*Collect from:*\n${lines}\n\n` +
         `_We'll message when ready._`;
     }
+  }
+
+  // If Odoo order failed, append counter guidance so staff can handle manually
+  if (!odooResult) {
+    confirmMsg += '\n\n_Your payment is confirmed. Please show this message at the counter._';
   }
 
   await sendWhatsApp(phoneId, token, buildText(order.wa_id, confirmMsg));
