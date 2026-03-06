@@ -3683,7 +3683,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       session_id: sessionId,
     }]);
 
-    // Mark as paid → finalizes order + KDS prep orders already created via last_order_preparation_change
+    // Mark as paid → finalizes order
     await odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]);
 
     // Get order name and tracking number
@@ -3692,6 +3692,38 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 
     const odooOrderName = orderData?.[0]?.name || `Order #${orderId}`;
     const trackingNumber = orderData?.[0]?.tracking_number || null;
+
+    // ── KDS Preparation Display Records ──────────────────────────
+    // pos.order.create() doesn't trigger the KDS pipeline (only sync_from_ui does).
+    // We manually create pos.prep.order + pos.prep.line so KDS displays pick up the order.
+    try {
+      const orderLines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
+        [[['order_id', '=', orderId]]], { fields: ['id', 'uuid', 'product_id', 'qty'] });
+
+      if (orderLines && orderLines.length > 0) {
+        const prepOrderId = await odooRPC(apiKey, 'pos.prep.order', 'create', [{
+          pos_order_id: orderId,
+          order_name: trackingNumber || String(orderId),
+          pdis_internal_note: noteLines,
+          pdis_general_customer_note: '',
+        }]);
+
+        if (prepOrderId) {
+          for (const ol of orderLines) {
+            await odooRPC(apiKey, 'pos.prep.line', 'create', [{
+              prep_order_id: prepOrderId,
+              product_id: ol.product_id[0],
+              quantity: ol.qty,
+              pos_order_line_uuid: ol.uuid,
+              pos_order_line_id: ol.id,
+            }]);
+          }
+          console.log(`KDS prep order ${prepOrderId} created with ${orderLines.length} line(s)`);
+        }
+      }
+    } catch (kdsErr) {
+      console.error('KDS prep record creation failed (non-fatal):', kdsErr.message);
+    }
 
     console.log(`Odoo POS order: ${odooOrderName} (ID: ${orderId}), tracking: ${trackingNumber}`);
     return { id: orderId, name: odooOrderName, trackingNumber };
