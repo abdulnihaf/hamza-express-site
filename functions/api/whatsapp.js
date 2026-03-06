@@ -261,7 +261,7 @@ const ODOO_DB = 'main';
 const ODOO_UID = 2;
 const TEST_ODOO_URL = 'https://test.hamzahotel.com/jsonrpc';
 const POS_CONFIG_ID = 10;     // HE - WABA
-const PRICELIST_ID = 1;       // Default pricelist
+const PRICELIST_ID = 5;       // Default pricelist (ops.hamzahotel.com)
 const PAYMENT_METHOD_UPI = 17; // WABA General UPI
 const GST_TAX_ID = 31;        // 5% GST S
 
