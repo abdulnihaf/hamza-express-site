@@ -3671,6 +3671,8 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
     // ── Step 1: Create POS order (single sequential call — everything depends on orderId) ──
     // internal_note MUST be empty or valid JSON — KDS OWL does JSON.parse(internal_note)
     // Staff-visible info goes in general_customer_note instead
+    // NOTE: last_order_preparation_change is NOT set here — it's written in Step 5 AFTER
+    // all prep records exist, so the bus notification reaches KDS when data is ready
     const orderId = await odooRPC(apiKey, 'pos.order', 'create', [{
       session_id: sessionId,
       config_id: POS_CONFIG_ID,
@@ -3685,7 +3687,6 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       internal_note: '',
       general_customer_note: noteLines,
       state: 'draft',
-      last_order_preparation_change: prepChangePayload,
     }]);
 
     if (!orderId) { console.error('Failed to create POS order'); return null; }
@@ -3754,7 +3755,17 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       odooRPC(apiKey, 'pos.order', 'search_read',
         [[['id', '=', orderId]]], { fields: ['name', 'tracking_number'] }),
     ]);
-    // ← KDS VISIBLE HERE (4 sequential steps × ~300ms = ~1.2s)
+
+    // ── Step 5: Trigger KDS real-time notification ──
+    // Write last_order_preparation_change AFTER all prep records + states exist.
+    // This triggers Odoo's _send_orders_to_preparation_display() which sends a bus
+    // notification to all matching KDS displays via WebSocket. The KDS OWL frontend
+    // receives the notification and re-queries → order card appears instantly.
+    // CRITICAL: This MUST happen after Step 4 (states created) — otherwise KDS queries
+    // find no states and shows 0 orders (the race condition that caused blank KDS).
+    await odooRPC(apiKey, 'pos.order', 'write', [[orderId], {
+      last_order_preparation_change: prepChangePayload,
+    }]);
 
     const stateCount = Array.isArray(stateIds) ? stateIds.length : (stateIds ? 1 : 0);
     console.log(`KDS prep order ${prepOrderId} created with ${(orderLines || []).length} line(s), ${stateCount} state(s)`);
