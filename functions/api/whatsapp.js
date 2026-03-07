@@ -3659,8 +3659,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 
     const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
-    // Build the KDS preparation change payload — this is what the POS frontend sends
-    // to trigger _send_orders_to_preparation_display and create prep orders/lines/states
+    // Build the KDS preparation change payload
     const prepChangePayload = JSON.stringify({
       lines: kdsLines,
       metadata: { serverDate: now },
@@ -3669,7 +3668,7 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       sittingMode: 0,
     });
 
-    // Create the POS order with last_order_preparation_change to trigger KDS
+    // ── Step 1: Create POS order (single sequential call — everything depends on orderId) ──
     // internal_note MUST be empty or valid JSON — KDS OWL does JSON.parse(internal_note)
     // Staff-visible info goes in general_customer_note instead
     const orderId = await odooRPC(apiKey, 'pos.order', 'create', [{
@@ -3691,71 +3690,77 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
 
     if (!orderId) { console.error('Failed to create POS order'); return null; }
 
-    // Create payment record
-    await odooRPC(apiKey, 'pos.payment', 'create', [{
-      pos_order_id: orderId,
-      payment_method_id: PAYMENT_METHOD_UPI,
-      amount: total,
-      payment_date: now,
-      session_id: sessionId,
-    }]);
+    // ── Step 2: Parallel batch — payment, read lines, create prep order (all only need orderId) ──
+    const [, orderLines, prepOrderId] = await Promise.all([
+      // O3: Create payment record
+      odooRPC(apiKey, 'pos.payment', 'create', [{
+        pos_order_id: orderId,
+        payment_method_id: PAYMENT_METHOD_UPI,
+        amount: total,
+        payment_date: now,
+        session_id: sessionId,
+      }]),
+      // O6: Read back order lines (need UUIDs for KDS prep lines)
+      odooRPC(apiKey, 'pos.order.line', 'search_read',
+        [[['order_id', '=', orderId]]], { fields: ['id', 'uuid', 'product_id', 'qty'] }),
+      // O7: Create KDS prep order (only needs orderId)
+      odooRPC(apiKey, 'pos.prep.order', 'create', [{
+        pos_order_id: orderId,
+        order_name: orderCode,
+        pdis_internal_note: '[]',
+        pdis_general_customer_note: noteLines,
+      }]),
+    ]);
 
-    // Mark as paid → finalizes order
-    await odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]);
+    // ── Step 3: Parallel — mark paid + create all prep lines ──
+    // O4 needs payment (done in step 2). Prep lines need orderLines + prepOrderId (done in step 2).
+    const prepLinePromises = (orderLines || []).map(ol =>
+      odooRPC(apiKey, 'pos.prep.line', 'create', [{
+        prep_order_id: prepOrderId,
+        product_id: ol.product_id[0],
+        quantity: ol.qty,
+        pos_order_line_uuid: ol.uuid,
+        pos_order_line_id: ol.id,
+      }])
+    );
 
-    // Get order name and tracking number
-    const orderData = await odooRPC(apiKey, 'pos.order', 'search_read',
-      [[['id', '=', orderId]]], { fields: ['name', 'tracking_number'] });
+    const [, ...prepLineIds] = await Promise.all([
+      // O4: Mark as paid → finalizes order
+      odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]),
+      // O8: Create all prep lines in parallel
+      ...prepLinePromises,
+    ]);
+
+    // ── Step 4: Parallel — batch create all prep states + read order name ──
+    // Build all state records — each prep line needs states for each matching KDS display
+    const stateRecords = [];
+    for (let i = 0; i < (orderLines || []).length; i++) {
+      const ol = orderLines[i];
+      const prepLineId = prepLineIds[i];
+      if (!prepLineId) continue;
+      const cartItem = cart.find(ci => ci.odooId === ol.product_id[0]);
+      const initialStages = KDS_INITIAL_STAGES[cartItem?.catId] || [];
+      for (const stageId of initialStages) {
+        stateRecords.push({ prep_line_id: prepLineId, stage_id: stageId, todo: true });
+      }
+    }
+
+    const [stateIds, orderData] = await Promise.all([
+      // O9: Batch create ALL prep states in one call — makes items visible on KDS
+      stateRecords.length > 0
+        ? odooRPC(apiKey, 'pos.prep.state', 'create', [stateRecords])
+        : Promise.resolve([]),
+      // O5: Read order name + tracking (needed for WhatsApp confirmation, not KDS)
+      odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', '=', orderId]]], { fields: ['name', 'tracking_number'] }),
+    ]);
+    // ← KDS VISIBLE HERE (4 sequential steps × ~300ms = ~1.2s)
+
+    const stateCount = Array.isArray(stateIds) ? stateIds.length : (stateIds ? 1 : 0);
+    console.log(`KDS prep order ${prepOrderId} created with ${(orderLines || []).length} line(s), ${stateCount} state(s)`);
 
     const odooOrderName = orderData?.[0]?.name || `Order #${orderId}`;
     const trackingNumber = orderData?.[0]?.tracking_number || null;
-
-    // ── KDS Preparation Display Records + States ──────────────────────────
-    // pos.order.create() doesn't trigger the KDS pipeline (only sync_from_ui does).
-    // We manually create pos.prep.order + pos.prep.line + pos.prep.state so KDS displays
-    // pick up the order. Without states, prep lines are invisible on KDS screens.
-    try {
-      const orderLines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
-        [[['order_id', '=', orderId]]], { fields: ['id', 'uuid', 'product_id', 'qty'] });
-
-      if (orderLines && orderLines.length > 0) {
-        const prepOrderId = await odooRPC(apiKey, 'pos.prep.order', 'create', [{
-          pos_order_id: orderId,
-          order_name: trackingNumber || String(orderId),
-          pdis_internal_note: '[]',   // Must be valid JSON — KDS OWL does JSON.parse(internal_note)
-          pdis_general_customer_note: noteLines,
-        }]);
-
-        if (prepOrderId) {
-          let stateCount = 0;
-          for (const ol of orderLines) {
-            const prepLineId = await odooRPC(apiKey, 'pos.prep.line', 'create', [{
-              prep_order_id: prepOrderId,
-              product_id: ol.product_id[0],
-              quantity: ol.qty,
-              pos_order_line_uuid: ol.uuid,
-              pos_order_line_id: ol.id,
-            }]);
-
-            // Create pos.prep.state for each matching KDS display's first stage
-            // This is what makes the item visible on KDS screens
-            const cartItem = cart.find(ci => ci.odooId === ol.product_id[0]);
-            const initialStages = KDS_INITIAL_STAGES[cartItem?.catId] || [];
-            for (const stageId of initialStages) {
-              await odooRPC(apiKey, 'pos.prep.state', 'create', [{
-                prep_line_id: prepLineId,
-                stage_id: stageId,
-                todo: true,
-              }]);
-              stateCount++;
-            }
-          }
-          console.log(`KDS prep order ${prepOrderId} created with ${orderLines.length} line(s), ${stateCount} state(s)`);
-        }
-      }
-    } catch (kdsErr) {
-      console.error('KDS prep record creation failed (non-fatal):', kdsErr.message);
-    }
 
     console.log(`Odoo POS order: ${odooOrderName} (ID: ${orderId}), tracking: ${trackingNumber}`);
     return { id: orderId, name: odooOrderName, trackingNumber };
