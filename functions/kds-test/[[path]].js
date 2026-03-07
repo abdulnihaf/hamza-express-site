@@ -610,6 +610,47 @@ const OVERRIDE_SCRIPT = `<script>
 })();
 </script>`;
 
+// ─── KDS Real-time Polling Script ────────────────────────────────────────────
+// Odoo bus notifications don't reach API-created orders (external execute_kw
+// can't trigger _send_orders_to_preparation_display). This script polls Odoo
+// for new orders every 3s via the OWL data service, triggering reactivity to
+// update the KDS display without requiring a manual page refresh.
+const KDS_POLL_SCRIPT = `<script>
+(function(){
+  var POLL_MS=3000,_active=false,_lastIds=null,_did=null;
+  function getDisplayId(){
+    var p=new URLSearchParams(location.search);
+    return parseInt(p.get('display_id'))||null;
+  }
+  function poll(){
+    if(!_did)return;
+    fetch('/web/dataset/call_kw/pos.prep.display/get_preparation_display_order',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method:'call',
+        params:{model:'pos.prep.display',method:'get_preparation_display_order',
+          args:[_did,false],kwargs:{context:{lang:'en_US',tz:'Asia/Kolkata',uid:2,allowed_company_ids:[1]}}}})
+    }).then(function(r){return r.json()}).then(function(d){
+      var r=d.result||{},po=r['pos.prep.order']||[],st=r['pos.prep.state']||[];
+      var ids=po.map(function(o){return o.id}).sort().join(',')+':'+st.length;
+      if(_lastIds===null){_lastIds=ids;}
+      else if(ids!==_lastIds){
+        console.log('[HE-KDS] Orders changed, reloading...');
+        location.reload();
+      }
+    }).catch(function(){});
+  }
+  function start(){
+    if(_active)return;_active=true;
+    _did=getDisplayId();
+    if(!_did){console.warn('[HE-KDS] No display_id');return;}
+    setInterval(poll,POLL_MS);
+    console.log('[HE-KDS] Polling active ('+POLL_MS+'ms) display='+_did);
+  }
+  if(document.readyState==='complete')setTimeout(start,5000);
+  else window.addEventListener('load',function(){setTimeout(start,5000);});
+})();
+</script>`;
+
 // ─── Font preload tags ─────────────────────────────────────────────────────────
 const FONT_TAGS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -708,6 +749,8 @@ export async function onRequest(context) {
           el.prepend(FONT_TAGS + OVERRIDE_SCRIPT, { html: true });
           // Inject brand CSS at END of <head> (wins cascade priority)
           el.append(`<style id="he-brand-css">${BRAND_CSS}</style>`, { html: true });
+          // Real-time polling — bus notifications don't reach API-created orders
+          el.append(KDS_POLL_SCRIPT, { html: true });
         }
       })
       // Rewrite <script src="/..."> → <script src="/kds-test/...">
