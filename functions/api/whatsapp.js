@@ -231,6 +231,20 @@ const COUNTER_CATS = {
   30: 'Grill Counter',
 };
 
+// ── KDS initial stage IDs per category (first stage of each matching display for config 10) ──
+// Used to create pos.prep.state records when WABA orders are placed via API
+// (POS frontend does this automatically via sync_from_ui → _send_orders_to_preparation_display)
+const KDS_INITIAL_STAGES = {
+  22: [31, 75, 67],  // Indian → KDS 11(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  24: [34, 75, 67],  // Chinese → KDS 12(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  25: [37, 75, 67],  // Tandoor → KDS 13(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  26: [40, 75, 67],  // FC → KDS 14(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  27: [46],           // Juice → KDS 16(To prepare)
+  28: [49, 69],       // Bain Marie → KDS 17(To prepare), KDS 22(Preparing)
+  29: [52],           // Shawarma → KDS 18(To prepare)
+  30: [55],           // Grill → KDS 19(To prepare)
+};
+
 // ── KDS stage → customer-facing counter name (for WhatsApp notifications) ──
 const STAGE_COUNTER_MAP = {
   // PREPARING stages
@@ -3650,12 +3664,14 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
     const prepChangePayload = JSON.stringify({
       lines: kdsLines,
       metadata: { serverDate: now },
-      general_customer_note: '',
-      internal_note: noteLines,
+      general_customer_note: noteLines,
+      internal_note: '',
       sittingMode: 0,
     });
 
     // Create the POS order with last_order_preparation_change to trigger KDS
+    // internal_note MUST be empty or valid JSON — KDS OWL does JSON.parse(internal_note)
+    // Staff-visible info goes in general_customer_note instead
     const orderId = await odooRPC(apiKey, 'pos.order', 'create', [{
       session_id: sessionId,
       config_id: POS_CONFIG_ID,
@@ -3667,7 +3683,8 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
       amount_return: 0,
       date_order: now,
       lines,
-      internal_note: noteLines,
+      internal_note: '',
+      general_customer_note: noteLines,
       state: 'draft',
       last_order_preparation_change: prepChangePayload,
     }]);
@@ -3693,9 +3710,10 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
     const odooOrderName = orderData?.[0]?.name || `Order #${orderId}`;
     const trackingNumber = orderData?.[0]?.tracking_number || null;
 
-    // ── KDS Preparation Display Records ──────────────────────────
+    // ── KDS Preparation Display Records + States ──────────────────────────
     // pos.order.create() doesn't trigger the KDS pipeline (only sync_from_ui does).
-    // We manually create pos.prep.order + pos.prep.line so KDS displays pick up the order.
+    // We manually create pos.prep.order + pos.prep.line + pos.prep.state so KDS displays
+    // pick up the order. Without states, prep lines are invisible on KDS screens.
     try {
       const orderLines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
         [[['order_id', '=', orderId]]], { fields: ['id', 'uuid', 'product_id', 'qty'] });
@@ -3704,21 +3722,35 @@ async function createOdooOrder(context, orderCode, cart, total, waId) {
         const prepOrderId = await odooRPC(apiKey, 'pos.prep.order', 'create', [{
           pos_order_id: orderId,
           order_name: trackingNumber || String(orderId),
-          pdis_internal_note: noteLines,
-          pdis_general_customer_note: '',
+          pdis_internal_note: '[]',   // Must be valid JSON — KDS OWL does JSON.parse(internal_note)
+          pdis_general_customer_note: noteLines,
         }]);
 
         if (prepOrderId) {
+          let stateCount = 0;
           for (const ol of orderLines) {
-            await odooRPC(apiKey, 'pos.prep.line', 'create', [{
+            const prepLineId = await odooRPC(apiKey, 'pos.prep.line', 'create', [{
               prep_order_id: prepOrderId,
               product_id: ol.product_id[0],
               quantity: ol.qty,
               pos_order_line_uuid: ol.uuid,
               pos_order_line_id: ol.id,
             }]);
+
+            // Create pos.prep.state for each matching KDS display's first stage
+            // This is what makes the item visible on KDS screens
+            const cartItem = cart.find(ci => ci.odooId === ol.product_id[0]);
+            const initialStages = KDS_INITIAL_STAGES[cartItem?.catId] || [];
+            for (const stageId of initialStages) {
+              await odooRPC(apiKey, 'pos.prep.state', 'create', [{
+                prep_line_id: prepLineId,
+                stage_id: stageId,
+                todo: true,
+              }]);
+              stateCount++;
+            }
           }
-          console.log(`KDS prep order ${prepOrderId} created with ${orderLines.length} line(s)`);
+          console.log(`KDS prep order ${prepOrderId} created with ${orderLines.length} line(s), ${stateCount} state(s)`);
         }
       }
     } catch (kdsErr) {
