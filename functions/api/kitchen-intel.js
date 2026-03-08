@@ -203,7 +203,19 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     }
 
     const kpStatus = getKPStatus(lines, statesByLine);
-    const elapsedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
+
+    // For Captain paid orders, date_order = payment time, NOT kitchen send time.
+    // Use earliest prep line create_date as the real start time.
+    let effectiveStart = orderDate;
+    if (configId === 6 && !isDraft && lines.length > 0) {
+      for (const line of lines) {
+        const lineCreated = parseOdooDate(line.create_date);
+        if (lineCreated && (!effectiveStart || lineCreated < effectiveStart)) {
+          effectiveStart = lineCreated;
+        }
+      }
+    }
+    const elapsedMin = effectiveStart ? Math.round((Date.now() - effectiveStart.getTime()) / 60000) : 0;
 
     // Prep completion time: latest stage change across COOKING lines only
     // BM (catId 28) items are bulk-cleared hours late on KDS — exclude from order-level timing
@@ -223,7 +235,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     }
     // Use cooking-only time for metrics; fallback to all if no cooking lines
     if (!prepCompleteTime) prepCompleteTime = prepCompleteTimeAll;
-    const prepCompleteSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
+    const prepCompleteSec = (prepCompleteTime && effectiveStart) ? Math.round((prepCompleteTime - effectiveStart) / 1000) : null;
 
     // Lifecycle-aware status model
     let status;
@@ -242,15 +254,16 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     }
 
     // Dining phase timing (for active draft tables)
-    const seatedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
-    const kitchenSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
+    const seatedMin = effectiveStart ? Math.round((Date.now() - effectiveStart.getTime()) / 60000) : 0;
+    const kitchenSec = (prepCompleteTime && effectiveStart) ? Math.round((prepCompleteTime - effectiveStart) / 1000) : null;
     const atTableSec = (allDone && prepCompleteTime) ? Math.round((Date.now() - prepCompleteTime.getTime()) / 1000) : null;
 
     // Dine-in tracking for completed orders
     // Captain POS (config 6) = always dine-in; others use sittingMode
     const settleDate = parseOdooDate(order.write_date);
-    const settleTimeSec = (settleDate && orderDate) ? Math.round((settleDate - orderDate) / 1000) : null;
     const isDineIn = configId === 6 || sittingMode === 0;
+    // Dine time = effectiveStart (kitchen send) to settle (payment)
+    const settleTimeSec = (settleDate && effectiveStart) ? Math.round((settleDate - effectiveStart) / 1000) : null;
     const dineTimeSec = (!isDraft && isDineIn && configId === 6 && settleTimeSec > 60 && settleTimeSec < 14400) ? settleTimeSec : null;
     const postPrepSec = (dineTimeSec && prepCompleteSec && settleTimeSec > prepCompleteSec) ? settleTimeSec - prepCompleteSec : null;
 
@@ -276,7 +289,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       kitchenSec: isDraft ? kitchenSec : null,
       atTableSec: isDraft ? atTableSec : null,
       timestamps: {
-        placed: formatIST(orderDate),
+        placed: formatIST(effectiveStart),
         foodReady: prepCompleteTime ? formatIST(prepCompleteTime) : null,
         settled: !isDraft && settleDate ? formatIST(settleDate) : null
       }
@@ -466,12 +479,22 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
   for (const order of orders) {
     const orderDate = parseOdooDate(order.date_order);
     if (!orderDate) continue;
-    const istTime = new Date(orderDate.getTime() + 5.5 * 60 * 60 * 1000);
+
+    // For Captain paid orders, use earliest prep line create_date as effective start
+    const oLines = prepLines.filter(l => l._posOrderId === order.id);
+    let effectiveStartStats = orderDate;
+    if (order.config_id?.[0] === 6 && oLines.length > 0) {
+      for (const line of oLines) {
+        const lc = parseOdooDate(line.create_date);
+        if (lc && lc < effectiveStartStats) effectiveStartStats = lc;
+      }
+    }
+
+    const istTime = new Date(effectiveStartStats.getTime() + 5.5 * 60 * 60 * 1000);
     const hourKey = istTime.getUTCHours().toString().padStart(2, '0');
     if (!hourlyData[hourKey]) hourlyData[hourKey] = { orders: 0, items: 0, totalPrepSec: 0, prepCount: 0 };
     hourlyData[hourKey].orders++;
 
-    const oLines = prepLines.filter(l => l._posOrderId === order.id);
     let lastDone = 0;
     let itemCount = 0;
     const BM_CAT_ID_STATS = 28;
@@ -489,7 +512,7 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     hourlyData[hourKey].items += itemCount;
 
     if (lastDone > 0) {
-      const totalSec = Math.round((lastDone - orderDate.getTime()) / 1000);
+      const totalSec = Math.round((lastDone - effectiveStartStats.getTime()) / 1000);
       if (totalSec > 0 && totalSec < 7200) {
         hourlyData[hourKey].totalPrepSec += totalSec;
         hourlyData[hourKey].prepCount++;
@@ -551,10 +574,18 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     const orderDate = parseOdooDate(order.date_order);
     const settleDate = parseOdooDate(order.write_date);
     if (!orderDate || !settleDate) continue;
-    const dineSec = Math.round((settleDate - orderDate) / 1000);
+
+    // Use earliest prep line create_date for Captain orders
+    const oLines = prepLines.filter(l => l._posOrderId === order.id);
+    let effStart = orderDate;
+    for (const line of oLines) {
+      const lc = parseOdooDate(line.create_date);
+      if (lc && lc < effStart) effStart = lc;
+    }
+
+    const dineSec = Math.round((settleDate - effStart) / 1000);
     if (dineSec > 60 && dineSec < 14400) dineInTimes.push(dineSec);
     // Find prep complete time (exclude BM items)
-    const oLines = prepLines.filter(l => l._posOrderId === order.id);
     let prepDone = null;
     for (const line of oLines) {
       const productId = line.product_id?.[0];
