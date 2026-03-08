@@ -603,10 +603,12 @@ function renderTables(data) {
         if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
         else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
         else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) { stageClass = 'stage-done'; }
+        const timePart = item.doneAt ? item.doneAt : (item.sentAt || '');
         return `<div class="tc-item">
           <span class="tc-item-qty">${item.qty}x</span>
           <span class="tc-item-name">${esc(item.product)}</span>
           <span class="tc-item-station">${esc(item.station)}</span>
+          <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap">${timePart}</span>
           <span class="tc-item-stage ${stageClass}">${stageLabel}</span>
         </div>`;
       }).join('');
@@ -615,6 +617,9 @@ function renderTables(data) {
       if (o.kitchenSec) footerParts.push('Kitchen: ' + fmtSec(o.kitchenSec));
       if (o.atTableSec) footerParts.push('At table: ' + fmtSec(o.atTableSec));
       footerParts.push('\u20B9' + o.amount);
+
+      const ts = o.timestamps || {};
+      const tsLine = ts.placed ? `Placed ${ts.placed}${ts.foodReady ? ' \u2192 Ready ' + ts.foodReady : ''}` : '';
 
       return `<div class="table-card ${phaseClass}">
         <div class="tc-header">
@@ -626,6 +631,7 @@ function renderTables(data) {
         </div>
         ${o.items.length > 0 ? `<div class="tc-items">${itemsHtml}</div>` : '<div style="padding:12px 14px;color:var(--muted);font-size:12px">No items yet</div>'}
         <div class="tc-footer"><span>${footerParts.join(' \u00B7 ')}</span><span>${itemsDone}/${o.items.length} ready</span></div>
+        ${tsLine ? `<div style="padding:4px 14px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-top:1px solid var(--border)">${tsLine}</div>` : ''}
       </div>`;
     }).join('');
   } else {
@@ -731,6 +737,7 @@ function renderOrderCard(order) {
 
   const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
   const tableInfo = order.table ? ' \u00B7 ' + esc(order.table.name || '') : '';
+  const ts = order.timestamps || {};
 
   return `<div class="order-card">
     <div class="order-header">
@@ -749,6 +756,7 @@ function renderOrderCard(order) {
       <span>${order.itemCount} items \u00B7 \u20B9${order.amount}${tableInfo}</span>
       <span class="kp-badge ${kpClass}">KP: ${esc(order.kpStatus)}</span>
     </div>
+    ${ts.placed ? `<div style="padding:4px 12px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-top:1px solid var(--border)">Placed ${ts.placed}${ts.foodReady ? ' \u2192 Ready ' + ts.foodReady : ''}</div>` : ''}
   </div>`;
 }
 
@@ -760,6 +768,7 @@ function renderCompletedCard(o) {
   const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
   const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
   const isNoPrep = o.status === 'no_prep';
+  const ts = o.timestamps || {};
 
   const itemRows = (o.items || []).map(item => {
     const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
@@ -775,6 +784,13 @@ function renderCompletedCard(o) {
     </div>`;
   }).join('');
 
+  // Timestamps row
+  const tsParts = [];
+  if (ts.placed) tsParts.push(`Placed ${ts.placed}`);
+  if (ts.foodReady) tsParts.push(`Ready ${ts.foodReady}`);
+  if (ts.settled) tsParts.push(`Settled ${ts.settled}`);
+  const tsRow = tsParts.length > 0 ? `<div style="padding:4px 10px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border)">${tsParts.join(' \u2192 ')}</div>` : '';
+
   return `<div class="cr-card" onclick="toggleItems(this)">
     <div class="completed-row">
       <div>
@@ -787,6 +803,7 @@ function renderCompletedCard(o) {
         <span class="cr-amount">\u20B9${o.amount}</span>
       </div>
     </div>
+    ${tsRow}
     ${o.items && o.items.length > 0 ? `<div class="cr-expand-hint">${o.items.length} items \u2014 tap to expand</div><div class="cr-items">${itemRows}</div>` : ''}
   </div>`;
 }

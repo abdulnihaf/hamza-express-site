@@ -196,22 +196,33 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       items.push({
         id: line.id, product: productName, qty: line.quantity,
         station: catInfo.name, stage: currentStage,
-        elapsed: timing.elapsed, prepDuration: timing.prepDuration
+        elapsed: timing.elapsed, prepDuration: timing.prepDuration,
+        sentAt: formatIST(parseOdooDate(line.create_date)),
+        doneAt: timing.doneTime ? formatIST(timing.doneTime) : null
       });
     }
 
     const kpStatus = getKPStatus(lines, statesByLine);
     const elapsedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
 
-    // Prep completion time: latest stage change across all lines
+    // Prep completion time: latest stage change across COOKING lines only
+    // BM (catId 28) items are bulk-cleared hours late on KDS — exclude from order-level timing
+    const BM_CAT_ID = 28;
     let prepCompleteTime = null;
+    let prepCompleteTimeAll = null; // includes BM, for status determination
     for (const line of lines) {
       const states = statesByLine[line.id] || [];
+      const productId = line.product_id?.[0];
+      const catInfo = productCatMap[productId] || { id: 0 };
+      const isBM = catInfo.id === BM_CAT_ID;
       for (const s of states) {
         const t = parseOdooDate(s.last_stage_change);
-        if (t && (!prepCompleteTime || t > prepCompleteTime)) prepCompleteTime = t;
+        if (t && (!prepCompleteTimeAll || t > prepCompleteTimeAll)) prepCompleteTimeAll = t;
+        if (t && !isBM && (!prepCompleteTime || t > prepCompleteTime)) prepCompleteTime = t;
       }
     }
+    // Use cooking-only time for metrics; fallback to all if no cooking lines
+    if (!prepCompleteTime) prepCompleteTime = prepCompleteTimeAll;
     const prepCompleteSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
 
     // Lifecycle-aware status model
@@ -236,9 +247,10 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     const atTableSec = (allDone && prepCompleteTime) ? Math.round((Date.now() - prepCompleteTime.getTime()) / 1000) : null;
 
     // Dine-in tracking for completed orders
+    // Captain POS (config 6) = always dine-in; others use sittingMode
     const settleDate = parseOdooDate(order.write_date);
     const settleTimeSec = (settleDate && orderDate) ? Math.round((settleDate - orderDate) / 1000) : null;
-    const isDineIn = sittingMode === 0;
+    const isDineIn = configId === 6 || sittingMode === 0;
     const dineTimeSec = (!isDraft && isDineIn && configId === 6 && settleTimeSec > 60 && settleTimeSec < 14400) ? settleTimeSec : null;
     const postPrepSec = (dineTimeSec && prepCompleteSec && settleTimeSec > prepCompleteSec) ? settleTimeSec - prepCompleteSec : null;
 
@@ -262,7 +274,12 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       prepCompleteSec, dineTimeSec, postPrepSec,
       seatedMin: isDraft ? seatedMin : null,
       kitchenSec: isDraft ? kitchenSec : null,
-      atTableSec: isDraft ? atTableSec : null
+      atTableSec: isDraft ? atTableSec : null,
+      timestamps: {
+        placed: formatIST(orderDate),
+        foodReady: prepCompleteTime ? formatIST(prepCompleteTime) : null,
+        settled: !isDraft && settleDate ? formatIST(settleDate) : null
+      }
     });
   }
 
@@ -275,8 +292,9 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
   const counterActive = result.filter(o => COUNTER_ACTIVE_STATUSES.has(o.status));
   const completedOrders = result.filter(o => DONE_STATUSES.has(o.status));
   const dineInCompleted = completedOrders.filter(o => o.type === 'dine-in' && o.config === 'Captain' && o.dineTimeSec);
-  const counterDone = completedOrders.filter(o => o.config !== 'Captain' || o.type !== 'dine-in');
-  const prepTimes = completedOrders.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
+  const counterDone = completedOrders.filter(o => o.config !== 'Captain');
+  const counterPrepTimes = counterDone.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
+  const diningPrepTimes = dineInCompleted.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
 
   // Alerts: stuck orders and items (both dining + counter active)
   const allActive = [...diningOrders, ...counterActive];
@@ -320,7 +338,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     counter: {
       activeCount: counterActive.length,
       completedCount: counterDone.length,
-      avgPrepSec: prepTimes.length > 0 ? Math.round(prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length) : 0,
+      avgPrepSec: counterPrepTimes.length > 0 ? Math.round(counterPrepTimes.reduce((a, b) => a + b, 0) / counterPrepTimes.length) : 0,
     },
     alerts
   };
@@ -456,8 +474,12 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     const oLines = prepLines.filter(l => l._posOrderId === order.id);
     let lastDone = 0;
     let itemCount = 0;
+    const BM_CAT_ID_STATS = 28;
     for (const line of oLines) {
       itemCount += line.quantity;
+      const productId = line.product_id?.[0];
+      const catInfo = productCatMap[productId] || { id: 0 };
+      if (catInfo.id === BM_CAT_ID_STATS) continue; // Skip BM for order-level prep timing
       const states = statesByLine[line.id] || [];
       for (const s of states) {
         const t = parseOdooDate(s.last_stage_change);
@@ -522,18 +544,22 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
 
   const dineInTimes = [];
   const postPrepTimes = [];
+  const BM_CAT_ID_DINE = 28;
   for (const order of orders) {
-    const sm = parseSittingMode(order.last_order_preparation_change);
-    if (sm !== 0 || order.config_id?.[0] !== 6) continue;
+    // Captain POS (config 6) = always dine-in
+    if (order.config_id?.[0] !== 6) continue;
     const orderDate = parseOdooDate(order.date_order);
     const settleDate = parseOdooDate(order.write_date);
     if (!orderDate || !settleDate) continue;
     const dineSec = Math.round((settleDate - orderDate) / 1000);
     if (dineSec > 60 && dineSec < 14400) dineInTimes.push(dineSec);
-    // Find prep complete time
+    // Find prep complete time (exclude BM items)
     const oLines = prepLines.filter(l => l._posOrderId === order.id);
     let prepDone = null;
     for (const line of oLines) {
+      const productId = line.product_id?.[0];
+      const catInfo = productCatMap[productId] || { id: 0 };
+      if (catInfo.id === BM_CAT_ID_DINE) continue; // Skip BM bulk-clear noise
       const states = statesByLine[line.id] || [];
       for (const s of states) {
         const t = parseOdooDate(s.last_stage_change);
@@ -655,14 +681,18 @@ function computeItemTiming(createDate, stationStages) {
   }
   withInfo.sort((a, b) => a.seq - b.seq);
   let prepDuration = 0;
+  let doneTime = null;
   // Walk stages in order; the last completed "done" stage with a terminal name is the prep-done marker
   for (const s of withInfo) {
     if (!s.todo && ['Prepared', 'Ready', 'Packed'].includes(s.name)) {
-      const doneTime = parseOdooDate(s.time);
-      if (doneTime && created) prepDuration = Math.round((doneTime - created.getTime()) / 1000);
+      const t = parseOdooDate(s.time);
+      if (t && created) {
+        prepDuration = Math.round((t - created.getTime()) / 1000);
+        doneTime = t;
+      }
     }
   }
-  return { elapsed, prepDuration };
+  return { elapsed, prepDuration, doneTime };
 }
 
 // --- Utility ---
