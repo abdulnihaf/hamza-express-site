@@ -10,7 +10,7 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const action = url.searchParams.get('action') || 'live';
 
-  const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
+  const ODOO_URL = 'https://test.hamzahotel.com/jsonrpc';
   const ODOO_DB = 'main';
   const ODOO_UID = 2;
   const ODOO_API_KEY = context.env.ODOO_API_KEY;
