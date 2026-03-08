@@ -454,7 +454,9 @@ async function loadStats() {
 
   const fromDate = $('stFromDate').value || todayIST();
   const from = fromDate + 'T00:00:00';
-  const to = fromDate === todayIST() ? '' : fromDate + 'T23:59:59';
+  // If from is today, omit 'to' so API uses now(). Otherwise use end of today.
+  const today = todayIST();
+  const to = fromDate === today ? '' : today + 'T23:59:59';
 
   try {
     const url = API + '?action=stats&from=' + encodeURIComponent(from) + (to ? '&to=' + encodeURIComponent(to) : '');
