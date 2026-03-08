@@ -221,22 +221,25 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     if (configId === 6) configLabel = 'Captain';
     else if (configId === 10) configLabel = 'WhatsApp';
 
+    // Short name: "HE - Cash Counter - 000045" → "#45"
+    const shortName = order.name ? '#' + parseInt(order.name.replace(/.*-\s*/, ''), 10) : order.name;
+
     result.push({
-      id: orderId, name: order.name, time: formatIST(orderDate),
+      id: orderId, name: order.name, shortName, time: formatIST(orderDate),
       elapsed: elapsedMin, amount: Math.round(order.amount_total),
       type: isDineIn ? 'dine-in' : 'takeaway',
       source: isWaba || configId === 10 ? 'whatsapp' : 'counter',
       table: order.table_id?.[1] || null, config: configLabel,
       items, kpStatus,
-      status: items.length === 0 ? 'ready' : allDone ? 'ready' : anyStarted ? 'preparing' : 'queued',
+      status: items.length === 0 ? 'no_prep' : allDone ? 'ready' : anyStarted ? 'preparing' : 'queued',
       itemCount: (olByOrder[orderId] || []).reduce((s, l) => s + l.qty, 0),
       prepCompleteSec, dineTimeSec, postPrepSec
     });
   }
 
   // --- Today's Summary ---
-  const completedOrders = result.filter(o => o.status === 'ready');
-  const activeOrders = result.filter(o => o.status !== 'ready');
+  const completedOrders = result.filter(o => o.status === 'ready' || o.status === 'no_prep');
+  const activeOrders = result.filter(o => o.status !== 'ready' && o.status !== 'no_prep');
   const dineInCompleted = completedOrders.filter(o => o.type === 'dine-in' && o.config === 'Captain' && o.dineTimeSec);
   const prepTimes = completedOrders.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
 
@@ -539,44 +542,70 @@ function getStationStages(states) {
 
 function getCurrentStage(stationStages) {
   if (stationStages.length === 0) return 'To prepare';
-  let highestDone = -1;
-  let highestDoneName = 'To prepare';
+  // Build sorted list of stages with their info
+  const withInfo = [];
   for (const s of stationStages) {
     const info = STAGE_INFO[s.stage_id?.[0]];
-    if (!info) continue;
-    if (!s.todo && info.seq > highestDone) { highestDone = info.seq; highestDoneName = info.name; }
+    if (info) withInfo.push({ todo: s.todo, seq: info.seq, name: info.name });
   }
-  if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(highestDoneName)) return highestDoneName;
-  if (highestDoneName === 'Preparing') return 'Preparing';
-  return 'To prepare';
+  if (withInfo.length === 0) return 'To prepare';
+  withInfo.sort((a, b) => a.seq - b.seq);
+  // The current stage is the FIRST one still pending (todo=true)
+  // If all stages are done (todo=false), return the last stage name
+  for (const s of withInfo) {
+    if (s.todo) return s.name;
+  }
+  return withInfo[withInfo.length - 1].name;
 }
 
 function getKPStatus(prepLines, statesByLine) {
   const KP_STAGE_IDS = new Set([75, 44, 74, 63]);
-  let maxSeq = -1;
-  let maxName = 'Queued';
+  // Find the minimum current KP stage across all lines
+  // (i.e., the slowest item determines overall KP status)
+  let minCurrentSeq = Infinity;
+  let minCurrentName = null;
+  let hasKPStates = false;
+
   for (const line of prepLines) {
     const states = statesByLine[line.id] || [];
+    const kpStages = [];
     for (const s of states) {
       const sid = s.stage_id?.[0];
       if (!KP_STAGE_IDS.has(sid)) continue;
       const info = STAGE_INFO[sid];
-      if (!info) continue;
-      if (!s.todo && info.seq > maxSeq) { maxSeq = info.seq; maxName = info.name; }
+      if (info) kpStages.push({ todo: s.todo, seq: info.seq, name: info.name });
+    }
+    if (kpStages.length === 0) continue;
+    hasKPStates = true;
+    kpStages.sort((a, b) => a.seq - b.seq);
+    // Current stage = first todo=true, or last stage if all done
+    let lineStage = kpStages[kpStages.length - 1];
+    for (const s of kpStages) {
+      if (s.todo) { lineStage = s; break; }
+    }
+    if (lineStage.seq < minCurrentSeq) {
+      minCurrentSeq = lineStage.seq;
+      minCurrentName = lineStage.name;
     }
   }
-  return maxName;
+  return hasKPStates ? (minCurrentName || 'Queued') : 'Queued';
 }
 
 function computeItemTiming(createDate, stationStages) {
   const created = parseOdooDate(createDate);
   const elapsed = created ? Math.round((Date.now() - created.getTime()) / 1000) : 0;
-  let prepDuration = 0;
+  // Find the completion stage (Prepared/Ready/Packed) — highest seq done stage
+  const withInfo = [];
   for (const s of stationStages) {
     const info = STAGE_INFO[s.stage_id?.[0]];
-    if (!info) continue;
-    if (['Prepared', 'Ready', 'Packed'].includes(info.name) && !s.todo) {
-      const doneTime = parseOdooDate(s.last_stage_change);
+    if (info) withInfo.push({ todo: s.todo, seq: info.seq, name: info.name, time: s.last_stage_change });
+  }
+  withInfo.sort((a, b) => a.seq - b.seq);
+  let prepDuration = 0;
+  // Walk stages in order; the last completed "done" stage with a terminal name is the prep-done marker
+  for (const s of withInfo) {
+    if (!s.todo && ['Prepared', 'Ready', 'Packed'].includes(s.name)) {
+      const doneTime = parseOdooDate(s.time);
       if (doneTime && created) prepDuration = Math.round((doneTime - created.getTime()) / 1000);
     }
   }

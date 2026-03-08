@@ -218,10 +218,10 @@
   <!-- ====== DASHBOARD TAB (default) ====== -->
   <div class="tab-content active" id="tab-dashboard">
     <div class="db-summary" id="dbSummary">
-      <div class="db-box"><div class="num" id="dbActive">-</div><div class="lbl">Active</div></div>
-      <div class="db-box"><div class="num" id="dbDone">-</div><div class="lbl">Completed</div></div>
+      <div class="db-box"><div class="num" id="dbActive">-</div><div class="lbl">In Kitchen</div></div>
+      <div class="db-box"><div class="num" id="dbDone">-</div><div class="lbl">Done</div></div>
       <div class="db-box"><div class="num" id="dbAvgPrep">-</div><div class="lbl">Avg Prep</div></div>
-      <div class="db-box"><div class="num" id="dbTotal">-</div><div class="lbl">Total</div></div>
+      <div class="db-box"><div class="num" id="dbTotal">-</div><div class="lbl">Orders (4h)</div></div>
     </div>
     <div id="dbAlerts"></div>
     <div class="section-title">Station Health</div>
@@ -453,10 +453,12 @@ function renderDashboard(data) {
   if (stationNames.length > 0) {
     $('dbStationHealth').innerHTML = stationNames.map(name => {
       const s = stations[name];
-      const color = s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
+      const hasData = s.samplesCount > 0;
+      const color = !hasData ? 'var(--muted)' : s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
+      const valText = hasData ? s.avgPrepMin + 'm' : '--';
       return `<div class="health-chip" style="border-top-color:${color}">
         <span class="hc-name">${name}</span>
-        <span class="hc-val" style="color:${color}">${s.avgPrepMin}m</span>
+        <span class="hc-val" style="color:${color}">${valText}</span>
         <span class="hc-items">${s.itemsProcessed} items</span>
       </div>`;
     }).join('');
@@ -480,11 +482,17 @@ function renderDashboard(data) {
   }
 
   // Completed orders (expandable to show item-level prep times)
-  const completed = orders.filter(o => o.status === 'ready').slice(0, 20);
+  // Show 'ready' first (with prep data), then 'no_prep' at bottom
+  const readyOrders = orders.filter(o => o.status === 'ready').slice(0, 20);
+  const noPrepOrders = orders.filter(o => o.status === 'no_prep').slice(0, 5);
+  const completed = [...readyOrders, ...noPrepOrders];
+
   if (completed.length > 0) {
     $('dbCompletedList').innerHTML = completed.map((o, idx) => {
+      const displayName = o.shortName || o.name;
       const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
       const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
+      const isNoPrep = o.status === 'no_prep';
 
       const itemRows = (o.items || []).map(item => {
         const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
@@ -503,12 +511,12 @@ function renderDashboard(data) {
       return `<div class="cr-card" onclick="toggleItems(this)">
         <div class="completed-row">
           <div>
-            <span class="cr-name">${o.name}</span>
-            <span class="cr-meta">${o.config} ${o.type}</span>
+            <span class="cr-name">${displayName}</span>
+            <span class="cr-meta">${o.config}${isNoPrep ? ' (no KDS)' : ''}</span>
           </div>
           <div class="cr-right">
-            <span class="cr-prep">Prep: ${prepStr}</span>
-            ${dineStr ? `<span class="cr-dine">Dine: ${dineStr}</span>` : ''}
+            ${!isNoPrep ? `<span class="cr-prep">${prepStr}</span>` : ''}
+            ${dineStr ? `<span class="cr-dine">${dineStr}</span>` : ''}
             <span class="cr-amount">&#8377;${o.amount}</span>
           </div>
         </div>
@@ -523,7 +531,7 @@ function renderDashboard(data) {
 // --- Live Queue tab (only active orders) ---
 function renderLive(data) {
   const orders = data.orders || [];
-  const active = orders.filter(o => o.status !== 'ready');
+  const active = orders.filter(o => o.status !== 'ready' && o.status !== 'no_prep');
   const queued = active.filter(o => o.status === 'queued');
   const preparing = active.filter(o => o.status === 'preparing');
 
@@ -549,13 +557,16 @@ function renderLive(data) {
 
 function renderOrderCard(order) {
   const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
+  const displayName = order.shortName || order.name;
+  const typeLabel = order.type === 'dine-in' ? 'Dine-in' : 'T/A';
   const typeClass = order.type === 'dine-in' ? 'badge-dinein' : 'badge-takeaway';
-  const srcClass = order.source === 'whatsapp' ? 'badge-whatsapp' : 'badge-counter';
 
   const itemsHtml = order.items.map(item => {
     let stageClass = 'stage-queued';
-    if (item.stage === 'Preparing') stageClass = 'stage-preparing';
-    if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
+    let stageLabel = item.stage;
+    if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
+    else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
+    else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
     // Show prep duration if done, else elapsed since sent to kitchen
     const timeSec = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
     const timeStr = timeSec > 0 ? fmtSec(timeSec) : '';
@@ -565,7 +576,7 @@ function renderOrderCard(order) {
       <span class="item-name">${item.product}</span>
       <span class="item-station">${item.station}</span>
       <span class="item-time" style="color:${timeColor}">${timeStr}</span>
-      <span class="item-stage ${stageClass}">${item.stage}</span>
+      <span class="item-stage ${stageClass}">${stageLabel}</span>
     </div>`;
   }).join('');
 
@@ -575,9 +586,9 @@ function renderOrderCard(order) {
   return `<div class="order-card">
     <div class="order-header">
       <div>
-        <span class="order-id">${order.name}</span>
-        <span class="order-badge ${typeClass}" style="margin-left:6px">${order.type}</span>
-        <span class="order-badge ${srcClass}" style="margin-left:4px">${order.source}</span>
+        <span class="order-id">${displayName}</span>
+        <span class="order-badge ${typeClass}" style="margin-left:6px">${typeLabel}</span>
+        <span class="order-badge badge-counter" style="margin-left:4px">${order.config}</span>
       </div>
       <div class="order-meta">
         <span class="order-time">${order.time}</span>
@@ -586,7 +597,7 @@ function renderOrderCard(order) {
     </div>
     <div class="order-items">${itemsHtml}</div>
     <div class="order-footer">
-      <span>${order.config}${tableInfo} &middot; ${order.itemCount} items &middot; &#8377;${order.amount}</span>
+      <span>${order.itemCount} items &middot; &#8377;${order.amount}${tableInfo}</span>
       <span class="kp-badge ${kpClass}">KP: ${order.kpStatus}</span>
     </div>
   </div>`;
