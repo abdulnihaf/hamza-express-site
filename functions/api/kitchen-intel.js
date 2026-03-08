@@ -121,8 +121,8 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
 
   const CONFIG_IDS = [5, 6, 10];
   const orders = await rpc(odooUrl, db, uid, apiKey, 'pos.order', 'search_read',
-    [[['config_id', 'in', CONFIG_IDS], ['date_order', '>=', fromOdoo], ['state', 'in', ['paid', 'done', 'invoiced', 'posted']]]],
-    { fields: ['id', 'name', 'date_order', 'amount_total', 'config_id', 'table_id', 'last_order_preparation_change', 'general_customer_note', 'write_date'], order: 'date_order desc', limit: 80 });
+    [[['config_id', 'in', CONFIG_IDS], ['date_order', '>=', fromOdoo], ['state', 'in', ['draft', 'paid', 'done', 'invoiced', 'posted']]]],
+    { fields: ['id', 'name', 'state', 'date_order', 'amount_total', 'config_id', 'table_id', 'last_order_preparation_change', 'general_customer_note', 'write_date'], order: 'date_order desc', limit: 80 });
 
   if (orders.length === 0) {
     return new Response(JSON.stringify({ success: true, orders: [], stations: {}, todaySummary: emptyTodaySummary() }), { headers });
@@ -162,6 +162,10 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     const sittingMode = parseSittingMode(order.last_order_preparation_change);
     const isWaba = (order.general_customer_note || '').includes('WHATSAPP ORDER');
     const configId = order.config_id?.[0];
+    const isDraft = order.state === 'draft';
+
+    // Draft counter orders = cashier mid-entry or abandoned. Skip.
+    if (isDraft && configId !== 6) continue;
 
     const lines = prepLines.filter(l => l._posOrderId === orderId);
     const items = [];
@@ -199,7 +203,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     const kpStatus = getKPStatus(lines, statesByLine);
     const elapsedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
 
-    // Dine-in tracking: prep completion time + settlement time
+    // Prep completion time: latest stage change across all lines
     let prepCompleteTime = null;
     for (const line of lines) {
       const states = statesByLine[line.id] || [];
@@ -209,67 +213,115 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       }
     }
     const prepCompleteSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
+
+    // Lifecycle-aware status model
+    let status;
+    if (isDraft) {
+      // Active dine-in table (Captain draft)
+      if (items.length === 0 && lines.length === 0) status = 'dining_ordering';
+      else if (allDone) status = 'dining_served';
+      else if (anyStarted) status = 'dining_preparing';
+      else status = 'dining_queued';
+    } else {
+      // Paid/done order
+      if (items.length === 0) status = 'no_prep';
+      else if (allDone) status = 'completed';
+      else if (anyStarted) status = 'preparing';
+      else status = 'queued';
+    }
+
+    // Dining phase timing (for active draft tables)
+    const seatedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
+    const kitchenSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
+    const atTableSec = (allDone && prepCompleteTime) ? Math.round((Date.now() - prepCompleteTime.getTime()) / 1000) : null;
+
+    // Dine-in tracking for completed orders
     const settleDate = parseOdooDate(order.write_date);
     const settleTimeSec = (settleDate && orderDate) ? Math.round((settleDate - orderDate) / 1000) : null;
     const isDineIn = sittingMode === 0;
-    // Dine time = order creation to bill settled (only meaningful for Captain dine-in)
-    const dineTimeSec = (isDineIn && configId === 6 && settleTimeSec > 60 && settleTimeSec < 14400) ? settleTimeSec : null;
-    // Post-prep wait = food ready to bill settled
+    const dineTimeSec = (!isDraft && isDineIn && configId === 6 && settleTimeSec > 60 && settleTimeSec < 14400) ? settleTimeSec : null;
     const postPrepSec = (dineTimeSec && prepCompleteSec && settleTimeSec > prepCompleteSec) ? settleTimeSec - prepCompleteSec : null;
 
     let configLabel = 'Counter';
     if (configId === 6) configLabel = 'Captain';
     else if (configId === 10) configLabel = 'WhatsApp';
 
-    // Short name: "HE - Cash Counter - 000045" → "#45"
-    const shortName = order.name ? '#' + parseInt(order.name.replace(/.*-\s*/, ''), 10) : order.name;
+    // Draft Captain orders have name='/' — use table name instead
+    const shortName = isDraft
+      ? (order.table_id?.[1] || 'Table ?')
+      : '#' + parseInt(order.name.replace(/.*-\s*/, ''), 10);
 
     result.push({
       id: orderId, name: order.name, shortName, time: formatIST(orderDate),
       elapsed: elapsedMin, amount: Math.round(order.amount_total),
       type: isDineIn ? 'dine-in' : 'takeaway',
       source: isWaba || configId === 10 ? 'whatsapp' : 'counter',
-      table: order.table_id?.[1] || null, config: configLabel,
-      items, kpStatus,
-      status: items.length === 0 ? 'no_prep' : allDone ? 'ready' : anyStarted ? 'preparing' : 'queued',
+      table: order.table_id ? { id: order.table_id[0], name: order.table_id[1] } : null,
+      config: configLabel, items, kpStatus, status,
       itemCount: (olByOrder[orderId] || []).reduce((s, l) => s + l.qty, 0),
-      prepCompleteSec, dineTimeSec, postPrepSec
+      prepCompleteSec, dineTimeSec, postPrepSec,
+      seatedMin: isDraft ? seatedMin : null,
+      kitchenSec: isDraft ? kitchenSec : null,
+      atTableSec: isDraft ? atTableSec : null
     });
   }
 
   // --- Today's Summary ---
-  const completedOrders = result.filter(o => o.status === 'ready' || o.status === 'no_prep');
-  const activeOrders = result.filter(o => o.status !== 'ready' && o.status !== 'no_prep');
+  const DINING_STATUSES = new Set(['dining_ordering', 'dining_queued', 'dining_preparing', 'dining_served']);
+  const COUNTER_ACTIVE_STATUSES = new Set(['queued', 'preparing']);
+  const DONE_STATUSES = new Set(['completed', 'no_prep']);
+
+  const diningOrders = result.filter(o => DINING_STATUSES.has(o.status));
+  const counterActive = result.filter(o => COUNTER_ACTIVE_STATUSES.has(o.status));
+  const completedOrders = result.filter(o => DONE_STATUSES.has(o.status));
   const dineInCompleted = completedOrders.filter(o => o.type === 'dine-in' && o.config === 'Captain' && o.dineTimeSec);
+  const counterDone = completedOrders.filter(o => o.config !== 'Captain' || o.type !== 'dine-in');
   const prepTimes = completedOrders.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
 
-  // Alerts: stuck orders and items
+  // Alerts: stuck orders and items (both dining + counter active)
+  const allActive = [...diningOrders, ...counterActive];
   const alerts = [];
-  for (const o of activeOrders) {
-    if (o.status === 'queued' && o.elapsed > 5) {
-      alerts.push({ name: o.name, type: 'not_started', message: `Queued ${o.elapsed}m — not started`, config: o.config });
-    } else if (o.elapsed > 20) {
-      alerts.push({ name: o.name, type: 'slow_order', message: `${o.elapsed}m in kitchen`, config: o.config });
+  for (const o of allActive) {
+    if ((o.status === 'queued' || o.status === 'dining_queued') && o.elapsed > 5) {
+      alerts.push({ name: o.shortName, type: 'not_started', message: `Queued ${o.elapsed}m — not started`, config: o.config });
+    } else if (o.elapsed > 20 && !DINING_STATUSES.has(o.status)) {
+      alerts.push({ name: o.shortName, type: 'slow_order', message: `${o.elapsed}m in kitchen`, config: o.config });
     }
     for (const item of o.items) {
       if (item.stage === 'Preparing' && item.elapsed > 900) {
-        alerts.push({ name: o.name, type: 'stuck_item', message: `${item.product} stuck preparing (${Math.round(item.elapsed / 60)}m)`, config: o.config });
+        alerts.push({ name: o.shortName, type: 'stuck_item', message: `${item.product} stuck preparing (${Math.round(item.elapsed / 60)}m)`, config: o.config });
       }
+    }
+  }
+  // Dining-specific alerts
+  for (const o of diningOrders) {
+    if (o.status === 'dining_served' && o.atTableSec && o.atTableSec > 2400) {
+      alerts.push({ name: o.shortName, type: 'long_dine', message: `Dining ${Math.round(o.atTableSec / 60)}m since food served`, config: o.config });
     }
   }
 
   const todaySummary = {
     totalOrders: result.length,
-    activeCount: activeOrders.length,
-    completedCount: completedOrders.length,
-    avgPrepSec: prepTimes.length > 0 ? Math.round(prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length) : 0,
-    dineIn: {
-      count: dineInCompleted.length,
+    dining: {
+      activeTables: diningOrders.length,
+      tables: diningOrders.map(o => ({
+        shortName: o.shortName, table: o.table, status: o.status,
+        seatedMin: o.seatedMin, amount: o.amount,
+        itemsDone: o.items.filter(i => ['Completed', 'Packed', 'Ready', 'Prepared'].includes(i.stage)).length,
+        itemsTotal: o.items.length,
+        kitchenSec: o.kitchenSec, atTableSec: o.atTableSec
+      })),
+      completedCount: dineInCompleted.length,
+      avgKitchenSec: dineInCompleted.length > 0 ? Math.round(dineInCompleted.filter(o => o.prepCompleteSec).reduce((a, b) => a + b.prepCompleteSec, 0) / Math.max(dineInCompleted.filter(o => o.prepCompleteSec).length, 1)) : 0,
       avgDineTimeSec: dineInCompleted.length > 0 ? Math.round(dineInCompleted.reduce((a, b) => a + b.dineTimeSec, 0) / dineInCompleted.length) : 0,
       avgPostPrepSec: dineInCompleted.filter(o => o.postPrepSec).length > 0
         ? Math.round(dineInCompleted.filter(o => o.postPrepSec).reduce((a, b) => a + b.postPrepSec, 0) / dineInCompleted.filter(o => o.postPrepSec).length) : 0,
     },
-    takeaway: { count: completedOrders.filter(o => o.type !== 'dine-in').length },
+    counter: {
+      activeCount: counterActive.length,
+      completedCount: counterDone.length,
+      avgPrepSec: prepTimes.length > 0 ? Math.round(prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length) : 0,
+    },
     alerts
   };
 
@@ -670,7 +722,7 @@ function emptySummary() {
 }
 
 function emptyTodaySummary() {
-  return { totalOrders: 0, activeCount: 0, completedCount: 0, avgPrepSec: 0, dineIn: { count: 0, avgDineTimeSec: 0, avgPostPrepSec: 0 }, takeaway: { count: 0 }, alerts: [] };
+  return { totalOrders: 0, dining: { activeTables: 0, tables: [], completedCount: 0, avgKitchenSec: 0, avgDineTimeSec: 0, avgPostPrepSec: 0 }, counter: { activeCount: 0, completedCount: 0, avgPrepSec: 0 }, alerts: [] };
 }
 
 async function rpc(url, db, uid, apiKey, model, method, args, kwargs = {}) {

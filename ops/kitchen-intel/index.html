@@ -47,11 +47,11 @@
     .quick-btn:active,.quick-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
     .btn-apply{padding:6px 12px;background:linear-gradient(135deg,var(--orange),var(--yellow));border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
 
-    /* Dashboard */
-    .db-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
-    .db-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
-    .db-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
-    .db-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+    /* Command Center summary row */
+    .cmd-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+    .cmd-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .cmd-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .cmd-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
 
     .alert-card{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
     .alert-card .alert-msg{color:var(--red);font-weight:600}
@@ -64,21 +64,66 @@
     .health-chip .hc-val{display:block;font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
     .health-chip .hc-items{display:block;font-size:9px;color:var(--muted)}
 
+    /* Mini table cards in Command Center */
+    .mini-tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+    .mini-table{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;border-left:3px solid var(--muted);transition:border-color .2s}
+    .mini-table:active{opacity:.8}
+    .mini-table.phase-ordering{border-left-color:var(--muted)}
+    .mini-table.phase-queued{border-left-color:var(--blue)}
+    .mini-table.phase-preparing{border-left-color:var(--yellow)}
+    .mini-table.phase-served{border-left-color:var(--green)}
+    .mt-name{font-size:13px;font-weight:700;margin-bottom:4px}
+    .mt-phase{font-size:10px;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+    .mt-progress{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-bottom:4px}
+    .mt-progress-fill{height:100%;border-radius:2px;background:var(--green);transition:width .3s}
+    .mt-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+    /* Mini queue cards in Command Center */
+    .mini-queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+    .mini-order{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;border-left:3px solid var(--yellow)}
+    .mini-order:active{opacity:.8}
+    .mini-order.status-queued{border-left-color:var(--muted)}
+    .mini-order.status-preparing{border-left-color:var(--yellow)}
+    .mo-name{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:2px}
+    .mo-meta{font-size:10px;color:var(--muted)}
+
+    /* Tables tab */
+    .tables-header{font-size:13px;color:var(--text2);margin-bottom:12px}
+    .table-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;border-left:4px solid var(--muted)}
+    .table-card.phase-ordering{border-left-color:var(--muted)}
+    .table-card.phase-queued{border-left-color:var(--blue)}
+    .table-card.phase-preparing{border-left-color:var(--yellow)}
+    .table-card.phase-served{border-left-color:var(--green)}
+    .tc-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+    .tc-name{font-size:15px;font-weight:700}
+    .tc-phase{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px}
+    .tc-phase-ordering{background:rgba(100,116,139,.15);color:var(--muted)}
+    .tc-phase-queued{background:rgba(59,130,246,.15);color:var(--blue)}
+    .tc-phase-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .tc-phase-served{background:rgba(16,185,129,.15);color:var(--green)}
+    .tc-items{padding:10px 14px}
+    .tc-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+    .tc-item-qty{font-weight:700;font-family:'JetBrains Mono',monospace;min-width:24px;color:var(--text2)}
+    .tc-item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tc-item-station{font-size:10px;color:var(--muted);white-space:nowrap}
+    .tc-item-stage{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;white-space:nowrap}
+    .tc-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--bg2);font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
     .dine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
     .dine-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
     .dine-box .d-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
     .dine-box .d-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:2px}
     .dine-box .d-sub{font-size:9px;color:var(--text2);margin-top:2px}
 
-    .completed-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;font-size:12px}
+    /* Completed order rows (shared) */
+    .cr-card{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden;cursor:pointer}
+    .completed-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:12px}
     .cr-name{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
     .cr-meta{color:var(--muted);font-size:10px;margin-left:6px}
     .cr-right{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px}
     .cr-prep{color:var(--cyan)}
     .cr-dine{color:var(--purple)}
     .cr-amount{color:var(--text2)}
-    .cr-card{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden;cursor:pointer}
-    .cr-card .completed-row{margin-bottom:0;border:none;border-radius:0}
     .cr-items{display:none;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--border)}
     .cr-items.show{display:block}
     .cr-item-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
@@ -89,11 +134,11 @@
     .cr-item-time{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;white-space:nowrap;margin-left:8px}
     .cr-expand-hint{font-size:9px;color:var(--muted);text-align:right;padding:0 10px 4px}
 
-    /* Live tab */
-    .live-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
-    .ls-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
-    .ls-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
-    .ls-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+    /* Queue tab */
+    .queue-header{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+    .qh-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .qh-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .qh-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
 
     .order-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
     .order-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
@@ -128,7 +173,8 @@
     .kp-queued{background:rgba(100,116,139,.15);color:var(--muted)}
     .kp-n\/a{background:rgba(100,116,139,.08);color:var(--muted)}
 
-    /* Station cards */
+    /* Kitchen (stations) tab */
+    .station-group-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-left:4px}
     .station-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--orange)}
     .station-name{font-size:14px;font-weight:700;margin-bottom:6px}
     .station-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -138,14 +184,23 @@
     .perf-bar{height:6px;background:var(--bg2);border-radius:3px;margin-top:8px;overflow:hidden}
     .perf-fill{height:100%;border-radius:3px;transition:width .3s}
 
-    /* KP Flow */
+    .sc-indian{border-left-color:#ef4444}
+    .sc-biryani{border-left-color:#f59e0b}
+    .sc-tandoor{border-left-color:#f97316}
+    .sc-chinese{border-left-color:#3b82f6}
+    .sc-fc{border-left-color:#8b5cf6}
+    .sc-juice{border-left-color:#10b981}
+    .sc-bm{border-left-color:#ec4899}
+    .sc-shawarma{border-left-color:#06b6d4}
+    .sc-grill{border-left-color:#f59e0b}
+
+    /* Flow tab (KP + Timeline merged) */
     .kp-flow-visual{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0;flex-wrap:wrap}
     .kp-node{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:80px}
     .kp-node .kp-stage-name{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase}
     .kp-arrow{color:var(--muted);font-size:12px;padding:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
     .kp-arrow .kp-dur{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--orange)}
 
-    /* Timeline */
     .tl-order{margin-bottom:16px}
     .tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
     .tl-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
@@ -159,7 +214,7 @@
     .tl-bar.done{background:rgba(16,185,129,.4)}
     .tl-bar.waiting{background:rgba(100,116,139,.2)}
 
-    /* Hourly chart */
+    /* Trends charts */
     .chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
     .chart-container{height:140px;display:flex;align-items:flex-end;gap:3px;padding-top:10px}
     .chart-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:all .2s;cursor:pointer;position:relative}
@@ -175,22 +230,13 @@
     .error-bar{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:10px;margin:10px 16px;font-size:12px;display:none}
     .error-bar.show{display:block}
 
-    .sc-indian{border-left-color:#ef4444}
-    .sc-biryani{border-left-color:#f59e0b}
-    .sc-tandoor{border-left-color:#f97316}
-    .sc-chinese{border-left-color:#3b82f6}
-    .sc-fc{border-left-color:#8b5cf6}
-    .sc-juice{border-left-color:#10b981}
-    .sc-bm{border-left-color:#ec4899}
-    .sc-shawarma{border-left-color:#06b6d4}
-    .sc-grill{border-left-color:#f59e0b}
-
     @media(max-width:400px){
-      .db-summary{grid-template-columns:repeat(2,1fr)}
-      .live-summary{grid-template-columns:repeat(2,1fr)}
+      .cmd-summary{grid-template-columns:repeat(2,1fr)}
+      .queue-header{grid-template-columns:repeat(2,1fr)}
       .station-stats{grid-template-columns:repeat(2,1fr)}
       .stat-grid{grid-template-columns:1fr}
       .dine-grid{grid-template-columns:1fr}
+      .mini-tables{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -208,42 +254,55 @@
   </header>
 
   <nav class="tabs" id="tabBar">
-    <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
-    <div class="tab" onclick="switchTab('live',this)">Live Queue</div>
-    <div class="tab" onclick="switchTab('stations',this)">Stations</div>
-    <div class="tab" onclick="switchTab('kp',this)">KP Flow</div>
-    <div class="tab" onclick="switchTab('timeline',this)">Timeline</div>
+    <div class="tab active" onclick="switchTab('command',this)">Command</div>
+    <div class="tab" onclick="switchTab('tables',this)">Tables</div>
+    <div class="tab" onclick="switchTab('queue',this)">Queue</div>
+    <div class="tab" onclick="switchTab('kitchen',this)">Kitchen</div>
+    <div class="tab" onclick="switchTab('flow',this)">Flow</div>
     <div class="tab" onclick="switchTab('trends',this)">Trends</div>
   </nav>
 
-  <!-- ====== DASHBOARD TAB (default) ====== -->
-  <div class="tab-content active" id="tab-dashboard">
-    <div class="db-summary" id="dbSummary">
-      <div class="db-box"><div class="num" id="dbActive">-</div><div class="lbl">In Kitchen</div></div>
-      <div class="db-box"><div class="num" id="dbDone">-</div><div class="lbl">Done</div></div>
-      <div class="db-box"><div class="num" id="dbAvgPrep">-</div><div class="lbl">Avg Prep</div></div>
-      <div class="db-box"><div class="num" id="dbTotal">-</div><div class="lbl">Orders (4h)</div></div>
+  <!-- ====== COMMAND CENTER TAB (default) ====== -->
+  <div class="tab-content active" id="tab-command">
+    <div class="cmd-summary" id="cmdSummary">
+      <div class="cmd-box"><div class="num" id="cmdDining">-</div><div class="lbl">Dining</div></div>
+      <div class="cmd-box"><div class="num" id="cmdCounter">-</div><div class="lbl">Counter</div></div>
+      <div class="cmd-box"><div class="num" id="cmdDone">-</div><div class="lbl">Done</div></div>
+      <div class="cmd-box"><div class="num" id="cmdAvgPrep">-</div><div class="lbl">Avg Prep</div></div>
     </div>
-    <div id="dbAlerts"></div>
+    <div id="cmdAlerts"></div>
+    <div id="cmdTablesSection"></div>
+    <div id="cmdQueueSection"></div>
     <div class="section-title">Station Health</div>
-    <div class="health-row" id="dbStationHealth"></div>
-    <div id="dbDineSection"></div>
-    <div class="section-title">Completed Orders</div>
-    <div id="dbCompletedList"></div>
+    <div class="health-row" id="cmdStationHealth"></div>
+    <div class="section-title">Recent Completed</div>
+    <div id="cmdCompletedList"></div>
   </div>
 
-  <!-- ====== LIVE QUEUE TAB ====== -->
-  <div class="tab-content" id="tab-live">
-    <div class="live-summary" id="liveSummary">
-      <div class="ls-box"><div class="num" id="lsQueued">-</div><div class="lbl">Queued</div></div>
-      <div class="ls-box"><div class="num" id="lsPreparing">-</div><div class="lbl">Preparing</div></div>
-      <div class="ls-box"><div class="num" id="lsAvgMin">-</div><div class="lbl">Avg Wait</div></div>
+  <!-- ====== TABLES TAB (Dine-in Focus) ====== -->
+  <div class="tab-content" id="tab-tables">
+    <div class="tables-header" id="tablesHeader">ACTIVE TABLES</div>
+    <div id="tablesActive"></div>
+    <div id="tablesDineStats"></div>
+    <div class="section-title">Completed Tables</div>
+    <div id="tablesCompleted"></div>
+  </div>
+
+  <!-- ====== QUEUE TAB (Takeaway Focus) ====== -->
+  <div class="tab-content" id="tab-queue">
+    <div class="queue-header" id="queueHeader">
+      <div class="qh-box"><div class="num" id="qhActive">-</div><div class="lbl">Active</div></div>
+      <div class="qh-box"><div class="num" id="qhReady">-</div><div class="lbl">Ready</div></div>
+      <div class="qh-box"><div class="num" id="qhAvgWait">-</div><div class="lbl">Avg Wait</div></div>
     </div>
-    <div id="liveOrders"></div>
+    <div id="queueActive"></div>
+    <div id="queueCounterStats"></div>
+    <div class="section-title">Completed</div>
+    <div id="queueCompleted"></div>
   </div>
 
-  <!-- ====== STATIONS TAB ====== -->
-  <div class="tab-content" id="tab-stations">
+  <!-- ====== KITCHEN TAB (Stations) ====== -->
+  <div class="tab-content" id="tab-kitchen">
     <div class="filter-row">
       <input type="date" id="stFromDate">
       <button class="quick-btn active" onclick="quickRange('today',this)">Today</button>
@@ -258,17 +317,16 @@
       <div class="stat-box"><div class="label">Items</div><div class="val" id="stItems">-</div></div>
     </div>
     <div id="stDineStats"></div>
-    <div class="section-title">Station Breakdown</div>
     <div id="stationCards"></div>
   </div>
 
-  <!-- ====== KP FLOW TAB ====== -->
-  <div class="tab-content" id="tab-kp">
+  <!-- ====== FLOW TAB (KP Flow + Timeline merged) ====== -->
+  <div class="tab-content" id="tab-flow">
     <div class="filter-row">
-      <input type="date" id="kpFromDate">
-      <button class="quick-btn active" onclick="quickRange('today',this,'kp')">Today</button>
-      <button class="quick-btn" onclick="quickRange('yesterday',this,'kp')">Yesterday</button>
-      <button class="quick-btn" onclick="quickRange('week',this,'kp')">7d</button>
+      <input type="date" id="flFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'fl')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'fl')">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this,'fl')">7d</button>
       <button class="btn-apply" onclick="loadStats()">Go</button>
     </div>
     <div class="section-title">Kitchen Pass Pipeline</div>
@@ -280,17 +338,7 @@
       <div class="stat-box"><div class="label">Packed &rarr; Done</div><div class="val" id="kpPD">-</div><div class="sub" id="kpPDn">0 orders</div></div>
       <div class="stat-box"><div class="label">Total KP Time</div><div class="val" id="kpTotal">-</div><div class="sub">end to end</div></div>
     </div>
-  </div>
-
-  <!-- ====== TIMELINE TAB ====== -->
-  <div class="tab-content" id="tab-timeline">
-    <div class="filter-row">
-      <input type="date" id="tlFromDate">
-      <button class="quick-btn active" onclick="quickRange('today',this,'tl')">Today</button>
-      <button class="quick-btn" onclick="quickRange('yesterday',this,'tl')">Yesterday</button>
-      <button class="btn-apply" onclick="loadStats()">Go</button>
-    </div>
-    <div class="section-title">Order Timelines</div>
+    <div class="section-title" style="margin-top:20px">Order Timelines</div>
     <p style="font-size:11px;color:var(--text2);margin-bottom:12px">Visual breakdown of each item's journey through the kitchen</p>
     <div id="timelineContent"></div>
   </div>
@@ -310,6 +358,7 @@
       <div class="stat-box"><div class="label">Counter</div><div class="val" id="trCounter">-</div></div>
       <div class="stat-box"><div class="label">Captain</div><div class="val" id="trCaptain">-</div></div>
     </div>
+    <div id="trDineVsTakeaway"></div>
     <div class="section-title">Orders Per Hour</div>
     <div class="chart-wrap">
       <div class="chart-container" id="trOrderChart"></div>
@@ -333,8 +382,12 @@ const $ = id => document.getElementById(id);
 let liveTimer = null;
 let liveData = null;
 let statsData = null;
-let currentTab = 'dashboard';
+let currentTab = 'command';
 let isLoading = false;
+
+const DINING_STATUSES = new Set(['dining_ordering', 'dining_queued', 'dining_preparing', 'dining_served']);
+const COUNTER_ACTIVE = new Set(['queued', 'preparing']);
+const DONE_STATUSES = new Set(['completed', 'no_prep']);
 
 // --- Init ---
 (async function init() {
@@ -346,7 +399,7 @@ let isLoading = false;
 
 function setTodayDefaults() {
   const today = todayIST();
-  ['stFromDate','kpFromDate','tlFromDate','trFromDate'].forEach(id => {
+  ['stFromDate','flFromDate','trFromDate'].forEach(id => {
     $(id).value = today;
   });
 }
@@ -372,13 +425,12 @@ function switchTab(name, el) {
   el.classList.add('active');
   $('tab-' + name).classList.add('active');
 
-  if (name === 'dashboard' || name === 'live') {
-    if (liveData) {
-      if (name === 'dashboard') renderDashboard(liveData);
-      else renderLive(liveData);
-    }
-  } else if (['stations', 'kp', 'timeline', 'trends'].includes(name) && !statsData) {
+  if (['command', 'tables', 'queue'].includes(name)) {
+    if (liveData) renderTab(name, liveData);
+  } else if (['kitchen', 'flow', 'trends'].includes(name) && !statsData) {
     loadStats();
+  } else if (statsData) {
+    renderStatsTab(name, statsData);
   }
 }
 
@@ -388,7 +440,7 @@ function quickRange(range, btn, prefix) {
   else if (range === 'yesterday') dateVal = yesterdayIST();
   else if (range === 'week') dateVal = weekAgoIST();
 
-  ['st', 'kp', 'tl', 'tr'].forEach(p => {
+  ['st', 'fl', 'tr'].forEach(p => {
     const input = $(p + 'FromDate');
     if (input) input.value = dateVal;
   });
@@ -400,19 +452,18 @@ function quickRange(range, btn, prefix) {
 }
 
 function manualRefresh() {
-  if (['dashboard', 'live'].includes(currentTab)) loadLive();
+  if (['command', 'tables', 'queue'].includes(currentTab)) loadLive();
   else loadStats();
 }
 
-// --- Live data (feeds Dashboard + Live Queue) ---
+// --- Live data (feeds Command + Tables + Queue) ---
 async function loadLive() {
   try {
     const res = await fetch(API + '?action=live');
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
     liveData = data;
-    if (currentTab === 'dashboard') renderDashboard(data);
-    if (currentTab === 'live') renderLive(data);
+    renderTab(currentTab, data);
     $('statusText').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     $('dot').style.background = 'var(--green)';
     $('error').classList.remove('show');
@@ -423,139 +474,237 @@ async function loadLive() {
   }
 }
 
-// --- Dashboard tab ---
-function renderDashboard(data) {
+function renderTab(name, data) {
+  if (name === 'command') renderCommand(data);
+  else if (name === 'tables') renderTables(data);
+  else if (name === 'queue') renderQueue(data);
+}
+
+// =============================================
+// COMMAND CENTER TAB
+// =============================================
+function renderCommand(data) {
   const summary = data.todaySummary || {};
   const orders = data.orders || [];
   const stations = data.stations || {};
+  const dining = summary.dining || {};
+  const counter = summary.counter || {};
 
   // Summary stats
-  $('dbActive').textContent = summary.activeCount || 0;
-  $('dbActive').style.color = (summary.activeCount > 0) ? 'var(--yellow)' : 'var(--green)';
-  $('dbDone').textContent = summary.completedCount || 0;
-  $('dbAvgPrep').textContent = fmtSec(summary.avgPrepSec);
-  $('dbAvgPrep').style.color = summary.avgPrepSec > 600 ? 'var(--red)' : summary.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
-  $('dbTotal').textContent = summary.totalOrders || 0;
+  const diningCount = dining.activeTables || 0;
+  const counterCount = counter.activeCount || 0;
+  const doneCount = (dining.completedCount || 0) + (counter.completedCount || 0);
+
+  $('cmdDining').textContent = diningCount > 0 ? diningCount + ' tables' : '0';
+  $('cmdDining').style.color = diningCount > 0 ? 'var(--purple)' : 'var(--green)';
+  $('cmdCounter').textContent = counterCount;
+  $('cmdCounter').style.color = counterCount > 0 ? 'var(--yellow)' : 'var(--green)';
+  $('cmdDone').textContent = doneCount;
+  $('cmdAvgPrep').textContent = fmtSec(counter.avgPrepSec);
+  $('cmdAvgPrep').style.color = counter.avgPrepSec > 600 ? 'var(--red)' : counter.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
 
   // Alerts
   const alerts = summary.alerts || [];
   if (alerts.length > 0) {
-    $('dbAlerts').innerHTML = '<div class="section-title" style="color:var(--red)">Alerts</div>' +
+    $('cmdAlerts').innerHTML = '<div class="section-title" style="color:var(--red)">Alerts</div>' +
       alerts.map(a => `<div class="alert-card">
-        <div><span class="alert-msg">${a.name}</span> <span class="alert-meta">${a.config}</span></div>
-        <span class="alert-meta">${a.message}</span>
+        <div><span class="alert-msg">${esc(a.name)}</span> <span class="alert-meta">${esc(a.config)}</span></div>
+        <span class="alert-meta">${esc(a.message)}</span>
       </div>`).join('');
   } else {
-    $('dbAlerts').innerHTML = '';
+    $('cmdAlerts').innerHTML = '';
   }
 
-  // Station health
-  const stationNames = Object.keys(stations);
+  // Active Tables mini-cards
+  const diningTables = dining.tables || [];
+  if (diningTables.length > 0) {
+    $('cmdTablesSection').innerHTML = '<div class="section-title">Active Tables</div>' +
+      '<div class="mini-tables">' + diningTables.map(t => {
+        const phaseClass = getPhaseClass(t.status);
+        const phaseLabel = getPhaseLabel(t.status, t);
+        const progressPct = t.itemsTotal > 0 ? Math.round((t.itemsDone / t.itemsTotal) * 100) : 0;
+        return `<div class="mini-table ${phaseClass}" onclick="goToTab('tables')">
+          <div class="mt-name">${esc(t.shortName)}</div>
+          <div class="mt-phase" style="color:${getPhaseColor(t.status)}">${phaseLabel}</div>
+          ${t.itemsTotal > 0 ? `<div class="mt-progress"><div class="mt-progress-fill" style="width:${progressPct}%"></div></div>` : ''}
+          <div class="mt-meta">
+            <span>${t.seatedMin || 0}m</span>
+            <span>${t.itemsDone}/${t.itemsTotal}</span>
+            <span>&#8377;${t.amount}</span>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+  } else {
+    $('cmdTablesSection').innerHTML = '';
+  }
+
+  // Counter Queue mini-cards
+  const counterOrders = orders.filter(o => COUNTER_ACTIVE.has(o.status));
+  if (counterOrders.length > 0) {
+    $('cmdQueueSection').innerHTML = '<div class="section-title">Counter Queue</div>' +
+      '<div class="mini-queue">' + counterOrders.map(o => {
+        const statusClass = o.status === 'queued' ? 'status-queued' : 'status-preparing';
+        return `<div class="mini-order ${statusClass}" onclick="goToTab('queue')">
+          <div class="mo-name">${esc(o.shortName)}</div>
+          <div class="mo-meta">${o.elapsed}m &middot; ${o.itemCount} items &middot; ${o.config}</div>
+        </div>`;
+      }).join('') + '</div>';
+  } else {
+    $('cmdQueueSection').innerHTML = '';
+  }
+
+  // Station health (exclude 0-sample stations)
+  const stationNames = Object.keys(stations).filter(n => stations[n].samplesCount > 0 || stations[n].itemsProcessed > 0);
   if (stationNames.length > 0) {
-    $('dbStationHealth').innerHTML = stationNames.map(name => {
+    $('cmdStationHealth').innerHTML = stationNames.map(name => {
       const s = stations[name];
       const hasData = s.samplesCount > 0;
       const color = !hasData ? 'var(--muted)' : s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
       const valText = hasData ? s.avgPrepMin + 'm' : '--';
       return `<div class="health-chip" style="border-top-color:${color}">
-        <span class="hc-name">${name}</span>
+        <span class="hc-name">${esc(name)}</span>
         <span class="hc-val" style="color:${color}">${valText}</span>
         <span class="hc-items">${s.itemsProcessed} items</span>
       </div>`;
     }).join('');
   } else {
-    $('dbStationHealth').innerHTML = '<span style="color:var(--muted);font-size:12px">No station data yet</span>';
+    $('cmdStationHealth').innerHTML = '<span style="color:var(--muted);font-size:12px">No station data yet</span>';
   }
 
-  // Dine-in metrics
-  const dineIn = summary.dineIn || {};
-  if (dineIn.count > 0) {
-    $('dbDineSection').innerHTML = `
-      <div class="section-title">Dine-in Tracking</div>
-      <div class="dine-grid">
-        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">order to settle</div></div>
-        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
-        <div class="dine-box"><div class="d-val">${dineIn.count}</div><div class="d-lbl">Dine-in</div><div class="d-sub">Captain orders</div></div>
-        <div class="dine-box"><div class="d-val">${summary.takeaway?.count || 0}</div><div class="d-lbl">Takeaway</div><div class="d-sub">completed</div></div>
-      </div>`;
-  } else {
-    $('dbDineSection').innerHTML = '';
-  }
+  // Recent completed (last 10)
+  const completed = orders.filter(o => DONE_STATUSES.has(o.status)).slice(0, 10);
+  $('cmdCompletedList').innerHTML = completed.length > 0
+    ? completed.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed orders yet</div>';
+}
 
-  // Completed orders (expandable to show item-level prep times)
-  // Show 'ready' first (with prep data), then 'no_prep' at bottom
-  const readyOrders = orders.filter(o => o.status === 'ready').slice(0, 20);
-  const noPrepOrders = orders.filter(o => o.status === 'no_prep').slice(0, 5);
-  const completed = [...readyOrders, ...noPrepOrders];
+// =============================================
+// TABLES TAB (Dine-in Focus)
+// =============================================
+function renderTables(data) {
+  const orders = data.orders || [];
+  const summary = data.todaySummary || {};
+  const dining = summary.dining || {};
 
-  if (completed.length > 0) {
-    $('dbCompletedList').innerHTML = completed.map((o, idx) => {
-      const displayName = o.shortName || o.name;
-      const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
-      const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
-      const isNoPrep = o.status === 'no_prep';
+  // Active dine-in tables
+  const activeTables = orders.filter(o => DINING_STATUSES.has(o.status));
+  $('tablesHeader').textContent = `ACTIVE TABLES \u2014 ${activeTables.length} occupied`;
 
-      const itemRows = (o.items || []).map(item => {
-        const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
-        const tStr = t > 0 ? fmtSec(t) : '-';
-        const tColor = t > 600 ? 'var(--red)' : t > 300 ? 'var(--yellow)' : 'var(--cyan)';
-        return `<div class="cr-item-row">
-          <div class="cr-item-left">
-            <span class="iq">${item.qty}x</span>
-            <span class="in">${item.product}</span>
-            <span class="is">${item.station}</span>
-          </div>
-          <span class="cr-item-time" style="color:${tColor}">${tStr}</span>
+  if (activeTables.length > 0) {
+    $('tablesActive').innerHTML = activeTables.map(o => {
+      const phaseClass = getPhaseClass(o.status);
+      const phaseLabel = getPhaseLabel(o.status, o);
+      const phaseCssClass = 'tc-phase-' + o.status.replace('dining_', '');
+      const itemsDone = o.items.filter(i => ['Completed', 'Packed', 'Ready', 'Prepared'].includes(i.stage)).length;
+
+      const itemsHtml = o.items.map(item => {
+        let stageClass = 'stage-queued';
+        let stageLabel = item.stage;
+        if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
+        else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
+        else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) { stageClass = 'stage-done'; }
+        return `<div class="tc-item">
+          <span class="tc-item-qty">${item.qty}x</span>
+          <span class="tc-item-name">${esc(item.product)}</span>
+          <span class="tc-item-station">${esc(item.station)}</span>
+          <span class="tc-item-stage ${stageClass}">${stageLabel}</span>
         </div>`;
       }).join('');
 
-      return `<div class="cr-card" onclick="toggleItems(this)">
-        <div class="completed-row">
-          <div>
-            <span class="cr-name">${displayName}</span>
-            <span class="cr-meta">${o.config}${isNoPrep ? ' (no KDS)' : ''}</span>
-          </div>
-          <div class="cr-right">
-            ${!isNoPrep ? `<span class="cr-prep">${prepStr}</span>` : ''}
-            ${dineStr ? `<span class="cr-dine">${dineStr}</span>` : ''}
-            <span class="cr-amount">&#8377;${o.amount}</span>
+      const footerParts = [];
+      if (o.kitchenSec) footerParts.push('Kitchen: ' + fmtSec(o.kitchenSec));
+      if (o.atTableSec) footerParts.push('At table: ' + fmtSec(o.atTableSec));
+      footerParts.push('\u20B9' + o.amount);
+
+      return `<div class="table-card ${phaseClass}">
+        <div class="tc-header">
+          <span class="tc-name">${esc(o.shortName)}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tc-phase ${phaseCssClass}">${phaseLabel}</span>
+            <span style="font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--text2)">${o.seatedMin || o.elapsed}m</span>
           </div>
         </div>
-        ${o.items && o.items.length > 0 ? `<div class="cr-expand-hint">${o.items.length} items — tap to expand</div><div class="cr-items">${itemRows}</div>` : ''}
+        ${o.items.length > 0 ? `<div class="tc-items">${itemsHtml}</div>` : '<div style="padding:12px 14px;color:var(--muted);font-size:12px">No items yet</div>'}
+        <div class="tc-footer"><span>${footerParts.join(' \u00B7 ')}</span><span>${itemsDone}/${o.items.length} ready</span></div>
       </div>`;
     }).join('');
   } else {
-    $('dbCompletedList').innerHTML = '<div class="empty-msg">No completed orders yet</div>';
+    $('tablesActive').innerHTML = '<div class="empty-msg">No active dine-in tables</div>';
   }
+
+  // Dine-in stats
+  if (dining.completedCount > 0) {
+    $('tablesDineStats').innerHTML = `
+      <div class="section-title">Today's Dine-in Stats</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${dining.completedCount}</div><div class="d-lbl">Tables Served</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgKitchenSec)}</div><div class="d-lbl">Avg Kitchen</div><div class="d-sub">order to food ready</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">order to settle</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
+      </div>`;
+  } else {
+    $('tablesDineStats').innerHTML = '';
+  }
+
+  // Completed Captain dine-in orders
+  const completedDining = orders.filter(o => DONE_STATUSES.has(o.status) && o.config === 'Captain' && o.type === 'dine-in').slice(0, 10);
+  $('tablesCompleted').innerHTML = completedDining.length > 0
+    ? completedDining.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed dine-in orders yet</div>';
 }
 
-// --- Live Queue tab (only active orders) ---
-function renderLive(data) {
+// =============================================
+// QUEUE TAB (Takeaway/Counter Focus)
+// =============================================
+function renderQueue(data) {
   const orders = data.orders || [];
-  const active = orders.filter(o => o.status !== 'ready' && o.status !== 'no_prep');
-  const queued = active.filter(o => o.status === 'queued');
-  const preparing = active.filter(o => o.status === 'preparing');
+  const summary = data.todaySummary || {};
+  const counter = summary.counter || {};
 
-  const avgMin = active.length > 0
-    ? Math.round(active.reduce((s, o) => s + o.elapsed, 0) / active.length)
-    : 0;
+  // Separate active and recently completed counter orders
+  const activeOrders = orders.filter(o => COUNTER_ACTIVE.has(o.status));
+  const recentlyCompleted = orders.filter(o => o.status === 'completed' && o.config !== 'Captain').slice(0, 5);
+  const allCounterDone = orders.filter(o => DONE_STATUSES.has(o.status) && !(o.config === 'Captain' && o.type === 'dine-in')).slice(0, 10);
 
-  $('lsQueued').textContent = queued.length;
-  $('lsQueued').style.color = queued.length > 3 ? 'var(--red)' : queued.length > 0 ? 'var(--yellow)' : 'var(--green)';
-  $('lsPreparing').textContent = preparing.length;
-  $('lsAvgMin').textContent = avgMin + 'm';
-  $('lsAvgMin').style.color = avgMin > 20 ? 'var(--red)' : avgMin > 10 ? 'var(--yellow)' : 'var(--green)';
+  const avgWait = activeOrders.length > 0
+    ? Math.round(activeOrders.reduce((s, o) => s + o.elapsed, 0) / activeOrders.length) : 0;
 
-  const container = $('liveOrders');
-  if (active.length === 0) {
-    container.innerHTML = '<div class="empty-msg">All orders fulfilled — kitchen clear</div>';
-    return;
+  $('qhActive').textContent = activeOrders.length;
+  $('qhActive').style.color = activeOrders.length > 3 ? 'var(--red)' : activeOrders.length > 0 ? 'var(--yellow)' : 'var(--green)';
+  $('qhReady').textContent = recentlyCompleted.length;
+  $('qhAvgWait').textContent = avgWait + 'm';
+  $('qhAvgWait').style.color = avgWait > 20 ? 'var(--red)' : avgWait > 10 ? 'var(--yellow)' : 'var(--green)';
+
+  // Active orders
+  if (activeOrders.length > 0) {
+    const sorted = [...activeOrders].sort((a, b) => b.elapsed - a.elapsed);
+    $('queueActive').innerHTML = '<div class="section-title">Active Orders</div>' +
+      sorted.map(order => renderOrderCard(order)).join('');
+  } else {
+    $('queueActive').innerHTML = '<div class="empty-msg">All orders fulfilled \u2014 counter clear</div>';
   }
 
-  const sorted = active.sort((a, b) => b.elapsed - a.elapsed);
-  container.innerHTML = sorted.map(order => renderOrderCard(order)).join('');
+  // Counter stats
+  if (counter.completedCount > 0) {
+    $('queueCounterStats').innerHTML = `
+      <div class="section-title">Today's Counter Stats</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${counter.completedCount}</div><div class="d-lbl">Orders Done</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(counter.avgPrepSec)}</div><div class="d-lbl">Avg Prep</div></div>
+      </div>`;
+  } else {
+    $('queueCounterStats').innerHTML = '';
+  }
+
+  // Completed counter orders
+  $('queueCompleted').innerHTML = allCounterDone.length > 0
+    ? allCounterDone.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed counter orders yet</div>';
 }
 
+// =============================================
+// SHARED: Order card renderer (for Queue active)
+// =============================================
 function renderOrderCard(order) {
   const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
   const displayName = order.shortName || order.name;
@@ -568,28 +717,27 @@ function renderOrderCard(order) {
     if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
     else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
     else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
-    // Show prep duration if done, else elapsed since sent to kitchen
     const timeSec = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
     const timeStr = timeSec > 0 ? fmtSec(timeSec) : '';
     const timeColor = timeSec > 600 ? 'var(--red)' : timeSec > 300 ? 'var(--yellow)' : 'var(--text2)';
     return `<div class="item-row">
       <span class="item-qty">${item.qty}x</span>
-      <span class="item-name">${item.product}</span>
-      <span class="item-station">${item.station}</span>
+      <span class="item-name">${esc(item.product)}</span>
+      <span class="item-station">${esc(item.station)}</span>
       <span class="item-time" style="color:${timeColor}">${timeStr}</span>
       <span class="item-stage ${stageClass}">${stageLabel}</span>
     </div>`;
   }).join('');
 
   const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
-  const tableInfo = order.table ? ' &middot; ' + order.table : '';
+  const tableInfo = order.table ? ' \u00B7 ' + esc(order.table.name || '') : '';
 
   return `<div class="order-card">
     <div class="order-header">
       <div>
-        <span class="order-id">${displayName}</span>
+        <span class="order-id">${esc(displayName)}</span>
         <span class="order-badge ${typeClass}" style="margin-left:6px">${typeLabel}</span>
-        <span class="order-badge badge-counter" style="margin-left:4px">${order.config}</span>
+        <span class="order-badge badge-counter" style="margin-left:4px">${esc(order.config)}</span>
       </div>
       <div class="order-meta">
         <span class="order-time">${order.time}</span>
@@ -598,13 +746,54 @@ function renderOrderCard(order) {
     </div>
     <div class="order-items">${itemsHtml}</div>
     <div class="order-footer">
-      <span>${order.itemCount} items &middot; &#8377;${order.amount}${tableInfo}</span>
-      <span class="kp-badge ${kpClass}">KP: ${order.kpStatus}</span>
+      <span>${order.itemCount} items \u00B7 \u20B9${order.amount}${tableInfo}</span>
+      <span class="kp-badge ${kpClass}">KP: ${esc(order.kpStatus)}</span>
     </div>
   </div>`;
 }
 
-// --- Stats data (shared across stations/kp/timeline/trends) ---
+// =============================================
+// SHARED: Completed card renderer
+// =============================================
+function renderCompletedCard(o) {
+  const displayName = o.shortName || o.name;
+  const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
+  const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
+  const isNoPrep = o.status === 'no_prep';
+
+  const itemRows = (o.items || []).map(item => {
+    const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
+    const tStr = t > 0 ? fmtSec(t) : '-';
+    const tColor = t > 600 ? 'var(--red)' : t > 300 ? 'var(--yellow)' : 'var(--cyan)';
+    return `<div class="cr-item-row">
+      <div class="cr-item-left">
+        <span class="iq">${item.qty}x</span>
+        <span class="in">${esc(item.product)}</span>
+        <span class="is">${esc(item.station)}</span>
+      </div>
+      <span class="cr-item-time" style="color:${tColor}">${tStr}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="cr-card" onclick="toggleItems(this)">
+    <div class="completed-row">
+      <div>
+        <span class="cr-name">${esc(displayName)}</span>
+        <span class="cr-meta">${esc(o.config)}${isNoPrep ? ' (no KDS)' : ''}</span>
+      </div>
+      <div class="cr-right">
+        ${!isNoPrep ? `<span class="cr-prep">${prepStr}</span>` : ''}
+        ${dineStr ? `<span class="cr-dine">${dineStr}</span>` : ''}
+        <span class="cr-amount">\u20B9${o.amount}</span>
+      </div>
+    </div>
+    ${o.items && o.items.length > 0 ? `<div class="cr-expand-hint">${o.items.length} items \u2014 tap to expand</div><div class="cr-items">${itemRows}</div>` : ''}
+  </div>`;
+}
+
+// =============================================
+// STATS: Load + render Kitchen/Flow/Trends
+// =============================================
 async function loadStats() {
   if (isLoading) return;
   isLoading = true;
@@ -620,10 +809,7 @@ async function loadStats() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
     statsData = data;
-    renderStations(data);
-    renderKPFlow(data);
-    renderTimeline(data);
-    renderTrends(data);
+    renderStatsTab(currentTab, data);
     $('error').classList.remove('show');
   } catch (e) {
     $('error').textContent = 'Error loading stats: ' + e.message;
@@ -632,15 +818,20 @@ async function loadStats() {
   isLoading = false;
 }
 
-// --- Stations tab ---
-function renderStations(data) {
+function renderStatsTab(name, data) {
+  if (name === 'kitchen') renderKitchen(data);
+  else if (name === 'flow') { renderKPFlow(data); renderTimeline(data); }
+  else if (name === 'trends') renderTrends(data);
+}
+
+// --- Kitchen tab (Stations) ---
+function renderKitchen(data) {
   const s = data.summary;
   $('stOrders').textContent = s.totalOrders;
   $('stAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
   $('stP90').textContent = fmtSec(s.p90OrderPrepSec);
   $('stItems').textContent = s.totalItems;
 
-  // Dine-in stats for stats tab
   const dineIn = s.dineIn || {};
   if (dineIn.count > 0) {
     $('stDineStats').innerHTML = `
@@ -659,29 +850,39 @@ function renderStations(data) {
     return;
   }
 
+  // Separate cooking stations from counter stations
+  const COOKING = new Set(['Indian', 'Chinese', 'Tandoor', 'Fried Chicken']);
+  const cookingStations = stations.filter(st => COOKING.has(st.station));
+  const counterStations = stations.filter(st => !COOKING.has(st.station));
+
   const maxAvg = Math.max(...stations.map(s => s.avgPrepSec), 1);
-  $('stationCards').innerHTML = stations.map(st => {
-    const colorClass = getStationColorClass(st.station);
-    const pct = Math.round((st.avgPrepSec / maxAvg) * 100);
-    const barColor = st.avgPrepSec > 600 ? 'var(--red)' : st.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
-    return `<div class="station-card ${colorClass}">
-      <div class="station-name">${st.station}</div>
-      <div class="station-stats">
-        <div class="ss-item"><div class="ss-val">${fmtSec(st.avgPrepSec)}</div><div class="ss-lbl">Avg Prep</div></div>
-        <div class="ss-item"><div class="ss-val">${st.items}</div><div class="ss-lbl">Items</div></div>
-        <div class="ss-item"><div class="ss-val">${st.orders}</div><div class="ss-lbl">Orders</div></div>
-      </div>
-      <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${barColor}"></div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)">
-        <span>Median: ${fmtSec(st.medianPrepSec)}</span>
-        <span>90th: ${fmtSec(st.p90PrepSec)}</span>
-        <span>Max: ${fmtSec(st.maxPrepSec)}</span>
-      </div>
-    </div>`;
-  }).join('');
+  const renderGroup = (label, list) => {
+    if (list.length === 0) return '';
+    return `<div class="station-group-label">${label}</div>` + list.map(st => {
+      const colorClass = getStationColorClass(st.station);
+      const pct = Math.round((st.avgPrepSec / maxAvg) * 100);
+      const barColor = st.avgPrepSec > 600 ? 'var(--red)' : st.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
+      return `<div class="station-card ${colorClass}">
+        <div class="station-name">${esc(st.station)}</div>
+        <div class="station-stats">
+          <div class="ss-item"><div class="ss-val">${fmtSec(st.avgPrepSec)}</div><div class="ss-lbl">Avg Prep</div></div>
+          <div class="ss-item"><div class="ss-val">${st.items}</div><div class="ss-lbl">Items</div></div>
+          <div class="ss-item"><div class="ss-val">${st.orders}</div><div class="ss-lbl">Orders</div></div>
+        </div>
+        <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)">
+          <span>Median: ${fmtSec(st.medianPrepSec)}</span>
+          <span>90th: ${fmtSec(st.p90PrepSec)}</span>
+          <span>Max: ${fmtSec(st.maxPrepSec)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  $('stationCards').innerHTML = renderGroup('Cooking Stations', cookingStations) + renderGroup('Counter Stations', counterStations);
 }
 
-// --- KP Flow tab ---
+// --- KP Flow ---
 function renderKPFlow(data) {
   const kp = data.kpFlow;
   if (!kp) return;
@@ -705,7 +906,7 @@ function renderKPFlow(data) {
   `;
 }
 
-// --- Timeline tab ---
+// --- Timeline ---
 function renderTimeline(data) {
   const orders = data.orderTimelines || [];
   if (orders.length === 0) {
@@ -735,11 +936,10 @@ function renderTimeline(data) {
           bars.push(`<div class="tl-bar ${barClass}" style="width:${widthPct}%" title="${ev.stage}: ${fmtSec(dur)}">${dur > 30 ? fmtSec(dur) : ''}</div>`);
         }
       }
-
       return `<div class="tl-item">
         <div class="tl-item-header">
-          <span>${item.qty}x ${item.product}</span>
-          <span class="tl-item-station">${item.station}</span>
+          <span>${item.qty}x ${esc(item.product)}</span>
+          <span class="tl-item-station">${esc(item.station)}</span>
         </div>
         <div class="tl-bar-container">${bars.join('')}</div>
       </div>`;
@@ -747,8 +947,8 @@ function renderTimeline(data) {
 
     return `<div class="tl-order card">
       <div class="tl-header">
-        <span class="tl-id">${order.name}</span>
-        <span class="tl-meta">${order.time} &middot; ${order.type} &middot; &#8377;${order.amount}</span>
+        <span class="tl-id">${esc(order.name)}</span>
+        <span class="tl-meta">${order.time} \u00B7 ${order.type} \u00B7 \u20B9${order.amount}</span>
       </div>
       ${itemsHtml}
       <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:4px">
@@ -765,6 +965,21 @@ function renderTrends(data) {
   $('trAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
   $('trCounter').textContent = s.counterOrders;
   $('trCaptain').textContent = s.captainOrders;
+
+  // Dine-in vs takeaway split
+  const dineIn = s.dineIn || {};
+  const takeaway = s.totalOrders - (dineIn.count || 0);
+  if (s.totalOrders > 0) {
+    const dinePct = Math.round(((dineIn.count || 0) / s.totalOrders) * 100);
+    $('trDineVsTakeaway').innerHTML = `
+      <div class="section-title">Dine-in vs Takeaway</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${dineIn.count || 0}</div><div class="d-lbl">Dine-in</div><div class="d-sub">${dinePct}%</div></div>
+        <div class="dine-box"><div class="d-val">${takeaway}</div><div class="d-lbl">Takeaway</div><div class="d-sub">${100 - dinePct}%</div></div>
+      </div>`;
+  } else {
+    $('trDineVsTakeaway').innerHTML = '';
+  }
 
   const hourly = data.hourly || [];
   const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23);
@@ -784,10 +999,55 @@ function renderBarChart(containerId, labelsId, hours, field, color, tipFn) {
   $(labelsId).innerHTML = hours.map(h => `<span>${h.label.replace(' AM','a').replace(' PM','p')}</span>`).join('');
 }
 
+// --- Navigation helper ---
+function goToTab(name) {
+  const tabEls = document.querySelectorAll('.tab');
+  for (const el of tabEls) {
+    if (el.textContent.toLowerCase() === name.toLowerCase() ||
+        (name === 'tables' && el.textContent === 'Tables') ||
+        (name === 'queue' && el.textContent === 'Queue')) {
+      switchTab(name, el);
+      return;
+    }
+  }
+}
+
 // --- Toggle expand for completed order items ---
 function toggleItems(card) {
   const items = card.querySelector('.cr-items');
   if (items) items.classList.toggle('show');
+}
+
+// --- Phase helpers ---
+function getPhaseClass(status) {
+  if (status === 'dining_ordering') return 'phase-ordering';
+  if (status === 'dining_queued') return 'phase-queued';
+  if (status === 'dining_preparing') return 'phase-preparing';
+  if (status === 'dining_served') return 'phase-served';
+  return '';
+}
+
+function getPhaseColor(status) {
+  if (status === 'dining_ordering') return 'var(--muted)';
+  if (status === 'dining_queued') return 'var(--blue)';
+  if (status === 'dining_preparing') return 'var(--yellow)';
+  if (status === 'dining_served') return 'var(--green)';
+  return 'var(--text2)';
+}
+
+function getPhaseLabel(status, o) {
+  if (status === 'dining_ordering') return 'ORDERING';
+  if (status === 'dining_queued') return 'SENT TO KITCHEN';
+  if (status === 'dining_preparing') {
+    const done = (o.itemsDone !== undefined) ? o.itemsDone : (o.items || []).filter(i => ['Completed', 'Packed', 'Ready', 'Prepared'].includes(i.stage)).length;
+    const total = (o.itemsTotal !== undefined) ? o.itemsTotal : (o.items || []).length;
+    return `PREPARING (${done}/${total})`;
+  }
+  if (status === 'dining_served') {
+    const atTable = o.atTableSec || 0;
+    return atTable > 0 ? `SERVED \u2014 ${fmtSec(atTable)}` : 'SERVED';
+  }
+  return status;
 }
 
 // --- Utilities ---
@@ -801,6 +1061,11 @@ function fmtSec(sec) {
     return h + 'h ' + (m % 60) + 'm';
   }
   return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function getStationColorClass(name) {
