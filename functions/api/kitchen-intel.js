@@ -588,7 +588,8 @@ function getKPStatus(prepLines, statesByLine) {
       minCurrentName = lineStage.name;
     }
   }
-  return hasKPStates ? (minCurrentName || 'Queued') : 'Queued';
+  if (!hasKPStates) return prepLines.length > 0 ? 'N/A' : 'Queued';
+  return minCurrentName || 'Queued';
 }
 
 function computeItemTiming(createDate, stationStages) {
