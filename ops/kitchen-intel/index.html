@@ -77,6 +77,17 @@
     .cr-prep{color:var(--cyan)}
     .cr-dine{color:var(--purple)}
     .cr-amount{color:var(--text2)}
+    .cr-card{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden;cursor:pointer}
+    .cr-card .completed-row{margin-bottom:0;border:none;border-radius:0}
+    .cr-items{display:none;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--border)}
+    .cr-items.show{display:block}
+    .cr-item-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
+    .cr-item-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+    .cr-item-left .iq{font-weight:700;color:var(--text2);font-family:'JetBrains Mono',monospace;min-width:22px}
+    .cr-item-left .in{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cr-item-left .is{font-size:10px;color:var(--muted);white-space:nowrap}
+    .cr-item-time{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;white-space:nowrap;margin-left:8px}
+    .cr-expand-hint{font-size:9px;color:var(--muted);text-align:right;padding:0 10px 4px}
 
     /* Live tab */
     .live-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
@@ -104,6 +115,7 @@
     .item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .item-station{font-size:10px;color:var(--muted);white-space:nowrap}
     .item-stage{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;white-space:nowrap}
+    .item-time{font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap;min-width:36px;text-align:right}
     .stage-queued{background:rgba(100,116,139,.15);color:var(--muted)}
     .stage-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
     .stage-done{background:rgba(16,185,129,.15);color:var(--green)}
@@ -467,22 +479,40 @@ function renderDashboard(data) {
     $('dbDineSection').innerHTML = '';
   }
 
-  // Completed orders
+  // Completed orders (expandable to show item-level prep times)
   const completed = orders.filter(o => o.status === 'ready').slice(0, 20);
   if (completed.length > 0) {
-    $('dbCompletedList').innerHTML = completed.map(o => {
+    $('dbCompletedList').innerHTML = completed.map((o, idx) => {
       const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
       const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
-      return `<div class="completed-row">
-        <div>
-          <span class="cr-name">${o.name}</span>
-          <span class="cr-meta">${o.config} ${o.type}</span>
+
+      const itemRows = (o.items || []).map(item => {
+        const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
+        const tStr = t > 0 ? fmtSec(t) : '-';
+        const tColor = t > 600 ? 'var(--red)' : t > 300 ? 'var(--yellow)' : 'var(--cyan)';
+        return `<div class="cr-item-row">
+          <div class="cr-item-left">
+            <span class="iq">${item.qty}x</span>
+            <span class="in">${item.product}</span>
+            <span class="is">${item.station}</span>
+          </div>
+          <span class="cr-item-time" style="color:${tColor}">${tStr}</span>
+        </div>`;
+      }).join('');
+
+      return `<div class="cr-card" onclick="toggleItems(this)">
+        <div class="completed-row">
+          <div>
+            <span class="cr-name">${o.name}</span>
+            <span class="cr-meta">${o.config} ${o.type}</span>
+          </div>
+          <div class="cr-right">
+            <span class="cr-prep">Prep: ${prepStr}</span>
+            ${dineStr ? `<span class="cr-dine">Dine: ${dineStr}</span>` : ''}
+            <span class="cr-amount">&#8377;${o.amount}</span>
+          </div>
         </div>
-        <div class="cr-right">
-          <span class="cr-prep">Prep: ${prepStr}</span>
-          ${dineStr ? `<span class="cr-dine">Dine: ${dineStr}</span>` : ''}
-          <span class="cr-amount">&#8377;${o.amount}</span>
-        </div>
+        ${o.items && o.items.length > 0 ? `<div class="cr-expand-hint">${o.items.length} items — tap to expand</div><div class="cr-items">${itemRows}</div>` : ''}
       </div>`;
     }).join('');
   } else {
@@ -526,10 +556,15 @@ function renderOrderCard(order) {
     let stageClass = 'stage-queued';
     if (item.stage === 'Preparing') stageClass = 'stage-preparing';
     if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
+    // Show prep duration if done, else elapsed since sent to kitchen
+    const timeSec = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
+    const timeStr = timeSec > 0 ? fmtSec(timeSec) : '';
+    const timeColor = timeSec > 600 ? 'var(--red)' : timeSec > 300 ? 'var(--yellow)' : 'var(--text2)';
     return `<div class="item-row">
       <span class="item-qty">${item.qty}x</span>
       <span class="item-name">${item.product}</span>
       <span class="item-station">${item.station}</span>
+      <span class="item-time" style="color:${timeColor}">${timeStr}</span>
       <span class="item-stage ${stageClass}">${item.stage}</span>
     </div>`;
   }).join('');
@@ -735,6 +770,12 @@ function renderBarChart(containerId, labelsId, hours, field, color, tipFn) {
     return `<div class="chart-bar" style="height:${Math.max(pct, 2)}%;background:${color};opacity:${opacity}" data-tip="${tipFn(h)}"></div>`;
   }).join('');
   $(labelsId).innerHTML = hours.map(h => `<span>${h.label.replace(' AM','a').replace(' PM','p')}</span>`).join('');
+}
+
+// --- Toggle expand for completed order items ---
+function toggleItems(card) {
+  const items = card.querySelector('.cr-items');
+  if (items) items.classList.toggle('show');
 }
 
 // --- Utilities ---
