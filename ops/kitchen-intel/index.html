@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HE Kitchen Intel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;--cyan:#06b6d4;--orange:#f97316;--pink:#ec4899}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50}
+    .header h1{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .header h1::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-text{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .btn-refresh{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text2);font-size:12px;cursor:pointer}
+    .btn-refresh:active{background:var(--card)}
+
+    /* Tabs */
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 12px}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+    /* Tab content */
+    .tab-content{display:none;padding:14px 16px}
+    .tab-content.active{display:block}
+
+    /* Shared */
+    .section-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+    .section-title::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:2px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+    .card-sm{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
+    .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .stat-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
+    .stat-box .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+    .stat-box .val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:2px}
+    .stat-box .sub{font-size:10px;color:var(--text2);margin-top:2px}
+    .empty-msg{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+
+    /* Filter bar for stats tabs */
+    .filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+    .filter-row input[type="date"]{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace}
+    .filter-row input:focus{outline:none;border-color:var(--orange)}
+    .filter-row input::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer}
+    .quick-btn{padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer}
+    .quick-btn:active,.quick-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+    .btn-apply{padding:6px 12px;background:linear-gradient(135deg,var(--orange),var(--yellow));border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+
+    /* Live tab — order cards */
+    .order-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+    .order-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+    .order-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
+    .order-meta{display:flex;align-items:center;gap:8px}
+    .order-time{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .order-elapsed{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px}
+    .elapsed-ok{background:rgba(16,185,129,.15);color:var(--green)}
+    .elapsed-warn{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .elapsed-late{background:rgba(239,68,68,.15);color:var(--red)}
+    .order-badge{font-size:9px;font-weight:600;text-transform:uppercase;padding:2px 6px;border-radius:4px;letter-spacing:.3px}
+    .badge-takeaway{background:rgba(59,130,246,.15);color:var(--blue)}
+    .badge-dinein{background:rgba(139,92,246,.15);color:var(--purple)}
+    .badge-whatsapp{background:rgba(16,185,129,.15);color:var(--green)}
+    .badge-counter{background:rgba(100,116,139,.15);color:var(--muted)}
+    .order-items{padding:8px 12px}
+    .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+    .item-qty{font-weight:700;font-family:'JetBrains Mono',monospace;min-width:20px;color:var(--text2)}
+    .item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item-station{font-size:10px;color:var(--muted);white-space:nowrap}
+    .item-stage{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;white-space:nowrap}
+    .stage-queued{background:rgba(100,116,139,.15);color:var(--muted)}
+    .stage-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .stage-done{background:rgba(16,185,129,.15);color:var(--green)}
+    .order-footer{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:var(--bg2);font-size:11px;color:var(--text2)}
+    .kp-badge{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600}
+    .kp-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .kp-ready{background:rgba(59,130,246,.15);color:var(--blue)}
+    .kp-packed{background:rgba(6,182,212,.15);color:var(--cyan)}
+    .kp-completed{background:rgba(16,185,129,.15);color:var(--green)}
+    .kp-queued{background:rgba(100,116,139,.15);color:var(--muted)}
+
+    /* Live summary bar */
+    .live-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+    .ls-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .ls-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .ls-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
+    /* Station cards */
+    .station-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--orange)}
+    .station-name{font-size:14px;font-weight:700;margin-bottom:6px}
+    .station-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .ss-item{text-align:center}
+    .ss-item .ss-val{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .ss-item .ss-lbl{font-size:9px;color:var(--muted);text-transform:uppercase}
+    .perf-bar{height:6px;background:var(--bg2);border-radius:3px;margin-top:8px;overflow:hidden}
+    .perf-fill{height:100%;border-radius:3px;transition:width .3s}
+
+    /* KP Flow */
+    .kp-flow-visual{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0;flex-wrap:wrap}
+    .kp-node{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:80px}
+    .kp-node .kp-stage-name{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase}
+    .kp-arrow{color:var(--muted);font-size:12px;padding:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .kp-arrow .kp-dur{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--orange)}
+
+    /* Timeline */
+    .tl-order{margin-bottom:16px}
+    .tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .tl-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
+    .tl-meta{font-size:11px;color:var(--text2)}
+    .tl-item{margin-bottom:8px;padding-left:12px;border-left:2px solid var(--border)}
+    .tl-item-header{font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+    .tl-item-station{font-size:10px;color:var(--muted)}
+    .tl-bar-container{display:flex;align-items:center;gap:4px;height:20px}
+    .tl-bar{height:14px;border-radius:3px;min-width:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.8)}
+    .tl-bar.preparing{background:rgba(245,158,11,.4)}
+    .tl-bar.done{background:rgba(16,185,129,.4)}
+    .tl-bar.waiting{background:rgba(100,116,139,.2)}
+
+    /* Hourly chart */
+    .chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+    .chart-container{height:140px;display:flex;align-items:flex-end;gap:3px;padding-top:10px}
+    .chart-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:all .2s;cursor:pointer;position:relative}
+    .chart-bar:active::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:9px;white-space:nowrap;z-index:10;font-family:'JetBrains Mono',monospace}
+    .chart-labels{display:flex;gap:3px;margin-top:4px}
+    .chart-labels span{flex:1;text-align:center;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+    /* Loading */
+    .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,15,26,.95);display:flex;align-items:center;justify-content:center;z-index:100}
+    .loading.hidden{display:none}
+    .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .inline-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+    .error-bar{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:10px;margin:10px 16px;font-size:12px;display:none}
+    .error-bar.show{display:block}
+
+    /* Color accents for stations */
+    .sc-indian{border-left-color:#ef4444}
+    .sc-biryani{border-left-color:#f59e0b}
+    .sc-tandoor{border-left-color:#f97316}
+    .sc-chinese{border-left-color:#3b82f6}
+    .sc-fc{border-left-color:#8b5cf6}
+    .sc-juice{border-left-color:#10b981}
+    .sc-bm{border-left-color:#ec4899}
+    .sc-shawarma{border-left-color:#06b6d4}
+    .sc-grill{border-left-color:#f59e0b}
+
+    @media(max-width:400px){
+      .live-summary{grid-template-columns:repeat(2,1fr)}
+      .station-stats{grid-template-columns:repeat(2,1fr)}
+      .stat-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading"><div class="spinner"></div></div>
+  <div class="error-bar" id="error"></div>
+
+  <header class="header">
+    <h1>Kitchen Intel</h1>
+    <div class="header-right">
+      <div class="status-dot" id="dot"></div>
+      <span class="status-text" id="statusText">--</span>
+      <button class="btn-refresh" onclick="manualRefresh()">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabBar">
+    <div class="tab active" onclick="switchTab('live',this)">Live</div>
+    <div class="tab" onclick="switchTab('stations',this)">Stations</div>
+    <div class="tab" onclick="switchTab('kp',this)">KP Flow</div>
+    <div class="tab" onclick="switchTab('timeline',this)">Timeline</div>
+    <div class="tab" onclick="switchTab('trends',this)">Trends</div>
+  </nav>
+
+  <!-- ====== LIVE TAB ====== -->
+  <div class="tab-content active" id="tab-live">
+    <div class="live-summary" id="liveSummary">
+      <div class="ls-box"><div class="num" id="lsActive">-</div><div class="lbl">Active</div></div>
+      <div class="ls-box"><div class="num" id="lsPreparing">-</div><div class="lbl">Preparing</div></div>
+      <div class="ls-box"><div class="num" id="lsReady">-</div><div class="lbl">Ready</div></div>
+      <div class="ls-box"><div class="num" id="lsAvgMin">-</div><div class="lbl">Avg Min</div></div>
+    </div>
+    <div id="liveOrders"></div>
+  </div>
+
+  <!-- ====== STATIONS TAB ====== -->
+  <div class="tab-content" id="tab-stations">
+    <div class="filter-row">
+      <input type="date" id="stFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this)">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this)">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this)">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="stat-grid" id="stSummary">
+      <div class="stat-box"><div class="label">Orders</div><div class="val" id="stOrders">-</div></div>
+      <div class="stat-box"><div class="label">Avg Prep</div><div class="val" id="stAvgPrep">-</div><div class="sub">per order</div></div>
+      <div class="stat-box"><div class="label">P90 Prep</div><div class="val" id="stP90">-</div><div class="sub">90th percentile</div></div>
+      <div class="stat-box"><div class="label">Items</div><div class="val" id="stItems">-</div></div>
+    </div>
+    <div class="section-title">Station Breakdown</div>
+    <div id="stationCards"></div>
+  </div>
+
+  <!-- ====== KP FLOW TAB ====== -->
+  <div class="tab-content" id="tab-kp">
+    <div class="filter-row">
+      <input type="date" id="kpFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'kp')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'kp')">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this,'kp')">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="section-title">Kitchen Pass Pipeline</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Average time between each Kitchen Pass stage</p>
+    <div class="kp-flow-visual" id="kpFlowVis"></div>
+    <div class="stat-grid" style="margin-top:16px" id="kpStats">
+      <div class="stat-box"><div class="label">Preparing &rarr; Ready</div><div class="val" id="kpPR">-</div><div class="sub" id="kpPRn">0 samples</div></div>
+      <div class="stat-box"><div class="label">Ready &rarr; Packed</div><div class="val" id="kpRP">-</div><div class="sub" id="kpRPn">0 samples</div></div>
+      <div class="stat-box"><div class="label">Packed &rarr; Done</div><div class="val" id="kpPD">-</div><div class="sub" id="kpPDn">0 samples</div></div>
+      <div class="stat-box"><div class="label">Total KP Time</div><div class="val" id="kpTotal">-</div><div class="sub">end to end</div></div>
+    </div>
+  </div>
+
+  <!-- ====== TIMELINE TAB ====== -->
+  <div class="tab-content" id="tab-timeline">
+    <div class="filter-row">
+      <input type="date" id="tlFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'tl')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'tl')">Yesterday</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="section-title">Recent Orders Timeline</div>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:12px">Visual breakdown of each item's journey through the kitchen</p>
+    <div id="timelineContent"></div>
+  </div>
+
+  <!-- ====== TRENDS TAB ====== -->
+  <div class="tab-content" id="tab-trends">
+    <div class="filter-row">
+      <input type="date" id="trFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'tr')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'tr')">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this,'tr')">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="stat-grid" id="trSummary">
+      <div class="stat-box"><div class="label">Total Orders</div><div class="val" id="trOrders">-</div></div>
+      <div class="stat-box"><div class="label">Avg Prep</div><div class="val" id="trAvgPrep">-</div></div>
+      <div class="stat-box"><div class="label">Counter</div><div class="val" id="trCounter">-</div></div>
+      <div class="stat-box"><div class="label">Captain</div><div class="val" id="trCaptain">-</div></div>
+    </div>
+    <div class="section-title">Orders Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trOrderChart"></div>
+      <div class="chart-labels" id="trOrderLabels"></div>
+    </div>
+    <div class="section-title">Avg Prep Time Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trPrepChart"></div>
+      <div class="chart-labels" id="trPrepLabels"></div>
+    </div>
+    <div class="section-title">Items Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trItemChart"></div>
+      <div class="chart-labels" id="trItemLabels"></div>
+    </div>
+  </div>
+
+<script>
+const API = '/api/kitchen-intel';
+const $ = id => document.getElementById(id);
+let liveTimer = null;
+let statsData = null;
+let currentTab = 'live';
+let isLoading = false;
+
+// --- Init ---
+(async function init() {
+  setTodayDefaults();
+  await loadLive();
+  $('loading').classList.add('hidden');
+  liveTimer = setInterval(loadLive, 30000);
+})();
+
+function setTodayDefaults() {
+  const today = todayIST();
+  ['stFromDate','kpFromDate','tlFromDate','trFromDate'].forEach(id => {
+    $(id).value = today;
+  });
+}
+
+function todayIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  return ist.toISOString().slice(0, 10);
+}
+
+function yesterdayIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 86400000);
+  return ist.toISOString().slice(0, 10);
+}
+
+function weekAgoIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 7 * 86400000);
+  return ist.toISOString().slice(0, 10);
+}
+
+// --- Tab switching ---
+function switchTab(name, el) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  $('tab-' + name).classList.add('active');
+
+  if (name === 'live') {
+    loadLive();
+  } else if (['stations', 'kp', 'timeline', 'trends'].includes(name) && !statsData) {
+    loadStats();
+  }
+}
+
+function quickRange(range, btn, prefix) {
+  // Update all date inputs to stay in sync
+  const prefixes = prefix ? [prefix] : ['st', 'kp', 'tl', 'tr'];
+  let dateVal;
+  if (range === 'today') dateVal = todayIST();
+  else if (range === 'yesterday') dateVal = yesterdayIST();
+  else if (range === 'week') dateVal = weekAgoIST();
+
+  prefixes.forEach(p => {
+    const input = $(p + 'FromDate');
+    if (input) input.value = dateVal;
+  });
+
+  // Also sync others
+  ['st', 'kp', 'tl', 'tr'].forEach(p => {
+    const input = $(p + 'FromDate');
+    if (input) input.value = dateVal;
+  });
+
+  // Update quick btn active states on current tab
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  loadStats();
+}
+
+function manualRefresh() {
+  if (currentTab === 'live') loadLive();
+  else loadStats();
+}
+
+// --- Live data ---
+async function loadLive() {
+  try {
+    const res = await fetch(API + '?action=live');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    renderLive(data);
+    $('statusText').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    $('dot').style.background = 'var(--green)';
+    $('error').classList.remove('show');
+  } catch (e) {
+    $('error').textContent = 'Error loading live data: ' + e.message;
+    $('error').classList.add('show');
+    $('dot').style.background = 'var(--red)';
+  }
+}
+
+function renderLive(data) {
+  const orders = data.orders || [];
+
+  // Separate into active (not all items ready) and completed
+  const active = orders.filter(o => o.status !== 'ready');
+  const ready = orders.filter(o => o.status === 'ready');
+  const preparing = orders.filter(o => o.status === 'preparing');
+
+  // Avg elapsed for active orders
+  const avgMin = active.length > 0
+    ? Math.round(active.reduce((s, o) => s + o.elapsed, 0) / active.length)
+    : 0;
+
+  $('lsActive').textContent = active.length;
+  $('lsPreparing').textContent = preparing.length;
+  $('lsReady').textContent = ready.length;
+  $('lsAvgMin').textContent = avgMin;
+
+  // Color code avg
+  $('lsAvgMin').style.color = avgMin > 20 ? 'var(--red)' : avgMin > 10 ? 'var(--yellow)' : 'var(--green)';
+
+  const container = $('liveOrders');
+  if (orders.length === 0) {
+    container.innerHTML = '<div class="empty-msg">No active orders in the last 4 hours</div>';
+    return;
+  }
+
+  // Show active orders first, then recently completed
+  const sorted = [...active.sort((a, b) => b.elapsed - a.elapsed), ...ready.slice(0, 10)];
+
+  container.innerHTML = sorted.map(order => {
+    const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
+    const typeClass = order.type === 'dine-in' ? 'badge-dinein' : 'badge-takeaway';
+    const srcClass = order.source === 'whatsapp' ? 'badge-whatsapp' : 'badge-counter';
+
+    const itemsHtml = order.items.map(item => {
+      let stageClass = 'stage-queued';
+      if (['Preparing'].includes(item.stage)) stageClass = 'stage-preparing';
+      if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
+
+      return `<div class="item-row">
+        <span class="item-qty">${item.qty}x</span>
+        <span class="item-name">${item.product}</span>
+        <span class="item-station">${item.station}</span>
+        <span class="item-stage ${stageClass}">${item.stage}</span>
+      </div>`;
+    }).join('');
+
+    const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
+    const tableInfo = order.table ? ' &middot; ' + order.table : '';
+
+    return `<div class="order-card">
+      <div class="order-header">
+        <div>
+          <span class="order-id">${order.name}</span>
+          <span class="order-badge ${typeClass}" style="margin-left:6px">${order.type}</span>
+          <span class="order-badge ${srcClass}" style="margin-left:4px">${order.source}</span>
+        </div>
+        <div class="order-meta">
+          <span class="order-time">${order.time}</span>
+          <span class="order-elapsed ${elClass}">${order.elapsed}m</span>
+        </div>
+      </div>
+      <div class="order-items">${itemsHtml}</div>
+      <div class="order-footer">
+        <span>${order.config}${tableInfo} &middot; ${order.itemCount} items &middot; &#8377;${order.amount}</span>
+        <span class="kp-badge ${kpClass}">KP: ${order.kpStatus}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- Stats data (shared across stations/kp/timeline/trends) ---
+async function loadStats() {
+  if (isLoading) return;
+  isLoading = true;
+
+  const fromDate = $('stFromDate').value || todayIST();
+  const from = fromDate + 'T00:00:00';
+  const to = fromDate === todayIST() ? '' : fromDate + 'T23:59:59';
+
+  try {
+    const url = API + '?action=stats&from=' + encodeURIComponent(from) + (to ? '&to=' + encodeURIComponent(to) : '');
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    statsData = data;
+    renderStations(data);
+    renderKPFlow(data);
+    renderTimeline(data);
+    renderTrends(data);
+    $('error').classList.remove('show');
+  } catch (e) {
+    $('error').textContent = 'Error loading stats: ' + e.message;
+    $('error').classList.add('show');
+  }
+  isLoading = false;
+}
+
+// --- Stations tab ---
+function renderStations(data) {
+  const s = data.summary;
+  $('stOrders').textContent = s.totalOrders;
+  $('stAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
+  $('stP90').textContent = fmtSec(s.p90OrderPrepSec);
+  $('stItems').textContent = s.totalItems;
+
+  const stations = data.stationPerf || [];
+  if (stations.length === 0) {
+    $('stationCards').innerHTML = '<div class="empty-msg">No station data for this period</div>';
+    return;
+  }
+
+  // Find max avg for bar scaling
+  const maxAvg = Math.max(...stations.map(s => s.avgPrepSec), 1);
+
+  $('stationCards').innerHTML = stations.map(st => {
+    const colorClass = getStationColorClass(st.station);
+    const pct = Math.round((st.avgPrepSec / maxAvg) * 100);
+    const barColor = st.avgPrepSec > 600 ? 'var(--red)' : st.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
+
+    return `<div class="station-card ${colorClass}">
+      <div class="station-name">${st.station}</div>
+      <div class="station-stats">
+        <div class="ss-item"><div class="ss-val">${fmtSec(st.avgPrepSec)}</div><div class="ss-lbl">Avg Prep</div></div>
+        <div class="ss-item"><div class="ss-val">${st.items}</div><div class="ss-lbl">Items</div></div>
+        <div class="ss-item"><div class="ss-val">${st.orders}</div><div class="ss-lbl">Orders</div></div>
+      </div>
+      <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)">
+        <span>Median: ${fmtSec(st.medianPrepSec)}</span>
+        <span>P90: ${fmtSec(st.p90PrepSec)}</span>
+        <span>Max: ${fmtSec(st.maxPrepSec)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- KP Flow tab ---
+function renderKPFlow(data) {
+  const kp = data.kpFlow;
+  if (!kp) return;
+
+  $('kpPR').textContent = fmtSec(kp.preparingToReady);
+  $('kpPRn').textContent = kp.samples.preparing + ' samples';
+  $('kpRP').textContent = fmtSec(kp.readyToPacked);
+  $('kpRPn').textContent = kp.samples.ready + ' samples';
+  $('kpPD').textContent = fmtSec(kp.packedToCompleted);
+  $('kpPDn').textContent = kp.samples.packed + ' samples';
+  $('kpTotal').textContent = fmtSec(kp.preparingToReady + kp.readyToPacked + kp.packedToCompleted);
+
+  // Visual flow
+  $('kpFlowVis').innerHTML = `
+    <div class="kp-node"><div class="kp-stage-name">Preparing</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.preparingToReady)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Ready</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.readyToPacked)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Packed</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.packedToCompleted)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Done</div></div>
+  `;
+}
+
+// --- Timeline tab ---
+function renderTimeline(data) {
+  const orders = data.orderTimelines || [];
+  if (orders.length === 0) {
+    $('timelineContent').innerHTML = '<div class="empty-msg">No orders with timeline data</div>';
+    return;
+  }
+
+  $('timelineContent').innerHTML = orders.map(order => {
+    // Find max offset for scaling
+    let maxOffset = 1;
+    for (const item of order.timeline) {
+      for (const ev of item.events) {
+        if (ev.offsetSec > maxOffset) maxOffset = ev.offsetSec;
+      }
+    }
+
+    const itemsHtml = order.timeline.map(item => {
+      // Build duration bars
+      const bars = [];
+      for (let i = 0; i < item.events.length; i++) {
+        const ev = item.events[i];
+        const next = item.events[i + 1];
+        const dur = next ? next.offsetSec - ev.offsetSec : 0;
+        const widthPct = maxOffset > 0 ? Math.max((dur / maxOffset) * 100, 2) : 2;
+        let barClass = 'waiting';
+        if (['Preparing'].includes(ev.stage)) barClass = 'preparing';
+        if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(ev.stage)) barClass = 'done';
+
+        if (dur > 0) {
+          bars.push(`<div class="tl-bar ${barClass}" style="width:${widthPct}%" title="${ev.stage}: ${fmtSec(dur)}">${dur > 30 ? fmtSec(dur) : ''}</div>`);
+        }
+      }
+
+      return `<div class="tl-item">
+        <div class="tl-item-header">
+          <span>${item.qty}x ${item.product}</span>
+          <span class="tl-item-station">${item.station}</span>
+        </div>
+        <div class="tl-bar-container">${bars.join('')}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="tl-order card">
+      <div class="tl-header">
+        <span class="tl-id">${order.name}</span>
+        <span class="tl-meta">${order.time} &middot; ${order.type} &middot; &#8377;${order.amount}</span>
+      </div>
+      ${itemsHtml}
+      <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:4px">
+        Total: ${maxOffset > 0 ? fmtSec(maxOffset) : '-'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- Trends tab ---
+function renderTrends(data) {
+  const s = data.summary;
+  $('trOrders').textContent = s.totalOrders;
+  $('trAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
+  $('trCounter').textContent = s.counterOrders;
+  $('trCaptain').textContent = s.captainOrders;
+
+  const hourly = data.hourly || [];
+  // Filter to operating hours (8 AM to 11 PM)
+  const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23);
+
+  // Orders chart
+  renderBarChart('trOrderChart', 'trOrderLabels', opHours, 'orders', 'var(--orange)', h => h.orders + ' orders');
+  // Prep time chart
+  renderBarChart('trPrepChart', 'trPrepLabels', opHours, 'avgPrepSec', 'var(--cyan)', h => fmtSec(h.avgPrepSec));
+  // Items chart
+  renderBarChart('trItemChart', 'trItemLabels', opHours, 'items', 'var(--green)', h => h.items + ' items');
+}
+
+function renderBarChart(containerId, labelsId, hours, field, color, tipFn) {
+  const maxVal = Math.max(...hours.map(h => h[field] || 0), 1);
+
+  $(containerId).innerHTML = hours.map(h => {
+    const val = h[field] || 0;
+    const pct = (val / maxVal) * 100;
+    const opacity = val > 0 ? 1 : 0.2;
+    return `<div class="chart-bar" style="height:${Math.max(pct, 2)}%;background:${color};opacity:${opacity}" data-tip="${tipFn(h)}"></div>`;
+  }).join('');
+
+  $(labelsId).innerHTML = hours.map(h => `<span>${h.label.replace(' AM','a').replace(' PM','p')}</span>`).join('');
+}
+
+// --- Utilities ---
+function fmtSec(sec) {
+  if (!sec || sec <= 0) return '-';
+  if (sec < 60) return sec + 's';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return h + 'h ' + (m % 60) + 'm';
+  }
+  return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+}
+
+function getStationColorClass(name) {
+  const lower = name.toLowerCase();
+  if (lower.includes('indian')) return 'sc-indian';
+  if (lower.includes('biryani')) return 'sc-biryani';
+  if (lower.includes('tandoor')) return 'sc-tandoor';
+  if (lower.includes('chinese')) return 'sc-chinese';
+  if (lower.includes('fried') || lower.includes('chicken')) return 'sc-fc';
+  if (lower.includes('juice')) return 'sc-juice';
+  if (lower.includes('bain') || lower.includes('bm')) return 'sc-bm';
+  if (lower.includes('shawarma')) return 'sc-shawarma';
+  if (lower.includes('grill')) return 'sc-grill';
+  return '';
+}
+</script>
+</body>
+</html>
