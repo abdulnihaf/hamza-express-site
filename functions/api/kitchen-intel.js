@@ -62,7 +62,7 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
   const [prepLines, prepStates] = await Promise.all([
     rpc(odooUrl, db, uid, apiKey, 'pos.prep.line', 'search_read',
       [[['id', 'in', allLineIds]]],
-      { fields: ['id', 'prep_order_id', 'product_id', 'quantity', 'create_date'] }),
+      { fields: ['id', 'prep_order_id', 'product_id', 'quantity', 'create_date', 'attribute_value_ids'] }),
     rpc(odooUrl, db, uid, apiKey, 'pos.prep.state', 'search_read',
       [[['prep_line_id', 'in', allLineIds]]],
       { fields: ['id', 'prep_line_id', 'stage_id', 'todo', 'last_stage_change'] })
@@ -82,14 +82,10 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
       [[['id', 'in', productIds]]],
       { fields: ['id', 'pos_categ_ids'] });
 
-    // Get all category IDs
-    const catIds = [...new Set(products.flatMap(p => p.pos_categ_ids || []))];
-    let categories = [];
-    if (catIds.length > 0) {
-      categories = await rpc(odooUrl, db, uid, apiKey, 'pos.category', 'search_read',
-        [[['id', 'in', catIds]]],
-        { fields: ['id', 'name', 'parent_id'] });
-    }
+    // Fetch ALL categories (not just direct ones) so parent walk-up works
+    const categories = await rpc(odooUrl, db, uid, apiKey, 'pos.category', 'search_read',
+      [[]],
+      { fields: ['id', 'name', 'parent_id'] });
 
     // Build category resolver (walk to top-level parent)
     const catById = {};
@@ -105,6 +101,21 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
       const catId = p.pos_categ_ids?.[0];
       productCatMap[p.id] = catId ? topLevelCat(catId) : { id: 0, name: 'Other' };
     }
+  }
+
+  // Step 4: Resolve attribute values (portion/variant names like "Half", "Qtr")
+  const allAttrIds = [...new Set(prepLines.flatMap(l => l.attribute_value_ids || []))];
+  let attrMap = {};
+  if (allAttrIds.length > 0) {
+    const attrs = await rpc(odooUrl, db, uid, apiKey, 'product.template.attribute.value', 'search_read',
+      [[['id', 'in', allAttrIds]]],
+      { fields: ['id', 'name'] });
+    for (const a of attrs) attrMap[a.id] = a.name;
+  }
+
+  // Enrich lines with resolved attribute names
+  for (const line of prepLines) {
+    line._attrNames = (line.attribute_value_ids || []).map(id => attrMap[id]).filter(Boolean);
   }
 
   return { prepLines, prepStates, productCatMap };
@@ -174,7 +185,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       const states = statesByLine[line.id] || [];
       const productId = line.product_id?.[0];
       const catInfo = productCatMap[productId] || { id: 0, name: 'Unknown' };
-      const productName = cleanProductName(line.product_id?.[1] || 'Unknown');
+      const productName = formatProductName(line);
 
       const stationStages = getStationStages(states);
       const currentStage = getCurrentStage(stationStages);
@@ -399,7 +410,7 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
       const states = statesByLine[line.id] || [];
       const productId = line.product_id?.[0];
       const catInfo = productCatMap[productId] || { id: 0, name: 'Unknown' };
-      const productName = cleanProductName(line.product_id?.[1] || 'Unknown');
+      const productName = formatProductName(line);
       const stationStages = getStationStages(states);
       const events = [];
       const created = parseOdooDate(line.create_date);
@@ -540,6 +551,13 @@ function formatISTStr(utcDate) {
 
 function cleanProductName(name) {
   return name.replace(/^\[HE-[A-Z0-9]+\]\s*/, '');
+}
+
+function formatProductName(line) {
+  const base = cleanProductName(line.product_id?.[1] || 'Unknown');
+  const attrs = line._attrNames || [];
+  if (attrs.length > 0) return `${base} (${attrs.join(', ')})`;
+  return base;
 }
 
 function avgSec(arr) {
