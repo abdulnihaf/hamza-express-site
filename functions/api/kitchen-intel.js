@@ -112,8 +112,11 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
 
 // --- Live order board ---
 async function handleLive(odooUrl, db, uid, apiKey, headers) {
+  // Cutoff: 2026-03-08 18:00 IST = 2026-03-08 12:30 UTC
+  const CUTOFF_UTC = '2026-03-08 12:30:00';
   const lookback = new Date(Date.now() - 4 * 60 * 60 * 1000);
-  const fromOdoo = lookback.toISOString().slice(0, 19).replace('T', ' ');
+  const lookbackStr = lookback.toISOString().slice(0, 19).replace('T', ' ');
+  const fromOdoo = lookbackStr > CUTOFF_UTC ? lookbackStr : CUTOFF_UTC;
 
   const CONFIG_IDS = [5, 6, 10]; // Cash Counter, Captain, WABA
   const orders = await rpc(odooUrl, db, uid, apiKey, 'pos.order', 'search_read',
@@ -249,6 +252,10 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
   } else {
     toUTC = new Date();
   }
+
+  // Cutoff: 2026-03-08 18:00 IST = 2026-03-08 12:30 UTC
+  const CUTOFF_UTC = new Date('2026-03-08T12:30:00Z');
+  if (fromUTC < CUTOFF_UTC) fromUTC = CUTOFF_UTC;
 
   const fromOdoo = fromUTC.toISOString().slice(0, 19).replace('T', ' ');
   const toOdoo = toUTC.toISOString().slice(0, 19).replace('T', ' ');
