@@ -40,14 +40,12 @@ export async function onRequest(context) {
 // ============================================================
 
 async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
-  // Step 1: Get prep orders (bridge between pos.order and prep.line)
   const prepOrders = await rpc(odooUrl, db, uid, apiKey, 'pos.prep.order', 'search_read',
     [[['pos_order_id', 'in', orderIds]]],
     { fields: ['id', 'pos_order_id', 'prep_line_ids'] });
 
   if (prepOrders.length === 0) return { prepLines: [], prepStates: [], productCatMap: {} };
 
-  // Build prep_order → pos_order mapping
   const prepOrderToOrder = {};
   const allLineIds = [];
   for (const po of prepOrders) {
@@ -58,7 +56,6 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
 
   if (allLineIds.length === 0) return { prepLines: [], prepStates: [], productCatMap: {} };
 
-  // Step 2: Get prep lines and their states in parallel
   const [prepLines, prepStates] = await Promise.all([
     rpc(odooUrl, db, uid, apiKey, 'pos.prep.line', 'search_read',
       [[['id', 'in', allLineIds]]],
@@ -68,26 +65,22 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
       { fields: ['id', 'prep_line_id', 'stage_id', 'todo', 'last_stage_change'] })
   ]);
 
-  // Enrich prep lines with pos_order_id (resolved through prep_order)
   for (const line of prepLines) {
     const prepOrderId = line.prep_order_id?.[0];
     line._posOrderId = prepOrderToOrder[prepOrderId] || null;
   }
 
-  // Step 3: Resolve product categories
+  // Resolve product categories (fetch ALL for parent walk-up)
   const productIds = [...new Set(prepLines.map(l => l.product_id?.[0]).filter(Boolean))];
   let productCatMap = {};
   if (productIds.length > 0) {
-    const products = await rpc(odooUrl, db, uid, apiKey, 'product.product', 'search_read',
-      [[['id', 'in', productIds]]],
-      { fields: ['id', 'pos_categ_ids'] });
+    const [products, categories] = await Promise.all([
+      rpc(odooUrl, db, uid, apiKey, 'product.product', 'search_read',
+        [[['id', 'in', productIds]]], { fields: ['id', 'pos_categ_ids'] }),
+      rpc(odooUrl, db, uid, apiKey, 'pos.category', 'search_read',
+        [[]], { fields: ['id', 'name', 'parent_id'] })
+    ]);
 
-    // Fetch ALL categories (not just direct ones) so parent walk-up works
-    const categories = await rpc(odooUrl, db, uid, apiKey, 'pos.category', 'search_read',
-      [[]],
-      { fields: ['id', 'name', 'parent_id'] });
-
-    // Build category resolver (walk to top-level parent)
     const catById = {};
     for (const c of categories) catById[c.id] = c;
     function topLevelCat(catId) {
@@ -103,17 +96,15 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
     }
   }
 
-  // Step 4: Resolve attribute values (portion/variant names like "Half", "Qtr")
+  // Resolve attribute values (portion/variant names)
   const allAttrIds = [...new Set(prepLines.flatMap(l => l.attribute_value_ids || []))];
   let attrMap = {};
   if (allAttrIds.length > 0) {
     const attrs = await rpc(odooUrl, db, uid, apiKey, 'product.template.attribute.value', 'search_read',
-      [[['id', 'in', allAttrIds]]],
-      { fields: ['id', 'name'] });
+      [[['id', 'in', allAttrIds]]], { fields: ['id', 'name'] });
     for (const a of attrs) attrMap[a.id] = a.name;
   }
 
-  // Enrich lines with resolved attribute names
   for (const line of prepLines) {
     line._attrNames = (line.attribute_value_ids || []).map(id => attrMap[id]).filter(Boolean);
   }
@@ -123,24 +114,22 @@ async function fetchPrepData(odooUrl, db, uid, apiKey, orderIds) {
 
 // --- Live order board ---
 async function handleLive(odooUrl, db, uid, apiKey, headers) {
-  // Cutoff: 2026-03-08 18:00 IST = 2026-03-08 12:30 UTC
   const CUTOFF_UTC = '2026-03-08 12:30:00';
   const lookback = new Date(Date.now() - 4 * 60 * 60 * 1000);
   const lookbackStr = lookback.toISOString().slice(0, 19).replace('T', ' ');
   const fromOdoo = lookbackStr > CUTOFF_UTC ? lookbackStr : CUTOFF_UTC;
 
-  const CONFIG_IDS = [5, 6, 10]; // Cash Counter, Captain, WABA
+  const CONFIG_IDS = [5, 6, 10];
   const orders = await rpc(odooUrl, db, uid, apiKey, 'pos.order', 'search_read',
     [[['config_id', 'in', CONFIG_IDS], ['date_order', '>=', fromOdoo], ['state', 'in', ['paid', 'done', 'invoiced', 'posted']]]],
-    { fields: ['id', 'name', 'date_order', 'amount_total', 'config_id', 'table_id', 'last_order_preparation_change', 'general_customer_note'], order: 'date_order desc', limit: 80 });
+    { fields: ['id', 'name', 'date_order', 'amount_total', 'config_id', 'table_id', 'last_order_preparation_change', 'general_customer_note', 'write_date'], order: 'date_order desc', limit: 80 });
 
   if (orders.length === 0) {
-    return new Response(JSON.stringify({ success: true, orders: [], stations: {} }), { headers });
+    return new Response(JSON.stringify({ success: true, orders: [], stations: {}, todaySummary: emptyTodaySummary() }), { headers });
   }
 
   const orderIds = orders.map(o => o.id);
 
-  // Fetch prep data + order lines in parallel
   const [{ prepLines, prepStates, productCatMap }, orderLines] = await Promise.all([
     fetchPrepData(odooUrl, db, uid, apiKey, orderIds),
     rpc(odooUrl, db, uid, apiKey, 'pos.order.line', 'search_read',
@@ -148,7 +137,6 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       { fields: ['id', 'order_id', 'product_id', 'qty', 'price_subtotal_incl'] })
   ]);
 
-  // Build state map: prep_line_id → [states]
   const statesByLine = {};
   for (const s of prepStates) {
     const lineId = s.prep_line_id?.[0];
@@ -157,7 +145,6 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     statesByLine[lineId].push(s);
   }
 
-  // Build order lines map
   const olByOrder = {};
   for (const ol of orderLines) {
     const oid = ol.order_id?.[0];
@@ -203,39 +190,85 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       if (timing.prepDuration > 0) stationMetrics[catInfo.name].prepTimes.push(timing.prepDuration);
 
       items.push({
-        id: line.id,
-        product: productName,
-        qty: line.quantity,
-        station: catInfo.name,
-        stage: currentStage,
-        elapsed: timing.elapsed,
-        prepDuration: timing.prepDuration
+        id: line.id, product: productName, qty: line.quantity,
+        station: catInfo.name, stage: currentStage,
+        elapsed: timing.elapsed, prepDuration: timing.prepDuration
       });
     }
 
     const kpStatus = getKPStatus(lines, statesByLine);
     const elapsedMin = orderDate ? Math.round((Date.now() - orderDate.getTime()) / 60000) : 0;
 
+    // Dine-in tracking: prep completion time + settlement time
+    let prepCompleteTime = null;
+    for (const line of lines) {
+      const states = statesByLine[line.id] || [];
+      for (const s of states) {
+        const t = parseOdooDate(s.last_stage_change);
+        if (t && (!prepCompleteTime || t > prepCompleteTime)) prepCompleteTime = t;
+      }
+    }
+    const prepCompleteSec = (prepCompleteTime && orderDate) ? Math.round((prepCompleteTime - orderDate) / 1000) : null;
+    const settleDate = parseOdooDate(order.write_date);
+    const settleTimeSec = (settleDate && orderDate) ? Math.round((settleDate - orderDate) / 1000) : null;
+    const isDineIn = sittingMode === 0;
+    // Dine time = order creation to bill settled (only meaningful for Captain dine-in)
+    const dineTimeSec = (isDineIn && configId === 6 && settleTimeSec > 60 && settleTimeSec < 14400) ? settleTimeSec : null;
+    // Post-prep wait = food ready to bill settled
+    const postPrepSec = (dineTimeSec && prepCompleteSec && settleTimeSec > prepCompleteSec) ? settleTimeSec - prepCompleteSec : null;
+
     let configLabel = 'Counter';
     if (configId === 6) configLabel = 'Captain';
     else if (configId === 10) configLabel = 'WhatsApp';
 
     result.push({
-      id: orderId,
-      name: order.name,
-      time: formatIST(orderDate),
-      elapsed: elapsedMin,
-      amount: Math.round(order.amount_total),
-      type: sittingMode === 0 ? 'dine-in' : 'takeaway',
+      id: orderId, name: order.name, time: formatIST(orderDate),
+      elapsed: elapsedMin, amount: Math.round(order.amount_total),
+      type: isDineIn ? 'dine-in' : 'takeaway',
       source: isWaba || configId === 10 ? 'whatsapp' : 'counter',
-      table: order.table_id?.[1] || null,
-      config: configLabel,
-      items,
-      kpStatus,
+      table: order.table_id?.[1] || null, config: configLabel,
+      items, kpStatus,
       status: items.length === 0 ? 'ready' : allDone ? 'ready' : anyStarted ? 'preparing' : 'queued',
-      itemCount: (olByOrder[orderId] || []).reduce((s, l) => s + l.qty, 0)
+      itemCount: (olByOrder[orderId] || []).reduce((s, l) => s + l.qty, 0),
+      prepCompleteSec, dineTimeSec, postPrepSec
     });
   }
+
+  // --- Today's Summary ---
+  const completedOrders = result.filter(o => o.status === 'ready');
+  const activeOrders = result.filter(o => o.status !== 'ready');
+  const dineInCompleted = completedOrders.filter(o => o.type === 'dine-in' && o.config === 'Captain' && o.dineTimeSec);
+  const prepTimes = completedOrders.filter(o => o.prepCompleteSec).map(o => o.prepCompleteSec);
+
+  // Alerts: stuck orders and items
+  const alerts = [];
+  for (const o of activeOrders) {
+    if (o.status === 'queued' && o.elapsed > 5) {
+      alerts.push({ name: o.name, type: 'not_started', message: `Queued ${o.elapsed}m — not started`, config: o.config });
+    } else if (o.elapsed > 20) {
+      alerts.push({ name: o.name, type: 'slow_order', message: `${o.elapsed}m in kitchen`, config: o.config });
+    }
+    for (const item of o.items) {
+      if (item.stage === 'Preparing' && item.elapsed > 900) {
+        alerts.push({ name: o.name, type: 'stuck_item', message: `${item.product} stuck preparing (${Math.round(item.elapsed / 60)}m)`, config: o.config });
+      }
+    }
+  }
+
+  const todaySummary = {
+    totalOrders: result.length,
+    activeCount: activeOrders.length,
+    completedCount: completedOrders.length,
+    avgPrepSec: prepTimes.length > 0 ? Math.round(prepTimes.reduce((a, b) => a + b, 0) / prepTimes.length) : 0,
+    dineIn: {
+      count: dineInCompleted.length,
+      avgDineTimeSec: dineInCompleted.length > 0 ? Math.round(dineInCompleted.reduce((a, b) => a + b.dineTimeSec, 0) / dineInCompleted.length) : 0,
+      avgPostPrepSec: dineInCompleted.filter(o => o.postPrepSec).length > 0
+        ? Math.round(dineInCompleted.filter(o => o.postPrepSec).reduce((a, b) => a + b.postPrepSec, 0) / dineInCompleted.filter(o => o.postPrepSec).length) : 0,
+    },
+    takeaway: { count: completedOrders.filter(o => o.type !== 'dine-in').length },
+    alerts
+  };
 
   const stations = {};
   for (const [name, data] of Object.entries(stationMetrics)) {
@@ -245,7 +278,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     stations[name] = { catId: data.catId, itemsProcessed: data.total, avgPrepMin: avgPrep, samplesCount: data.prepTimes.length };
   }
 
-  return new Response(JSON.stringify({ success: true, orders: result, stations }), { headers });
+  return new Response(JSON.stringify({ success: true, orders: result, stations, todaySummary }), { headers });
 }
 
 // --- Historical stats ---
@@ -264,7 +297,6 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     toUTC = new Date();
   }
 
-  // Cutoff: 2026-03-08 18:00 IST = 2026-03-08 12:30 UTC
   const CUTOFF_UTC = new Date('2026-03-08T12:30:00Z');
   if (fromUTC < CUTOFF_UTC) fromUTC = CUTOFF_UTC;
 
@@ -274,7 +306,7 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
   const CONFIG_IDS = [5, 6, 10];
   const orders = await rpc(odooUrl, db, uid, apiKey, 'pos.order', 'search_read',
     [[['config_id', 'in', CONFIG_IDS], ['date_order', '>=', fromOdoo], ['date_order', '<=', toOdoo], ['state', 'in', ['paid', 'done', 'invoiced', 'posted']]]],
-    { fields: ['id', 'name', 'date_order', 'amount_total', 'config_id', 'last_order_preparation_change'], limit: 500 });
+    { fields: ['id', 'name', 'date_order', 'amount_total', 'config_id', 'last_order_preparation_change', 'write_date'], limit: 500 });
 
   if (orders.length === 0) {
     return new Response(JSON.stringify({
@@ -313,10 +345,7 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     const times = d.prepTimes;
     const sorted = [...times].sort((a, b) => a - b);
     return {
-      station: name,
-      catId: d.catId,
-      items: d.items,
-      orders: d.orders.size,
+      station: name, catId: d.catId, items: d.items, orders: d.orders.size,
       avgPrepSec: times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0,
       medianPrepSec: sorted.length > 0 ? sorted[Math.floor(sorted.length / 2)] : 0,
       p90PrepSec: sorted.length > 0 ? sorted[Math.floor(sorted.length * 0.9)] : 0,
@@ -433,7 +462,35 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     };
   });
 
+  // --- Summary with dine-in metrics ---
   const sortedPrepTimes = [...orderPrepTimes].sort((a, b) => a - b);
+
+  const dineInTimes = [];
+  const postPrepTimes = [];
+  for (const order of orders) {
+    const sm = parseSittingMode(order.last_order_preparation_change);
+    if (sm !== 0 || order.config_id?.[0] !== 6) continue;
+    const orderDate = parseOdooDate(order.date_order);
+    const settleDate = parseOdooDate(order.write_date);
+    if (!orderDate || !settleDate) continue;
+    const dineSec = Math.round((settleDate - orderDate) / 1000);
+    if (dineSec > 60 && dineSec < 14400) dineInTimes.push(dineSec);
+    // Find prep complete time
+    const oLines = prepLines.filter(l => l._posOrderId === order.id);
+    let prepDone = null;
+    for (const line of oLines) {
+      const states = statesByLine[line.id] || [];
+      for (const s of states) {
+        const t = parseOdooDate(s.last_stage_change);
+        if (t && (!prepDone || t > prepDone)) prepDone = t;
+      }
+    }
+    if (prepDone) {
+      const postPrep = Math.round((settleDate - prepDone) / 1000);
+      if (postPrep > 0 && postPrep < 14400) postPrepTimes.push(postPrep);
+    }
+  }
+
   const summary = {
     totalOrders: orders.length,
     avgOrderPrepSec: sortedPrepTimes.length > 0 ? Math.round(sortedPrepTimes.reduce((a, b) => a + b, 0) / sortedPrepTimes.length) : 0,
@@ -442,7 +499,12 @@ async function handleStats(odooUrl, db, uid, apiKey, fromParam, toParam, headers
     counterOrders: orders.filter(o => o.config_id?.[0] === 5).length,
     captainOrders: orders.filter(o => o.config_id?.[0] === 6).length,
     wabaOrders: orders.filter(o => o.config_id?.[0] === 10).length,
-    totalItems: prepLines.reduce((s, l) => s + l.quantity, 0)
+    totalItems: prepLines.reduce((s, l) => s + l.quantity, 0),
+    dineIn: {
+      count: dineInTimes.length,
+      avgDineTimeSec: dineInTimes.length > 0 ? Math.round(dineInTimes.reduce((a, b) => a + b, 0) / dineInTimes.length) : 0,
+      avgPostPrepSec: postPrepTimes.length > 0 ? Math.round(postPrepTimes.reduce((a, b) => a + b, 0) / postPrepTimes.length) : 0,
+    }
   };
 
   return new Response(JSON.stringify({
@@ -574,7 +636,11 @@ function buildEmptyHourly() {
 }
 
 function emptySummary() {
-  return { totalOrders: 0, avgOrderPrepSec: 0, medianOrderPrepSec: 0, p90OrderPrepSec: 0, counterOrders: 0, captainOrders: 0, wabaOrders: 0, totalItems: 0 };
+  return { totalOrders: 0, avgOrderPrepSec: 0, medianOrderPrepSec: 0, p90OrderPrepSec: 0, counterOrders: 0, captainOrders: 0, wabaOrders: 0, totalItems: 0, dineIn: { count: 0, avgDineTimeSec: 0, avgPostPrepSec: 0 } };
+}
+
+function emptyTodaySummary() {
+  return { totalOrders: 0, activeCount: 0, completedCount: 0, avgPrepSec: 0, dineIn: { count: 0, avgDineTimeSec: 0, avgPostPrepSec: 0 }, takeaway: { count: 0 }, alerts: [] };
 }
 
 async function rpc(url, db, uid, apiKey, model, method, args, kwargs = {}) {

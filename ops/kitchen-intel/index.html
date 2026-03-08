@@ -11,7 +11,6 @@
     body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
     .mono{font-family:'JetBrains Mono',monospace}
 
-    /* Header */
     .header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50}
     .header h1{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
     .header h1::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:2px}
@@ -22,21 +21,17 @@
     .btn-refresh{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text2);font-size:12px;cursor:pointer}
     .btn-refresh:active{background:var(--card)}
 
-    /* Tabs */
     .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 12px}
     .tabs::-webkit-scrollbar{display:none}
     .tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
     .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
 
-    /* Tab content */
     .tab-content{display:none;padding:14px 16px}
     .tab-content.active{display:block}
 
-    /* Shared */
     .section-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:var(--text2)}
     .section-title::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:2px}
     .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
-    .card-sm{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
     .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
     .stat-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
     .stat-box .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
@@ -44,7 +39,6 @@
     .stat-box .sub{font-size:10px;color:var(--text2);margin-top:2px}
     .empty-msg{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
 
-    /* Filter bar for stats tabs */
     .filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
     .filter-row input[type="date"]{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace}
     .filter-row input:focus{outline:none;border-color:var(--orange)}
@@ -53,7 +47,43 @@
     .quick-btn:active,.quick-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
     .btn-apply{padding:6px 12px;background:linear-gradient(135deg,var(--orange),var(--yellow));border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
 
-    /* Live tab — order cards */
+    /* Dashboard */
+    .db-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+    .db-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .db-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .db-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
+    .alert-card{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+    .alert-card .alert-msg{color:var(--red);font-weight:600}
+    .alert-card .alert-meta{color:var(--muted);font-size:10px}
+
+    .health-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch}
+    .health-row::-webkit-scrollbar{display:none}
+    .health-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:90px;text-align:center;flex-shrink:0;border-top:3px solid var(--green)}
+    .health-chip .hc-name{display:block;font-size:11px;font-weight:600;margin-bottom:2px}
+    .health-chip .hc-val{display:block;font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .health-chip .hc-items{display:block;font-size:9px;color:var(--muted)}
+
+    .dine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .dine-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+    .dine-box .d-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .dine-box .d-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+    .dine-box .d-sub{font-size:9px;color:var(--text2);margin-top:2px}
+
+    .completed-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;font-size:12px}
+    .cr-name{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+    .cr-meta{color:var(--muted);font-size:10px;margin-left:6px}
+    .cr-right{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px}
+    .cr-prep{color:var(--cyan)}
+    .cr-dine{color:var(--purple)}
+    .cr-amount{color:var(--text2)}
+
+    /* Live tab */
+    .live-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+    .ls-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .ls-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .ls-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
     .order-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
     .order-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
     .order-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
@@ -84,12 +114,6 @@
     .kp-packed{background:rgba(6,182,212,.15);color:var(--cyan)}
     .kp-completed{background:rgba(16,185,129,.15);color:var(--green)}
     .kp-queued{background:rgba(100,116,139,.15);color:var(--muted)}
-
-    /* Live summary bar */
-    .live-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
-    .ls-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
-    .ls-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
-    .ls-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
 
     /* Station cards */
     .station-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--orange)}
@@ -135,11 +159,9 @@
     .loading.hidden{display:none}
     .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .inline-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
     .error-bar{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:10px;margin:10px 16px;font-size:12px;display:none}
     .error-bar.show{display:block}
 
-    /* Color accents for stations */
     .sc-indian{border-left-color:#ef4444}
     .sc-biryani{border-left-color:#f59e0b}
     .sc-tandoor{border-left-color:#f97316}
@@ -151,9 +173,11 @@
     .sc-grill{border-left-color:#f59e0b}
 
     @media(max-width:400px){
+      .db-summary{grid-template-columns:repeat(2,1fr)}
       .live-summary{grid-template-columns:repeat(2,1fr)}
       .station-stats{grid-template-columns:repeat(2,1fr)}
       .stat-grid{grid-template-columns:1fr}
+      .dine-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -171,20 +195,36 @@
   </header>
 
   <nav class="tabs" id="tabBar">
-    <div class="tab active" onclick="switchTab('live',this)">Live</div>
+    <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
+    <div class="tab" onclick="switchTab('live',this)">Live Queue</div>
     <div class="tab" onclick="switchTab('stations',this)">Stations</div>
     <div class="tab" onclick="switchTab('kp',this)">KP Flow</div>
     <div class="tab" onclick="switchTab('timeline',this)">Timeline</div>
     <div class="tab" onclick="switchTab('trends',this)">Trends</div>
   </nav>
 
-  <!-- ====== LIVE TAB ====== -->
-  <div class="tab-content active" id="tab-live">
+  <!-- ====== DASHBOARD TAB (default) ====== -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="db-summary" id="dbSummary">
+      <div class="db-box"><div class="num" id="dbActive">-</div><div class="lbl">Active</div></div>
+      <div class="db-box"><div class="num" id="dbDone">-</div><div class="lbl">Completed</div></div>
+      <div class="db-box"><div class="num" id="dbAvgPrep">-</div><div class="lbl">Avg Prep</div></div>
+      <div class="db-box"><div class="num" id="dbTotal">-</div><div class="lbl">Total</div></div>
+    </div>
+    <div id="dbAlerts"></div>
+    <div class="section-title">Station Health</div>
+    <div class="health-row" id="dbStationHealth"></div>
+    <div id="dbDineSection"></div>
+    <div class="section-title">Completed Orders</div>
+    <div id="dbCompletedList"></div>
+  </div>
+
+  <!-- ====== LIVE QUEUE TAB ====== -->
+  <div class="tab-content" id="tab-live">
     <div class="live-summary" id="liveSummary">
-      <div class="ls-box"><div class="num" id="lsActive">-</div><div class="lbl">Active</div></div>
+      <div class="ls-box"><div class="num" id="lsQueued">-</div><div class="lbl">Queued</div></div>
       <div class="ls-box"><div class="num" id="lsPreparing">-</div><div class="lbl">Preparing</div></div>
-      <div class="ls-box"><div class="num" id="lsReady">-</div><div class="lbl">Ready</div></div>
-      <div class="ls-box"><div class="num" id="lsAvgMin">-</div><div class="lbl">Avg Min</div></div>
+      <div class="ls-box"><div class="num" id="lsAvgMin">-</div><div class="lbl">Avg Wait</div></div>
     </div>
     <div id="liveOrders"></div>
   </div>
@@ -201,9 +241,10 @@
     <div class="stat-grid" id="stSummary">
       <div class="stat-box"><div class="label">Orders</div><div class="val" id="stOrders">-</div></div>
       <div class="stat-box"><div class="label">Avg Prep</div><div class="val" id="stAvgPrep">-</div><div class="sub">per order</div></div>
-      <div class="stat-box"><div class="label">P90 Prep</div><div class="val" id="stP90">-</div><div class="sub">90th percentile</div></div>
+      <div class="stat-box"><div class="label">90th %ile</div><div class="val" id="stP90">-</div><div class="sub">90th percentile</div></div>
       <div class="stat-box"><div class="label">Items</div><div class="val" id="stItems">-</div></div>
     </div>
+    <div id="stDineStats"></div>
     <div class="section-title">Station Breakdown</div>
     <div id="stationCards"></div>
   </div>
@@ -221,9 +262,9 @@
     <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Average time between each Kitchen Pass stage</p>
     <div class="kp-flow-visual" id="kpFlowVis"></div>
     <div class="stat-grid" style="margin-top:16px" id="kpStats">
-      <div class="stat-box"><div class="label">Preparing &rarr; Ready</div><div class="val" id="kpPR">-</div><div class="sub" id="kpPRn">0 samples</div></div>
-      <div class="stat-box"><div class="label">Ready &rarr; Packed</div><div class="val" id="kpRP">-</div><div class="sub" id="kpRPn">0 samples</div></div>
-      <div class="stat-box"><div class="label">Packed &rarr; Done</div><div class="val" id="kpPD">-</div><div class="sub" id="kpPDn">0 samples</div></div>
+      <div class="stat-box"><div class="label">Preparing &rarr; Ready</div><div class="val" id="kpPR">-</div><div class="sub" id="kpPRn">0 orders</div></div>
+      <div class="stat-box"><div class="label">Ready &rarr; Packed</div><div class="val" id="kpRP">-</div><div class="sub" id="kpRPn">0 orders</div></div>
+      <div class="stat-box"><div class="label">Packed &rarr; Done</div><div class="val" id="kpPD">-</div><div class="sub" id="kpPDn">0 orders</div></div>
       <div class="stat-box"><div class="label">Total KP Time</div><div class="val" id="kpTotal">-</div><div class="sub">end to end</div></div>
     </div>
   </div>
@@ -236,7 +277,7 @@
       <button class="quick-btn" onclick="quickRange('yesterday',this,'tl')">Yesterday</button>
       <button class="btn-apply" onclick="loadStats()">Go</button>
     </div>
-    <div class="section-title">Recent Orders Timeline</div>
+    <div class="section-title">Order Timelines</div>
     <p style="font-size:11px;color:var(--text2);margin-bottom:12px">Visual breakdown of each item's journey through the kitchen</p>
     <div id="timelineContent"></div>
   </div>
@@ -277,8 +318,9 @@
 const API = '/api/kitchen-intel';
 const $ = id => document.getElementById(id);
 let liveTimer = null;
+let liveData = null;
 let statsData = null;
-let currentTab = 'live';
+let currentTab = 'dashboard';
 let isLoading = false;
 
 // --- Init ---
@@ -300,12 +342,10 @@ function todayIST() {
   const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
   return ist.toISOString().slice(0, 10);
 }
-
 function yesterdayIST() {
   const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 86400000);
   return ist.toISOString().slice(0, 10);
 }
-
 function weekAgoIST() {
   const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 7 * 86400000);
   return ist.toISOString().slice(0, 10);
@@ -319,52 +359,47 @@ function switchTab(name, el) {
   el.classList.add('active');
   $('tab-' + name).classList.add('active');
 
-  if (name === 'live') {
-    loadLive();
+  if (name === 'dashboard' || name === 'live') {
+    if (liveData) {
+      if (name === 'dashboard') renderDashboard(liveData);
+      else renderLive(liveData);
+    }
   } else if (['stations', 'kp', 'timeline', 'trends'].includes(name) && !statsData) {
     loadStats();
   }
 }
 
 function quickRange(range, btn, prefix) {
-  // Update all date inputs to stay in sync
-  const prefixes = prefix ? [prefix] : ['st', 'kp', 'tl', 'tr'];
   let dateVal;
   if (range === 'today') dateVal = todayIST();
   else if (range === 'yesterday') dateVal = yesterdayIST();
   else if (range === 'week') dateVal = weekAgoIST();
 
-  prefixes.forEach(p => {
-    const input = $(p + 'FromDate');
-    if (input) input.value = dateVal;
-  });
-
-  // Also sync others
   ['st', 'kp', 'tl', 'tr'].forEach(p => {
     const input = $(p + 'FromDate');
     if (input) input.value = dateVal;
   });
 
-  // Update quick btn active states on current tab
   const parent = btn.parentElement;
   parent.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
   loadStats();
 }
 
 function manualRefresh() {
-  if (currentTab === 'live') loadLive();
+  if (['dashboard', 'live'].includes(currentTab)) loadLive();
   else loadStats();
 }
 
-// --- Live data ---
+// --- Live data (feeds Dashboard + Live Queue) ---
 async function loadLive() {
   try {
     const res = await fetch(API + '?action=live');
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
-    renderLive(data);
+    liveData = data;
+    if (currentTab === 'dashboard') renderDashboard(data);
+    if (currentTab === 'live') renderLive(data);
     $('statusText').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     $('dot').style.background = 'var(--green)';
     $('error').classList.remove('show');
@@ -375,76 +410,151 @@ async function loadLive() {
   }
 }
 
+// --- Dashboard tab ---
+function renderDashboard(data) {
+  const summary = data.todaySummary || {};
+  const orders = data.orders || [];
+  const stations = data.stations || {};
+
+  // Summary stats
+  $('dbActive').textContent = summary.activeCount || 0;
+  $('dbActive').style.color = (summary.activeCount > 0) ? 'var(--yellow)' : 'var(--green)';
+  $('dbDone').textContent = summary.completedCount || 0;
+  $('dbAvgPrep').textContent = fmtSec(summary.avgPrepSec);
+  $('dbAvgPrep').style.color = summary.avgPrepSec > 600 ? 'var(--red)' : summary.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
+  $('dbTotal').textContent = summary.totalOrders || 0;
+
+  // Alerts
+  const alerts = summary.alerts || [];
+  if (alerts.length > 0) {
+    $('dbAlerts').innerHTML = '<div class="section-title" style="color:var(--red)">Alerts</div>' +
+      alerts.map(a => `<div class="alert-card">
+        <div><span class="alert-msg">${a.name}</span> <span class="alert-meta">${a.config}</span></div>
+        <span class="alert-meta">${a.message}</span>
+      </div>`).join('');
+  } else {
+    $('dbAlerts').innerHTML = '';
+  }
+
+  // Station health
+  const stationNames = Object.keys(stations);
+  if (stationNames.length > 0) {
+    $('dbStationHealth').innerHTML = stationNames.map(name => {
+      const s = stations[name];
+      const color = s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
+      return `<div class="health-chip" style="border-top-color:${color}">
+        <span class="hc-name">${name}</span>
+        <span class="hc-val" style="color:${color}">${s.avgPrepMin}m</span>
+        <span class="hc-items">${s.itemsProcessed} items</span>
+      </div>`;
+    }).join('');
+  } else {
+    $('dbStationHealth').innerHTML = '<span style="color:var(--muted);font-size:12px">No station data yet</span>';
+  }
+
+  // Dine-in metrics
+  const dineIn = summary.dineIn || {};
+  if (dineIn.count > 0) {
+    $('dbDineSection').innerHTML = `
+      <div class="section-title">Dine-in Tracking</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">order to settle</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
+        <div class="dine-box"><div class="d-val">${dineIn.count}</div><div class="d-lbl">Dine-in</div><div class="d-sub">Captain orders</div></div>
+        <div class="dine-box"><div class="d-val">${summary.takeaway?.count || 0}</div><div class="d-lbl">Takeaway</div><div class="d-sub">completed</div></div>
+      </div>`;
+  } else {
+    $('dbDineSection').innerHTML = '';
+  }
+
+  // Completed orders
+  const completed = orders.filter(o => o.status === 'ready').slice(0, 20);
+  if (completed.length > 0) {
+    $('dbCompletedList').innerHTML = completed.map(o => {
+      const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
+      const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
+      return `<div class="completed-row">
+        <div>
+          <span class="cr-name">${o.name}</span>
+          <span class="cr-meta">${o.config} ${o.type}</span>
+        </div>
+        <div class="cr-right">
+          <span class="cr-prep">Prep: ${prepStr}</span>
+          ${dineStr ? `<span class="cr-dine">Dine: ${dineStr}</span>` : ''}
+          <span class="cr-amount">&#8377;${o.amount}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    $('dbCompletedList').innerHTML = '<div class="empty-msg">No completed orders yet</div>';
+  }
+}
+
+// --- Live Queue tab (only active orders) ---
 function renderLive(data) {
   const orders = data.orders || [];
-
-  // Separate into active (not all items ready) and completed
   const active = orders.filter(o => o.status !== 'ready');
-  const ready = orders.filter(o => o.status === 'ready');
-  const preparing = orders.filter(o => o.status === 'preparing');
+  const queued = active.filter(o => o.status === 'queued');
+  const preparing = active.filter(o => o.status === 'preparing');
 
-  // Avg elapsed for active orders
   const avgMin = active.length > 0
     ? Math.round(active.reduce((s, o) => s + o.elapsed, 0) / active.length)
     : 0;
 
-  $('lsActive').textContent = active.length;
+  $('lsQueued').textContent = queued.length;
+  $('lsQueued').style.color = queued.length > 3 ? 'var(--red)' : queued.length > 0 ? 'var(--yellow)' : 'var(--green)';
   $('lsPreparing').textContent = preparing.length;
-  $('lsReady').textContent = ready.length;
-  $('lsAvgMin').textContent = avgMin;
-
-  // Color code avg
+  $('lsAvgMin').textContent = avgMin + 'm';
   $('lsAvgMin').style.color = avgMin > 20 ? 'var(--red)' : avgMin > 10 ? 'var(--yellow)' : 'var(--green)';
 
   const container = $('liveOrders');
-  if (orders.length === 0) {
-    container.innerHTML = '<div class="empty-msg">No active orders in the last 4 hours</div>';
+  if (active.length === 0) {
+    container.innerHTML = '<div class="empty-msg">All orders fulfilled — kitchen clear</div>';
     return;
   }
 
-  // Show active orders first, then recently completed
-  const sorted = [...active.sort((a, b) => b.elapsed - a.elapsed), ...ready.slice(0, 10)];
+  const sorted = active.sort((a, b) => b.elapsed - a.elapsed);
+  container.innerHTML = sorted.map(order => renderOrderCard(order)).join('');
+}
 
-  container.innerHTML = sorted.map(order => {
-    const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
-    const typeClass = order.type === 'dine-in' ? 'badge-dinein' : 'badge-takeaway';
-    const srcClass = order.source === 'whatsapp' ? 'badge-whatsapp' : 'badge-counter';
+function renderOrderCard(order) {
+  const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
+  const typeClass = order.type === 'dine-in' ? 'badge-dinein' : 'badge-takeaway';
+  const srcClass = order.source === 'whatsapp' ? 'badge-whatsapp' : 'badge-counter';
 
-    const itemsHtml = order.items.map(item => {
-      let stageClass = 'stage-queued';
-      if (['Preparing'].includes(item.stage)) stageClass = 'stage-preparing';
-      if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
-
-      return `<div class="item-row">
-        <span class="item-qty">${item.qty}x</span>
-        <span class="item-name">${item.product}</span>
-        <span class="item-station">${item.station}</span>
-        <span class="item-stage ${stageClass}">${item.stage}</span>
-      </div>`;
-    }).join('');
-
-    const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
-    const tableInfo = order.table ? ' &middot; ' + order.table : '';
-
-    return `<div class="order-card">
-      <div class="order-header">
-        <div>
-          <span class="order-id">${order.name}</span>
-          <span class="order-badge ${typeClass}" style="margin-left:6px">${order.type}</span>
-          <span class="order-badge ${srcClass}" style="margin-left:4px">${order.source}</span>
-        </div>
-        <div class="order-meta">
-          <span class="order-time">${order.time}</span>
-          <span class="order-elapsed ${elClass}">${order.elapsed}m</span>
-        </div>
-      </div>
-      <div class="order-items">${itemsHtml}</div>
-      <div class="order-footer">
-        <span>${order.config}${tableInfo} &middot; ${order.itemCount} items &middot; &#8377;${order.amount}</span>
-        <span class="kp-badge ${kpClass}">KP: ${order.kpStatus}</span>
-      </div>
+  const itemsHtml = order.items.map(item => {
+    let stageClass = 'stage-queued';
+    if (item.stage === 'Preparing') stageClass = 'stage-preparing';
+    if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
+    return `<div class="item-row">
+      <span class="item-qty">${item.qty}x</span>
+      <span class="item-name">${item.product}</span>
+      <span class="item-station">${item.station}</span>
+      <span class="item-stage ${stageClass}">${item.stage}</span>
     </div>`;
   }).join('');
+
+  const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
+  const tableInfo = order.table ? ' &middot; ' + order.table : '';
+
+  return `<div class="order-card">
+    <div class="order-header">
+      <div>
+        <span class="order-id">${order.name}</span>
+        <span class="order-badge ${typeClass}" style="margin-left:6px">${order.type}</span>
+        <span class="order-badge ${srcClass}" style="margin-left:4px">${order.source}</span>
+      </div>
+      <div class="order-meta">
+        <span class="order-time">${order.time}</span>
+        <span class="order-elapsed ${elClass}">${order.elapsed}m</span>
+      </div>
+    </div>
+    <div class="order-items">${itemsHtml}</div>
+    <div class="order-footer">
+      <span>${order.config}${tableInfo} &middot; ${order.itemCount} items &middot; &#8377;${order.amount}</span>
+      <span class="kp-badge ${kpClass}">KP: ${order.kpStatus}</span>
+    </div>
+  </div>`;
 }
 
 // --- Stats data (shared across stations/kp/timeline/trends) ---
@@ -454,7 +564,6 @@ async function loadStats() {
 
   const fromDate = $('stFromDate').value || todayIST();
   const from = fromDate + 'T00:00:00';
-  // If from is today, omit 'to' so API uses now(). Otherwise use end of today.
   const today = todayIST();
   const to = fromDate === today ? '' : today + 'T23:59:59';
 
@@ -484,20 +593,30 @@ function renderStations(data) {
   $('stP90').textContent = fmtSec(s.p90OrderPrepSec);
   $('stItems').textContent = s.totalItems;
 
+  // Dine-in stats for stats tab
+  const dineIn = s.dineIn || {};
+  if (dineIn.count > 0) {
+    $('stDineStats').innerHTML = `
+      <div class="section-title">Dine-in Performance</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">${dineIn.count} orders</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
+      </div>`;
+  } else {
+    $('stDineStats').innerHTML = '';
+  }
+
   const stations = data.stationPerf || [];
   if (stations.length === 0) {
     $('stationCards').innerHTML = '<div class="empty-msg">No station data for this period</div>';
     return;
   }
 
-  // Find max avg for bar scaling
   const maxAvg = Math.max(...stations.map(s => s.avgPrepSec), 1);
-
   $('stationCards').innerHTML = stations.map(st => {
     const colorClass = getStationColorClass(st.station);
     const pct = Math.round((st.avgPrepSec / maxAvg) * 100);
     const barColor = st.avgPrepSec > 600 ? 'var(--red)' : st.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
-
     return `<div class="station-card ${colorClass}">
       <div class="station-name">${st.station}</div>
       <div class="station-stats">
@@ -508,7 +627,7 @@ function renderStations(data) {
       <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${barColor}"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)">
         <span>Median: ${fmtSec(st.medianPrepSec)}</span>
-        <span>P90: ${fmtSec(st.p90PrepSec)}</span>
+        <span>90th: ${fmtSec(st.p90PrepSec)}</span>
         <span>Max: ${fmtSec(st.maxPrepSec)}</span>
       </div>
     </div>`;
@@ -521,14 +640,13 @@ function renderKPFlow(data) {
   if (!kp) return;
 
   $('kpPR').textContent = fmtSec(kp.preparingToReady);
-  $('kpPRn').textContent = kp.samples.preparing + ' samples';
+  $('kpPRn').textContent = kp.samples.preparing + ' orders';
   $('kpRP').textContent = fmtSec(kp.readyToPacked);
-  $('kpRPn').textContent = kp.samples.ready + ' samples';
+  $('kpRPn').textContent = kp.samples.ready + ' orders';
   $('kpPD').textContent = fmtSec(kp.packedToCompleted);
-  $('kpPDn').textContent = kp.samples.packed + ' samples';
+  $('kpPDn').textContent = kp.samples.packed + ' orders';
   $('kpTotal').textContent = fmtSec(kp.preparingToReady + kp.readyToPacked + kp.packedToCompleted);
 
-  // Visual flow
   $('kpFlowVis').innerHTML = `
     <div class="kp-node"><div class="kp-stage-name">Preparing</div></div>
     <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.preparingToReady)}</span></div>
@@ -549,7 +667,6 @@ function renderTimeline(data) {
   }
 
   $('timelineContent').innerHTML = orders.map(order => {
-    // Find max offset for scaling
     let maxOffset = 1;
     for (const item of order.timeline) {
       for (const ev of item.events) {
@@ -558,7 +675,6 @@ function renderTimeline(data) {
     }
 
     const itemsHtml = order.timeline.map(item => {
-      // Build duration bars
       const bars = [];
       for (let i = 0; i < item.events.length; i++) {
         const ev = item.events[i];
@@ -566,9 +682,8 @@ function renderTimeline(data) {
         const dur = next ? next.offsetSec - ev.offsetSec : 0;
         const widthPct = maxOffset > 0 ? Math.max((dur / maxOffset) * 100, 2) : 2;
         let barClass = 'waiting';
-        if (['Preparing'].includes(ev.stage)) barClass = 'preparing';
+        if (ev.stage === 'Preparing') barClass = 'preparing';
         if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(ev.stage)) barClass = 'done';
-
         if (dur > 0) {
           bars.push(`<div class="tl-bar ${barClass}" style="width:${widthPct}%" title="${ev.stage}: ${fmtSec(dur)}">${dur > 30 ? fmtSec(dur) : ''}</div>`);
         }
@@ -605,27 +720,20 @@ function renderTrends(data) {
   $('trCaptain').textContent = s.captainOrders;
 
   const hourly = data.hourly || [];
-  // Filter to operating hours (8 AM to 11 PM)
   const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23);
-
-  // Orders chart
   renderBarChart('trOrderChart', 'trOrderLabels', opHours, 'orders', 'var(--orange)', h => h.orders + ' orders');
-  // Prep time chart
   renderBarChart('trPrepChart', 'trPrepLabels', opHours, 'avgPrepSec', 'var(--cyan)', h => fmtSec(h.avgPrepSec));
-  // Items chart
   renderBarChart('trItemChart', 'trItemLabels', opHours, 'items', 'var(--green)', h => h.items + ' items');
 }
 
 function renderBarChart(containerId, labelsId, hours, field, color, tipFn) {
   const maxVal = Math.max(...hours.map(h => h[field] || 0), 1);
-
   $(containerId).innerHTML = hours.map(h => {
     const val = h[field] || 0;
     const pct = (val / maxVal) * 100;
     const opacity = val > 0 ? 1 : 0.2;
     return `<div class="chart-bar" style="height:${Math.max(pct, 2)}%;background:${color};opacity:${opacity}" data-tip="${tipFn(h)}"></div>`;
   }).join('');
-
   $(labelsId).innerHTML = hours.map(h => `<span>${h.label.replace(' AM','a').replace(' PM','p')}</span>`).join('');
 }
 
