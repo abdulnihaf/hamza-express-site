@@ -894,6 +894,10 @@ export async function onRequest(context) {
       try {
         const redir = new URL(loc, odooUrl);
         if (redir.host === odooUrl.host) {
+          // Ensure login redirects include db=main so Odoo shows the login form
+          if (redir.pathname === '/web/login' && !redir.searchParams.has('db')) {
+            redir.searchParams.set('db', 'main');
+          }
           const newLoc = '/kds' + redir.pathname + redir.search;
           const redirHeaders = new Headers({ 'Location': newLoc });
           // Forward cookies from redirect response (strip Domain for proxy)
