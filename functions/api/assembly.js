@@ -39,6 +39,31 @@ const STATION_ABBR = {
   'Grill Counter': 'GR',
 };
 
+// KDS initial stage IDs per parent category (must match whatsapp.js KDS_INITIAL_STAGES)
+const KDS_INITIAL_STAGES = {
+  22: [31, 75, 67, 94],  // Indian → Station + KP Master + KP TV + Assembly
+  24: [34, 75, 67, 94],  // Chinese
+  25: [37, 75, 67, 94],  // Tandoor
+  26: [40, 75, 67, 94],  // FC
+  27: [46, 94],           // Juice + Assembly
+  28: [49, 69, 94],       // BM + BM TV + Assembly
+  29: [52, 94],           // Shawarma + Assembly
+  30: [55, 94],           // Grill + Assembly
+};
+
+// Resolve subcategory → parent category for KDS routing
+function resolveParentCat(catId) {
+  if (KDS_INITIAL_STAGES[catId]) return catId;
+  const SUBCAT_PARENT = {
+    47: 22, 48: 22,
+    70: 26, 71: 26, 72: 26, 73: 26, 74: 26, 75: 26, 76: 26,
+    77: 22, 78: 22, 79: 22, 80: 22, 81: 22, 82: 22,
+    83: 24, 84: 24, 85: 24, 86: 24, 87: 24, 88: 24,
+    89: 25, 90: 25,
+  };
+  return SUBCAT_PARENT[catId] || 22;
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -140,7 +165,7 @@ async function handleDashboard(db) {
 
 // (Push logic is in handlePushWithBody below, called from onRequestPost)
 
-// ─── Create Odoo POS order for delivery ────────────────────────
+// ─── Create Odoo POS order for delivery (with full KDS prep records) ──
 async function createDeliveryOdooOrder(apiKey, source, sourceOrderId, customerName, items) {
   try {
     // Find active POS session
@@ -203,44 +228,98 @@ async function createDeliveryOdooOrder(apiKey, source, sourceOrderId, customerNa
     const prepChangePayload = JSON.stringify({
       lines: kdsLines,
       metadata: { serverDate: now },
-      general_customer_note: '',
-      internal_note: noteLines,
+      general_customer_note: noteLines,
+      internal_note: '',
       sittingMode: 0,
     });
 
+    // ── Step 1: Create POS order ──
+    // internal_note MUST be empty — KDS OWL does JSON.parse(internal_note), plain text crashes it
+    // Staff-visible info goes in general_customer_note
+    // last_order_preparation_change written in Step 5 AFTER prep records exist
     const orderId = await odooRPC(apiKey, 'pos.order', 'create', [{
       session_id: sessionId,
       config_id: POS_CONFIG_ID,
       pricelist_id: PRICELIST_ID,
-      preset_id: 2, // Takeout
+      preset_id: 2,
       amount_total: total,
       amount_paid: total,
       amount_tax: taxAmount,
       amount_return: 0,
       date_order: now,
       lines,
-      internal_note: noteLines,
+      internal_note: '',
+      general_customer_note: noteLines,
       state: 'draft',
+    }]);
+
+    if (!orderId) { console.error('Failed to create delivery POS order'); return null; }
+
+    // ── Step 2: Parallel — payment + read lines + create prep order ──
+    const orderName = `${sourceLabel}-${sourceOrderId || orderId}`;
+    const [, orderLines, prepOrderId] = await Promise.all([
+      odooRPC(apiKey, 'pos.payment', 'create', [{
+        pos_order_id: orderId,
+        payment_method_id: PAYMENT_METHOD_UPI,
+        amount: total,
+        payment_date: now,
+        session_id: sessionId,
+      }]),
+      odooRPC(apiKey, 'pos.order.line', 'search_read',
+        [[['order_id', '=', orderId]]], { fields: ['id', 'uuid', 'product_id', 'qty'] }),
+      odooRPC(apiKey, 'pos.prep.order', 'create', [{
+        pos_order_id: orderId,
+        order_name: orderName,
+        pdis_internal_note: '[]',
+        pdis_general_customer_note: noteLines,
+      }]),
+    ]);
+
+    // ── Step 3: Parallel — mark paid + create prep lines ──
+    const prepLinePromises = (orderLines || []).map(ol =>
+      odooRPC(apiKey, 'pos.prep.line', 'create', [{
+        prep_order_id: prepOrderId,
+        product_id: ol.product_id[0],
+        quantity: ol.qty,
+        pos_order_line_uuid: ol.uuid,
+        pos_order_line_id: ol.id,
+      }])
+    );
+
+    const [, ...prepLineIds] = await Promise.all([
+      odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]),
+      ...prepLinePromises,
+    ]);
+
+    // ── Step 4: Parallel — batch create prep states + read order data ──
+    const stateRecords = [];
+    for (let i = 0; i < (orderLines || []).length; i++) {
+      const ol = orderLines[i];
+      const prepLineId = prepLineIds[i];
+      if (!prepLineId) continue;
+      const matchItem = items.find(it => (it.odoo_product_id || it.odooId) === ol.product_id[0]);
+      const parentCat = resolveParentCat(matchItem?.category_id || matchItem?.catId);
+      const initialStages = KDS_INITIAL_STAGES[parentCat] || [];
+      for (const stageId of initialStages) {
+        stateRecords.push({ prep_line_id: prepLineId, stage_id: stageId, todo: true });
+      }
+    }
+
+    const [, orderData] = await Promise.all([
+      stateRecords.length > 0
+        ? odooRPC(apiKey, 'pos.prep.state', 'create', [stateRecords])
+        : Promise.resolve([]),
+      odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', '=', orderId]]], { fields: ['name', 'tracking_number'] }),
+    ]);
+
+    // ── Step 5: Trigger KDS real-time notification ──
+    // Write AFTER all prep records + states exist so bus notification reaches KDS with data ready
+    await odooRPC(apiKey, 'pos.order', 'write', [[orderId], {
       last_order_preparation_change: prepChangePayload,
     }]);
 
-    if (!orderId) return null;
-
-    // Create payment (platform settlement)
-    await odooRPC(apiKey, 'pos.payment', 'create', [{
-      pos_order_id: orderId,
-      payment_method_id: PAYMENT_METHOD_UPI,
-      amount: total,
-      payment_date: now,
-      session_id: sessionId,
-    }]);
-
-    // Mark paid → triggers KDS prep orders
-    await odooRPC(apiKey, 'pos.order', 'action_pos_order_paid', [[orderId]]);
-
-    // Get order name + tracking
-    const orderData = await odooRPC(apiKey, 'pos.order', 'search_read',
-      [[['id', '=', orderId]]], { fields: ['name', 'tracking_number'] });
+    console.log(`Delivery KDS: order ${orderId}, prep ${prepOrderId}, ${(orderLines || []).length} lines, ${stateRecords.length} states`);
 
     return {
       id: orderId,

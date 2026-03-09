@@ -235,14 +235,14 @@ const COUNTER_CATS = {
 // Used to create pos.prep.state records when WABA orders are placed via API
 // (POS frontend does this automatically via sync_from_ui → _send_orders_to_preparation_display)
 const KDS_INITIAL_STAGES = {
-  22: [31, 75, 67],  // Indian → KDS 11(To prepare), KDS 15(Preparing), KDS 21(Preparing)
-  24: [34, 75, 67],  // Chinese → KDS 12(To prepare), KDS 15(Preparing), KDS 21(Preparing)
-  25: [37, 75, 67],  // Tandoor → KDS 13(To prepare), KDS 15(Preparing), KDS 21(Preparing)
-  26: [40, 75, 67],  // FC → KDS 14(To prepare), KDS 15(Preparing), KDS 21(Preparing)
-  27: [46],           // Juice → KDS 16(To prepare)
-  28: [49, 69],       // Bain Marie → KDS 17(To prepare), KDS 22(Preparing)
-  29: [52],           // Shawarma → KDS 18(To prepare)
-  30: [55],           // Grill → KDS 19(To prepare)
+  22: [31, 75, 67, 94],  // Indian → KDS 11(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
+  24: [34, 75, 67, 94],  // Chinese → KDS 12(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
+  25: [37, 75, 67, 94],  // Tandoor → KDS 13(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
+  26: [40, 75, 67, 94],  // FC → KDS 14(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
+  27: [46, 94],           // Juice → KDS 16(To prepare), Assembly(Preparing)
+  28: [49, 69, 94],       // Bain Marie → KDS 17(To prepare), KDS 22(Preparing), Assembly(Preparing)
+  29: [52, 94],           // Shawarma → KDS 18(To prepare), Assembly(Preparing)
+  30: [55, 94],           // Grill → KDS 19(To prepare), Assembly(Preparing)
 };
 
 // ── KDS stage → customer-facing counter name (for WhatsApp notifications) ──
@@ -2036,6 +2036,14 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       }, isTestWebhook);
     }
 
+    // Route 4: HE-Delivery (config 7) — Swiggy/Zomato assembly tracking only
+    if (configId === 7 && !isTestWebhook) {
+      handleKdsWebhookAssembly(context, stage_id, prep_line_id, posOrderId, productId).catch(e =>
+        console.error('Assembly webhook error (config 7):', e.message)
+      );
+      return new Response(JSON.stringify({ ok: true, assembly: 'config 7 processed' }), { headers: corsHeaders });
+    }
+
     return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant config' }), { headers: corsHeaders });
 
   } catch (error) {
@@ -2188,13 +2196,18 @@ function getFloorConfig(url) {
   };
 }
 
-// ─── Assembly KDS Webhook (delivery order station tracking) ────
-// Updates assembly_items status when KDS stages change.
-// Non-blocking — called alongside WABA notifications for config 10 orders.
+// ─── Assembly KDS (Odoo display 28) — auto-advance when stations mark items ready ────
+// Stages: 94(Preparing) → 95(Ready) → 96(Packed)
+// When a station marks an item done, auto-advances from Preparing→Ready on Assembly KDS.
+// Also updates D1 assembly_items/assembly_orders tables (legacy tracking).
+const ASSEMBLY_KDS_PREPARING = 94;
+const ASSEMBLY_KDS_READY = 95;
+const ASSEMBLY_KDS_PACKED = 96;
+
 const ASSEMBLY_READY_STAGES = new Set([
   76,   // Kitchen Pass TV → InProgress (packed)
   47,   // Juice → Ready
-  50,   // Bain Marie → Ready
+  50,   // Bain Marie → Ready (stage name: "Packed")
   53,   // Shawarma → Ready
   56,   // Grill → Ready
 ]);
@@ -2207,59 +2220,68 @@ const ASSEMBLY_STAGE_STATION = {
 };
 
 async function handleKdsWebhookAssembly(context, stageId, prepLineId, posOrderId, productId) {
-  const db = context.env.DB;
-
   // Only process stages we care about for assembly
   if (!ASSEMBLY_READY_STAGES.has(stageId)) return;
 
-  // Check if this order is tracked in assembly_orders
+  const apiKey = context.env.ODOO_API_KEY;
+
+  // ── Odoo Assembly KDS auto-advance: Preparing(94) → Ready(95) ──
+  // Find the prep_state for this prep_line on Assembly KDS "Preparing" stage
+  if (apiKey && prepLineId) {
+    try {
+      const existingState = await odooRPC(apiKey, 'pos.prep.state', 'search_read',
+        [[['prep_line_id', '=', prepLineId], ['stage_id', '=', ASSEMBLY_KDS_PREPARING], ['todo', '=', true]]],
+        { fields: ['id'], limit: 1 });
+      if (existingState && existingState[0]) {
+        // Mark Preparing as done, create Ready state
+        await Promise.all([
+          odooRPC(apiKey, 'pos.prep.state', 'write', [[existingState[0].id], { todo: false }]),
+          odooRPC(apiKey, 'pos.prep.state', 'create', [{ prep_line_id: prepLineId, stage_id: ASSEMBLY_KDS_READY, todo: true }]),
+        ]);
+      }
+    } catch (e) {
+      console.error('Assembly KDS auto-advance error:', e.message);
+    }
+  }
+
+  // ── D1 assembly tracking (legacy — kept for Push UI / external dashboard) ──
+  const db = context.env.DB;
   const assemblyOrder = await db.prepare(
     'SELECT id, total_items, items_ready, stations_total FROM assembly_orders WHERE odoo_order_id = ? AND status = ?'
   ).bind(posOrderId, 'preparing').first();
-  if (!assemblyOrder) return; // Not a delivery assembly order
+  if (!assemblyOrder) return;
 
-  // Try to find assembly_item by prep_line_id (if already bound)
   let item = await db.prepare(
     'SELECT * FROM assembly_items WHERE prep_line_id = ? AND assembly_order_id = ?'
   ).bind(prepLineId, assemblyOrder.id).first();
 
-  // If not bound, try to bind by product_id match
   if (!item && productId) {
     item = await db.prepare(
       'SELECT * FROM assembly_items WHERE assembly_order_id = ? AND odoo_product_id = ? AND prep_line_id IS NULL AND status = ? LIMIT 1'
     ).bind(assemblyOrder.id, productId, 'preparing').first();
-
     if (item) {
-      // Bind this prep_line_id to the item
       await db.prepare('UPDATE assembly_items SET prep_line_id = ? WHERE id = ?')
         .bind(prepLineId, item.id).run();
     }
   }
 
-  if (!item || item.status === 'ready') return; // Already ready or no match
+  if (!item || item.status === 'ready') return;
 
-  // Mark item as ready
   const now = new Date().toISOString().slice(0, 19);
   await db.prepare('UPDATE assembly_items SET status = ?, ready_at = ? WHERE id = ?')
     .bind('ready', now, item.id).run();
 
-  // Recalculate order readiness
   const readyCount = await db.prepare(
     'SELECT COUNT(*) as cnt FROM assembly_items WHERE assembly_order_id = ? AND status = ?'
   ).bind(assemblyOrder.id, 'ready').first();
-
   const totalCount = await db.prepare(
     'SELECT COUNT(*) as cnt FROM assembly_items WHERE assembly_order_id = ?'
   ).bind(assemblyOrder.id).first();
-
-  // Count distinct ready stations
   const readyStations = await db.prepare(
-    `SELECT COUNT(DISTINCT station) as cnt FROM assembly_items
-     WHERE assembly_order_id = ? AND status = ?`
+    `SELECT COUNT(DISTINCT station) as cnt FROM assembly_items WHERE assembly_order_id = ? AND status = ?`
   ).bind(assemblyOrder.id, 'ready').first();
 
   const allReady = readyCount.cnt >= totalCount.cnt;
-
   await db.prepare(`
     UPDATE assembly_orders SET items_ready = ?, stations_ready = ?, updated_at = ?
     ${allReady ? ", status = 'assembled', assembled_at = ?" : ''}
