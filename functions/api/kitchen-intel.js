@@ -155,6 +155,8 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
 
   const result = [];
   const stationMetrics = {};
+  const kpPrepTimes = [];
+  const gapTimes = [];
 
   for (const order of orders) {
     const orderId = order.id;
@@ -181,6 +183,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       const stationStages = getStationStages(states);
       const currentStage = getCurrentStage(stationStages);
       const timing = computeItemTiming(line.create_date, stationStages);
+      const kpTiming = computeKPTiming(states, timing.doneTime);
 
       if (!['Completed', 'Packed', 'Ready', 'Prepared'].includes(currentStage)) {
         allDone = false;
@@ -192,13 +195,18 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       }
       stationMetrics[catInfo.name].total += line.quantity;
       if (timing.prepDuration > 0) stationMetrics[catInfo.name].prepTimes.push(timing.prepDuration);
+      if (kpTiming.kpSec > 0) kpPrepTimes.push(kpTiming.kpSec);
+      if (kpTiming.gapSec > 0) gapTimes.push(kpTiming.gapSec);
 
       items.push({
         id: line.id, product: productName, qty: line.quantity,
         station: catInfo.name, stage: currentStage,
         elapsed: timing.elapsed, prepDuration: timing.prepDuration,
         sentAt: formatIST(parseOdooDate(line.create_date)),
-        doneAt: timing.doneTime ? formatIST(timing.doneTime) : null
+        doneAt: timing.doneTime ? formatIST(timing.doneTime) : null,
+        kpStage: kpTiming.kpStage,
+        kpSec: kpTiming.kpSec,
+        gapSec: kpTiming.gapSec,
       });
     }
 
@@ -217,10 +225,12 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     }
     const elapsedMin = effectiveStart ? Math.round((Date.now() - effectiveStart.getTime()) / 60000) : 0;
 
-    // Prep completion time: latest stage change across COOKING lines only
+    // Prep completion time: split station vs KP
     // BM (catId 28) items are bulk-cleared hours late on KDS — exclude from order-level timing
     const BM_CAT_ID = 28;
-    let prepCompleteTime = null;
+    const KP_IDS = new Set([75, 44, 74, 63]);
+    let stationCompleteTime = null;
+    let kpCompleteTime = null;
     let prepCompleteTimeAll = null; // includes BM, for status determination
     for (const line of lines) {
       const states = statesByLine[line.id] || [];
@@ -228,14 +238,28 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       const catInfo = productCatMap[productId] || { id: 0 };
       const isBM = catInfo.id === BM_CAT_ID;
       for (const s of states) {
+        const sid = s.stage_id?.[0];
         const t = parseOdooDate(s.last_stage_change);
-        if (t && (!prepCompleteTimeAll || t > prepCompleteTimeAll)) prepCompleteTimeAll = t;
-        if (t && !isBM && (!prepCompleteTime || t > prepCompleteTime)) prepCompleteTime = t;
+        if (!t) continue;
+        if (!prepCompleteTimeAll || t > prepCompleteTimeAll) prepCompleteTimeAll = t;
+        if (KP_IDS.has(sid)) {
+          if (!kpCompleteTime || t > kpCompleteTime) kpCompleteTime = t;
+        } else if (!isBM) {
+          if (!stationCompleteTime || t > stationCompleteTime) stationCompleteTime = t;
+        }
       }
     }
-    // Use cooking-only time for metrics; fallback to all if no cooking lines
-    if (!prepCompleteTime) prepCompleteTime = prepCompleteTimeAll;
+    // Use station time for prep metrics; fallback to KP or all
+    const prepCompleteTime = stationCompleteTime || kpCompleteTime || prepCompleteTimeAll;
     const prepCompleteSec = (prepCompleteTime && effectiveStart) ? Math.round((prepCompleteTime - effectiveStart) / 1000) : null;
+
+    // Per-order split timing averages
+    const itemStationTimes = items.filter(i => i.prepDuration > 0).map(i => i.prepDuration);
+    const itemKPTimes = items.filter(i => i.kpSec > 0).map(i => i.kpSec);
+    const itemGapTimes = items.filter(i => i.gapSec > 0).map(i => i.gapSec);
+    const stationAvgSec = itemStationTimes.length > 0 ? Math.round(itemStationTimes.reduce((a, b) => a + b, 0) / itemStationTimes.length) : null;
+    const kpAvgSec = itemKPTimes.length > 0 ? Math.round(itemKPTimes.reduce((a, b) => a + b, 0) / itemKPTimes.length) : null;
+    const gapAvgSec = itemGapTimes.length > 0 ? Math.round(itemGapTimes.reduce((a, b) => a + b, 0) / itemGapTimes.length) : null;
 
     // Lifecycle-aware status model
     let status;
@@ -285,6 +309,7 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       config: configLabel, items, kpStatus, status,
       itemCount: (olByOrder[orderId] || []).reduce((s, l) => s + l.qty, 0),
       prepCompleteSec, dineTimeSec, postPrepSec,
+      stationAvgSec, kpAvgSec, gapAvgSec,
       seatedMin: isDraft ? seatedMin : null,
       kitchenSec: isDraft ? kitchenSec : null,
       atTableSec: isDraft ? atTableSec : null,
@@ -352,6 +377,8 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
       activeCount: counterActive.length,
       completedCount: counterDone.length,
       avgPrepSec: counterPrepTimes.length > 0 ? Math.round(counterPrepTimes.reduce((a, b) => a + b, 0) / counterPrepTimes.length) : 0,
+      avgKPSec: kpPrepTimes.length > 0 ? Math.round(kpPrepTimes.reduce((a, b) => a + b, 0) / kpPrepTimes.length) : 0,
+      avgGapSec: gapTimes.length > 0 ? Math.round(gapTimes.reduce((a, b) => a + b, 0) / gapTimes.length) : 0,
     },
     alerts
   };
@@ -364,7 +391,14 @@ async function handleLive(odooUrl, db, uid, apiKey, headers) {
     stations[name] = { catId: data.catId, itemsProcessed: data.total, avgPrepMin: avgPrep, samplesCount: data.prepTimes.length };
   }
 
-  return new Response(JSON.stringify({ success: true, orders: result, stations, todaySummary }), { headers });
+  const kpMetrics = {
+    avgSec: kpPrepTimes.length > 0 ? Math.round(kpPrepTimes.reduce((a, b) => a + b, 0) / kpPrepTimes.length) : 0,
+    avgGapSec: gapTimes.length > 0 ? Math.round(gapTimes.reduce((a, b) => a + b, 0) / gapTimes.length) : 0,
+    samples: kpPrepTimes.length,
+    gapSamples: gapTimes.length
+  };
+
+  return new Response(JSON.stringify({ success: true, orders: result, stations, kpMetrics, todaySummary }), { headers });
 }
 
 // --- Historical stats ---
@@ -724,6 +758,43 @@ function computeItemTiming(createDate, stationStages) {
     }
   }
   return { elapsed, prepDuration, doneTime };
+}
+
+function computeKPTiming(allStates, stationDoneTime) {
+  const KP_SEQ = { 75: 0, 44: 1, 74: 2, 63: 3 };
+  const KP_NAMES = { 75: 'Preparing', 44: 'Ready', 74: 'Packed', 63: 'Completed' };
+
+  const kpStates = [];
+  for (const s of allStates) {
+    const sid = s.stage_id?.[0];
+    if (sid in KP_SEQ) {
+      kpStates.push({
+        seq: KP_SEQ[sid], name: KP_NAMES[sid],
+        todo: s.todo, time: parseOdooDate(s.last_stage_change)
+      });
+    }
+  }
+
+  if (kpStates.length === 0) return { kpStage: null, kpSec: 0, gapSec: 0 };
+
+  kpStates.sort((a, b) => a.seq - b.seq);
+
+  // Current KP stage = first still pending, or last if all done
+  let kpStage = kpStates[kpStates.length - 1].name;
+  for (const s of kpStates) { if (s.todo) { kpStage = s.name; break; } }
+
+  // Only completed (todo=false) stages have meaningful timestamps
+  const done = kpStates.filter(s => !s.todo && s.time);
+  if (done.length === 0) return { kpStage, kpSec: 0, gapSec: 0 };
+
+  const kpStart = done[0].time;
+  const kpEnd = done[done.length - 1].time;
+  const kpSec = Math.round((kpEnd - kpStart) / 1000);
+  const gapSec = stationDoneTime
+    ? Math.max(0, Math.round((kpStart - stationDoneTime) / 1000))
+    : 0;
+
+  return { kpStage, kpSec, gapSec };
 }
 
 // --- Utility ---

@@ -173,6 +173,18 @@
     .kp-queued{background:rgba(100,116,139,.15);color:var(--muted)}
     .kp-n\/a{background:rgba(100,116,139,.08);color:var(--muted)}
 
+    .timing-bar{display:flex;height:14px;border-radius:3px;overflow:hidden;background:var(--bg2);margin-top:4px}
+    .tb-seg{display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.85);min-width:4px}
+    .tb-station{background:rgba(245,158,11,.45)}
+    .tb-gap{background:rgba(239,68,68,.25)}
+    .tb-kp{background:rgba(59,130,246,.45)}
+    .tb-active{animation:pulse-seg 1.5s ease-in-out infinite}
+    @keyframes pulse-seg{0%,100%{opacity:1}50%{opacity:.5}}
+    .timing-split{display:flex;gap:8px;font-size:10px;font-family:'JetBrains Mono',monospace}
+    .ts-station{color:var(--yellow)}
+    .ts-gap{color:var(--red)}
+    .ts-kp{color:var(--blue)}
+
     /* Kitchen (stations) tab */
     .station-group-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-left:4px}
     .station-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--orange)}
@@ -556,7 +568,7 @@ function renderCommand(data) {
   // Station health (exclude 0-sample stations)
   const stationNames = Object.keys(stations).filter(n => stations[n].samplesCount > 0 || stations[n].itemsProcessed > 0);
   if (stationNames.length > 0) {
-    $('cmdStationHealth').innerHTML = stationNames.map(name => {
+    let chipHtml = stationNames.map(name => {
       const s = stations[name];
       const hasData = s.samplesCount > 0;
       const color = !hasData ? 'var(--muted)' : s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
@@ -567,6 +579,27 @@ function renderCommand(data) {
         <span class="hc-items">${s.itemsProcessed} items</span>
       </div>`;
     }).join('');
+
+    // KP Pass and Handoff chips
+    const kp = data.kpMetrics || {};
+    if (kp.samples > 0) {
+      const kpColor = kp.avgSec > 300 ? 'var(--red)' : kp.avgSec > 120 ? 'var(--yellow)' : 'var(--green)';
+      chipHtml += `<div class="health-chip" style="border-top-color:${kpColor}">
+        <span class="hc-name">KP Pass</span>
+        <span class="hc-val" style="color:${kpColor}">${fmtSec(kp.avgSec)}</span>
+        <span class="hc-items">${kp.samples} items</span>
+      </div>`;
+      if (kp.avgGapSec > 0) {
+        const gapColor = kp.avgGapSec > 120 ? 'var(--red)' : kp.avgGapSec > 60 ? 'var(--yellow)' : 'var(--green)';
+        chipHtml += `<div class="health-chip" style="border-top-color:${gapColor}">
+          <span class="hc-name">Handoff</span>
+          <span class="hc-val" style="color:${gapColor}">${fmtSec(kp.avgGapSec)}</span>
+          <span class="hc-items">${kp.gapSamples} items</span>
+        </div>`;
+      }
+    }
+
+    $('cmdStationHealth').innerHTML = chipHtml;
   } else {
     $('cmdStationHealth').innerHTML = '<span style="color:var(--muted);font-size:12px">No station data yet</span>';
   }
@@ -610,7 +643,7 @@ function renderTables(data) {
           <span class="tc-item-station">${esc(item.station)}</span>
           <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap">${timePart}</span>
           <span class="tc-item-stage ${stageClass}">${stageLabel}</span>
-        </div>`;
+        </div>${renderTimingBar(item)}`;
       }).join('');
 
       const footerParts = [];
@@ -732,7 +765,8 @@ function renderOrderCard(order) {
       <span class="item-station">${esc(item.station)}</span>
       <span class="item-time" style="color:${timeColor}">${timeStr}</span>
       <span class="item-stage ${stageClass}">${stageLabel}</span>
-    </div>`;
+      ${item.kpStage ? `<span class="item-stage ${getKPBadgeClass(item.kpStage)}">KP:${item.kpStage}</span>` : ''}
+    </div>${renderTimingBar(item)}`;
   }).join('');
 
   const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
@@ -753,7 +787,14 @@ function renderOrderCard(order) {
     </div>
     <div class="order-items">${itemsHtml}</div>
     <div class="order-footer">
-      <span>${order.itemCount} items \u00B7 \u20B9${order.amount}${tableInfo}</span>
+      <span>${(() => {
+        const fp = [];
+        if (order.stationAvgSec) fp.push('S:' + fmtSec(order.stationAvgSec));
+        if (order.gapAvgSec) fp.push('G:' + fmtSec(order.gapAvgSec));
+        if (order.kpAvgSec) fp.push('KP:' + fmtSec(order.kpAvgSec));
+        const timingStr = fp.length > 0 ? fp.join(' \u00B7 ') + ' \u00B7 ' : '';
+        return timingStr + order.itemCount + ' items \u00B7 \u20B9' + order.amount + tableInfo;
+      })()}</span>
       <span class="kp-badge ${kpClass}">KP: ${esc(order.kpStatus)}</span>
     </div>
     ${ts.placed ? `<div style="padding:4px 12px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-top:1px solid var(--border)">Placed ${ts.placed}${ts.foodReady ? ' \u2192 Ready ' + ts.foodReady : ''}</div>` : ''}
@@ -765,7 +806,8 @@ function renderOrderCard(order) {
 // =============================================
 function renderCompletedCard(o) {
   const displayName = o.shortName || o.name;
-  const prepStr = o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-';
+  const stationStr = o.stationAvgSec ? fmtSec(o.stationAvgSec) : (o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-');
+  const kpStr = o.kpAvgSec ? fmtSec(o.kpAvgSec) : '';
   const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
   const isNoPrep = o.status === 'no_prep';
   const ts = o.timestamps || {};
@@ -781,7 +823,7 @@ function renderCompletedCard(o) {
         <span class="is">${esc(item.station)}</span>
       </div>
       <span class="cr-item-time" style="color:${tColor}">${tStr}</span>
-    </div>`;
+    </div>${renderTimingSplit(item)}`;
   }).join('');
 
   // Timestamps row
@@ -798,7 +840,8 @@ function renderCompletedCard(o) {
         <span class="cr-meta">${esc(o.config)}${isNoPrep ? ' (no KDS)' : ''}</span>
       </div>
       <div class="cr-right">
-        ${!isNoPrep ? `<span class="cr-prep">${prepStr}</span>` : ''}
+        ${!isNoPrep ? `<span class="cr-prep">${stationStr}</span>` : ''}
+        ${kpStr ? `<span style="color:var(--blue)">${kpStr}</span>` : ''}
         ${dineStr ? `<span class="cr-dine">${dineStr}</span>` : ''}
         <span class="cr-amount">\u20B9${o.amount}</span>
       </div>
@@ -1065,6 +1108,50 @@ function getPhaseLabel(status, o) {
     return atTable > 0 ? `SERVED \u2014 ${fmtSec(atTable)}` : 'SERVED';
   }
   return status;
+}
+
+// --- Timing bar helpers ---
+function renderTimingBar(item) {
+  const station = item.prepDuration || 0;
+  const gap = item.gapSec || 0;
+  const kp = item.kpSec || 0;
+  const total = station + gap + kp;
+  if (total === 0) return '';
+
+  const pct = v => Math.max((v / total) * 100, v > 0 ? 8 : 0);
+  const label = v => v > 30 ? fmtSec(v) : '';
+
+  const stationDone = ['Completed','Packed','Ready','Prepared'].includes(item.stage);
+  const kpDone = item.kpStage && ['Packed','Completed'].includes(item.kpStage);
+
+  const stationActive = !stationDone ? ' tb-active' : '';
+  const gapActive = (stationDone && !item.kpStage) ? ' tb-active' : '';
+  const kpActive = (stationDone && item.kpStage && !kpDone) ? ' tb-active' : '';
+
+  let html = '<div class="timing-bar">';
+  if (station > 0) html += `<div class="tb-seg tb-station${stationActive}" style="width:${pct(station)}%" title="Station: ${fmtSec(station)}">${label(station)}</div>`;
+  if (gap > 0) html += `<div class="tb-seg tb-gap${gapActive}" style="width:${pct(gap)}%" title="Gap: ${fmtSec(gap)}">${label(gap)}</div>`;
+  if (kp > 0) html += `<div class="tb-seg tb-kp${kpActive}" style="width:${pct(kp)}%" title="KP: ${fmtSec(kp)}">${label(kp)}</div>`;
+  html += '</div>';
+  return html;
+}
+
+function renderTimingSplit(item) {
+  const parts = [];
+  if (item.prepDuration > 0) parts.push(`<span class="ts-station">S:${fmtSec(item.prepDuration)}</span>`);
+  if (item.gapSec > 0) parts.push(`<span class="ts-gap">G:${fmtSec(item.gapSec)}</span>`);
+  if (item.kpSec > 0) parts.push(`<span class="ts-kp">KP:${fmtSec(item.kpSec)}</span>`);
+  return parts.length > 0 ? `<div class="timing-split">${parts.join('')}</div>` : '';
+}
+
+function getKPBadgeClass(kpStage) {
+  if (!kpStage) return '';
+  const lower = kpStage.toLowerCase();
+  if (lower === 'preparing') return 'kp-preparing';
+  if (lower === 'ready') return 'kp-ready';
+  if (lower === 'packed') return 'kp-packed';
+  if (lower === 'completed') return 'kp-completed';
+  return 'kp-queued';
 }
 
 // --- Utilities ---
