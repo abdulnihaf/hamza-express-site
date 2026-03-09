@@ -98,6 +98,11 @@ const PORTRAIT_OVERRIDE_SCRIPT = `<script>
     }
     return el;
   };
+  [['SCRIPT','src'],['LINK','href'],['IMG','src']].forEach(function(pair){
+    var proto=document.createElement(pair[0]).constructor.prototype,prop=pair[1];
+    var desc=Object.getOwnPropertyDescriptor(proto,prop);
+    if(desc&&desc.set){Object.defineProperty(proto,prop,{set:function(v){desc.set.call(this,rw(v));},get:desc.get,configurable:true});}
+  });
   var _WS=window.WebSocket;
   window.WebSocket=function(url,protocols){
     if(typeof url==='string'){
@@ -624,7 +629,7 @@ const OVERRIDE_SCRIPT = `<script>
     arguments[1]=rw(arguments[1]);
     return _x.apply(this,arguments);
   };
-  // Override dynamic script/link creation
+  // Override dynamic script/link creation (setAttribute)
   var _ce=document.createElement.bind(document);
   document.createElement=function(tag){
     var el=_ce(tag);
@@ -637,6 +642,12 @@ const OVERRIDE_SCRIPT = `<script>
     }
     return el;
   };
+  // Override .src/.href direct property assignment (Odoo sets script.src directly)
+  [['SCRIPT','src'],['LINK','href'],['IMG','src']].forEach(function(pair){
+    var proto=document.createElement(pair[0]).constructor.prototype,prop=pair[1];
+    var desc=Object.getOwnPropertyDescriptor(proto,prop);
+    if(desc&&desc.set){Object.defineProperty(proto,prop,{set:function(v){desc.set.call(this,rw(v));},get:desc.get,configurable:true});}
+  });
   // Override WebSocket to route through proxy (preserves session cookies)
   var _WS=window.WebSocket;
   window.WebSocket=function(url,protocols){
