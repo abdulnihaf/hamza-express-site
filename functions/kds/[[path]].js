@@ -740,16 +740,30 @@ const OVERRIDE_SCRIPT = `<script>
 </script>`;
 
 // ─── KDS Real-time Polling Script ────────────────────────────────────────────
-// Odoo bus notifications don't reach API-created orders (external execute_kw
-// can't trigger _send_orders_to_preparation_display). This script polls Odoo
-// for new orders every 3s via the OWL data service, triggering reactivity to
-// update the KDS display without requiring a manual page refresh.
+// Polls Odoo every 3s for:
+// 1. New orders (API-created WABA orders don't trigger OWL bus) → reload page
+// 2. Stage changes → fire webhook for WhatsApp notifications (replaces unreliable Odoo automation)
+// Double-notification protection: client-side _firedSet + server-side notified_counters dedup
 const KDS_POLL_SCRIPT = `<script>
 (function(){
-  var POLL_MS=3000,_active=false,_lastIds=null,_did=null;
+  var POLL_MS=3000,_active=false,_lastOrderIds=null,_stateMap={},_firedSet={},_did=null;
+  var NOTIFY_STAGES={44:1,62:1,64:1,65:1,66:1,76:1,47:1,50:1,53:1,56:1};
+  var _isPrep=location.pathname.indexOf('pos_preparation_display')!==-1;
   function getDisplayId(){
     var p=new URLSearchParams(location.search);
-    return parseInt(p.get('display_id'))||null;
+    return parseInt(p.get('display_id'))||parseInt(p.get('preparation_display'))||null;
+  }
+  function xid(v){return Array.isArray(v)?v[0]:(typeof v==='number'?v:null);}
+  function fireWebhook(stageId,todo,prepLineId){
+    var key=prepLineId+':'+stageId;
+    if(_firedSet[key])return;
+    _firedSet[key]=true;
+    fetch('/kds/_he_kds_notify',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({stage_id:stageId,todo:todo,prep_line_id:prepLineId})
+    }).then(function(r){
+      console.log('[HE-KDS] Webhook: stage='+stageId+' prep_line='+prepLineId+' →'+r.status);
+    }).catch(function(e){console.warn('[HE-KDS] Webhook err:',e);});
   }
   function poll(){
     if(!_did)return;
@@ -760,11 +774,15 @@ const KDS_POLL_SCRIPT = `<script>
           args:[_did,false],kwargs:{context:{lang:'en_US',tz:'Asia/Kolkata',uid:2,allowed_company_ids:[1]}}}})
     }).then(function(r){return r.json()}).then(function(d){
       var r=d.result||{},po=r['pos.prep.order']||[],st=r['pos.prep.state']||[];
-      var ids=po.map(function(o){return o.id}).sort().join(',')+':'+st.length;
-      if(_lastIds===null){_lastIds=ids;}
-      else if(ids!==_lastIds){
-        console.log('[HE-KDS] Orders changed, reloading...');
-        location.reload();
+      for(var j=0;j<st.length;j++){
+        var s=st[j],sid=xid(s.stage_id),plid=xid(s.prep_line_id),prev=_stateMap[s.id];
+        if(prev&&prev!==sid&&sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
+        _stateMap[s.id]=sid;
+      }
+      if(!_isPrep){
+        var ids=po.map(function(o){return o.id}).sort().join(',');
+        if(_lastOrderIds===null){_lastOrderIds=ids;}
+        else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');location.reload();}
       }
     }).catch(function(){});
   }
@@ -773,7 +791,7 @@ const KDS_POLL_SCRIPT = `<script>
     _did=getDisplayId();
     if(!_did){console.warn('[HE-KDS] No display_id');return;}
     setInterval(poll,POLL_MS);
-    console.log('[HE-KDS] Polling active ('+POLL_MS+'ms) display='+_did);
+    console.log('[HE-KDS] Poll+notify active ('+POLL_MS+'ms) display='+_did+(_isPrep?' [prep]':' [track]'));
   }
   if(document.readyState==='complete')setTimeout(start,5000);
   else window.addEventListener('load',function(){setTimeout(start,5000);});
@@ -793,6 +811,25 @@ function shouldRewrite(url) {
 // ─── Main handler ──────────────────────────────────────────────────────────────
 export async function onRequest(context) {
   const url = new URL(context.request.url);
+  const internalPath = url.pathname.replace(/^\/kds/, '') || '/';
+
+  // ── Webhook relay: KDS poll script → WhatsApp notification handler ──
+  // Receives {stage_id, todo, prep_line_id} from browser, adds secret, forwards
+  if (internalPath === '/_he_kds_notify' && context.request.method === 'POST') {
+    const corsH = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+    try {
+      const body = await context.request.json();
+      const secret = context.env.KDS_WEBHOOK_SECRET;
+      if (!secret) return new Response(JSON.stringify({ error: 'no secret' }), { status: 500, headers: corsH });
+      const resp = await fetch(
+        `https://hamzaexpress.in/api/whatsapp?action=kds-webhook&secret=${encodeURIComponent(secret)}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      );
+      return new Response(await resp.text(), { status: resp.status, headers: corsH });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsH });
+    }
+  }
 
   // Determine target Odoo origin (production vs test)
   const isTest = url.searchParams.get('env') === 'test';
@@ -801,7 +838,7 @@ export async function onRequest(context) {
   const isPortrait = url.searchParams.get('portrait') === '1';
 
   // Strip /kds prefix to reconstruct the Odoo path
-  const odooPath = url.pathname.replace(/^\/kds/, '') || '/';
+  const odooPath = internalPath;
   const odooUrl = new URL(odooPath, odooOrigin);
   odooUrl.search = url.search;
   // Remove our custom params so they don't leak to Odoo
