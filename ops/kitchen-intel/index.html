@@ -789,8 +789,8 @@ function renderOrderCard(order) {
     <div class="order-footer">
       <span>${(() => {
         const fp = [];
-        if (order.stationAvgSec) fp.push('S:' + fmtSec(order.stationAvgSec));
-        if (order.gapAvgSec) fp.push('G:' + fmtSec(order.gapAvgSec));
+        if (order.stationAvgSec) fp.push('Stn:' + fmtSec(order.stationAvgSec));
+        if (order.gapAvgSec) fp.push('Wait:' + fmtSec(order.gapAvgSec));
         if (order.kpAvgSec) fp.push('KP:' + fmtSec(order.kpAvgSec));
         const timingStr = fp.length > 0 ? fp.join(' \u00B7 ') + ' \u00B7 ' : '';
         return timingStr + order.itemCount + ' items \u00B7 \u20B9' + order.amount + tableInfo;
@@ -1129,8 +1129,8 @@ function renderTimingBar(item) {
   const kpActive = (stationDone && item.kpStage && !kpDone) ? ' tb-active' : '';
 
   let html = '<div class="timing-bar">';
-  if (station > 0) html += `<div class="tb-seg tb-station${stationActive}" style="width:${pct(station)}%" title="Station: ${fmtSec(station)}">${label(station)}</div>`;
-  if (gap > 0) html += `<div class="tb-seg tb-gap${gapActive}" style="width:${pct(gap)}%" title="Gap: ${fmtSec(gap)}">${label(gap)}</div>`;
+  if (station > 0) html += `<div class="tb-seg tb-station${stationActive}" style="width:${pct(station)}%" title="Stn: ${fmtSec(station)}">${label(station)}</div>`;
+  if (gap > 0) html += `<div class="tb-seg tb-gap${gapActive}" style="width:${pct(gap)}%" title="Wait: ${fmtSec(gap)}">${label(gap)}</div>`;
   if (kp > 0) html += `<div class="tb-seg tb-kp${kpActive}" style="width:${pct(kp)}%" title="KP: ${fmtSec(kp)}">${label(kp)}</div>`;
   html += '</div>';
   return html;
@@ -1138,8 +1138,8 @@ function renderTimingBar(item) {
 
 function renderTimingSplit(item) {
   const parts = [];
-  if (item.prepDuration > 0) parts.push(`<span class="ts-station">S:${fmtSec(item.prepDuration)}</span>`);
-  if (item.gapSec > 0) parts.push(`<span class="ts-gap">G:${fmtSec(item.gapSec)}</span>`);
+  if (item.prepDuration > 0) parts.push(`<span class="ts-station">Stn:${fmtSec(item.prepDuration)}</span>`);
+  if (item.gapSec > 0) parts.push(`<span class="ts-gap">Wait:${fmtSec(item.gapSec)}</span>`);
   if (item.kpSec > 0) parts.push(`<span class="ts-kp">KP:${fmtSec(item.kpSec)}</span>`);
   return parts.length > 0 ? `<div class="timing-split">${parts.join('')}</div>` : '';
 }
