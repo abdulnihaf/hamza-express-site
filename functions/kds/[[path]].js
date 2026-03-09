@@ -942,6 +942,10 @@ export async function onRequest(context) {
   const contentType = odooResp.headers.get('content-type') || '';
 
   // ── HTML response: inject brand CSS + URL rewriting ──
+  // Login/utility pages: only URL rewriting (no brand CSS that breaks Odoo's OWL UI)
+  const isLoginPage = odooPath.startsWith('/web/login') || odooPath.startsWith('/web/reset_password') || odooPath.startsWith('/web/signup') || odooPath === '/web' || odooPath === '/odoo';
+  const isKdsDisplay = odooPath.includes('pos_preparation_display') || odooPath.includes('pos-order-tracking') || odooPath.includes('pos_order_tracking');
+
   if (contentType.includes('text/html')) {
     let headInjected = false;
     const rewriter = new HTMLRewriter()
@@ -950,19 +954,25 @@ export async function onRequest(context) {
         element(el) {
           if (headInjected) return;  // Odoo HTML has 2 <head> tags — only inject once
           headInjected = true;
-          if (isPortrait) {
+          if (isLoginPage) {
+            // Login page: URL rewriting only — no brand CSS, no poll, no header rebuild
+            el.prepend(OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
+          } else if (isPortrait) {
             // Portrait mode: URL rewriting only (no brand fonts/header rebuild)
             // Odoo QWeb provides its own branding — avoids double-branding
             el.prepend(PORTRAIT_OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
             el.append(`<style id="he-portrait-css">${PORTRAIT_CSS}</style>`, { html: true });
-          } else {
-            // Standard mode: full brand overlay with fonts + header rebuild
+            el.append(KDS_POLL_SCRIPT, { html: true });
+          } else if (isKdsDisplay) {
+            // KDS display: full brand overlay with fonts + header rebuild + poll
             el.prepend(FONT_TAGS + OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
             el.append(`<style id="he-brand-css">${BRAND_CSS}</style>`, { html: true });
+            el.append(KDS_POLL_SCRIPT, { html: true });
+          } else {
+            // Other Odoo pages (preparation display, etc.): URL rewriting + poll only
+            el.prepend(OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
+            el.append(KDS_POLL_SCRIPT, { html: true });
           }
-          // Real-time polling — both modes need this since bus notifications
-          // don't reach API-created orders (WABA flow)
-          el.append(KDS_POLL_SCRIPT, { html: true });
         }
       })
       // Portrait: also inject CSS at END of body (overrides Odoo QWeb inline styles)
