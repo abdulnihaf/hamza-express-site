@@ -6,7 +6,7 @@ const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
 const ODOO_DB = 'main';
 const ODOO_UID = 2;
 const POS_CONFIG_ID = 10; // HE - WABA (used for all delivery orders)
-const PRICELIST_ID = 1;
+const PRICELIST_ID = 5; // Default pricelist (HN Hotels — must match whatsapp.js)
 const PAYMENT_METHOD_UPI = 17; // WABA General UPI
 const GST_TAX_ID = 31; // 5% GST S
 
