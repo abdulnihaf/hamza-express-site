@@ -1028,6 +1028,13 @@ export async function onRequest(context) {
           const action = el.getAttribute('action');
           if (shouldRewrite(action)) el.setAttribute('action', '/kds' + action);
         }
+      })
+      // Rewrite hidden redirect field so post-login redirect stays within proxy
+      .on('input[name="redirect"]', {
+        element(el) {
+          const val = el.getAttribute('value');
+          if (shouldRewrite(val)) el.setAttribute('value', '/kds' + val);
+        }
       });
 
     // Remove content-length since we're modifying the body
