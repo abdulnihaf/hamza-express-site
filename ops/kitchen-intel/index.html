@@ -261,6 +261,7 @@
     <div class="header-right">
       <div class="status-dot" id="dot"></div>
       <span class="status-text" id="statusText">--</span>
+      <button class="btn-refresh" onclick="generateDailyReport()" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:#fff;border-color:transparent;font-weight:600">Report</button>
       <button class="btn-refresh" onclick="manualRefresh()">Refresh</button>
     </div>
   </header>
@@ -1170,6 +1171,529 @@ function fmtSec(sec) {
 function esc(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================
+// PDF DAILY REPORT
+// =============================================
+async function generateDailyReport() {
+  // Ensure stats are loaded
+  if (!statsData) {
+    await loadStats();
+  }
+  if (!statsData) {
+    alert('Unable to load data for report. Please try again.');
+    return;
+  }
+
+  // Load jsPDF on demand
+  if (!window.jspdf) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const W = 210, H = 297;
+  const ML = 14, MR = 14, MT = 14;
+  const PW = W - ML - MR; // printable width
+  let y = MT;
+
+  const fromDate = $('stFromDate').value || todayIST();
+  const dateLabel = new Date(fromDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Colors
+  const C = {
+    dark: [15, 23, 42],
+    text: [30, 41, 59],
+    muted: [100, 116, 139],
+    orange: [249, 115, 22],
+    green: [16, 185, 129],
+    red: [239, 68, 68],
+    yellow: [245, 158, 11],
+    blue: [59, 130, 246],
+    cyan: [6, 182, 212],
+    white: [255, 255, 255],
+    lightBg: [248, 250, 252],
+    cardBg: [241, 245, 249],
+  };
+
+  function checkPage(needed) {
+    if (y + needed > H - 16) {
+      doc.addPage();
+      y = MT;
+      return true;
+    }
+    return false;
+  }
+
+  function setFont(style, size) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+  }
+
+  function drawLine(x1, yy, x2) {
+    doc.setDrawColor(...C.muted);
+    doc.setLineWidth(0.3);
+    doc.line(x1, yy, x2, yy);
+  }
+
+  // ---------- HEADER ----------
+  doc.setFillColor(...C.dark);
+  doc.rect(0, 0, W, 32, 'F');
+  setFont('bold', 18);
+  doc.setTextColor(...C.white);
+  doc.text('Kitchen Intel', ML, 14);
+  setFont('normal', 11);
+  doc.setTextColor(200, 210, 225);
+  doc.text('Daily Operations Report', ML, 21);
+  setFont('normal', 9);
+  doc.text(dateLabel, ML, 27);
+  doc.text('Generated: ' + new Date().toLocaleString('en-IN'), W - MR, 27, { align: 'right' });
+
+  // Orange accent bar
+  doc.setFillColor(...C.orange);
+  doc.rect(0, 32, W, 1.5, 'F');
+  y = 40;
+
+  const s = statsData.summary;
+  const stations = statsData.stationPerf || [];
+  const kp = statsData.kpFlow;
+  const hourly = statsData.hourly || [];
+  const dineIn = s.dineIn || {};
+
+  // ---------- EXECUTIVE SUMMARY ----------
+  setFont('bold', 13);
+  doc.setTextColor(...C.dark);
+  doc.text('Executive Summary', ML, y);
+  y += 7;
+
+  // Summary boxes in a 3x2 grid
+  const boxW = (PW - 6) / 3;
+  const boxH = 18;
+  const summaryBoxes = [
+    { label: 'Total Orders', value: String(s.totalOrders), color: C.orange },
+    { label: 'Avg Prep Time', value: fmtSec(s.avgOrderPrepSec), color: s.avgOrderPrepSec > 600 ? C.red : s.avgOrderPrepSec > 300 ? C.yellow : C.green },
+    { label: '90th Percentile', value: fmtSec(s.p90OrderPrepSec), color: s.p90OrderPrepSec > 900 ? C.red : C.yellow },
+    { label: 'Counter Orders', value: String(s.counterOrders), color: C.blue },
+    { label: 'Captain Orders', value: String(s.captainOrders), color: C.cyan },
+    { label: 'Total Items', value: String(s.totalItems), color: C.muted },
+  ];
+
+  summaryBoxes.forEach((b, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const bx = ML + col * (boxW + 3);
+    const by = y + row * (boxH + 3);
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(bx, by, boxW, boxH, 2, 2, 'F');
+    // Color accent stripe on left
+    doc.setFillColor(...b.color);
+    doc.rect(bx, by + 2, 1.5, boxH - 4, 'F');
+    setFont('normal', 7);
+    doc.setTextColor(...C.muted);
+    doc.text(b.label.toUpperCase(), bx + 5, by + 6);
+    setFont('bold', 14);
+    doc.setTextColor(...b.color);
+    doc.text(b.value, bx + 5, by + 14);
+  });
+
+  y += 2 * (boxH + 3) + 6;
+
+  // Dine-in vs Takeaway split
+  if (dineIn.count > 0) {
+    const dinePct = Math.round((dineIn.count / s.totalOrders) * 100);
+    const takeaway = s.totalOrders - dineIn.count;
+
+    // Progress bar showing split
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(ML, y, PW, 10, 2, 2, 'F');
+    const dineW = (dinePct / 100) * PW;
+    doc.setFillColor(139, 92, 246); // purple for dine-in
+    if (dineW > 2) doc.roundedRect(ML, y, Math.max(dineW, 4), 10, 2, 2, 'F');
+
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    if (dineW > 30) doc.text(`Dine-in: ${dineIn.count} (${dinePct}%)`, ML + 4, y + 6.5);
+    doc.setTextColor(...C.dark);
+    if (PW - dineW > 35) doc.text(`Takeaway: ${takeaway} (${100 - dinePct}%)`, ML + dineW + 4, y + 6.5);
+    y += 14;
+  }
+
+  // ---------- DINE-IN PERFORMANCE ----------
+  if (dineIn.count > 0) {
+    checkPage(30);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Dine-in Performance', ML, y);
+    y += 7;
+
+    const dineBoxes = [
+      { label: 'Avg Kitchen Time', value: fmtSec(dineIn.avgDineTimeSec), sub: 'order to food ready' },
+      { label: 'Post-Prep Wait', value: fmtSec(dineIn.avgPostPrepSec), sub: 'food ready to bill' },
+    ];
+
+    dineBoxes.forEach((b, i) => {
+      const bx = ML + i * (PW / 2 + 1.5);
+      const bw = PW / 2 - 1.5;
+      doc.setFillColor(...C.cardBg);
+      doc.roundedRect(bx, y, bw, 16, 2, 2, 'F');
+      setFont('normal', 7);
+      doc.setTextColor(...C.muted);
+      doc.text(b.label.toUpperCase(), bx + 4, y + 5);
+      setFont('bold', 12);
+      doc.setTextColor(...C.dark);
+      doc.text(b.value, bx + 4, y + 12);
+    });
+    y += 22;
+  }
+
+  // ---------- STATION PERFORMANCE TABLE ----------
+  if (stations.length > 0) {
+    checkPage(20 + stations.length * 7);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Station Performance', ML, y);
+    y += 7;
+
+    // Table header
+    const cols = [
+      { label: 'Station', x: ML, w: 36 },
+      { label: 'Avg Prep', x: ML + 38, w: 22 },
+      { label: 'Median', x: ML + 62, w: 22 },
+      { label: '90th %', x: ML + 86, w: 22 },
+      { label: 'Max', x: ML + 110, w: 22 },
+      { label: 'Items', x: ML + 134, w: 18 },
+      { label: 'Orders', x: ML + 154, w: 18 },
+      { label: 'Status', x: ML + 174, w: 12 },
+    ];
+
+    doc.setFillColor(...C.dark);
+    doc.roundedRect(ML, y, PW, 7, 1, 1, 'F');
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    cols.forEach(c => doc.text(c.label, c.x + 2, y + 5));
+    y += 8;
+
+    stations.forEach((st, i) => {
+      checkPage(8);
+      if (i % 2 === 0) {
+        doc.setFillColor(...C.lightBg);
+        doc.rect(ML, y - 1, PW, 7, 'F');
+      }
+
+      setFont('normal', 7.5);
+      doc.setTextColor(...C.text);
+      doc.text(st.station, cols[0].x + 2, y + 4);
+      doc.text(fmtSec(st.avgPrepSec), cols[1].x + 2, y + 4);
+      doc.text(fmtSec(st.medianPrepSec), cols[2].x + 2, y + 4);
+      doc.text(fmtSec(st.p90PrepSec), cols[3].x + 2, y + 4);
+      doc.text(fmtSec(st.maxPrepSec), cols[4].x + 2, y + 4);
+      doc.text(String(st.items), cols[5].x + 2, y + 4);
+      doc.text(String(st.orders), cols[6].x + 2, y + 4);
+
+      // Status dot
+      const dotColor = st.avgPrepSec > 600 ? C.red : st.avgPrepSec > 300 ? C.yellow : C.green;
+      doc.setFillColor(...dotColor);
+      doc.circle(cols[7].x + 6, y + 3, 2.5, 'F');
+
+      y += 7;
+    });
+    y += 4;
+  }
+
+  // ---------- KITCHEN PASS PIPELINE ----------
+  if (kp) {
+    checkPage(40);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Kitchen Pass Pipeline', ML, y);
+    y += 8;
+
+    const stages = [
+      { from: 'Preparing', to: 'Ready', dur: kp.preparingToReady, samples: kp.samples.preparing },
+      { from: 'Ready', to: 'Packed', dur: kp.readyToPacked, samples: kp.samples.ready },
+      { from: 'Packed', to: 'Done', dur: kp.packedToCompleted, samples: kp.samples.packed },
+    ];
+    const totalKP = stages.reduce((s, st) => s + st.dur, 0);
+
+    // Visual pipeline
+    const nodeW = 28, arrowW = (PW - 4 * nodeW) / 3;
+    const pipeY = y;
+    const stageColors = [C.yellow, C.blue, C.green, C.cyan];
+
+    stages.forEach((st, i) => {
+      const nx = ML + i * (nodeW + arrowW);
+      // From node
+      doc.setFillColor(...stageColors[i]);
+      doc.roundedRect(nx, pipeY, nodeW, 14, 3, 3, 'F');
+      setFont('bold', 7);
+      doc.setTextColor(...C.white);
+      doc.text(st.from, nx + nodeW / 2, pipeY + 6, { align: 'center' });
+      setFont('normal', 6);
+      doc.text(st.samples + ' ord', nx + nodeW / 2, pipeY + 11, { align: 'center' });
+
+      // Arrow with duration
+      if (i < stages.length) {
+        const ax = nx + nodeW;
+        doc.setDrawColor(...C.muted);
+        doc.setLineWidth(0.5);
+        doc.line(ax + 2, pipeY + 7, ax + arrowW - 2, pipeY + 7);
+        // arrowhead
+        doc.line(ax + arrowW - 5, pipeY + 5, ax + arrowW - 2, pipeY + 7);
+        doc.line(ax + arrowW - 5, pipeY + 9, ax + arrowW - 2, pipeY + 7);
+        setFont('bold', 8);
+        doc.setTextColor(...C.orange);
+        doc.text(fmtSec(st.dur), ax + arrowW / 2, pipeY + 4, { align: 'center' });
+      }
+    });
+    // Final "Done" node
+    const lastX = ML + 3 * (nodeW + arrowW);
+    doc.setFillColor(...stageColors[3]);
+    doc.roundedRect(lastX, pipeY, nodeW, 14, 3, 3, 'F');
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    doc.text('Done', lastX + nodeW / 2, pipeY + 8, { align: 'center' });
+
+    y = pipeY + 20;
+
+    // Total KP time
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(ML, y, PW, 10, 2, 2, 'F');
+    setFont('bold', 9);
+    doc.setTextColor(...C.dark);
+    doc.text('Total Kitchen Pass Time: ' + fmtSec(totalKP), ML + 4, y + 7);
+    y += 16;
+  }
+
+  // ---------- HOURLY BREAKDOWN TABLE ----------
+  if (hourly.length > 0) {
+    const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23 && h.orders > 0);
+    if (opHours.length > 0) {
+      checkPage(16 + opHours.length * 6);
+      setFont('bold', 13);
+      doc.setTextColor(...C.dark);
+      doc.text('Hourly Breakdown', ML, y);
+      y += 7;
+
+      // Simple bar chart representation
+      const maxOrders = Math.max(...opHours.map(h => h.orders), 1);
+      const barMaxW = PW - 60;
+
+      // Table header
+      doc.setFillColor(...C.dark);
+      doc.roundedRect(ML, y, PW, 6, 1, 1, 'F');
+      setFont('bold', 6.5);
+      doc.setTextColor(...C.white);
+      doc.text('Hour', ML + 2, y + 4);
+      doc.text('Orders', ML + 18, y + 4);
+      doc.text('Avg Prep', ML + 34, y + 4);
+      doc.text('Volume', ML + 56, y + 4);
+      y += 7;
+
+      opHours.forEach((h, i) => {
+        checkPage(7);
+        if (i % 2 === 0) {
+          doc.setFillColor(...C.lightBg);
+          doc.rect(ML, y - 1, PW, 6, 'F');
+        }
+
+        setFont('normal', 7);
+        doc.setTextColor(...C.text);
+        doc.text(h.label, ML + 2, y + 3.5);
+        doc.text(String(h.orders), ML + 20, y + 3.5);
+
+        const prepColor = h.avgPrepSec > 600 ? C.red : h.avgPrepSec > 300 ? C.yellow : C.green;
+        doc.setTextColor(...prepColor);
+        doc.text(fmtSec(h.avgPrepSec), ML + 34, y + 3.5);
+
+        // Mini bar
+        const barW = Math.max((h.orders / maxOrders) * barMaxW, 2);
+        const barColor = h.orders === maxOrders ? C.orange : C.blue;
+        doc.setFillColor(...barColor);
+        doc.roundedRect(ML + 55, y, barW, 4, 1, 1, 'F');
+
+        y += 6;
+      });
+      y += 4;
+    }
+  }
+
+  // ---------- ACTIONABLE INSIGHTS ----------
+  checkPage(50);
+  setFont('bold', 13);
+  doc.setTextColor(...C.dark);
+  doc.text('Actionable Insights', ML, y);
+  y += 3;
+
+  const insights = [];
+
+  // 1. Slow stations
+  stations.filter(st => st.avgPrepSec > 600).forEach(st => {
+    insights.push({
+      type: 'critical',
+      icon: 'SLOW',
+      text: `${st.station} station averaging ${fmtSec(st.avgPrepSec)} prep time (${st.items} items). Investigate bottleneck — target under 10 min.`,
+    });
+  });
+
+  // 2. 90th percentile warnings
+  stations.filter(st => st.p90PrepSec > 900).forEach(st => {
+    insights.push({
+      type: 'warning',
+      icon: 'P90',
+      text: `${st.station} 90th percentile at ${fmtSec(st.p90PrepSec)}. 10% of orders taking too long — check during peak hours.`,
+    });
+  });
+
+  // 3. KP bottlenecks
+  if (kp) {
+    if (kp.readyToPacked > 120) {
+      insights.push({
+        type: 'critical',
+        icon: 'KP',
+        text: `Ready-to-Packed averaging ${fmtSec(kp.readyToPacked)}. Food sitting at pass too long — tighten packing coordination.`,
+      });
+    }
+    if (kp.packedToCompleted > 180) {
+      insights.push({
+        type: 'warning',
+        icon: 'KP',
+        text: `Packed-to-Done averaging ${fmtSec(kp.packedToCompleted)}. Delivery/handoff delay — review runner availability.`,
+      });
+    }
+  }
+
+  // 4. Dine-in post-prep wait
+  if (dineIn.avgPostPrepSec > 300) {
+    insights.push({
+      type: 'warning',
+      icon: 'DINE',
+      text: `Post-prep wait averaging ${fmtSec(dineIn.avgPostPrepSec)}. Food ready but tables not billing — improve table turnover.`,
+    });
+  }
+
+  // 5. Peak hour detection
+  if (hourly.length > 0) {
+    const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23 && h.orders > 0);
+    const peakHour = opHours.reduce((max, h) => h.orders > max.orders ? h : max, { orders: 0 });
+    if (peakHour.orders > 0) {
+      insights.push({
+        type: 'info',
+        icon: 'PEAK',
+        text: `Peak hour: ${peakHour.label} with ${peakHour.orders} orders. Ensure full staffing at all stations during this window.`,
+      });
+
+      // Slow peak
+      if (peakHour.avgPrepSec > 480) {
+        insights.push({
+          type: 'warning',
+          icon: 'PEAK',
+          text: `Peak hour avg prep ${fmtSec(peakHour.avgPrepSec)} — significantly slower. Add prep support during rush.`,
+        });
+      }
+    }
+
+    // Dead hours
+    const deadHours = opHours.filter(h => h.orders <= 2 && h.hour >= 11 && h.hour <= 21);
+    if (deadHours.length > 0) {
+      insights.push({
+        type: 'info',
+        icon: 'LOW',
+        text: `Low-volume hours: ${deadHours.map(h => h.label).join(', ')}. Consider reduced staffing or prep-ahead tasks.`,
+      });
+    }
+  }
+
+  // 6. Overall performance
+  if (s.avgOrderPrepSec <= 300 && s.totalOrders > 10) {
+    insights.push({
+      type: 'good',
+      icon: 'OK',
+      text: `Overall avg prep ${fmtSec(s.avgOrderPrepSec)} — excellent performance across ${s.totalOrders} orders today.`,
+    });
+  } else if (s.avgOrderPrepSec > 600) {
+    insights.push({
+      type: 'critical',
+      icon: 'SLOW',
+      text: `Overall avg prep ${fmtSec(s.avgOrderPrepSec)} — above 10 min target. Review station allocation and staffing.`,
+    });
+  }
+
+  // 7. High-variance stations
+  stations.filter(st => st.maxPrepSec > st.avgPrepSec * 3 && st.orders > 3).forEach(st => {
+    insights.push({
+      type: 'warning',
+      icon: 'VAR',
+      text: `${st.station} has high variance: avg ${fmtSec(st.avgPrepSec)} but max ${fmtSec(st.maxPrepSec)}. Inconsistent — check specific orders.`,
+    });
+  });
+
+  if (insights.length === 0) {
+    insights.push({
+      type: 'good',
+      icon: 'OK',
+      text: 'All metrics within acceptable ranges. Keep up the good work!',
+    });
+  }
+
+  // Render insights
+  const typeColors = {
+    critical: C.red,
+    warning: C.yellow,
+    info: C.blue,
+    good: C.green,
+  };
+
+  const typeBg = {
+    critical: [254, 242, 242],
+    warning: [255, 251, 235],
+    info: [239, 246, 255],
+    good: [236, 253, 245],
+  };
+
+  insights.forEach(insight => {
+    const lines = doc.splitTextToSize(insight.text, PW - 22);
+    const cardH = Math.max(lines.length * 4 + 6, 12);
+    checkPage(cardH + 4);
+
+    y += 4;
+    doc.setFillColor(...typeBg[insight.type]);
+    doc.roundedRect(ML, y, PW, cardH, 2, 2, 'F');
+    // Left accent
+    doc.setFillColor(...typeColors[insight.type]);
+    doc.rect(ML, y + 2, 2, cardH - 4, 'F');
+
+    // Icon badge
+    setFont('bold', 6);
+    doc.setTextColor(...typeColors[insight.type]);
+    doc.text(insight.icon, ML + 5, y + 5);
+
+    // Text
+    setFont('normal', 7.5);
+    doc.setTextColor(...C.text);
+    doc.text(lines, ML + 18, y + 5);
+
+    y += cardH + 1;
+  });
+
+  // ---------- FOOTER ----------
+  y += 6;
+  drawLine(ML, y, W - MR);
+  y += 4;
+  setFont('normal', 7);
+  doc.setTextColor(...C.muted);
+  doc.text('Kitchen Intel Report — Hamza Express', ML, y);
+  doc.text('Confidential — Internal Use Only', W - MR, y, { align: 'right' });
+
+  // Save
+  const filename = `kitchen-intel-${fromDate}.pdf`;
+  doc.save(filename);
 }
 
 function getStationColorClass(name) {
