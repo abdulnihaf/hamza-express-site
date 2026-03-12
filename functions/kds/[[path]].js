@@ -642,8 +642,8 @@ const OVERRIDE_SCRIPT = `<script>
     }
     return el;
   };
-  // Override .src/.href direct property assignment (Odoo sets script.src directly)
-  [['SCRIPT','src'],['LINK','href'],['IMG','src']].forEach(function(pair){
+  // Override .src/.href/.action direct property assignment (Odoo sets these directly via JS)
+  [['SCRIPT','src'],['LINK','href'],['IMG','src'],['FORM','action']].forEach(function(pair){
     var proto=document.createElement(pair[0]).constructor.prototype,prop=pair[1];
     var desc=Object.getOwnPropertyDescriptor(proto,prop);
     if(desc&&desc.set){Object.defineProperty(proto,prop,{set:function(v){desc.set.call(this,rw(v));},get:desc.get,configurable:true});}
