@@ -790,11 +790,9 @@ const KDS_POLL_SCRIPT = `<script>
         if(prev&&prev!==sid&&sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
         _stateMap[s.id]=sid;
       }
-      if(!_isPrep){
-        var ids=po.map(function(o){return o.id}).sort().join(',');
-        if(_lastOrderIds===null){_lastOrderIds=ids;}
-        else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');location.reload();}
-      }
+      var ids=po.map(function(o){return o.id}).sort().join(',');
+      if(_lastOrderIds===null){_lastOrderIds=ids;}
+      else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');location.reload();}
     }).catch(function(){});
   }
   function start(){
