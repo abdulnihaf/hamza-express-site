@@ -2104,55 +2104,79 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
   const phoneId = context.env.WA_PHONE_ID;
   const token = context.env.WA_ACCESS_TOKEN;
 
+  // Determine if this is a station QR order (customer physically at the counter)
+  // vs a general/multi-counter order (customer could be anywhere)
+  const items = JSON.parse(waOrder.items);
+  const expectedCounters = new Set();
+  for (const item of items) {
+    const cn = COUNTER_CATS[item.catId] || KITCHEN_COUNTER_LABEL;
+    expectedCounters.add(cn.replace(/\s+/g, '_').toLowerCase());
+  }
+  const isStationOrder = expectedCounters.size === 1 && COUNTER_CATS[items[0]?.catId];
+
   if (notificationType === 'preparing') {
-    if (tier === 'regular') {
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `*${waOrder.order_code}* — preparing at ${counterName}`));
+    if (isStationOrder) {
+      // Station QR — customer is standing right at the counter watching the staff
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — being prepared now`));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `Your *${waOrder.order_code}* is being prepared right now.`));
+      }
     } else {
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `*Preparing your order*\n\n` +
-        `*${waOrder.order_code}* at ${counterName}\n` +
-        `We'll let you know the moment it's ready.`));
+      // General order — customer needs counter context
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — preparing at ${counterName}`));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* is being prepared at ${counterName}.`));
+      }
     }
   } else if (notificationType === 'ready') {
-    const timeline = formatPrepTimeline(waOrder.created_at);
-    if (tier === 'regular') {
-      const elapsed = Math.round((Date.now() - new Date(waOrder.created_at).getTime()) / 60000);
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `*${waOrder.order_code}* — READY at ${counterName}` +
-        (trackingNumber ? ` | Token ${trackingNumber}` : '') +
-        ` | ${elapsed}m`));
+    const elapsed = Math.round((Date.now() - new Date(waOrder.created_at).getTime()) / 60000);
+    const elapsedText = elapsed <= 1 ? 'under a minute' : `${elapsed} min`;
+
+    if (isStationOrder) {
+      // Station QR — customer is right there, keep it direct
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — ready!` +
+          (trackingNumber ? ` Token ${trackingNumber}` : '') +
+          ` | ${elapsedText}`));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* is ready — pick it up!` +
+          (trackingNumber ? `\nToken *${trackingNumber}*` : '')));
+      }
     } else {
-      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-        `*Your order is ready!*\n\n` +
-        `Collect from *${counterName}*\n` +
-        (trackingNumber ? `Token *${trackingNumber}*\n\n` : '\n') +
-        `${timeline} — freshly made.`));
+      // General order — customer needs directions
+      if (tier === 'regular') {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* — READY at ${counterName}` +
+          (trackingNumber ? ` | Token ${trackingNumber}` : '') +
+          ` | ${elapsedText}`));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+          `*${waOrder.order_code}* is ready at *${counterName}*!` +
+          (trackingNumber ? `\nToken *${trackingNumber}*` : '')));
+      }
     }
 
     // Multi-counter "all ready" summary
-    const items = JSON.parse(waOrder.items);
-    const expectedCounters = new Set();
-    for (const item of items) {
-      const cn = COUNTER_CATS[item.catId] || KITCHEN_COUNTER_LABEL;
-      expectedCounters.add(cn.replace(/\s+/g, '_').toLowerCase());
-    }
     if (expectedCounters.size > 1) {
       const allReady = [...expectedCounters].every(ck => notified[`ready_${ck}`]);
       if (allReady) {
         const counterNames = [...new Set(items.map(i => COUNTER_CATS[i.catId] || KITCHEN_COUNTER_LABEL))];
         const counterList = counterNames.join(' + ');
-        const elapsed = Math.round((Date.now() - new Date(waOrder.created_at).getTime()) / 60000);
         if (tier === 'regular') {
           await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-            `*${trackingNumber || waOrder.order_code}* — all ready | ${counterList} | ${elapsed}m`));
+            `*${trackingNumber || waOrder.order_code}* — all ready | ${counterList} | ${elapsedText}`));
         } else {
-          const timelineAll = formatPrepTimeline(waOrder.created_at);
           await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-            `*All items ready!*\n\n` +
-            `Collect from *${counterList}*\n` +
-            (trackingNumber ? `Token *${trackingNumber}*\n\n` : '\n') +
-            `Everything ${timelineAll.toLowerCase()}.`));
+            `All items ready! Collect from *${counterList}*` +
+            (trackingNumber ? ` — Token *${trackingNumber}*` : '')));
         }
       }
     }
@@ -3558,17 +3582,29 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   const isSingleCounter = collection.points.length === 1;
   const counterName = isSingleCounter ? collection.points[0].counter : null;
 
-  // Station QR orders (single counter) get terse confirmations — customer is AT the counter
-  // General/multi-counter orders get full guidance
+  // Station QR orders (single counter) — customer is physically at the counter
+  // General/multi-counter orders — customer needs collection guidance
+  const isStationQR = isSingleCounter && COUNTER_CATS[cart[0]?.catId];
   let confirmMsg;
   if (isSingleCounter) {
-    // Single counter order (station QR or single-station general order)
-    if (tier === 'new') {
-      confirmMsg = `*Payment confirmed!*\n\nToken *${trackingNum}* — ${counterName}\nYour order is now with the kitchen.\nWe'll message you when it's ready.`;
-    } else if (tier === 'regular') {
-      confirmMsg = `*${trackingNum}* — ${counterName} \u2713`;
+    if (isStationQR) {
+      // Station QR — customer is right there watching
+      if (tier === 'new') {
+        confirmMsg = `*Paid!* Token *${trackingNum}*\nYour order is being prepared — we'll message you when it's ready.`;
+      } else if (tier === 'regular') {
+        confirmMsg = `*${trackingNum}* \u2713`;
+      } else {
+        confirmMsg = `*Paid!* Token *${trackingNum}*\nWe'll message you when it's ready.`;
+      }
     } else {
-      confirmMsg = `*Paid!* Token *${trackingNum}* — ${counterName}\nWe'll notify when ready.`;
+      // Single counter but general order (e.g. only ordered kitchen items)
+      if (tier === 'new') {
+        confirmMsg = `*Paid!* Token *${trackingNum}* — ${counterName}\nYour order is being prepared. We'll message you when it's ready.`;
+      } else if (tier === 'regular') {
+        confirmMsg = `*${trackingNum}* — ${counterName} \u2713`;
+      } else {
+        confirmMsg = `*Paid!* Token *${trackingNum}* — ${counterName}\nWe'll message you when ready.`;
+      }
     }
   } else {
     // Multi-counter order — needs collection guidance
