@@ -618,18 +618,28 @@ const OVERRIDE_SCRIPT = `<script>
   function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
   // Override fetch() + trigger instant poll on staff stage-change taps
   var _f=window.fetch;
+  // Seamless reload: dark bg prevents white flash, opacity fade hides the transition
+  // Global so poll script (separate IIFE) can also use it
+  var _reloadPending=false;
+  window._heSeamlessReload=function(){
+    if(_reloadPending)return;_reloadPending=true;
+    document.documentElement.style.backgroundColor='#110804';
+    document.body.style.transition='opacity 0.12s ease-out';
+    document.body.style.opacity='0';
+    setTimeout(function(){location.reload();},150);
+  };
   window.fetch=function(u,o){
     if(typeof u==='string'){u=rw(u);}
     else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
     var result=_f.call(this,u,o);
-    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll + reload
+    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll + seamless reload
     // OWL relies on bus notifications to re-render, but bus doesn't work through proxy.
-    // So: fire webhook via instant poll (150ms), then reload page (800ms) to refresh OWL UI.
+    // So: fire webhook via instant poll (150ms), then seamless reload (800ms) to refresh OWL UI.
     var url=typeof u==='string'?u:(u instanceof Request?u.url:'');
     if(url.indexOf('pos.prep')!==-1&&url.indexOf('get_preparation_display_order')===-1){
       result.then(function(){
         setTimeout(function(){if(window._heKdsTriggerPoll)window._heKdsTriggerPoll();},150);
-        setTimeout(function(){location.reload();},800);
+        setTimeout(window._heSeamlessReload,800);
       }).catch(function(){});
     }
     return result;
@@ -817,7 +827,7 @@ const KDS_POLL_SCRIPT = `<script>
       }
       var ids=po.map(function(o){return o.id}).sort().join(',');
       if(_lastOrderIds===null){_lastOrderIds=ids;}
-      else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');location.reload();}
+      else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');window._heSeamlessReload();}
     }).catch(function(){_pollInFlight=false;});
   }
   // Expose global trigger for instant poll from fetch override
@@ -1062,6 +1072,8 @@ export async function onRequest(context) {
     // Remove content-length since we're modifying the body
     respHeaders.delete('content-length');
     respHeaders.delete('content-encoding');
+    // Prevent Cloudflare/browser caching of HTML (injected scripts change with deploys)
+    respHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate');
 
     return rewriter.transform(new Response(odooResp.body, {
       status: odooResp.status,
