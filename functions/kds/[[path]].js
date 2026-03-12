@@ -632,14 +632,12 @@ const OVERRIDE_SCRIPT = `<script>
     if(typeof u==='string'){u=rw(u);}
     else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
     var result=_f.call(this,u,o);
-    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll + seamless reload
-    // OWL relies on bus notifications to re-render, but bus doesn't work through proxy.
-    // So: fire webhook via instant poll (150ms), then seamless reload (800ms) to refresh OWL UI.
+    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll
+    // OWL bus doesn't work through proxy, so poll detects the change and triggers seamless reload
     var url=typeof u==='string'?u:(u instanceof Request?u.url:'');
     if(url.indexOf('pos.prep')!==-1&&url.indexOf('get_preparation_display_order')===-1){
       result.then(function(){
         setTimeout(function(){if(window._heKdsTriggerPoll)window._heKdsTriggerPoll();},150);
-        setTimeout(window._heSeamlessReload,800);
       }).catch(function(){});
     }
     return result;
@@ -819,15 +817,22 @@ const KDS_POLL_SCRIPT = `<script>
       for(var i=0;i<po.length;i++){var o=po[i];if(o.pos_order_id)poMap[o.id]=xid(o.pos_order_id);}
       // Build prep_line_id → pos_order_id + product_id via prep_order_id
       for(var i=0;i<pl.length;i++){var l=pl[i],poid=xid(l.prep_order_id);if(poid&&poMap[poid])_plToOrder[l.id]=poMap[poid];if(l.product_id)_plToProduct[l.id]=xid(l.product_id);}
-      // Detect stage changes → fire webhooks
+      // Detect stage changes → fire webhooks + reload UI
+      var _anyChanged=false;
       for(var j=0;j<st.length;j++){
         var s=st[j],sid=xid(s.stage_id),plid=xid(s.prep_line_id),prev=_stateMap[s.id];
-        if(prev&&prev!==sid&&sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
+        if(prev&&prev!==sid){
+          _anyChanged=true;
+          if(sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
+        }
         _stateMap[s.id]=sid;
       }
       var ids=po.map(function(o){return o.id}).sort().join(',');
       if(_lastOrderIds===null){_lastOrderIds=ids;}
-      else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');window._heSeamlessReload();}
+      else if(ids!==_lastOrderIds){_anyChanged=true;console.log('[HE-KDS] Orders changed');}
+      // Seamless reload when anything changed (stage moves or new/removed orders)
+      // OWL bus doesn't work through proxy, so this is the only way to update the UI
+      if(_anyChanged){console.log('[HE-KDS] State changed, refreshing UI...');window._heSeamlessReload();}
     }).catch(function(){_pollInFlight=false;});
   }
   // Expose global trigger for instant poll from fetch override
@@ -1017,6 +1022,8 @@ export async function onRequest(context) {
           } else {
             // Other Odoo pages (preparation display, etc.): URL rewriting + poll only
             el.prepend(OVERRIDE_SCRIPT.replace('__ODOO_ORIGIN__', odooOrigin), { html: true });
+            // Set dark background so seamless reloads don't flash white
+            el.append(`<style>html,body{background:#110804!important}</style>`, { html: true });
             el.append(KDS_POLL_SCRIPT, { html: true });
           }
         }
