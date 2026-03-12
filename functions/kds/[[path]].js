@@ -618,11 +618,27 @@ const OVERRIDE_SCRIPT = `<script>
   function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
   // Override fetch() + trigger instant poll on staff stage-change taps
   var _f=window.fetch;
-  // Seamless reload: dark bg prevents white flash, opacity fade hides the transition
-  // Global so poll script (separate IIFE) can also use it
-  var _reloadPending=false;
+  // OWL-native refresh: calls prepDisplay.getPreparationDisplayOrder() to re-render
+  // without any page reload — zero flash, instant UI update.
+  // Falls back to seamless page reload if OWL component not accessible (login page etc.)
+  var _refreshPending=false;
+  window._heOwlRefresh=function(){
+    if(_refreshPending)return;_refreshPending=true;
+    try{
+      var pd=odoo.__WOWL_DEBUG__.root.prepDisplay;
+      pd.getPreparationDisplayOrder().then(function(){
+        console.log('[HE-KDS] OWL refreshed');_refreshPending=false;
+      }).catch(function(){_refreshPending=false;location.reload();});
+    }catch(e){
+      // Fallback: seamless page reload (dark bg, opacity fade)
+      document.documentElement.style.backgroundColor='#110804';
+      document.body.style.transition='opacity 0.12s ease-out';
+      document.body.style.opacity='0';
+      setTimeout(function(){location.reload();},150);
+    }
+  };
+  // Full reload for new orders (OWL doesn't know about orders created outside its session)
   window._heSeamlessReload=function(){
-    if(_reloadPending)return;_reloadPending=true;
     document.documentElement.style.backgroundColor='#110804';
     document.body.style.transition='opacity 0.12s ease-out';
     document.body.style.opacity='0';
@@ -817,22 +833,22 @@ const KDS_POLL_SCRIPT = `<script>
       for(var i=0;i<po.length;i++){var o=po[i];if(o.pos_order_id)poMap[o.id]=xid(o.pos_order_id);}
       // Build prep_line_id → pos_order_id + product_id via prep_order_id
       for(var i=0;i<pl.length;i++){var l=pl[i],poid=xid(l.prep_order_id);if(poid&&poMap[poid])_plToOrder[l.id]=poMap[poid];if(l.product_id)_plToProduct[l.id]=xid(l.product_id);}
-      // Detect stage changes → fire webhooks + reload UI
-      var _anyChanged=false;
+      // Detect stage changes → fire webhooks + OWL refresh (no page reload!)
+      var _stageChanged=false;
       for(var j=0;j<st.length;j++){
         var s=st[j],sid=xid(s.stage_id),plid=xid(s.prep_line_id),prev=_stateMap[s.id];
         if(prev&&prev!==sid){
-          _anyChanged=true;
+          _stageChanged=true;
           if(sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
         }
         _stateMap[s.id]=sid;
       }
+      // Stage changes: OWL-native refresh (zero flash, instant re-render)
+      if(_stageChanged&&window._heOwlRefresh){window._heOwlRefresh();}
+      // New/removed orders: need full reload (OWL doesn't know about API-created orders)
       var ids=po.map(function(o){return o.id}).sort().join(',');
       if(_lastOrderIds===null){_lastOrderIds=ids;}
-      else if(ids!==_lastOrderIds){_anyChanged=true;console.log('[HE-KDS] Orders changed');}
-      // Seamless reload when anything changed (stage moves or new/removed orders)
-      // OWL bus doesn't work through proxy, so this is the only way to update the UI
-      if(_anyChanged){console.log('[HE-KDS] State changed, refreshing UI...');window._heSeamlessReload();}
+      else if(ids!==_lastOrderIds){console.log('[HE-KDS] New orders, reloading...');window._heSeamlessReload();}
     }).catch(function(){_pollInFlight=false;});
   }
   // Expose global trigger for instant poll from fetch override
