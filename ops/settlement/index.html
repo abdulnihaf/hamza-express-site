@@ -46,6 +46,72 @@
     .point-card .p-last{font-size:11px;color:var(--muted)}
     .point-card.counter{border-left:4px solid var(--blue)}
     .point-card.captain{border-left:4px solid var(--purple)}
+    .point-card.shift{border:2px solid var(--green);border-left:4px solid var(--green)}
+    .point-card.shift:hover{background:rgba(16,185,129,0.08);border-color:var(--green)}
+
+    /* Wizard overlay */
+    .wizard-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:900;display:none;overflow-y:auto}
+    .wizard-overlay.show{display:block}
+    .wizard-container{max-width:600px;margin:0 auto;padding:16px 16px 100px}
+    .wizard-header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-bottom:8px}
+    .wizard-header h2{font-size:18px;display:flex;align-items:center;gap:8px}
+    .wizard-close{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px}
+    .wizard-close:hover{background:var(--border);color:var(--text)}
+    .wizard-steps{display:flex;gap:4px;margin-bottom:24px}
+    .wizard-step{flex:1;text-align:center;padding:10px 4px;border-radius:8px;font-size:12px;font-weight:600;background:var(--bg2);color:var(--text2);transition:all 0.3s}
+    .wizard-step.active{background:var(--orange);color:#fff}
+    .wizard-step.done{background:rgba(16,185,129,0.2);color:var(--green)}
+    .wizard-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+    .wizard-card h3{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .wizard-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid rgba(45,58,79,0.5)}
+    .wizard-row:last-of-type{border-bottom:none}
+    .wizard-row .wr-label{color:var(--text2)}
+    .wizard-row .wr-val{font-family:'JetBrains Mono',monospace;font-weight:500}
+    .wizard-row.total{border-top:2px solid var(--border);margin-top:4px;padding-top:12px;font-weight:600}
+    .wizard-row.total .wr-label{color:var(--text)}
+    .wizard-row.total .wr-val{font-size:18px}
+    .wizard-input-group{margin:16px 0}
+    .wizard-input-group label{font-size:13px;color:var(--text2);display:block;margin-bottom:6px}
+    .wizard-input-group input{width:100%;background:var(--bg2);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:22px;padding:14px;font-family:'JetBrains Mono',monospace;transition:border-color 0.2s}
+    .wizard-input-group input:focus{outline:none;border-color:var(--orange)}
+    .wizard-match{border-radius:10px;padding:14px;margin:12px 0;font-size:13px;line-height:1.5}
+    .wizard-match.ok{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green)}
+    .wizard-match.warn{background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);color:var(--yellow)}
+    .wizard-match.bad{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red)}
+    .wizard-captain-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;transition:border-color 0.2s}
+    .wizard-captain-card.absent{opacity:0.5;border-style:dashed}
+    .wizard-captain-card .wcc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .wizard-captain-card .wcc-name{font-size:16px;font-weight:700}
+    .wizard-captain-card .wcc-badge{font-size:11px;padding:4px 10px;border-radius:6px;font-weight:600;background:var(--bg2);color:var(--text2)}
+    .wizard-captain-card .wcc-calc{background:var(--bg2);border-radius:8px;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .wizard-absent-toggle{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px;background:var(--bg2);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2)}
+    .wizard-absent-toggle input[type=checkbox]{width:18px;height:18px;accent-color:var(--orange)}
+    .wizard-recon-box{border-radius:12px;padding:16px;margin:12px 0;text-align:center}
+    .wizard-recon-box.balanced{background:rgba(16,185,129,0.1);border:2px solid var(--green)}
+    .wizard-recon-box.variance{background:rgba(234,179,8,0.1);border:2px solid var(--yellow)}
+    .wizard-recon-box.bad{background:rgba(239,68,68,0.1);border:2px solid var(--red)}
+    .wizard-recon-box .wrb-text{font-size:16px;font-weight:700}
+    .wizard-recon-box .wrb-amount{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:4px}
+    .wizard-nav{display:flex;gap:12px;margin-top:24px;position:sticky;bottom:0;padding:16px 0;background:linear-gradient(transparent,var(--bg) 20%)}
+    .wizard-nav button{flex:1;padding:16px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s}
+    .wizard-nav .wn-back{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+    .wizard-nav .wn-next{background:var(--orange);color:#fff}
+    .wizard-nav .wn-submit{background:var(--green);color:#fff}
+    .wizard-nav .wn-submit:disabled{background:var(--border);cursor:not-allowed}
+
+    /* Shift history */
+    .sh-card{background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)}
+    .sh-card-header{display:flex;justify-content:space-between;align-items:center}
+    .sh-card-title{font-size:14px;font-weight:600}
+    .sh-card-time{font-size:12px;color:var(--muted)}
+    .sh-card-meta{display:flex;gap:12px;margin-top:6px;font-size:12px;color:var(--text2)}
+    .sh-card-meta span{font-family:'JetBrains Mono',monospace}
+    .sh-card-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+    .sh-card-badge.balanced{background:rgba(16,185,129,0.15);color:var(--green)}
+    .sh-card-badge.variance{background:rgba(239,68,68,0.15);color:var(--red)}
+    .sh-captain-row{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-top:6px;background:var(--card);border-radius:6px;font-size:12px}
+    .sh-captain-row .scr-name{font-weight:600}
+    .sh-captain-row .scr-val{font-family:'JetBrains Mono',monospace}
 
     /* Section panels */
     .section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
@@ -106,6 +172,22 @@
   <div class="overlay" id="overlay"><div class="spinner"></div></div>
   <div class="toast" id="toast"></div>
 
+  <!-- Shift Wizard Overlay -->
+  <div class="wizard-overlay" id="wizardOverlay">
+    <div class="wizard-container">
+      <div class="wizard-header">
+        <h2>End My Shift</h2>
+        <button class="wizard-close" onclick="closeWizard()">X Cancel</button>
+      </div>
+      <div class="wizard-steps">
+        <div class="wizard-step active" id="wizStep1">1. Counter</div>
+        <div class="wizard-step" id="wizStep2">2. Captains</div>
+        <div class="wizard-step" id="wizStep3">3. Reconcile</div>
+      </div>
+      <div id="wizardContent"></div>
+    </div>
+  </div>
+
   <!-- PIN Screen -->
   <div id="pinScreen">
     <div class="pin-title">Hamza Express Settlement</div>
@@ -135,6 +217,7 @@
       <div class="tab" onclick="switchTab('expenses',this)">Expenses</div>
       <div class="tab" onclick="switchTab('collect',this)" id="collectTab" style="display:none">Collect</div>
       <div class="tab" onclick="switchTab('history',this)">History</div>
+      <div class="tab" onclick="switchTab('shifts',this)">Shifts</div>
     </div>
 
     <!-- Settle Tab -->
@@ -189,6 +272,14 @@
         <div id="historyList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
       </div>
     </div>
+
+    <!-- Shifts Tab -->
+    <div id="tab-shifts" style="display:none">
+      <div class="section">
+        <div class="section-title">Shift History</div>
+        <div id="shiftHistoryList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Loading...</div></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -237,10 +328,14 @@
     // ── Dashboard ────────────────────────────────────────────────────────────
     const POINTS = [
       { id: 'counter', name: 'Cash Counter', cls: 'counter' },
-      { id: 'captain_1', name: 'Captain 1', cls: 'captain' },
-      { id: 'captain_2', name: 'Captain 2', cls: 'captain' },
-      { id: 'captain_3', name: 'Captain 3', cls: 'captain' },
+      { id: 'captain_1', name: 'Captain 01', cls: 'captain' },
+      { id: 'captain_2', name: 'Captain 02', cls: 'captain' },
+      { id: 'captain_3', name: 'Captain 03', cls: 'captain' },
+      { id: 'captain_4', name: 'Captain 04', cls: 'captain' },
+      { id: 'captain_5', name: 'Captain 05', cls: 'captain' },
     ];
+
+    const CAPTAIN_IDS = ['captain_1','captain_2','captain_3','captain_4','captain_5'];
 
     async function loadDashboard() {
       // Load last settlement timestamps
@@ -250,11 +345,16 @@
       for (const s of (data.settlements || [])) {
         if (!lastByPoint[s.point]) lastByPoint[s.point] = s.settled_at;
       }
-      $('pointsGrid').innerHTML = POINTS.map(p =>
+      // Shift card + individual point cards
+      let gridHtml = '<div class="point-card shift" onclick="startShiftWizard()">' +
+        '<div class="p-name">End My Shift</div>' +
+        '<div class="p-last">Settle All</div></div>';
+      gridHtml += POINTS.map(p =>
         '<div class="point-card ' + p.cls + '" onclick="selectPoint(\'' + p.id + '\',this)" id="pc-' + p.id + '">' +
         '<div class="p-name">' + p.name + '</div>' +
         '<div class="p-last">Last: ' + fmtTime(lastByPoint[p.id]) + '</div></div>'
       ).join('');
+      $('pointsGrid').innerHTML = gridHtml;
     }
 
     async function selectPoint(pointId, el) {
@@ -451,13 +551,437 @@
     function switchTab(tab, el) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       if (el) el.classList.add('active');
-      ['settle', 'expenses', 'collect', 'history'].forEach(t => {
+      ['settle', 'expenses', 'collect', 'history', 'shifts'].forEach(t => {
         const panel = $('tab-' + t);
         if (panel) panel.style.display = t === tab ? '' : 'none';
       });
       if (tab === 'expenses') loadExpenses();
       if (tab === 'collect') { loadBalance(); loadCollections(); }
       if (tab === 'history') loadHistory();
+      if (tab === 'shifts') loadShiftHistory();
+    }
+
+    // ── Shift Wizard ──────────────────────────────────────────────────────────
+    let wizardData = null, wizardStep = 1, wizardDrawerCash = 0, wizardCaptainInputs = [];
+
+    async function startShiftWizard() {
+      show(true);
+      try {
+        // Fetch counter + all captain data in parallel
+        const [counterRes, ...captainResults] = await Promise.all([
+          fetch(API + '?action=point-summary&point=counter').then(r => r.json()),
+          ...CAPTAIN_IDS.map(cid =>
+            fetch(API + '?action=captain-live&captain_id=' + cid).then(r => r.json())
+          ),
+        ]);
+
+        if (!counterRes.success) throw new Error(counterRes.error || 'Counter fetch failed');
+
+        // Initialize wizard data
+        wizardData = {
+          counter: counterRes,
+          captains: CAPTAIN_IDS.map((cid, i) => ({
+            captain_id: cid,
+            name: 'Captain ' + (i + 1),
+            data: captainResults[i].success ? captainResults[i] : null,
+            hasOrders: captainResults[i].success && captainResults[i].orders.count > 0,
+          })),
+          periodStart: counterRes.period?.fromRaw || new Date(Date.now() - 24*60*60*1000).toISOString(),
+        };
+
+        // Initialize captain inputs
+        wizardCaptainInputs = wizardData.captains.map(c => ({
+          captain_id: c.captain_id,
+          captain_name: c.name,
+          orders_total: c.data?.orders?.total || 0,
+          orders_count: c.data?.orders?.count || 0,
+          upi_amount: c.data?.upi?.total || 0,
+          card_amount: c.data?.card || 0,
+          comp_amount: c.data?.comp || 0,
+          cashCalculated: c.data?.cashInHand || 0,
+          cashCollected: 0,
+          absent: !c.hasOrders,
+        }));
+
+        wizardStep = 1;
+        wizardDrawerCash = 0;
+        renderWizardStep1();
+        updateWizardSteps();
+        $('wizardOverlay').classList.add('show');
+      } catch (e) {
+        console.error('Wizard start error:', e);
+        toast('Failed to load data: ' + e.message, 'error');
+      }
+      show(false);
+    }
+
+    function closeWizard() {
+      $('wizardOverlay').classList.remove('show');
+      wizardData = null;
+    }
+
+    function updateWizardSteps() {
+      for (let i = 1; i <= 3; i++) {
+        const el = $('wizStep' + i);
+        el.classList.remove('active', 'done');
+        if (i === wizardStep) el.classList.add('active');
+        else if (i < wizardStep) el.classList.add('done');
+      }
+    }
+
+    // Step 1: Counter Assessment
+    function renderWizardStep1() {
+      const c = wizardData.counter;
+      const cashExp = c.cashExpected || 0;
+
+      let html = '<div class="wizard-card"><h3>Counter Assessment</h3>';
+      html += '<div class="wizard-row"><span class="wr-label">Orders</span><span class="wr-val">' + c.odoo.orderCount + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Total Sales</span><span class="wr-val" style="color:var(--green)">' + fmt(c.odoo.total) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Cash (Odoo)</span><span class="wr-val">' + fmt(c.odoo.cash) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">UPI (Odoo)</span><span class="wr-val">' + fmt(c.odoo.upi) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">UPI (Razorpay)</span><span class="wr-val">' + fmt(c.razorpay.upi) + '</span></div>';
+
+      const upiVar = c.upiVariance || 0;
+      if (Math.abs(upiVar) > 5) {
+        html += '<div class="wizard-match warn" style="margin:12px 0">UPI variance: ' + fmt(upiVar) + ' (Razorpay vs Odoo)</div>';
+      }
+
+      if (c.odoo.card) html += '<div class="wizard-row"><span class="wr-label">Card</span><span class="wr-val">' + fmt(c.odoo.card) + '</span></div>';
+      if (c.odoo.comp) html += '<div class="wizard-row"><span class="wr-label">Complimentary</span><span class="wr-val" style="color:var(--pink)">' + fmt(c.odoo.comp) + '</span></div>';
+      html += '<div class="wizard-row total"><span class="wr-label">Cash Expected</span><span class="wr-val" style="color:var(--green)">' + fmt(cashExp) + '</span></div>';
+      html += '</div>';
+
+      // Cash input
+      html += '<div class="wizard-card"><h3>Cash in Register</h3>';
+      html += '<div class="wizard-input-group"><label>Count the physical cash in the register</label>';
+      html += '<input type="number" id="wizDrawerCash" placeholder="0" inputmode="numeric" oninput="updateDrawerMatch()"></div>';
+      html += '<div id="drawerMatch"></div></div>';
+
+      // Nav
+      html += '<div class="wizard-nav">';
+      html += '<button class="wn-back" onclick="closeWizard()">Cancel</button>';
+      html += '<button class="wn-next" onclick="goToStep2()">Next: Captains</button>';
+      html += '</div>';
+
+      $('wizardContent').innerHTML = html;
+    }
+
+    function updateDrawerMatch() {
+      wizardDrawerCash = parseFloat($('wizDrawerCash')?.value) || 0;
+      const expected = wizardData.counter.cashExpected || 0;
+      const diff = wizardDrawerCash - expected;
+      const el = $('drawerMatch');
+      if (!wizardDrawerCash) { el.innerHTML = ''; return; }
+      const cls = Math.abs(diff) <= 10 ? 'ok' : (diff < 0 ? 'bad' : 'warn');
+      el.innerHTML = '<div class="wizard-match ' + cls + '"><strong>' + (diff >= 0 ? '+' : '') + fmt(diff) + '</strong> vs expected ' + fmt(expected) + '</div>';
+    }
+
+    // Step 2: Captain Checkpoints
+    function goToStep2() {
+      wizardDrawerCash = parseFloat($('wizDrawerCash')?.value) || 0;
+      wizardStep = 2;
+      updateWizardSteps();
+      renderWizardStep2();
+    }
+
+    function renderWizardStep2() {
+      let html = '';
+      wizardCaptainInputs.forEach((ci, idx) => {
+        const absent = ci.absent;
+        html += '<div class="wizard-captain-card' + (absent ? ' absent' : '') + '" id="captCard' + idx + '">';
+        html += '<div class="wcc-header"><span class="wcc-name">' + ci.captain_name + '</span>';
+        html += '<span class="wcc-badge">' + ci.orders_count + ' orders / ' + fmt(ci.orders_total) + '</span></div>';
+
+        if (!absent && ci.orders_count > 0) {
+          html += '<div class="wizard-row"><span class="wr-label">Total Sales</span><span class="wr-val">' + fmt(ci.orders_total) + '</span></div>';
+          html += '<div class="wizard-row"><span class="wr-label">UPI</span><span class="wr-val" style="color:var(--green)">' + fmt(ci.upi_amount) + '</span></div>';
+          if (ci.card_amount) html += '<div class="wizard-row"><span class="wr-label">Card</span><span class="wr-val" style="color:var(--blue)">' + fmt(ci.card_amount) + '</span></div>';
+          if (ci.comp_amount) html += '<div class="wizard-row"><span class="wr-label">Comp</span><span class="wr-val" style="color:var(--purple)">' + fmt(ci.comp_amount) + '</span></div>';
+          html += '<div class="wcc-calc">' + fmt(ci.orders_total) + ' - ' + fmt(ci.upi_amount) + ' UPI';
+          if (ci.card_amount) html += ' - ' + fmt(ci.card_amount) + ' card';
+          if (ci.comp_amount) html += ' - ' + fmt(ci.comp_amount) + ' comp';
+          html += ' = <strong>' + fmt(ci.cashCalculated) + ' cash expected</strong></div>';
+
+          html += '<div class="wizard-input-group"><label>Cash collected from ' + ci.captain_name + '</label>';
+          html += '<input type="number" id="captCash' + idx + '" placeholder="0" inputmode="numeric" value="' + (ci.cashCollected || '') + '" oninput="updateCaptainCash(' + idx + ')"></div>';
+          html += '<div id="captMatch' + idx + '"></div>';
+        }
+
+        html += '<label class="wizard-absent-toggle"><input type="checkbox" ' + (absent ? 'checked' : '') + ' onchange="toggleCaptainAbsent(' + idx + ')">';
+        html += '<span>' + (ci.orders_count === 0 ? 'No orders (auto-skipped)' : 'Not present / skip') + '</span></label>';
+        html += '</div>';
+      });
+
+      html += '<div class="wizard-nav">';
+      html += '<button class="wn-back" onclick="goBackToStep1()">Back</button>';
+      html += '<button class="wn-next" onclick="goToStep3()">Next: Reconcile</button>';
+      html += '</div>';
+
+      $('wizardContent').innerHTML = html;
+
+      // Render initial match indicators
+      wizardCaptainInputs.forEach((ci, idx) => {
+        if (!ci.absent && ci.orders_count > 0 && ci.cashCollected > 0) updateCaptainCash(idx);
+      });
+    }
+
+    function updateCaptainCash(idx) {
+      const val = parseFloat($('captCash' + idx)?.value) || 0;
+      wizardCaptainInputs[idx].cashCollected = val;
+      const expected = wizardCaptainInputs[idx].cashCalculated;
+      const diff = val - expected;
+      const el = $('captMatch' + idx);
+      if (!val) { el.innerHTML = ''; return; }
+      const cls = Math.abs(diff) <= 10 ? 'ok' : (diff < 0 ? 'bad' : 'warn');
+      el.innerHTML = '<div class="wizard-match ' + cls + '"><strong>' + (diff >= 0 ? '+' : '') + fmt(diff) + '</strong> vs expected ' + fmt(expected) + '</div>';
+    }
+
+    function toggleCaptainAbsent(idx) {
+      wizardCaptainInputs[idx].absent = !wizardCaptainInputs[idx].absent;
+      if (wizardCaptainInputs[idx].absent) {
+        wizardCaptainInputs[idx].cashCollected = 0;
+      }
+      renderWizardStep2();
+    }
+
+    function goBackToStep1() {
+      wizardStep = 1;
+      updateWizardSteps();
+      renderWizardStep1();
+      // Restore value
+      setTimeout(() => { if ($('wizDrawerCash') && wizardDrawerCash) $('wizDrawerCash').value = wizardDrawerCash; }, 50);
+    }
+
+    // Step 3: Reconciliation
+    function goToStep3() {
+      // Collect captain cash values
+      wizardCaptainInputs.forEach((ci, idx) => {
+        if (!ci.absent) ci.cashCollected = parseFloat($('captCash' + idx)?.value) || 0;
+      });
+      wizardStep = 3;
+      updateWizardSteps();
+      renderWizardStep3();
+    }
+
+    function renderWizardStep3() {
+      const counterCashExp = wizardData.counter.cashExpected || 0;
+      const drawerCash = wizardDrawerCash;
+
+      // Captain totals
+      let captainCashExpected = 0, captainCashCollected = 0, presentCount = 0;
+      for (const ci of wizardCaptainInputs) {
+        if (!ci.absent && ci.orders_count > 0) {
+          captainCashExpected += ci.cashCalculated;
+          captainCashCollected += ci.cashCollected;
+          presentCount++;
+        }
+      }
+
+      const totalPhysical = drawerCash + captainCashCollected;
+      const totalExpected = counterCashExp + captainCashExpected;
+      const variance = totalPhysical - totalExpected;
+      const isBalanced = Math.abs(variance) <= 20;
+
+      let html = '<div class="wizard-card"><h3>Reconciliation Summary</h3>';
+
+      // Counter
+      const drawerVar = drawerCash - counterCashExp;
+      html += '<div class="wizard-row"><span class="wr-label">Counter Cash Expected</span><span class="wr-val">' + fmt(counterCashExp) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Drawer Cash Entered</span><span class="wr-val">' + fmt(drawerCash) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Counter Variance</span><span class="wr-val" style="color:' + (Math.abs(drawerVar) <= 10 ? 'var(--green)' : 'var(--red)') + '">' + (drawerVar >= 0 ? '+' : '') + fmt(drawerVar) + '</span></div>';
+
+      html += '<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">';
+
+      // Captains
+      html += '<div class="wizard-row"><span class="wr-label">Captain Cash Expected</span><span class="wr-val">' + fmt(captainCashExpected) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Captain Cash Collected</span><span class="wr-val">' + fmt(captainCashCollected) + '</span></div>';
+      html += '<div class="wizard-row"><span class="wr-label">Captain Variance</span><span class="wr-val" style="color:' + (Math.abs(captainCashCollected - captainCashExpected) <= 10 ? 'var(--green)' : 'var(--red)') + '">' + (captainCashCollected - captainCashExpected >= 0 ? '+' : '') + fmt(captainCashCollected - captainCashExpected) + '</span></div>';
+
+      html += '<hr style="border:none;border-top:1px solid var(--border);margin:10px 0">';
+
+      // Totals
+      html += '<div class="wizard-row total"><span class="wr-label">Total Physical Cash</span><span class="wr-val" style="color:var(--green)">' + fmt(totalPhysical) + '</span></div>';
+      html += '<div class="wizard-row total"><span class="wr-label">Total Expected</span><span class="wr-val">' + fmt(totalExpected) + '</span></div>';
+      html += '</div>';
+
+      // Variance box
+      const cls = isBalanced ? 'balanced' : (variance < 0 ? 'bad' : 'variance');
+      html += '<div class="wizard-recon-box ' + cls + '">';
+      html += '<div class="wrb-text">' + (isBalanced ? 'All Clear' : (variance < 0 ? 'Cash Short' : 'Cash Excess')) + '</div>';
+      html += '<div class="wrb-amount">' + (variance >= 0 ? '+' : '') + fmt(variance) + '</div>';
+      html += '</div>';
+
+      // Per-captain breakdown
+      if (presentCount > 0) {
+        html += '<div class="wizard-card"><h3>Captain Breakdown</h3>';
+        for (const ci of wizardCaptainInputs) {
+          if (ci.absent) continue;
+          if (ci.orders_count === 0) continue;
+          const capVar = ci.cashCollected - ci.cashCalculated;
+          const capCls = Math.abs(capVar) <= 10 ? 'var(--green)' : 'var(--red)';
+          html += '<div class="wizard-row"><span class="wr-label">' + ci.captain_name + '</span>';
+          html += '<span class="wr-val">' + fmt(ci.cashCollected) + ' / ' + fmt(ci.cashCalculated) + ' <span style="color:' + capCls + '">(' + (capVar >= 0 ? '+' : '') + fmt(capVar) + ')</span></span></div>';
+        }
+        html += '</div>';
+      }
+
+      // Handover to
+      html += '<div class="wizard-card"><h3>Handover</h3>';
+      html += '<div class="wizard-input-group"><label>Hand over to (optional)</label>';
+      html += '<input type="text" id="wizHandover" placeholder="Next cashier name" style="font-size:16px;font-family:Plus Jakarta Sans,sans-serif"></div></div>';
+
+      // Nav
+      html += '<div class="wizard-nav">';
+      html += '<button class="wn-back" onclick="goBackToStep2()">Back</button>';
+      html += '<button class="wn-submit" onclick="submitShift()">Confirm &amp; Settle</button>';
+      html += '</div>';
+
+      $('wizardContent').innerHTML = html;
+    }
+
+    function goBackToStep2() {
+      wizardStep = 2;
+      updateWizardSteps();
+      renderWizardStep2();
+    }
+
+    async function submitShift() {
+      const counterCashExp = wizardData.counter.cashExpected || 0;
+      const c = wizardData.counter;
+
+      let captainCashExpected = 0, captainCashCollected = 0;
+      for (const ci of wizardCaptainInputs) {
+        if (!ci.absent && ci.orders_count > 0) {
+          captainCashExpected += ci.cashCalculated;
+          captainCashCollected += ci.cashCollected;
+        }
+      }
+      const totalPhysical = wizardDrawerCash + captainCashCollected;
+      const totalExpected = counterCashExp + captainCashExpected;
+      const rawVariance = totalPhysical - totalExpected;
+
+      const now = new Date().toISOString();
+      const handoverTo = $('wizHandover')?.value || '';
+
+      const payload = {
+        settled_by: currentUser.user,
+        period_start: wizardData.periodStart,
+        period_end: now,
+        handover_to: handoverTo,
+        counter_balance: {
+          petty_cash_start: 0,
+          counter_cash_settled: 0,
+          captain_cash_settled: captainCashCollected,
+          expenses_total: 0,
+          expected_drawer: counterCashExp,
+        },
+        drawer_cash_entered: wizardDrawerCash,
+        counter: {
+          cash_expected: counterCashExp,
+          cash_entered: wizardDrawerCash,
+          upi: c.odoo.upi || 0,
+          card: c.odoo.card || 0,
+          comp: c.odoo.comp || 0,
+          qr_odoo: c.odoo.upi || 0,
+          qr_razorpay: c.razorpay.upi || 0,
+          qr_variance: c.upiVariance || 0,
+        },
+        captain_checkpoints: wizardCaptainInputs.filter(ci => !ci.absent || ci.orders_count > 0).map(ci => ({
+          captain_id: ci.captain_id,
+          captain_name: ci.captain_name,
+          orders_total: ci.orders_total,
+          orders_count: ci.orders_count,
+          upi_amount: ci.upi_amount,
+          card_amount: ci.card_amount,
+          comp_amount: ci.comp_amount,
+          cash_calculated: ci.cashCalculated,
+          cash_collected: ci.cashCollected,
+          cash_variance: ci.cashCollected - ci.cashCalculated,
+          status: ci.absent ? 'absent' : 'present',
+        })),
+        reconciliation: {
+          total_physical_cash: totalPhysical,
+          expected_cash: totalExpected,
+          raw_variance: rawVariance,
+          variance_resolved: 0,
+          variance_unresolved: rawVariance,
+          discrepancy_resolutions: [],
+        },
+      };
+
+      show(true);
+      try {
+        const res = await fetch(API + '?action=captain-shift-settle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        show(false);
+        if (data.success) {
+          toast('Shift settled successfully', 'success');
+          closeWizard();
+          loadDashboard();
+        } else {
+          toast(data.error || 'Failed', 'error');
+        }
+      } catch (e) {
+        show(false);
+        toast('Network error: ' + e.message, 'error');
+      }
+    }
+
+    // ── Shift History ─────────────────────────────────────────────────────────
+    async function loadShiftHistory() {
+      try {
+        const res = await fetch(API + '?action=captain-shift-history&limit=20');
+        const data = await res.json();
+        if (!data.success) { $('shiftHistoryList').innerHTML = '<div style="color:var(--red)">Error loading shifts</div>'; return; }
+
+        const shifts = data.shifts || [];
+        if (shifts.length === 0) {
+          $('shiftHistoryList').innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">No shifts recorded yet</div>';
+          return;
+        }
+
+        $('shiftHistoryList').innerHTML = shifts.map(s => {
+          const isBalanced = Math.abs(s.variance_unresolved || 0) <= 20;
+          const pStart = new Date(s.period_start);
+          const pEnd = new Date(s.settled_at);
+
+          let html = '<div class="sh-card" style="border-color:' + (isBalanced ? 'var(--green)' : 'var(--yellow)') + '">';
+          html += '<div class="sh-card-header"><div>';
+          html += '<div class="sh-card-title">Shift — ' + s.cashier_name + '</div>';
+          html += '<div class="sh-card-time">' + fmtTime(s.period_start) + ' &rarr; ' + fmtTime(s.settled_at) + '</div>';
+          html += '</div><div style="text-align:right">';
+          html += '<span class="sh-card-badge ' + (isBalanced ? 'balanced' : 'variance') + '">' + (isBalanced ? 'All Clear' : fmt(Math.abs(s.variance_unresolved)) + ' short') + '</span>';
+          html += '<div style="font-size:18px;font-weight:700;font-family:JetBrains Mono,monospace;color:var(--green);margin-top:4px">' + fmt(s.total_cash_physical) + '</div>';
+          html += '</div></div>';
+          html += '<div class="sh-card-meta"><span>Drawer: ' + fmt(s.drawer_cash_entered) + '</span>';
+          if (s.captain_count > 0) html += '<span>Captains: ' + s.captain_count + '</span>';
+          if (s.handover_to) html += '<span>To: ' + s.handover_to + '</span>';
+          html += '</div>';
+
+          // Captain checkpoints
+          const cps = s.checkpoints || [];
+          if (cps.length > 0) {
+            for (const cp of cps) {
+              const capVar = cp.cash_variance || 0;
+              const isAbsent = cp.status === 'absent';
+              html += '<div class="sh-captain-row" style="' + (isAbsent ? 'opacity:0.5' : '') + '">';
+              html += '<span class="scr-name">' + cp.captain_name + (isAbsent ? ' (absent)' : '') + '</span>';
+              html += '<span class="scr-val">' + fmt(cp.cash_collected) + ' / ' + fmt(cp.cash_calculated) + '';
+              if (!isAbsent && Math.abs(capVar) > 5) html += ' <span style="color:' + (capVar < 0 ? 'var(--red)' : 'var(--green)') + '">(' + (capVar >= 0 ? '+' : '') + fmt(capVar) + ')</span>';
+              html += '</span></div>';
+            }
+          }
+          html += '</div>';
+          return html;
+        }).join('');
+      } catch (e) {
+        console.error('Shift history error:', e);
+        $('shiftHistoryList').innerHTML = '<div style="color:var(--red)">Error: ' + e.message + '</div>';
+      }
     }
 
     // ── Utilities ────────────────────────────────────────────────────────────
