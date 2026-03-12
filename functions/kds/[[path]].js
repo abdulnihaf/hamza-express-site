@@ -1029,13 +1029,10 @@ export async function onRequest(context) {
           if (shouldRewrite(action)) el.setAttribute('action', '/kds' + action);
         }
       })
-      // Rewrite hidden redirect field so post-login redirect stays within proxy
-      .on('input[name="redirect"]', {
-        element(el) {
-          const val = el.getAttribute('value');
-          if (shouldRewrite(val)) el.setAttribute('value', '/kds' + val);
-        }
-      });
+      // NOTE: Do NOT rewrite input[name="redirect"] — the value goes to Odoo in the
+      // POST body as-is. Odoo redirects to that path, and the proxy's redirect handler
+      // (line ~912) adds the /kds prefix once. Rewriting here would cause double /kds/kds/.
+      ;
 
     // Remove content-length since we're modifying the body
     respHeaders.delete('content-length');
