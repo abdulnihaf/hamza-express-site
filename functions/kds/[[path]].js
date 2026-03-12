@@ -771,8 +771,8 @@ const KDS_POLL_SCRIPT = `<script>
   var POLL_MS=1000,_active=false,_lastOrderIds=null,_stateMap={},_firedSet={},_did=null;
   var NOTIFY_STAGES={44:1,62:1,64:1,65:1,66:1,76:1,47:1,50:1,53:1,56:1};
   var _isPrep=location.pathname.indexOf('pos_preparation_display')!==-1;
-  // Maps: prep_line_id → pos_order_id (built from poll response)
-  var _plToOrder={};
+  // Maps: prep_line_id → pos_order_id, prep_line_id → product_id (built from poll response)
+  var _plToOrder={},_plToProduct={};
   function getDisplayId(){
     var p=new URLSearchParams(location.search);
     return parseInt(p.get('display_id'))||parseInt(p.get('preparation_display'))||null;
@@ -784,6 +784,7 @@ const KDS_POLL_SCRIPT = `<script>
     _firedSet[key]=true;
     var payload={stage_id:stageId,todo:todo,prep_line_id:prepLineId};
     if(_plToOrder[prepLineId])payload.pos_order_id=_plToOrder[prepLineId];
+    if(_plToProduct[prepLineId])payload.product_id=_plToProduct[prepLineId];
     fetch('/kds/_he_kds_notify',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload)
@@ -806,8 +807,8 @@ const KDS_POLL_SCRIPT = `<script>
       // Build prep_order_id → pos_order_id from pos.prep.order
       var poMap={};
       for(var i=0;i<po.length;i++){var o=po[i];if(o.pos_order_id)poMap[o.id]=xid(o.pos_order_id);}
-      // Build prep_line_id → pos_order_id via prep_order_id
-      for(var i=0;i<pl.length;i++){var l=pl[i],poid=xid(l.prep_order_id);if(poid&&poMap[poid])_plToOrder[l.id]=poMap[poid];}
+      // Build prep_line_id → pos_order_id + product_id via prep_order_id
+      for(var i=0;i<pl.length;i++){var l=pl[i],poid=xid(l.prep_order_id);if(poid&&poMap[poid])_plToOrder[l.id]=poMap[poid];if(l.product_id)_plToProduct[l.id]=xid(l.product_id);}
       // Detect stage changes → fire webhooks
       for(var j=0;j<st.length;j++){
         var s=st[j],sid=xid(s.stage_id),plid=xid(s.prep_line_id),prev=_stateMap[s.id];

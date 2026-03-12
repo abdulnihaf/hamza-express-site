@@ -1971,7 +1971,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const webhookOdooUrl = isTestWebhook ? TEST_ODOO_URL : undefined;
 
     const body = await context.request.json();
-    const { stage_id, todo, prep_line_id, pos_order_id: clientPosOrderId } = body;
+    const { stage_id, todo, prep_line_id, pos_order_id: clientPosOrderId, product_id: clientProductId } = body;
 
     await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, pos_order_id=${clientPosOrderId||'none'}, env=${isTestWebhook?'test':'prod'}`);
 
@@ -1985,8 +1985,9 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     let posOrderId, productId = null, configId, presetId, trackingNumber;
 
     if (clientPosOrderId) {
-      // Fast path: client sent pos_order_id from poll data — skip 2 RPCs
+      // Fast path: client sent pos_order_id + product_id from poll data — skip 2 RPCs
       posOrderId = clientPosOrderId;
+      productId = clientProductId || null;
       // Still need config_id + tracking_number from pos.order (1 RPC instead of 3)
       const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
         [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
@@ -1997,7 +1998,7 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       configId = posOrder[0].config_id[0];
       presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
       trackingNumber = posOrder[0].tracking_number || null;
-      await debugLog(`FAST_RESOLVED: configId=${configId}, posOrderId=${posOrderId}, stage=${stage_id} (skipped 2 RPCs)`);
+      await debugLog(`FAST_RESOLVED: configId=${configId}, posOrderId=${posOrderId}, productId=${productId}, stage=${stage_id} (skipped 2 RPCs)`);
     } else {
       // Slow path: resolve prep_line_id → prep_order → pos_order (3 RPCs)
       // Step 1: Get prep_order_id from pos.prep.line
