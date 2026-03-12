@@ -2082,21 +2082,33 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
     return new Response(JSON.stringify({ ok: true, skipped: 'no matching wa_order' }), { headers: corsHeaders });
   }
 
-  // Counter-aware dedup
+  // Counter-aware dedup — ATOMIC to prevent race conditions
+  // Two sources can fire simultaneously (poll script + Odoo automation).
+  // Non-atomic read-check-write allows both to read empty state and both send.
+  // Atomic UPDATE with WHERE json_extract check ensures exactly-one delivery.
   const counterName = STAGE_COUNTER_MAP[stage_id] || KITCHEN_COUNTER_LABEL;
-  const notified = JSON.parse(waOrder.notified_counters || '{}');
   const counterKey = counterName.replace(/\s+/g, '_').toLowerCase();
   const notifKey = `${notificationType}_${counterKey}`;
-  if (notified[notifKey]) {
-    return new Response(JSON.stringify({ ok: true, skipped: `already sent ${notifKey}` }), { headers: corsHeaders });
-  }
-  notified[notifKey] = new Date().toISOString();
-
   const now = new Date().toISOString();
   const newStatus = notificationType === 'ready' ? 'ready' :
     (waOrder.status === 'ready' ? 'ready' : 'preparing');
-  await db.prepare('UPDATE wa_orders SET status = ?, notified_counters = ?, tracking_number = ?, updated_at = ? WHERE id = ?')
-    .bind(newStatus, JSON.stringify(notified), trackingNumber, now, waOrder.id).run();
+
+  const claimResult = await db.prepare(`
+    UPDATE wa_orders
+    SET notified_counters = json_set(COALESCE(notified_counters, '{}'), ?, ?),
+        status = ?, tracking_number = ?, updated_at = ?
+    WHERE id = ? AND json_extract(COALESCE(notified_counters, '{}'), ?) IS NULL
+  `).bind('$.' + notifKey, now, newStatus, trackingNumber, now, waOrder.id, '$.' + notifKey).run();
+
+  if (!claimResult.meta.changes) {
+    return new Response(JSON.stringify({ ok: true, skipped: `already sent ${notifKey} (atomic)` }), { headers: corsHeaders });
+  }
+
+  // Re-read notified_counters for multi-counter "all ready" check later
+  const notified = JSON.parse(
+    (await db.prepare('SELECT notified_counters FROM wa_orders WHERE id = ?').bind(waOrder.id).first())
+      ?.notified_counters || '{}'
+  );
 
   const waUser = await db.prepare('SELECT total_orders FROM wa_users WHERE wa_id = ?')
     .bind(waOrder.wa_id).first();
