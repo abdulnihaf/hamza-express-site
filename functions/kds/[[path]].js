@@ -616,12 +616,18 @@ const OVERRIDE_SCRIPT = `<script>
 (function(){
   var OO='__ODOO_ORIGIN__';
   function rw(u){if(typeof u!=='string')return u;if(u.indexOf(OO)===0)return'/kds'+u.substring(OO.length);if(u.charAt(0)==='/'&&u.indexOf('/kds/')!==0&&u.charAt(1)!=='/')return'/kds'+u;return u;}
-  // Override fetch()
+  // Override fetch() + trigger instant poll on staff stage-change taps
   var _f=window.fetch;
   window.fetch=function(u,o){
     if(typeof u==='string'){u=rw(u);}
     else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
-    return _f.call(this,u,o);
+    var result=_f.call(this,u,o);
+    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll
+    var url=typeof u==='string'?u:(u instanceof Request?u.url:'');
+    if(url.indexOf('pos.prep')!==-1&&url.indexOf('get_preparation_display_order')===-1){
+      result.then(function(){setTimeout(function(){if(window._heKdsTriggerPoll)window._heKdsTriggerPoll();},150);}).catch(function(){});
+    }
+    return result;
   };
   // Override XMLHttpRequest.open()
   var _x=XMLHttpRequest.prototype.open;
@@ -757,9 +763,11 @@ const OVERRIDE_SCRIPT = `<script>
 // Double-notification protection: client-side _firedSet + server-side notified_counters dedup
 const KDS_POLL_SCRIPT = `<script>
 (function(){
-  var POLL_MS=3000,_active=false,_lastOrderIds=null,_stateMap={},_firedSet={},_did=null;
+  var POLL_MS=1000,_active=false,_lastOrderIds=null,_stateMap={},_firedSet={},_did=null;
   var NOTIFY_STAGES={44:1,62:1,64:1,65:1,66:1,76:1,47:1,50:1,53:1,56:1};
   var _isPrep=location.pathname.indexOf('pos_preparation_display')!==-1;
+  // Maps: prep_line_id → pos_order_id (built from poll response)
+  var _plToOrder={};
   function getDisplayId(){
     var p=new URLSearchParams(location.search);
     return parseInt(p.get('display_id'))||parseInt(p.get('preparation_display'))||null;
@@ -769,22 +777,33 @@ const KDS_POLL_SCRIPT = `<script>
     var key=prepLineId+':'+stageId;
     if(_firedSet[key])return;
     _firedSet[key]=true;
+    var payload={stage_id:stageId,todo:todo,prep_line_id:prepLineId};
+    if(_plToOrder[prepLineId])payload.pos_order_id=_plToOrder[prepLineId];
     fetch('/kds/_he_kds_notify',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({stage_id:stageId,todo:todo,prep_line_id:prepLineId})
+      body:JSON.stringify(payload)
     }).then(function(r){
-      console.log('[HE-KDS] Webhook: stage='+stageId+' prep_line='+prepLineId+' →'+r.status);
+      console.log('[HE-KDS] Webhook: stage='+stageId+' prep_line='+prepLineId+' order='+(_plToOrder[prepLineId]||'?')+' →'+r.status);
     }).catch(function(e){console.warn('[HE-KDS] Webhook err:',e);});
   }
+  var _pollInFlight=false;
   function poll(){
-    if(!_did)return;
+    if(!_did||_pollInFlight)return;
+    _pollInFlight=true;
     fetch('/web/dataset/call_kw/pos.prep.display/get_preparation_display_order',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method:'call',
         params:{model:'pos.prep.display',method:'get_preparation_display_order',
           args:[_did,false],kwargs:{context:{lang:'en_US',tz:'Asia/Kolkata',uid:2,allowed_company_ids:[1]}}}})
     }).then(function(r){return r.json()}).then(function(d){
-      var r=d.result||{},po=r['pos.prep.order']||[],st=r['pos.prep.state']||[];
+      _pollInFlight=false;
+      var r=d.result||{},po=r['pos.prep.order']||[],pl=r['pos.prep.line']||[],st=r['pos.prep.state']||[];
+      // Build prep_order_id → pos_order_id from pos.prep.order
+      var poMap={};
+      for(var i=0;i<po.length;i++){var o=po[i];if(o.pos_order_id)poMap[o.id]=xid(o.pos_order_id);}
+      // Build prep_line_id → pos_order_id via prep_order_id
+      for(var i=0;i<pl.length;i++){var l=pl[i],poid=xid(l.prep_order_id);if(poid&&poMap[poid])_plToOrder[l.id]=poMap[poid];}
+      // Detect stage changes → fire webhooks
       for(var j=0;j<st.length;j++){
         var s=st[j],sid=xid(s.stage_id),plid=xid(s.prep_line_id),prev=_stateMap[s.id];
         if(prev&&prev!==sid&&sid&&NOTIFY_STAGES[sid]&&plid){fireWebhook(sid,!!s.todo,plid);}
@@ -793,8 +812,10 @@ const KDS_POLL_SCRIPT = `<script>
       var ids=po.map(function(o){return o.id}).sort().join(',');
       if(_lastOrderIds===null){_lastOrderIds=ids;}
       else if(ids!==_lastOrderIds){console.log('[HE-KDS] Orders changed, reloading...');location.reload();}
-    }).catch(function(){});
+    }).catch(function(){_pollInFlight=false;});
   }
+  // Expose global trigger for instant poll from fetch override
+  window._heKdsTriggerPoll=function(){if(_active)poll();};
   function start(){
     if(_active)return;_active=true;
     _did=getDisplayId();

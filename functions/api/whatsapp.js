@@ -1971,9 +1971,9 @@ async function handleKdsWebhook(context, url, corsHeaders) {
     const webhookOdooUrl = isTestWebhook ? TEST_ODOO_URL : undefined;
 
     const body = await context.request.json();
-    const { stage_id, todo, prep_line_id } = body;
+    const { stage_id, todo, prep_line_id, pos_order_id: clientPosOrderId } = body;
 
-    await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, env=${isTestWebhook?'test':'prod'}`);
+    await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, pos_order_id=${clientPosOrderId||'none'}, env=${isTestWebhook?'test':'prod'}`);
 
     // Resolve: prep_line_id → pos.prep.order → pos.order → config_id
     const apiKey = context.env.ODOO_API_KEY;
@@ -1982,37 +1982,55 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       return new Response(JSON.stringify({ ok: true, skipped: 'no api key or prep_line_id' }), { headers: corsHeaders });
     }
 
-    // Step 1: Get prep_order_id from pos.prep.line
-    const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
-      [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 }, webhookOdooUrl);
-    if (!prepLine || !prepLine[0]?.prep_order_id) {
-      await debugLog(`SKIP: prep line not found (prepLine=${JSON.stringify(prepLine)})`);
-      return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
-    }
-    const prepOrderId = prepLine[0].prep_order_id[0];
-    const productId = prepLine[0].product_id?.[0] || null;
+    let posOrderId, productId = null, configId, presetId, trackingNumber;
 
-    // Step 2: Get pos_order_id from pos.prep.order
-    const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
-      [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 }, webhookOdooUrl);
-    if (!prepOrder || !prepOrder[0]?.pos_order_id) {
-      await debugLog(`SKIP: prep order not found (prepOrder=${JSON.stringify(prepOrder)})`);
-      return new Response(JSON.stringify({ ok: true, skipped: 'prep order not found' }), { headers: corsHeaders });
-    }
-    const posOrderId = prepOrder[0].pos_order_id[0];
+    if (clientPosOrderId) {
+      // Fast path: client sent pos_order_id from poll data — skip 2 RPCs
+      posOrderId = clientPosOrderId;
+      // Still need config_id + tracking_number from pos.order (1 RPC instead of 3)
+      const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
+      if (!posOrder || !posOrder[0]) {
+        await debugLog(`SKIP: pos order not found for fast path (id=${posOrderId})`);
+        return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
+      }
+      configId = posOrder[0].config_id[0];
+      presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
+      trackingNumber = posOrder[0].tracking_number || null;
+      await debugLog(`FAST_RESOLVED: configId=${configId}, posOrderId=${posOrderId}, stage=${stage_id} (skipped 2 RPCs)`);
+    } else {
+      // Slow path: resolve prep_line_id → prep_order → pos_order (3 RPCs)
+      // Step 1: Get prep_order_id from pos.prep.line
+      const prepLine = await odooRPC(apiKey, 'pos.prep.line', 'search_read',
+        [[['id', '=', prep_line_id]]], { fields: ['prep_order_id', 'product_id'], limit: 1 }, webhookOdooUrl);
+      if (!prepLine || !prepLine[0]?.prep_order_id) {
+        await debugLog(`SKIP: prep line not found (prepLine=${JSON.stringify(prepLine)})`);
+        return new Response(JSON.stringify({ ok: true, skipped: 'prep line not found' }), { headers: corsHeaders });
+      }
+      const prepOrderId = prepLine[0].prep_order_id[0];
+      productId = prepLine[0].product_id?.[0] || null;
 
-    // Step 3: Get config_id + preset_id from pos.order
-    const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
-      [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
-    if (!posOrder || !posOrder[0]) {
-      await debugLog(`SKIP: pos order not found (posOrder=${JSON.stringify(posOrder)})`);
-      return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
-    }
-    const configId = posOrder[0].config_id[0];
-    const presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
-    const trackingNumber = posOrder[0].tracking_number || null;
+      // Step 2: Get pos_order_id from pos.prep.order
+      const prepOrder = await odooRPC(apiKey, 'pos.prep.order', 'search_read',
+        [[['id', '=', prepOrderId]]], { fields: ['pos_order_id'], limit: 1 }, webhookOdooUrl);
+      if (!prepOrder || !prepOrder[0]?.pos_order_id) {
+        await debugLog(`SKIP: prep order not found (prepOrder=${JSON.stringify(prepOrder)})`);
+        return new Response(JSON.stringify({ ok: true, skipped: 'prep order not found' }), { headers: corsHeaders });
+      }
+      posOrderId = prepOrder[0].pos_order_id[0];
 
-    await debugLog(`RESOLVED: configId=${configId}, presetId=${presetId}, posOrderId=${posOrderId}, stage=${stage_id}`);
+      // Step 3: Get config_id + preset_id from pos.order
+      const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', '=', posOrderId]]], { fields: ['config_id', 'preset_id', 'tracking_number'], limit: 1 }, webhookOdooUrl);
+      if (!posOrder || !posOrder[0]) {
+        await debugLog(`SKIP: pos order not found (posOrder=${JSON.stringify(posOrder)})`);
+        return new Response(JSON.stringify({ ok: true, skipped: 'pos order not found' }), { headers: corsHeaders });
+      }
+      configId = posOrder[0].config_id[0];
+      presetId = posOrder[0].preset_id?.[0] || posOrder[0].preset_id || null;
+      trackingNumber = posOrder[0].tracking_number || null;
+      await debugLog(`SLOW_RESOLVED: configId=${configId}, presetId=${presetId}, posOrderId=${posOrderId}, stage=${stage_id} (3 RPCs)`);
+    }
 
     // Route by config
     if (configId === POS_CONFIG_ID && !isTestWebhook) {
