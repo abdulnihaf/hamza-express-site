@@ -622,10 +622,15 @@ const OVERRIDE_SCRIPT = `<script>
     if(typeof u==='string'){u=rw(u);}
     else if(u instanceof Request){try{var nr=rw(u.url);if(nr!==u.url)u=new Request(nr,u);}catch(e){}}
     var result=_f.call(this,u,o);
-    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll
+    // Detect stage-change RPCs (staff tapping Preparing/Packed) — trigger immediate poll + reload
+    // OWL relies on bus notifications to re-render, but bus doesn't work through proxy.
+    // So: fire webhook via instant poll (150ms), then reload page (800ms) to refresh OWL UI.
     var url=typeof u==='string'?u:(u instanceof Request?u.url:'');
     if(url.indexOf('pos.prep')!==-1&&url.indexOf('get_preparation_display_order')===-1){
-      result.then(function(){setTimeout(function(){if(window._heKdsTriggerPoll)window._heKdsTriggerPoll();},150);}).catch(function(){});
+      result.then(function(){
+        setTimeout(function(){if(window._heKdsTriggerPoll)window._heKdsTriggerPoll();},150);
+        setTimeout(function(){location.reload();},800);
+      }).catch(function(){});
     }
     return result;
   };
@@ -823,8 +828,8 @@ const KDS_POLL_SCRIPT = `<script>
     setInterval(poll,POLL_MS);
     console.log('[HE-KDS] Poll+notify active ('+POLL_MS+'ms) display='+_did+(_isPrep?' [prep]':' [track]'));
   }
-  if(document.readyState==='complete')setTimeout(start,5000);
-  else window.addEventListener('load',function(){setTimeout(start,5000);});
+  if(document.readyState==='complete')setTimeout(start,2000);
+  else window.addEventListener('load',function(){setTimeout(start,2000);});
 })();
 </script>`;
 
