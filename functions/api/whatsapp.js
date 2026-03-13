@@ -3247,6 +3247,23 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({ ok: true });
   }
 
+  // ── Test push (admin only) ──
+  if (action === 'floor-test-push' && method === 'POST') {
+    const body = await context.request.json();
+    const targetId = body.staff_id || staff.id;
+    const targetStaff = await db.prepare(`SELECT id, name, push_subscription FROM ${t}floor_staff WHERE id = ?`).bind(targetId).first();
+    if (!targetStaff?.push_subscription) return json({ ok: false, error: 'No push subscription for staff ' + targetId });
+    const sub = JSON.parse(targetStaff.push_subscription);
+    const result = await sendPush(context.env, sub, {
+      title: body.title || 'Test Buzz',
+      body: body.body || 'Push notification test from Hamza Express',
+      vibrate: body.vibrate || [500, 200, 500, 200, 500],
+      tag: 'test-push',
+      url: '/ops/waiter/'
+    });
+    return json({ ok: result.ok || false, result, staff: targetStaff.name });
+  }
+
   // ── Start shift (any staff) ──
   if (action === 'floor-start-shift' && method === 'POST') {
     const now = new Date().toISOString();
