@@ -3437,7 +3437,7 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
 
       // Query Odoo for config 6 dine-in orders modified in last 2 hours
       const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
-        [[['config_id', '=', 6], ['preset_id', '=', 1], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+        [[['config_id', '=', 6], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
         { fields: ['id', 'name', 'date_order', 'write_date', 'state'], order: 'write_date asc', limit: 50 },
         odooUrl
       );
@@ -3657,7 +3657,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
 
   // Query Odoo for config 6 dine-in orders modified in last 2 hours
   const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
-    [[['config_id', '=', 6], ['preset_id', '=', 1], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+    [[['config_id', '=', 6], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
     { fields: ['id', 'name', 'date_order', 'write_date', 'state'], order: 'write_date asc', limit: 50 },
     odooUrl
   );
