@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>HE Cleaner</title>
+  <title>HE Cleaner [NIHAF]</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b}
@@ -158,7 +158,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const ENV = 'nihaf'; // hardcoded — this is the nihaf staging dashboard
 const API_BASE = '/api/whatsapp';
+const API_SUFFIX = ENV ? `&env=${ENV}` : '';
 let token = localStorage.getItem('floor_cleaner_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_cleaner_staff') || 'null');
 let tableData = null;
@@ -230,14 +232,14 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.className = 'toast', 2500);
 }
 
-function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+function vibrate(pattern) { try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {} }
 
 // ── API helper ──
 async function api(action, method = 'GET', body = null) {
   const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
   if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   try {
-    const res = await fetch(`${API_BASE}?action=${action}`, opts);
+    const res = await fetch(`${API_BASE}?action=${action}${API_SUFFIX}`, opts);
     const data = await res.json();
     if (!res.ok) {
       if (res.status === 401) { toast('Session expired', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
@@ -268,7 +270,7 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
 
   if (pinBuffer.length === 4) {
     try {
-      const data = await fetch(`${API_BASE}?action=floor-login`, {
+      const data = await fetch(`${API_BASE}?action=floor-login${API_SUFFIX}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinBuffer })
@@ -360,6 +362,19 @@ function enterApp() {
   pollInterval = setInterval(refresh, 5000);
   timerInterval = setInterval(updateTimers, 1000);
 }
+
+// ── Background tab: pause polling when hidden, resume on return ──
+document.addEventListener('visibilitychange', () => {
+  if (!token || !staffInfo?.on_shift) return;
+  if (document.hidden) {
+    clearInterval(pollInterval);
+    clearInterval(timerInterval);
+  } else {
+    refresh();
+    pollInterval = setInterval(refresh, 5000);
+    timerInterval = setInterval(updateTimers, 1000);
+  }
+});
 
 // ── Main refresh ──
 async function refresh() {

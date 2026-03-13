@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>HE Captain</title>
+  <title>HE Captain [NIHAF]</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
@@ -206,6 +206,31 @@
     .toast.show{opacity:1}
     .toast.error{border-color:var(--red);color:var(--red)}
     .toast.success{border-color:var(--green);color:var(--green)}
+    .toast.warning{border-color:var(--orange);color:var(--orange)}
+
+    /* Financials */
+    .fin-hero{background:var(--card);border:2px solid var(--green);border-radius:16px;padding:20px;text-align:center;margin-bottom:16px}
+    .fin-hero .fin-label{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .fin-hero .fin-amount{font-size:36px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace}
+    .fin-hero .fin-period{font-size:11px;color:var(--text2);margin-top:6px}
+    .fin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+    .fin-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+    .fin-stat .fs-val{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .fin-stat .fs-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+    .fin-stat .fs-val.orange{color:var(--orange)}
+    .fin-stat .fs-val.blue{color:var(--blue)}
+    .fin-stat .fs-val.purple{color:var(--purple)}
+    .fin-stat .fs-val.amber{color:var(--amber)}
+    .fin-list{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+    .fin-list-title{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600}
+    .fin-row{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:13px}
+    .fin-row:last-child{border-bottom:none}
+    .fin-row .fr-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fin-row .fr-qty{color:var(--text2);font-size:11px;margin:0 8px;flex-shrink:0}
+    .fin-row .fr-amt{font-family:'JetBrains Mono',monospace;font-weight:500;flex-shrink:0}
+    .fin-row .fr-time{color:var(--text2);font-size:11px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+    .fin-row .fr-vpa{color:var(--text2);font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+    .fin-empty{color:var(--text2);font-size:13px;text-align:center;padding:20px}
   </style>
 </head>
 <body>
@@ -259,12 +284,31 @@
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard<span class="badge" id="unassigned-badge" style="display:none">0</span></div>
+    <div class="tab active" data-tab="financials" onclick="switchTab('financials')">Financials</div>
+    <div class="tab" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard<span class="badge" id="unassigned-badge" style="display:none">0</span></div>
     <div class="tab" data-tab="staff" onclick="switchTab('staff')">Staff</div>
   </div>
 
+  <!-- Financials Screen (default landing) -->
+  <div class="screen active" id="screen-financials">
+    <div class="fin-hero" id="fin-hero">
+      <div class="fin-label">Cash In Hand</div>
+      <div class="fin-amount" id="fin-cash">--</div>
+      <div class="fin-period" id="fin-period"></div>
+    </div>
+    <div class="fin-stats" id="fin-stats">
+      <div class="fin-stat"><div class="fs-val orange" id="fin-orders">--</div><div class="fs-label">Orders</div></div>
+      <div class="fin-stat"><div class="fs-val blue" id="fin-upi">--</div><div class="fs-label">UPI</div></div>
+      <div class="fin-stat"><div class="fs-val purple" id="fin-card">--</div><div class="fs-label">Card</div></div>
+      <div class="fin-stat"><div class="fs-val amber" id="fin-comp">--</div><div class="fs-label">Comp</div></div>
+    </div>
+    <div id="fin-orders-list"></div>
+    <div id="fin-upi-list"></div>
+    <div id="fin-products-list"></div>
+  </div>
+
   <!-- Dashboard Screen -->
-  <div class="screen active" id="screen-dashboard">
+  <div class="screen" id="screen-dashboard">
     <div class="stats-bar" id="stats-bar"></div>
 
     <!-- Bottleneck alerts (only when issues exist) -->
@@ -328,7 +372,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const ENV = 'nihaf'; // hardcoded — this is the nihaf staging dashboard
 const API_BASE = '/api/whatsapp';
+const API_SUFFIX = ENV ? `&env=${ENV}` : '';
 let token = localStorage.getItem('floor_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_staff') || 'null');
 let dashboardData = null;
@@ -336,6 +382,7 @@ let intelData = null;
 let dashboardInterval = null;
 let pollInterval = null;
 let reassigningOrderId = null;
+let financialsInterval = null;
 
 // ── Toast ──
 function toast(msg, type = 'success') {
@@ -350,7 +397,7 @@ async function api(action, method = 'GET', body = null) {
   const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
   if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   try {
-    const res = await fetch(`${API_BASE}?action=${action}`, opts);
+    const res = await fetch(`${API_BASE}?action=${action}${API_SUFFIX}`, opts);
     const data = await res.json();
     if (!res.ok) {
       if (res.status === 401) { toast('Session expired — please log in again', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
@@ -379,7 +426,7 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
 
   if (pinBuffer.length === 4) {
     try {
-      const data = await fetch(`${API_BASE}?action=floor-login`, {
+      const data = await fetch(`${API_BASE}?action=floor-login${API_SUFFIX}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinBuffer })
@@ -411,6 +458,7 @@ function logout() {
   localStorage.removeItem('floor_staff');
   clearInterval(dashboardInterval);
   clearInterval(pollInterval);
+  clearInterval(financialsInterval);
   document.getElementById('app').style.display = 'none';
   document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('pin-screen').style.display = 'flex';
@@ -455,6 +503,7 @@ async function endShift() {
     localStorage.setItem('floor_staff', JSON.stringify(staffInfo));
     clearInterval(dashboardInterval);
     clearInterval(pollInterval);
+    clearInterval(financialsInterval);
     toast('Shift ended');
     showShiftScreen();
   } catch (e) { toast(e.message, 'error'); }
@@ -467,13 +516,30 @@ function enterApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('staff-name').textContent = staffInfo.name;
   refreshLive();
-  // Single atomic poll+data every 5s (kitchen-intel pattern)
   pollInterval = setInterval(refreshLive, 5000);
+  // Financials refresh every 30s (financial data doesn't need 5s updates)
+  loadFinancials();
+  financialsInterval = setInterval(loadFinancials, 30000);
 }
+
+// ── Background tab: pause polling when hidden, resume on return ──
+document.addEventListener('visibilitychange', () => {
+  if (!token || !staffInfo) return;
+  if (document.hidden) {
+    clearInterval(pollInterval);
+    clearInterval(financialsInterval);
+  } else {
+    refreshLive();
+    pollInterval = setInterval(refreshLive, 5000);
+    loadFinancials();
+    financialsInterval = setInterval(loadFinancials, 30000);
+  }
+});
 
 async function refreshLive() {
   try {
     const data = await api('floor-live');
+    if (data._poll?.odoo_error) toast('Odoo sync failed — data may be stale', 'warning');
     dashboardData = data;
     renderDashboard();
   } catch (e) { console.error('Live refresh error:', e); }
@@ -483,6 +549,7 @@ async function refreshLive() {
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + tab));
+  if (tab === 'financials') loadFinancials();
   if (tab === 'dashboard') refreshLive();
   if (tab === 'staff') loadStaff();
 }
@@ -989,6 +1056,90 @@ async function removeStaff(id) {
     toast('Staff removed');
     loadStaff();
   } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Financials: captain-live from settlement API ──
+// Map odoo_employee_id → settlement captain_id (per-env, IDs differ across Odoo instances)
+const EMP_TO_CAPTAIN_MAP = {
+  nihaf: { 69: 'captain_1', 70: 'captain_2', 71: 'captain_3', 72: 'captain_4', 73: 'captain_5' },
+  default: { 69: 'captain_1', 70: 'captain_2', 73: 'captain_1', 74: 'captain_2', 75: 'captain_3', 76: 'captain_4', 77: 'captain_5' },
+};
+const EMP_TO_CAPTAIN = EMP_TO_CAPTAIN_MAP[ENV] || EMP_TO_CAPTAIN_MAP.default;
+let finData = null;
+
+function getCaptainId() {
+  if (!staffInfo?.odoo_employee_id) return null;
+  return EMP_TO_CAPTAIN[staffInfo.odoo_employee_id] || null;
+}
+
+async function loadFinancials() {
+  const captainId = getCaptainId();
+  if (!captainId) {
+    document.getElementById('fin-cash').textContent = '--';
+    document.getElementById('fin-period').textContent = 'No captain mapping configured';
+    return;
+  }
+  try {
+    const res = await fetch(`/api/settlement?action=captain-live&captain_id=${captainId}${ENV ? '&env=' + ENV : ''}`);
+    const data = await res.json();
+    if (!data.success) { console.error('Financials error:', data.error); return; }
+    finData = data;
+    renderFinancials();
+  } catch (e) { console.error('Financials fetch error:', e); }
+}
+
+function renderFinancials() {
+  if (!finData) return;
+  const d = finData;
+  const fmt = n => n != null ? '₹' + Math.round(n).toLocaleString('en-IN') : '--';
+
+  // Hero card
+  document.getElementById('fin-cash').textContent = fmt(d.cashInHand);
+  document.getElementById('fin-hero').style.borderColor = d.cashInHand >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('fin-cash').style.color = d.cashInHand >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('fin-period').textContent = d.period?.startFormatted ? `Since ${d.period.startFormatted}` : '';
+
+  // Stats bar
+  document.getElementById('fin-orders').textContent = d.orders?.count ?? '--';
+  document.getElementById('fin-upi').textContent = fmt(d.upi?.total);
+  document.getElementById('fin-card').textContent = fmt(d.card);
+  document.getElementById('fin-comp').textContent = fmt(d.comp);
+
+  // Orders list
+  const ordersDiv = document.getElementById('fin-orders-list');
+  if (d.orderDetails && d.orderDetails.length > 0) {
+    ordersDiv.innerHTML = '<div class="fin-list"><div class="fin-list-title">ORDERS</div>' +
+      d.orderDetails.slice(0, 20).map(o => {
+        const time = o.time ? new Date(o.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) : '';
+        return `<div class="fin-row"><span class="fr-name">${o.name || ''}</span><span class="fr-amt">${fmt(o.amount)}</span><span class="fr-time">${time}</span></div>`;
+      }).join('') + '</div>';
+  } else {
+    ordersDiv.innerHTML = '<div class="fin-list"><div class="fin-list-title">ORDERS</div><div class="fin-empty">No orders yet</div></div>';
+  }
+
+  // UPI payments
+  const upiDiv = document.getElementById('fin-upi-list');
+  if (d.upi?.payments && d.upi.payments.length > 0) {
+    upiDiv.innerHTML = '<div class="fin-list"><div class="fin-list-title">UPI PAYMENTS</div>' +
+      d.upi.payments.slice(0, 15).map(p => {
+        const time = p.time ? new Date(p.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' }) : '';
+        return `<div class="fin-row"><span class="fr-vpa">${p.vpa || '--'}</span><span class="fr-amt">${fmt(p.amount)}</span><span class="fr-time">${time}</span></div>`;
+      }).join('') + '</div>';
+  } else {
+    upiDiv.innerHTML = '';
+  }
+
+  // Top products
+  const prodDiv = document.getElementById('fin-products-list');
+  if (d.productBreakdown && d.productBreakdown.length > 0) {
+    prodDiv.innerHTML = '<div class="fin-list"><div class="fin-list-title">TOP PRODUCTS</div>' +
+      d.productBreakdown.slice(0, 10).map(p => {
+        const name = (p.name || '').replace(/^\[HE-\w+\]\s*/, '');
+        return `<div class="fin-row"><span class="fr-name">${name}</span><span class="fr-qty">x${p.qty}</span><span class="fr-amt">${fmt(p.amount)}</span></div>`;
+      }).join('') + '</div>';
+  } else {
+    prodDiv.innerHTML = '';
+  }
 }
 
 // ── Init ──
