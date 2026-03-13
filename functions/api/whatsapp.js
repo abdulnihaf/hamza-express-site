@@ -2054,7 +2054,8 @@ async function handleKdsWebhook(context, url, corsHeaders) {
         'test': { isTest: true, odooUrl: TEST_ODOO_URL, stageMap: TEST_FLOOR_STAGE_MAP, t: 'test_' },
         'nihaf': { isTest: true, odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', stageMap: NIHAF_FLOOR_STAGE_MAP, t: 'nihaf_' },
       };
-      const floorCfg = WEBHOOK_FLOOR_CFG[webhookEnv] || { isTest: false, odooUrl: ODOO_URL, stageMap: FLOOR_STAGE_MAP, t: '' };
+      // Default floor webhook → test.hamzahotel.com (production POS)
+      const floorCfg = WEBHOOK_FLOOR_CFG[webhookEnv] || { isTest: false, odooUrl: TEST_ODOO_URL, stageMap: FLOOR_STAGE_MAP, t: '' };
       return handleKdsWebhookFloor(context, corsHeaders, {
         stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId
       }, floorCfg);
@@ -2310,7 +2311,8 @@ function getFloorConfig(url) {
     'test': { odooUrl: TEST_ODOO_URL, t: 'test_', stageMap: TEST_FLOOR_STAGE_MAP },
     'nihaf': { odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', t: 'nihaf_', stageMap: NIHAF_FLOOR_STAGE_MAP },
   };
-  const cfg = envMap[env] || { odooUrl: ODOO_URL, t: '', stageMap: FLOOR_STAGE_MAP };
+  // Default floor ops → test.hamzahotel.com (production POS)
+  const cfg = envMap[env] || { odooUrl: TEST_ODOO_URL, t: '', stageMap: FLOOR_STAGE_MAP };
   return {
     isTest: !!env,
     odooUrl: cfg.odooUrl,
