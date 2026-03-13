@@ -472,10 +472,10 @@ function switchTab(tab) {
   document.getElementById('screen-' + tab).classList.add('active');
 }
 
-// ── Main refresh ──
+// ── Main refresh (single atomic call — polls Odoo + returns data) ──
 async function refresh() {
   try {
-    myData = await api('floor-my-orders');
+    myData = await api('floor-live');
     renderTables();
     renderDeliver();
     checkNotifications();

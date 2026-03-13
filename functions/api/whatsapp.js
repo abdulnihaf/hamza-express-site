@@ -2855,6 +2855,11 @@ async function handleFloorAction(context, action, corsHeaders) {
   const staff = await validateFloorToken(db, token, null, t);
   if (!staff) return err('Unauthorized', 401);
 
+  // ── Live: atomic poll + data in ONE call (like kitchen-intel) ──
+  if (action === 'floor-live' && method === 'GET') {
+    return handleFloorLive(context, db, staff, json, corsHeaders, cfg);
+  }
+
   // ── Poll for new Odoo orders (Captain) ──
   if (action === 'floor-poll' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
@@ -3157,6 +3162,221 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
 
   console.log(`Floor${t ? '[TEST]' : ''}: auto-created order ${order.name} (${lines.length} items, table ${tableNumber || '?'})`);
   return floorOrder;
+}
+
+// ── LIVE: atomic poll + dashboard in ONE call (kitchen-intel pattern) ──
+async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
+  const apiKey = context.env.ODOO_API_KEY;
+  const t = cfg?.t || '';
+  const odooUrl = cfg?.odooUrl || ODOO_URL;
+  const now = new Date().toISOString();
+
+  // ── Step 1: Fast Odoo sync (poll for new orders + payment detection) ──
+  let pollResult = { created: 0, newly_paid: 0, odoo_error: false };
+
+  if (apiKey) {
+    try {
+      // Get last poll time
+      const pollState = await db.prepare(`SELECT value FROM ${t}floor_poll_state WHERE key = 'last_poll_time'`).first();
+      const lastPollTime = pollState?.value || '2026-02-26 00:00:00';
+      const odooLastPoll = lastPollTime.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
+
+      // Query Odoo for new config 6 dine-in orders since last poll
+      const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', odooLastPoll], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+        { fields: ['id', 'name', 'date_order', 'state'], order: 'date_order asc' },
+        odooUrl
+      );
+
+      if (newOrders === null) {
+        pollResult.odoo_error = true;
+      } else {
+        // Create floor orders for genuinely new ones
+        for (const order of newOrders) {
+          const existing = await db.prepare(`SELECT id FROM ${t}floor_orders WHERE odoo_order_id = ?`).bind(order.id).first();
+          if (existing) continue;
+          if (order.state === 'cancel') continue;
+          const result = await createFloorOrderFromOdoo(context, order.id, 6, cfg);
+          if (result) {
+            pollResult.created++;
+            await autoAssignOrder(db, result.id, t);
+          }
+        }
+
+        // Payment detection on unpaid orders
+        const unpaidOrders = await db.prepare(
+          `SELECT id, odoo_order_id, status FROM ${t}floor_orders WHERE paid_at IS NULL AND status IN ('new', 'assigned', 'in_progress', 'served') AND odoo_order_id IS NOT NULL`
+        ).all();
+
+        if (unpaidOrders.results.length > 0) {
+          const unpaidOdooIds = unpaidOrders.results.map(o => o.odoo_order_id);
+          for (let i = 0; i < unpaidOdooIds.length; i += 20) {
+            const batch = unpaidOdooIds.slice(i, i + 20);
+            const paidOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
+              [[['id', 'in', batch], ['state', 'in', ['paid', 'done', 'invoiced']]]],
+              { fields: ['id'] }, odooUrl
+            );
+            if (paidOrders) {
+              const paidIds = new Set(paidOrders.map(p => p.id));
+              for (const uo of unpaidOrders.results) {
+                if (paidIds.has(uo.odoo_order_id)) {
+                  await db.prepare(
+                    `UPDATE ${t}floor_orders SET status = 'served', served_at = COALESCE(served_at, ?), paid_at = ?, clean_status = 'needs_cleaning', updated_at = ? WHERE id = ?`
+                  ).bind(now, now, now, uo.id).run();
+                  if (uo.status === 'assigned' || uo.status === 'in_progress') {
+                    await db.prepare(
+                      `UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = (SELECT waiter_id FROM ${t}floor_orders WHERE id = ?)`
+                    ).bind(uo.id).run();
+                  }
+                  pollResult.newly_paid++;
+                }
+              }
+            }
+          }
+        }
+
+        // Captain shift sync
+        try {
+          const sessions = await odooRPC(apiKey, 'pos.session', 'search_read',
+            [[['config_id', '=', 6], ['state', 'in', ['opened', 'opening_control']]]],
+            { fields: ['id', 'state'], limit: 1 }, odooUrl
+          );
+          if (sessions && sessions.length === 0) {
+            await db.prepare(
+              `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE can_captain = 1 AND on_shift = 1`
+            ).bind(now).run();
+          }
+        } catch (e) { /* best-effort */ }
+
+        // Advance poll cursor
+        await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
+      }
+    } catch (e) {
+      pollResult.odoo_error = true;
+      console.error(`Floor${t ? '[TEST]' : ''} live poll error:`, e.message);
+    }
+  }
+
+  // ── Step 2: Return role-appropriate data (immediately after sync) ──
+  if (staff.can_captain) {
+    // Captain: full dashboard data
+    const captainFilter = staff.odoo_employee_id ? ` AND fo.captain_id = ${staff.id}` : '';
+    const captainFilterSimple = staff.odoo_employee_id ? ` AND captain_id = ${staff.id}` : '';
+
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayISO = todayStart.toISOString();
+    const [unassigned, active, waiters, stats, onShiftCount, cleaners, dirtyTables, servedOrders, liveOrders] = await Promise.all([
+      db.prepare(`SELECT * FROM ${t}floor_orders fo WHERE waiter_id IS NULL AND status IN ('new')${captainFilter} ORDER BY created_at ASC`).all(),
+      db.prepare(`SELECT fo.*, fs.name as waiter_name, cs.name as captain_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id LEFT JOIN ${t}floor_staff cs ON fo.captain_id = cs.id WHERE fo.status IN ('new', 'assigned', 'in_progress')${captainFilter} ORDER BY fo.created_at ASC`).all(),
+      db.prepare(`SELECT fs.id, fs.name, fs.role, fs.can_captain, fs.can_waiter, fs.current_load, fs.on_shift, fs.shift_started_at, fs.shift_ended_at, fs.last_delivery_at, fs.last_seen_at, (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status IN ('assigned', 'in_progress')) as active_orders, (SELECT COUNT(*) FROM ${t}floor_orders WHERE waiter_id = fs.id AND status = 'served' AND DATE(updated_at) = DATE(?)) as served_today FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.role = 'waiter' ORDER BY fs.name`).bind(now).all(),
+      db.prepare(`SELECT COUNT(*) as total_orders, SUM(CASE WHEN waiter_id IS NULL AND status = 'new' THEN 1 ELSE 0 END) as unassigned, SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN 1 ELSE 0 END) as active, SUM(CASE WHEN status = 'served' THEN 1 ELSE 0 END) as served FROM ${t}floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)${captainFilterSimple}`).bind(now).first(),
+      db.prepare(`SELECT COUNT(*) as cnt FROM ${t}floor_staff WHERE is_active = 1 AND role = 'waiter' AND on_shift = 1`).first(),
+      db.prepare(`SELECT fs.id, fs.name, fs.role, fs.can_clean, fs.current_load, fs.on_shift, fs.shift_started_at, fs.last_seen_at, (SELECT COUNT(*) FROM ${t}floor_orders WHERE cleaner_id = fs.id AND clean_status = 'cleaning') as active_cleaning, (SELECT COUNT(*) FROM ${t}floor_orders WHERE cleaner_id = fs.id AND cleaned_at IS NOT NULL AND DATE(cleaned_at) = DATE(?)) as cleaned_today FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.can_clean = 1 ORDER BY fs.name`).bind(now).all(),
+      db.prepare(`SELECT id, table_number, odoo_order_name, paid_at, clean_status, cleaner_id, clean_ack_at FROM ${t}floor_orders WHERE clean_status IN ('needs_cleaning', 'cleaning')${captainFilterSimple} ORDER BY paid_at ASC`).all(),
+      db.prepare(`SELECT id, table_number, odoo_order_name, served_at, paid_at FROM ${t}floor_orders WHERE status = 'served' AND paid_at IS NULL${captainFilterSimple} ORDER BY served_at ASC`).all(),
+      // Live orders for pipeline (replaces floor-intel)
+      db.prepare(`SELECT fo.id, fo.table_number, fo.odoo_order_name, fo.status, fo.created_at, fo.assigned_at, fo.served_at, fo.paid_at, fo.clean_status, fo.cleaned_at, fo.total_items, fo.items_ready, fo.items_delivered, w.name as waiter_name, c.name as cleaner_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff w ON fo.waiter_id = w.id LEFT JOIN ${t}floor_staff c ON fo.cleaner_id = c.id WHERE fo.status NOT IN ('cancelled') AND DATE(fo.created_at) = DATE(?)${captainFilter} ORDER BY fo.created_at DESC`).bind(todayISO).all(),
+    ]);
+
+    // Get items for active + unassigned orders
+    const allOrderIds = [...active.results.map(o => o.id), ...unassigned.results.map(o => o.id)];
+    let itemsByOrder = {};
+    if (allOrderIds.length > 0) {
+      const placeholders = allOrderIds.map(() => '?').join(',');
+      const items = await db.prepare(
+        `SELECT * FROM ${t}floor_items WHERE floor_order_id IN (${placeholders}) ORDER BY id`
+      ).bind(...allOrderIds).all();
+      for (const item of items.results) {
+        if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
+        itemsByOrder[item.floor_order_id].push(item);
+      }
+    }
+
+    return json({
+      _live: true, _poll: pollResult,
+      unassigned: unassigned.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
+      active: active.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
+      waiters: waiters.results,
+      cleaners: cleaners.results,
+      dirty_tables: dirtyTables.results,
+      served_awaiting_payment: servedOrders.results,
+      live_orders: liveOrders.results,
+      stats: { ...(stats || { total_orders: 0, unassigned: 0, active: 0, served: 0 }), on_shift_waiters: onShiftCount?.cnt || 0 },
+      staff_id: staff.id,
+      staff_name: staff.name,
+      on_shift: !!staff.on_shift
+    });
+  } else {
+    // Waiter / other: my-orders style data
+    let orders;
+    if (staff.can_waiter) {
+      orders = await db.prepare(
+        `SELECT * FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('new', 'assigned', 'in_progress') ORDER BY created_at ASC`
+      ).bind(staff.id).all();
+    } else {
+      orders = { results: [] };
+    }
+
+    if (orders.results.length === 0) {
+      return json({
+        _live: true, _poll: pollResult,
+        orders: [], deliver_batches: [],
+        cooking_count: 0, ready_count: 0, picked_up_count: 0,
+        on_shift: !!staff.on_shift
+      });
+    }
+
+    const orderIds = orders.results.map(o => o.id);
+    const placeholders = orderIds.map(() => '?').join(',');
+    const items = await db.prepare(
+      `SELECT fi.*, fo.table_number FROM ${t}floor_items fi JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id WHERE fi.floor_order_id IN (${placeholders}) ORDER BY fi.id`
+    ).bind(...orderIds).all();
+
+    let cookingCount = 0, readyCount = 0, pickedUpCount = 0;
+    const deliverByTable = {};
+    const itemsByOrder = {};
+
+    for (const item of items.results) {
+      if (!itemsByOrder[item.floor_order_id]) itemsByOrder[item.floor_order_id] = [];
+      itemsByOrder[item.floor_order_id].push(item);
+
+      if (item.status === 'cooking') cookingCount++;
+      else if (item.status === 'at_counter') readyCount++;
+      else if (item.status === 'picked_up') {
+        pickedUpCount++;
+        const table = item.table_number || 'Unknown';
+        if (!deliverByTable[table]) deliverByTable[table] = { table_number: table, items: [] };
+        deliverByTable[table].items.push({
+          id: item.id, product_name: item.product_name, quantity: item.quantity,
+          counter: item.counter, picked_up_at: item.picked_up_at, floor_order_id: item.floor_order_id
+        });
+      }
+    }
+
+    const deliverBatches = Object.values(deliverByTable).map(batch => ({
+      table_number: batch.table_number,
+      item_count: batch.items.length,
+      items: batch.items
+    })).sort((a, b) => (parseInt(a.table_number) || 999) - (parseInt(b.table_number) || 999));
+
+    return json({
+      _live: true, _poll: pollResult,
+      orders: orders.results.map(o => ({
+        ...o,
+        items: (itemsByOrder[o.id] || []).map(i => ({
+          id: i.id, product_name: i.product_name, quantity: i.quantity,
+          counter: i.counter, status: i.status,
+          cooked_at: i.cooked_at, at_counter_at: i.at_counter_at,
+          picked_up_at: i.picked_up_at, delivered_at: i.delivered_at
+        }))
+      })),
+      deliver_batches: deliverBatches,
+      cooking_count: cookingCount,
+      ready_count: readyCount,
+      picked_up_count: pickedUpCount,
+      on_shift: !!staff.on_shift
+    });
+  }
 }
 
 // ── Poll Odoo for new config 6 dine-in orders ──

@@ -466,38 +466,30 @@ function enterApp() {
   document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('staff-name').textContent = staffInfo.name;
-  pollAndRefresh();
-  // Combined poll+refresh every 5s for near-realtime updates
-  pollInterval = setInterval(pollAndRefresh, 5000);
+  refreshLive();
+  // Single atomic poll+data every 5s (kitchen-intel pattern)
+  pollInterval = setInterval(refreshLive, 5000);
 }
 
-async function pollAndRefresh() {
+async function refreshLive() {
   try {
-    await api('floor-poll');
-  } catch (e) { /* poll failure is non-fatal */ }
-  refreshDashboard();
+    const data = await api('floor-live');
+    dashboardData = data;
+    renderDashboard();
+  } catch (e) { console.error('Live refresh error:', e); }
 }
-
 
 // ── Tab switching ──
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + tab));
-  if (tab === 'dashboard') refreshDashboard();
+  if (tab === 'dashboard') refreshLive();
   if (tab === 'staff') loadStaff();
 }
 
 // ── Dashboard ──
 async function refreshDashboard() {
-  try {
-    const [dash, intel] = await Promise.all([
-      api('floor-dashboard'),
-      api('floor-intel').catch(() => null)
-    ]);
-    dashboardData = dash;
-    intelData = intel;
-    renderDashboard();
-  } catch (e) { console.error('Dashboard error:', e); }
+  refreshLive();
 }
 
 function renderDashboard() {
@@ -648,12 +640,12 @@ function renderDashboard() {
     aDiv.innerHTML = '';
   }
 
-  // ── Intel sections (from floor-intel endpoint) ──
+  // ── Pipeline (from live_orders in floor-live response) ──
   renderIntel();
 }
 
 function renderIntel() {
-  const intel = intelData;
+  const intel = dashboardData;
 
   // Pipeline
   const pipeDiv = document.getElementById('pipeline-section');
@@ -926,15 +918,9 @@ async function reassignOrder(waiterId) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Poll Odoo ──
+// ── Poll Odoo (now handled by floor-live) ──
 async function pollOdoo() {
-  try {
-    const r = await api('floor-poll');
-    if (r.created > 0) {
-      toast(`${r.created} new order${r.created > 1 ? 's' : ''} found`);
-      refreshDashboard();
-    }
-  } catch (e) { console.error('Poll error:', e); }
+  refreshLive();
 }
 
 // ── Staff Management ──
