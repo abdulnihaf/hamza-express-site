@@ -240,6 +240,7 @@ let firstLoad = true;
 // ── Audio: Web Audio API alarm ──
 let audioCtx = null;
 let activeAlarm = null;
+let alarmTimeout = null;
 
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -247,6 +248,8 @@ function initAudio() {
 
 function startAlarm() {
   if (!audioCtx) return null;
+  // Stop any existing alarm first (idempotency)
+  stopAlarm();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
@@ -261,11 +264,14 @@ function startAlarm() {
   osc.connect(gain).connect(audioCtx.destination);
   osc.start();
   osc.stop(now + 20);
+  // Auto-dismiss overlay after 20s if user doesn't tap
+  alarmTimeout = setTimeout(() => { dismissAlert(); }, 20000);
   return { stop: () => { try { osc.stop(); } catch(e) {} } };
 }
 
 function stopAlarm() {
   if (activeAlarm) { activeAlarm.stop(); activeAlarm = null; }
+  if (alarmTimeout) { clearTimeout(alarmTimeout); alarmTimeout = null; }
 }
 
 // ── Counter display names & colors ──
@@ -326,7 +332,7 @@ function showReadyToast(msg) {
 }
 
 // ── Vibrate ──
-function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+function vibrate(pattern) { try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {} }
 
 // ── API helper ──
 async function api(action, method = 'GET', body = null) {
@@ -465,6 +471,18 @@ function enterApp() {
   timerInterval = setInterval(updateTimers, 1000);
 }
 
+// ── Stop polling when tab is hidden, resume on return ──
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(pollInterval);
+    clearInterval(timerInterval);
+  } else if (token && staffInfo?.on_shift) {
+    refresh();
+    pollInterval = setInterval(refresh, 5000);
+    timerInterval = setInterval(updateTimers, 1000);
+  }
+});
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -473,9 +491,12 @@ function switchTab(tab) {
 }
 
 // ── Main refresh (single atomic call — polls Odoo + returns data) ──
+let refreshLock = false;
 async function refresh() {
+  if (refreshLock) return; // prevent concurrent refreshes
   try {
     myData = await api('floor-live');
+    if (myData._poll?.odoo_error) toast('Odoo sync issue — data may be stale', 'error');
     renderTables();
     renderDeliver();
     checkNotifications();
@@ -711,36 +732,42 @@ function renderDeliver() {
 
 // ── Accept Orders (waiter acknowledges) ──
 async function acceptOrders(orderIds) {
+  refreshLock = true; // prevent poll from re-rendering during action
   try {
     for (const id of orderIds) {
       await api('floor-accept-order', 'POST', { order_id: id });
     }
     vibrate([100, 50, 100]);
     toast('Order accepted!');
-    refresh();
   } catch (e) { toast(e.message, 'error'); }
+  refreshLock = false;
+  refresh();
 }
 
 // ── Serve Orders (mark all items delivered + order served) ──
 async function serveOrders(orderIds) {
+  refreshLock = true;
   try {
     for (const id of orderIds) {
       await api('floor-serve-table', 'POST', { order_id: id });
     }
     vibrate([100]);
     toast('Table served!');
-    refresh();
   } catch (e) { toast(e.message, 'error'); }
+  refreshLock = false;
+  refresh();
 }
 
 // ── Legacy serve by table (for deliver tab) ──
 async function serveTable(tableNumber) {
+  refreshLock = true;
   try {
     await api('floor-deliver', 'POST', { table_number: tableNumber });
     vibrate([100]);
     toast(`Served Table ${tableNumber}!`);
-    refresh();
   } catch (e) { toast(e.message, 'error'); }
+  refreshLock = false;
+  refresh();
 }
 
 // ── Init ──
