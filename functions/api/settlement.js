@@ -168,7 +168,7 @@ export async function onRequest(context) {
         result = verifyCaptainPin(url.searchParams.get('pin'));
         break;
       case 'captain-live':
-        result = await getCaptainLive(env, url.searchParams.get('captain_id'));
+        result = await getCaptainLive(env, url.searchParams.get('captain_id'), url.searchParams.get('env'));
         break;
       case 'captain-get-last-settlement':
         result = await getCaptainLastSettlement(env, url.searchParams.get('captain_id'));
@@ -574,9 +574,13 @@ async function getCaptainLastSettlement(env, captainId) {
   };
 }
 
-async function getCaptainLive(env, captainId) {
+async function getCaptainLive(env, captainId, envParam) {
   const captain = CAPTAINS[captainId];
   if (!captain) return { success: false, error: 'Invalid captain' };
+
+  // Resolve Odoo URL based on env param (nihaf staging, test, or default)
+  const ENV_ODOO_MAP = { 'nihaf': 'https://nihaf.hamzahotel.com/jsonrpc' };
+  const odooUrl = ENV_ODOO_MAP[envParam] || ODOO_URL;
 
   const apiKey = env.ODOO_API_KEY;
 
@@ -607,7 +611,7 @@ async function getCaptainLive(env, captainId) {
     (async () => {
       if (!apiKey) return [];
       try {
-        return await rpc(ODOO_URL, ODOO_DB, ODOO_UID, apiKey, 'pos.order', 'search_read',
+        return await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.order', 'search_read',
           [[['config_id', '=', CAPTAIN_CONFIG_ID],
             ['employee_id', '=', captain.employeeId],
             ['date_order', '>=', fromOdoo],
@@ -630,7 +634,7 @@ async function getCaptainLive(env, captainId) {
     try {
       const paymentIds = orders.flatMap(o => o.payment_ids || []);
       if (paymentIds.length > 0) {
-        const payments = await rpc(ODOO_URL, ODOO_DB, ODOO_UID, apiKey, 'pos.payment', 'search_read',
+        const payments = await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.payment', 'search_read',
           [[['id', 'in', paymentIds]]],
           { fields: ['amount', 'payment_method_id'] });
         for (const p of payments) {
@@ -650,7 +654,7 @@ async function getCaptainLive(env, captainId) {
   if (orders.length > 0 && apiKey) {
     try {
       const orderIds = orders.map(o => o.id);
-      const lines = await rpc(ODOO_URL, ODOO_DB, ODOO_UID, apiKey, 'pos.order.line', 'search_read',
+      const lines = await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.order.line', 'search_read',
         [[['order_id', 'in', orderIds]]],
         { fields: ['order_id', 'product_id', 'qty', 'price_subtotal_incl'] });
 
@@ -671,7 +675,7 @@ async function getCaptainLive(env, captainId) {
   if (orders.length > 0 && apiKey) {
     try {
       const orderIds = orders.map(o => o.id);
-      const lines = await rpc(ODOO_URL, ODOO_DB, ODOO_UID, apiKey, 'pos.order.line', 'search_read',
+      const lines = await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.order.line', 'search_read',
         [[['order_id', 'in', orderIds]]],
         { fields: ['order_id', 'product_id', 'qty', 'price_subtotal_incl'] });
 

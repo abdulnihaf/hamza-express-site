@@ -158,7 +158,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+const ENV = new URLSearchParams(location.search).get('env');
 const API_BASE = '/api/whatsapp';
+const API_SUFFIX = ENV ? `&env=${ENV}` : '';
 let token = localStorage.getItem('floor_cleaner_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_cleaner_staff') || 'null');
 let tableData = null;
@@ -230,14 +232,14 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.className = 'toast', 2500);
 }
 
-function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+function vibrate(pattern) { try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {} }
 
 // ── API helper ──
 async function api(action, method = 'GET', body = null) {
   const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
   if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   try {
-    const res = await fetch(`${API_BASE}?action=${action}`, opts);
+    const res = await fetch(`${API_BASE}?action=${action}${API_SUFFIX}`, opts);
     const data = await res.json();
     if (!res.ok) {
       if (res.status === 401) { toast('Session expired', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
@@ -268,7 +270,7 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
 
   if (pinBuffer.length === 4) {
     try {
-      const data = await fetch(`${API_BASE}?action=floor-login`, {
+      const data = await fetch(`${API_BASE}?action=floor-login${API_SUFFIX}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinBuffer })
@@ -360,6 +362,19 @@ function enterApp() {
   pollInterval = setInterval(refresh, 5000);
   timerInterval = setInterval(updateTimers, 1000);
 }
+
+// ── Background tab: pause polling when hidden, resume on return ──
+document.addEventListener('visibilitychange', () => {
+  if (!token || !staffInfo?.on_shift) return;
+  if (document.hidden) {
+    clearInterval(pollInterval);
+    clearInterval(timerInterval);
+  } else {
+    refresh();
+    pollInterval = setInterval(refresh, 5000);
+    timerInterval = setInterval(updateTimers, 1000);
+  }
+});
 
 // ── Main refresh ──
 async function refresh() {

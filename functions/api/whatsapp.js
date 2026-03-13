@@ -2277,15 +2277,19 @@ const FLOOR_COUNTER_MAP = {
   89: 'Kitchen Pass', 90: 'Kitchen Pass',
 };
 
-// Get floor config based on env=test query param
+// Get floor config based on env= query param (test, nihaf, or production)
 function getFloorConfig(url) {
-  const isTest = new URL(url).searchParams.get('env') === 'test';
-  const t = isTest ? 'test_' : '';
+  const env = new URL(url).searchParams.get('env');
+  const envMap = {
+    'test': { odooUrl: TEST_ODOO_URL, t: 'test_', stageMap: TEST_FLOOR_STAGE_MAP },
+    'nihaf': { odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', t: 'nihaf_', stageMap: TEST_FLOOR_STAGE_MAP },
+  };
+  const cfg = envMap[env] || { odooUrl: ODOO_URL, t: '', stageMap: FLOOR_STAGE_MAP };
   return {
-    isTest,
-    odooUrl: isTest ? TEST_ODOO_URL : ODOO_URL,
-    stageMap: isTest ? TEST_FLOOR_STAGE_MAP : FLOOR_STAGE_MAP,
-    t, // table prefix: '' for prod, 'test_' for test
+    isTest: !!env,
+    odooUrl: cfg.odooUrl,
+    stageMap: cfg.stageMap,
+    t: cfg.t, // table prefix: '' for prod, 'test_' for test, 'nihaf_' for staging
   };
 }
 
@@ -2805,9 +2809,15 @@ async function autoAssignOrder(db, orderId, t = '') {
   const waiter = waiters.results[0]; // lowest load, longest idle
   const now = new Date().toISOString();
 
-  await db.prepare(
-    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ?`
+  const result = await db.prepare(
+    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ? AND waiter_id IS NULL`
   ).bind(waiter.id, now, now, orderId).run();
+
+  if (!result.meta.changes) {
+    console.log(`AutoAssign${t ? '[TEST]' : ''}: order ${orderId} already assigned (race avoided)`);
+    return false;
+  }
+
   await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter.id).run();
 
   console.log(`AutoAssign${t ? '[TEST]' : ''}: order ${orderId} → ${waiter.name} (load: ${waiter.current_load + 1})`);
@@ -2846,7 +2856,8 @@ async function handleFloorAction(context, action, corsHeaders) {
       token, name: staff.name, role: staff.role,
       can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
       can_clean: !!staff.can_clean,
-      staff_id: staff.id, on_shift: !!staff.on_shift
+      staff_id: staff.id, on_shift: !!staff.on_shift,
+      odoo_employee_id: staff.odoo_employee_id || null
     });
   }
 
@@ -3877,9 +3888,11 @@ async function handleFloorCleanAck(db, staff, body, json, err, t = '') {
   if (!order) return err('Table not found or already being cleaned');
 
   const now = new Date().toISOString();
-  await db.prepare(
-    `UPDATE ${t}floor_orders SET clean_status = 'cleaning', cleaner_id = ?, clean_ack_at = ?, updated_at = ? WHERE id = ?`
+  const result = await db.prepare(
+    `UPDATE ${t}floor_orders SET clean_status = 'cleaning', cleaner_id = ?, clean_ack_at = ?, updated_at = ? WHERE id = ? AND clean_status = 'needs_cleaning'`
   ).bind(staff.id, now, now, order_id).run();
+
+  if (!result.meta.changes) return err('Table already being cleaned');
 
   return json({ ok: true, order_id, clean_status: 'cleaning' });
 }
