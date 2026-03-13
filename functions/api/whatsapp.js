@@ -3038,7 +3038,7 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
   // Note: 'note' field doesn't exist on pos.order in Odoo 18; use 'general_customer_note' or skip
   const posOrder = await odooRPC(apiKey, 'pos.order', 'search_read',
     [[['id', '=', posOrderId]]], {
-      fields: ['name', 'config_id', 'tracking_number', 'table_id', 'preset_id', 'general_customer_note'],
+      fields: ['name', 'config_id', 'tracking_number', 'table_id', 'preset_id', 'general_customer_note', 'employee_id'],
       limit: 1
     }, odooUrl);
   if (!posOrder?.[0]) return null;
@@ -3079,13 +3079,31 @@ async function createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg)
     }
   }
 
+  // Map Odoo employee_id to captain floor_staff
+  const odooEmployeeId = order.employee_id?.[0] || null;
+  let captainId = null;
+  if (odooEmployeeId) {
+    const captain = await db.prepare(
+      `SELECT id FROM ${t}floor_staff WHERE odoo_employee_id = ? AND can_captain = 1`
+    ).bind(odooEmployeeId).first();
+    captainId = captain?.id || null;
+    // Auto-start captain shift if not already on
+    if (captain) {
+      await db.prepare(
+        `UPDATE ${t}floor_staff SET on_shift = 1, shift_started_at = COALESCE(
+          CASE WHEN on_shift = 1 THEN shift_started_at END, ?
+        ) WHERE id = ? AND (on_shift = 0 OR on_shift IS NULL)`
+      ).bind(now, captain.id).run();
+    }
+  }
+
   // Create floor_order
   await db.prepare(
-    `INSERT INTO ${t}floor_orders (odoo_order_id, odoo_order_name, config_id, table_number, tracking_number, status, total_items, customer_note, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`
+    `INSERT INTO ${t}floor_orders (odoo_order_id, odoo_order_name, config_id, table_number, tracking_number, captain_id, status, total_items, customer_note, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`
   ).bind(
     posOrderId, order.name, configId, tableNumber,
-    order.tracking_number || null, lines.length,
+    order.tracking_number || null, captainId, lines.length,
     order.general_customer_note || null, now, now
   ).run();
 
@@ -3212,6 +3230,24 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     }
   }
 
+  // ── Captain shift sync: check Odoo POS session state ──
+  if (!odooError) {
+    try {
+      // Check if config 6 session is open
+      const sessions = await odooRPC(apiKey, 'pos.session', 'search_read',
+        [[['config_id', '=', 6], ['state', 'in', ['opened', 'opening_control']]]],
+        { fields: ['id', 'state'], limit: 1 },
+        odooUrl
+      );
+      if (sessions && sessions.length === 0) {
+        // No open session — end all captain shifts
+        await db.prepare(
+          `UPDATE ${t}floor_staff SET on_shift = 0, shift_ended_at = ? WHERE can_captain = 1 AND on_shift = 1`
+        ).bind(now).run();
+      }
+    } catch (e) { /* session check is best-effort */ }
+  }
+
   // Only advance poll cursor if Odoo call succeeded
   if (!odooError) {
     await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
@@ -3231,7 +3267,7 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
 
   // Active orders (assigned, not yet closed)
   const active = await db.prepare(
-    `SELECT fo.*, fs.name as waiter_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC`
+    `SELECT fo.*, fs.name as waiter_name, cs.name as captain_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id LEFT JOIN ${t}floor_staff cs ON fo.captain_id = cs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC`
   ).all();
 
   // Waiter data with shift info + today's served count

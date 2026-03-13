@@ -224,13 +224,13 @@
   </div>
 </div>
 
-<!-- Shift Screen (shown after login if not on shift) -->
+<!-- Shift Screen (shown after login — captain shift is auto-detected from Odoo POS) -->
 <div id="shift-screen">
   <div class="shift-greeting" id="shift-greeting">Hello!</div>
-  <div class="shift-sub">Tap the button to start your shift</div>
-  <button class="shift-btn" id="shift-btn" onclick="startShift()">
+  <div class="shift-sub" id="shift-sub">Your shift starts automatically when you log into Odoo POS</div>
+  <button class="shift-btn" id="shift-btn" onclick="enterApp()" style="border-color:var(--green);background:rgba(34,197,94,.08);color:var(--green)">
     <span class="shift-icon">&#x25B6;</span>
-    Start Shift
+    Open Dashboard
   </button>
   <div class="shift-time" id="shift-time"></div>
   <div class="shift-logout" onclick="logout()">Logout</div>
@@ -245,7 +245,7 @@
       <div class="conn-dot" id="conn-dot"></div>
       <button class="icon-btn" onclick="pollOdoo()" title="Poll Odoo">+</button>
       <button class="icon-btn" onclick="refreshDashboard()" title="Refresh">&#x21bb;</button>
-      <button class="icon-btn" onclick="showEndShift()" title="End Shift" style="color:var(--red)">&#x23F9;</button>
+      <button class="icon-btn" onclick="logout()" title="Logout" style="color:var(--red)">&#x23F9;</button>
     </div>
   </div>
 
@@ -409,14 +409,10 @@ function logout() {
   document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
 }
 
-// ── After Login: check shift state ──
+// ── After Login: captain goes straight to dashboard (shift detected from Odoo POS) ──
 function afterLogin() {
   document.getElementById('pin-screen').style.display = 'none';
-  if (staffInfo.on_shift) {
-    enterApp();
-  } else {
-    showShiftScreen();
-  }
+  enterApp();
 }
 
 // ── Shift Screen ──
