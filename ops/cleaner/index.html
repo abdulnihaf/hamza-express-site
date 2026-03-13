@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Cleaner</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:var(--purple);border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--purple);border-color:var(--purple)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Shift Screen */
+    #shift-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .shift-greeting{font-size:24px;font-weight:700;margin-bottom:8px}
+    .shift-sub{color:var(--text2);font-size:15px;margin-bottom:40px;text-align:center}
+    .shift-btn{width:200px;height:200px;border-radius:50%;border:3px solid var(--purple);background:var(--purple-dim);color:var(--purple);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .shift-btn:active{transform:scale(.95);background:var(--purple);color:#fff}
+    .shift-btn .shift-icon{font-size:48px}
+    .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
+    .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
+
+    /* Main content */
+    .content{padding:16px;max-width:600px;margin:0 auto;padding-bottom:100px}
+
+    /* Stats bar */
+    .stats-bar{display:flex;gap:8px;margin-bottom:16px}
+    .stat-card{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+    .stat-card .num{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .stat-card .label{font-size:10px;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+    .stat-card.purple .num{color:var(--purple)}
+    .stat-card.green .num{color:var(--green)}
+    .stat-card.orange .num{color:var(--orange)}
+
+    /* Clean card */
+    .clean-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;transition:all .2s}
+    .clean-card.needs{border-color:var(--red);animation:cardPulse 2s infinite}
+    .clean-card.cleaning{border-color:var(--purple)}
+    @keyframes cardPulse{0%,100%{border-color:var(--red)}50%{border-color:rgba(239,68,68,.3)}}
+
+    .clean-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .clean-table{font-size:24px;font-weight:700}
+    .clean-wait{font-family:'JetBrains Mono',monospace;font-size:14px;padding:3px 10px;border-radius:6px}
+    .clean-wait.urgent{color:var(--red);background:var(--red-dim);animation:pulse 1s infinite}
+    .clean-wait.warning{color:var(--orange);background:var(--orange-dim)}
+    .clean-wait.ok{color:var(--green);background:var(--green-dim)}
+    @keyframes pulse{50%{opacity:.6}}
+
+    .clean-meta{font-size:12px;color:var(--text2);margin-bottom:14px}
+
+    .clean-action{width:100%;padding:16px;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+    .clean-action:active{opacity:.8;transform:scale(.98)}
+    .clean-action.ack{background:var(--purple);color:#fff}
+    .clean-action.done{background:var(--green);color:#000}
+
+    .cleaning-timer{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--purple);text-align:center;margin-bottom:10px}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:40px 20px}
+    .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+    .empty-state p{color:var(--text2);font-size:14px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    .toast.show{opacity:1}
+    .toast.error{border-color:var(--red);color:var(--red)}
+    .toast.success{border-color:var(--green);color:var(--green)}
+  </style>
+</head>
+<body>
+
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <div class="pin-title">Cleaner Login</div>
+  <div class="pin-sub">Enter your 4-digit PIN</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key del" data-key="del">DEL</button>
+  </div>
+</div>
+
+<!-- Shift Screen -->
+<div id="shift-screen">
+  <div class="shift-greeting" id="shift-greeting">Hello!</div>
+  <div class="shift-sub">Tap the button to start your shift<br>and begin receiving table alerts</div>
+  <button class="shift-btn" id="shift-btn" onclick="toggleShift()">
+    <span class="shift-icon">&#x25B6;</span>
+    Start Shift
+  </button>
+  <div class="shift-time" id="shift-time"></div>
+  <div class="shift-logout" onclick="logout()">Logout</div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="header">
+    <h1><span class="accent"></span>Cleaner</h1>
+    <div class="header-right">
+      <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="icon-btn" onclick="refresh()" title="Refresh">&#x21bb;</button>
+      <button class="icon-btn" onclick="showEndShift()" title="End Shift" style="color:var(--red)">&#x23F9;</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Shift stats -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card purple"><div class="num" id="stat-pending">0</div><div class="label">Waiting</div></div>
+      <div class="stat-card green"><div class="num" id="stat-cleaned">0</div><div class="label">Cleaned</div></div>
+      <div class="stat-card orange"><div class="num" id="stat-avg">--</div><div class="label">Avg Min</div></div>
+    </div>
+
+    <!-- Tables needing cleaning -->
+    <div id="tables-content"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+let token = localStorage.getItem('floor_cleaner_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_cleaner_staff') || 'null');
+let tableData = null;
+let knownNeedsCleaning = new Set();
+let pollInterval = null;
+let timerInterval = null;
+let firstLoad = true;
+
+// ── Audio: ring tone for dirty tables ──
+let audioCtx = null;
+let activeRing = null;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function startRing() {
+  if (!audioCtx) return null;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  // Phone-style ringtone: alternating 440Hz + 480Hz
+  const osc1 = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc1.type = 'sine';
+  osc1.frequency.value = 440;
+  osc2.type = 'sine';
+  osc2.frequency.value = 480;
+  const now = audioCtx.currentTime;
+  // Ring pattern: 1s on, 1s off, for 30 seconds
+  for (let i = 0; i < 15; i++) {
+    gain.gain.setValueAtTime(0.3, now + i * 2);
+    gain.gain.setValueAtTime(0, now + i * 2 + 1);
+  }
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc1.start();
+  osc2.start();
+  osc1.stop(now + 30);
+  osc2.stop(now + 30);
+  return { stop: () => { try { osc1.stop(); osc2.stop(); } catch(e) {} } };
+}
+
+function stopRing() {
+  if (activeRing) { activeRing.stop(); activeRing = null; }
+}
+
+// ── Timer helpers ──
+function elapsedSince(isoStr) {
+  if (!isoStr) return { min: 0, sec: 0, total: 0 };
+  const ms = Date.now() - new Date(isoStr).getTime();
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return { min: Math.floor(total / 60), sec: total % 60, total };
+}
+function formatTimer(min, sec) {
+  return String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+function waitClass(totalSec) {
+  if (totalSec < 60) return 'ok';
+  if (totalSec < 120) return 'warning';
+  return 'urgent';
+}
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+
+// ── API helper ──
+async function api(action, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  try {
+    const res = await fetch(`${API_BASE}?action=${action}`, opts);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { toast('Session expired', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    document.getElementById('conn-dot').className = 'conn-dot';
+    return data;
+  } catch (e) {
+    if (e.message !== 'Session expired') {
+      const dot = document.getElementById('conn-dot');
+      if (dot) dot.className = 'conn-dot offline';
+    }
+    throw e;
+  }
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const data = await fetch(`${API_BASE}?action=floor-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      }).then(r => r.json());
+
+      if (data.error) throw new Error(data.error);
+      if (!data.can_clean) throw new Error('Cleaner access required');
+
+      initAudio();
+      token = data.token;
+      staffInfo = data;
+      localStorage.setItem('floor_cleaner_token', token);
+      localStorage.setItem('floor_cleaner_staff', JSON.stringify(data));
+      afterLogin();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+function logout() {
+  token = ''; staffInfo = null;
+  localStorage.removeItem('floor_cleaner_token');
+  localStorage.removeItem('floor_cleaner_staff');
+  clearInterval(pollInterval);
+  clearInterval(timerInterval);
+  stopRing();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinBuffer = '';
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+}
+
+function afterLogin() {
+  document.getElementById('pin-screen').style.display = 'none';
+  if (staffInfo.on_shift) enterApp(); else showShiftScreen();
+}
+
+function showShiftScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'flex';
+  document.getElementById('shift-greeting').textContent = `Hello, ${staffInfo.name}!`;
+  document.getElementById('shift-time').textContent = '';
+}
+
+async function toggleShift() {
+  try {
+    initAudio();
+    await api('floor-start-shift', 'POST');
+    staffInfo.on_shift = true;
+    localStorage.setItem('floor_cleaner_staff', JSON.stringify(staffInfo));
+    vibrate([200]);
+    toast('Shift started!');
+    enterApp();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showEndShift() {
+  if (confirm('End your shift?')) endShift();
+}
+
+async function endShift() {
+  try {
+    await api('floor-end-shift', 'POST');
+    staffInfo.on_shift = false;
+    localStorage.setItem('floor_cleaner_staff', JSON.stringify(staffInfo));
+    clearInterval(pollInterval);
+    clearInterval(timerInterval);
+    stopRing();
+    vibrate([100]);
+    toast('Shift ended');
+    showShiftScreen();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('staff-name').textContent = staffInfo.name;
+  firstLoad = true;
+  refresh();
+  pollInterval = setInterval(refresh, 5000);
+  timerInterval = setInterval(updateTimers, 1000);
+}
+
+// ── Main refresh ──
+async function refresh() {
+  try {
+    tableData = await api('floor-cleaner-tables');
+    renderTables();
+    checkNotifications();
+    firstLoad = false;
+  } catch (e) { console.error('Refresh error:', e); }
+}
+
+// ── Notifications ──
+function checkNotifications() {
+  if (!tableData) return;
+  const needsCleaning = tableData.tables.filter(t => t.clean_status === 'needs_cleaning');
+  const currentIds = new Set(needsCleaning.map(t => t.order_id));
+
+  if (!firstLoad) {
+    let hasNew = false;
+    for (const id of currentIds) {
+      if (!knownNeedsCleaning.has(id)) { hasNew = true; break; }
+    }
+    if (hasNew) {
+      stopRing();
+      activeRing = startRing();
+      vibrate([500, 200, 500, 200, 500]);
+    }
+  }
+
+  // Stop ringing if no tables need cleaning
+  if (needsCleaning.length === 0) stopRing();
+
+  knownNeedsCleaning = currentIds;
+}
+
+// ── Update timers every second ──
+function updateTimers() {
+  document.querySelectorAll('[data-wait-from]').forEach(el => {
+    const from = el.dataset.waitFrom;
+    const e = elapsedSince(from);
+    el.textContent = formatTimer(e.min, e.sec);
+    el.className = 'clean-wait ' + waitClass(e.total);
+  });
+  document.querySelectorAll('[data-clean-from]').forEach(el => {
+    const from = el.dataset.cleanFrom;
+    const e = elapsedSince(from);
+    el.textContent = 'Cleaning ' + formatTimer(e.min, e.sec);
+  });
+}
+
+// ── Render tables ──
+function renderTables() {
+  if (!tableData) return;
+  const tables = tableData.tables;
+
+  // Stats
+  const pending = tables.filter(t => t.clean_status === 'needs_cleaning').length;
+  const cleaning = tables.filter(t => t.clean_status === 'cleaning').length;
+  document.getElementById('stat-pending').textContent = pending + cleaning;
+
+  // Fetch KPI for cleaned count + avg (from the KPI endpoint on next iteration — for now use local count)
+  // We'll compute from the cleaned tables we've seen
+  const avgTimes = tables.filter(t => t.waiting_seconds > 0 && t.clean_status === 'cleaning');
+  const avgClean = avgTimes.length > 0
+    ? Math.round(avgTimes.reduce((s, t) => s + t.waiting_seconds, 0) / avgTimes.length / 60 * 10) / 10
+    : '--';
+  document.getElementById('stat-avg').textContent = avgClean;
+
+  const div = document.getElementById('tables-content');
+
+  if (tables.length === 0) {
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x2728;</div><p>All tables clean</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">You\'ll be alerted when a table needs cleaning</p></div>';
+    return;
+  }
+
+  // Sort: needs_cleaning first (by wait time desc), then cleaning
+  const sorted = [...tables].sort((a, b) => {
+    if (a.clean_status === 'needs_cleaning' && b.clean_status !== 'needs_cleaning') return -1;
+    if (b.clean_status === 'needs_cleaning' && a.clean_status !== 'needs_cleaning') return 1;
+    return b.waiting_seconds - a.waiting_seconds;
+  });
+
+  div.innerHTML = sorted.map(t => {
+    const isNeeds = t.clean_status === 'needs_cleaning';
+    const isCleaning = t.clean_status === 'cleaning';
+    const e = elapsedSince(t.paid_at);
+    const wc = waitClass(e.total);
+
+    let card = `<div class="clean-card ${isNeeds ? 'needs' : isCleaning ? 'cleaning' : ''}">`;
+    card += `<div class="clean-card-top">
+      <span class="clean-table">Table ${t.table_number || '?'}</span>
+      <span class="clean-wait ${wc}" data-wait-from="${t.paid_at}">${formatTimer(e.min, e.sec)}</span>
+    </div>`;
+    card += `<div class="clean-meta">${t.order_name || ''} &middot; ${t.total_items || 0} items</div>`;
+
+    if (isNeeds) {
+      card += `<button class="clean-action ack" onclick="ackClean(${t.order_id})">Start Cleaning</button>`;
+    } else if (isCleaning) {
+      const ce = elapsedSince(t.clean_ack_at);
+      card += `<div class="cleaning-timer" data-clean-from="${t.clean_ack_at}">Cleaning ${formatTimer(ce.min, ce.sec)}</div>`;
+      card += `<button class="clean-action done" onclick="doneClean(${t.order_id})">&#x2713; Done</button>`;
+    }
+
+    card += '</div>';
+    return card;
+  }).join('');
+}
+
+// ── Actions ──
+async function ackClean(orderId) {
+  try {
+    await api('floor-clean-ack', 'POST', { order_id: orderId });
+    stopRing();
+    vibrate([100]);
+    toast('Cleaning started');
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function doneClean(orderId) {
+  try {
+    await api('floor-clean-done', 'POST', { order_id: orderId });
+    vibrate([100]);
+    toast('Table cleaned!');
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Init ──
+if (token && staffInfo) {
+  afterLogin();
+} else {
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

@@ -2770,6 +2770,7 @@ async function validateFloorToken(db, token, requireRole, t) {
   if (staff.token_expires_at && new Date(staff.token_expires_at) < new Date()) return null;
   if (requireRole === 'captain' && !staff.can_captain) return null;
   if (requireRole === 'waiter' && !staff.can_waiter) return null;
+  if (requireRole === 'cleaner' && !staff.can_clean) return null;
   // Update last_seen
   await db.prepare(`UPDATE ${t}floor_staff SET last_seen_at = ? WHERE id = ?`)
     .bind(new Date().toISOString(), staff.id).run();
@@ -2844,6 +2845,7 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({
       token, name: staff.name, role: staff.role,
       can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
+      can_clean: !!staff.can_clean,
       staff_id: staff.id, on_shift: !!staff.on_shift
     });
   }
@@ -2897,18 +2899,38 @@ async function handleFloorAction(context, action, corsHeaders) {
     return handleFloorMyOrders(db, staff, json, t);
   }
 
-  // ── Mark items picked up (Waiter) ──
+  // ── Mark items picked up (any floor staff can help) ──
   if (action === 'floor-pickup' && method === 'POST') {
-    if (!staff.can_waiter) return err('Waiter access required', 403);
     const body = await context.request.json();
     return handleFloorPickup(db, staff, body, json, err, t);
   }
 
-  // ── Mark items delivered (Waiter) ──
+  // ── Mark items delivered (Waiter or anyone helping) ──
   if (action === 'floor-deliver' && method === 'POST') {
-    if (!staff.can_waiter) return err('Waiter access required', 403);
     const body = await context.request.json();
     return handleFloorDeliver(db, staff, body, json, err, t);
+  }
+
+  // ── Cleaner: tables needing cleaning ──
+  if (action === 'floor-cleaner-tables' && method === 'GET') {
+    return handleFloorCleanerTables(db, staff, json, t);
+  }
+
+  // ── Cleaner: acknowledge (start cleaning) ──
+  if (action === 'floor-clean-ack' && method === 'POST') {
+    const body = await context.request.json();
+    return handleFloorCleanAck(db, staff, body, json, err, t);
+  }
+
+  // ── Cleaner: done cleaning ──
+  if (action === 'floor-clean-done' && method === 'POST') {
+    const body = await context.request.json();
+    return handleFloorCleanDone(db, staff, body, json, err, t);
+  }
+
+  // ── KPI: serving + cleaning performance ──
+  if (action === 'floor-kpi' && method === 'GET') {
+    return handleFloorKPI(db, json, t);
   }
 
   // ── Manage staff (Captain) ──
@@ -2922,7 +2944,7 @@ async function handleFloorAction(context, action, corsHeaders) {
   if (action === 'floor-staff' && method === 'GET') {
     if (!staff.can_captain) return err('Captain access required', 403);
     const staffList = await db.prepare(
-      `SELECT id, name, role, can_captain, can_waiter, is_active, current_load, on_shift, shift_started_at, shift_ended_at, last_delivery_at, last_seen_at FROM ${t}floor_staff ORDER BY name`
+      `SELECT id, name, role, can_captain, can_waiter, can_clean, is_active, current_load, on_shift, shift_started_at, shift_ended_at, last_delivery_at, last_seen_at FROM ${t}floor_staff ORDER BY name`
     ).all();
     return json({ staff: staffList.results });
   }
@@ -3155,12 +3177,42 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     }
   }
 
+  // ── Payment detection: check if served/in_progress orders have been paid in Odoo ──
+  let newlyPaid = 0;
+  const unpaidOrders = await db.prepare(
+    `SELECT id, odoo_order_id FROM ${t}floor_orders WHERE paid_at IS NULL AND status IN ('assigned', 'in_progress', 'served') AND odoo_order_id IS NOT NULL`
+  ).all();
+
+  if (unpaidOrders.results.length > 0 && !odooError) {
+    const unpaidOdooIds = unpaidOrders.results.map(o => o.odoo_order_id);
+    // Check payment state in batches of 20
+    for (let i = 0; i < unpaidOdooIds.length; i += 20) {
+      const batch = unpaidOdooIds.slice(i, i + 20);
+      const paidOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', 'in', batch], ['state', 'in', ['paid', 'done', 'invoiced']]]],
+        { fields: ['id'] },
+        odooUrl
+      );
+      if (paidOrders) {
+        const paidIds = new Set(paidOrders.map(p => p.id));
+        for (const uo of unpaidOrders.results) {
+          if (paidIds.has(uo.odoo_order_id)) {
+            await db.prepare(
+              `UPDATE ${t}floor_orders SET paid_at = ?, clean_status = 'needs_cleaning', updated_at = ? WHERE id = ?`
+            ).bind(now, now, uo.id).run();
+            newlyPaid++;
+          }
+        }
+      }
+    }
+  }
+
   // Only advance poll cursor if Odoo call succeeded
   if (!odooError) {
     await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
   }
 
-  return json({ ok: true, created, cancelled, polled_at: now, odoo_error: odooError || undefined, odoo_error_detail: odooError ? (odooRPC._lastError || 'unknown') : undefined });
+  return json({ ok: true, created, cancelled, newly_paid: newlyPaid, polled_at: now, odoo_error: odooError || undefined, odoo_error_detail: odooError ? (odooRPC._lastError || 'unknown') : undefined });
 }
 
 // ── Captain Dashboard ──
@@ -3272,10 +3324,10 @@ async function handleFloorReassign(db, body, json, err, t = '') {
 
 // ── Waiter's orders (v2: My Orders + Deliver batches by table) ──
 async function handleFloorMyOrders(db, staff, json, t = '') {
-  // Get all active orders assigned to this waiter
+  // Get ALL active orders (any waiter sees all tables for manual coordination)
   const orders = await db.prepare(
-    `SELECT * FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('assigned', 'in_progress') ORDER BY created_at ASC`
-  ).bind(staff.id).all();
+    `SELECT * FROM ${t}floor_orders WHERE status IN ('new', 'assigned', 'in_progress') ORDER BY created_at ASC`
+  ).all();
 
   if (orders.results.length === 0) {
     return json({
@@ -3364,7 +3416,7 @@ async function handleFloorPickup(db, staff, body, json, err, t = '') {
      WHERE fi.id IN (${placeholders})`
   ).bind(...item_ids).all();
 
-  const validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'at_counter');
+  const validItems = items.results.filter(i => i.status === 'at_counter');
   if (validItems.length === 0) return err('No valid items to pick up');
 
   // Create pickup trip
@@ -3388,29 +3440,29 @@ async function handleFloorPickup(db, staff, body, json, err, t = '') {
   return json({ ok: true, trip_id: tripId, picked_up: validItems.length, tables, counters });
 }
 
-// ── Mark items as delivered to table (v2: accepts table_number OR item_ids) ──
+// ── Mark items as delivered to table (any waiter can serve any table) ──
 async function handleFloorDeliver(db, staff, body, json, err, t = '') {
   const { item_ids, table_number, trip_id } = body;
   const now = new Date().toISOString();
   let validItems;
 
   if (table_number) {
-    // v2: Deliver ALL picked_up items for this table (one-tap-per-table)
+    // One-tap: Deliver ALL picked_up items for this table
     const items = await db.prepare(
-      `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
+      `SELECT fi.*, fo.id as order_id FROM ${t}floor_items fi
        JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
-       WHERE fo.waiter_id = ? AND fo.table_number = ? AND fi.status = 'picked_up'`
-    ).bind(staff.id, String(table_number)).all();
+       WHERE fo.table_number = ? AND fi.status = 'picked_up'`
+    ).bind(String(table_number)).all();
     validItems = items.results;
   } else if (item_ids && Array.isArray(item_ids) && item_ids.length > 0) {
-    // v1 fallback: deliver specific item_ids
+    // Explicit item_ids fallback
     const placeholders = item_ids.map(() => '?').join(',');
     const items = await db.prepare(
-      `SELECT fi.*, fo.waiter_id, fo.id as order_id FROM ${t}floor_items fi
+      `SELECT fi.*, fo.id as order_id FROM ${t}floor_items fi
        JOIN ${t}floor_orders fo ON fi.floor_order_id = fo.id
-       WHERE fi.id IN (${placeholders})`
+       WHERE fi.id IN (${placeholders}) AND fi.status = 'picked_up'`
     ).bind(...item_ids).all();
-    validItems = items.results.filter(i => i.waiter_id === staff.id && i.status === 'picked_up');
+    validItems = items.results;
   } else {
     return err('table_number or item_ids required');
   }
@@ -3439,17 +3491,11 @@ async function handleFloorDeliver(db, staff, body, json, err, t = '') {
       `UPDATE ${t}floor_orders SET items_delivered = ?, updated_at = ? WHERE id = ?`
     ).bind(delivered.cnt, now, orderId).run();
 
-    // If all items delivered, mark order as served
+    // If all items delivered, mark order as served + record served_at and who served
     if (delivered.cnt >= (total?.total_items || 0)) {
       await db.prepare(
-        `UPDATE ${t}floor_orders SET status = 'served', updated_at = ? WHERE id = ?`
-      ).bind(now, orderId).run();
-      // Decrement waiter load
-      const order = await db.prepare(`SELECT waiter_id FROM ${t}floor_orders WHERE id = ?`).bind(orderId).first();
-      if (order?.waiter_id) {
-        await db.prepare(`UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = ?`)
-          .bind(order.waiter_id).run();
-      }
+        `UPDATE ${t}floor_orders SET status = 'served', served_at = ?, waiter_id = ?, updated_at = ? WHERE id = ?`
+      ).bind(now, staff.id, now, orderId).run();
     }
   }
 
@@ -3458,15 +3504,120 @@ async function handleFloorDeliver(db, staff, body, json, err, t = '') {
     await db.prepare(`UPDATE ${t}pickup_trips SET completed_at = ? WHERE id = ?`).bind(now, trip_id).run();
   }
 
-  // Update waiter's last_delivery_at for auto-assign load balancing
+  // Update staff's last_delivery_at
   await db.prepare(`UPDATE ${t}floor_staff SET last_delivery_at = ? WHERE id = ?`).bind(now, staff.id).run();
 
   return json({ ok: true, delivered: validItems.length, orders_served: [...affectedOrders].length });
 }
 
+// ── Cleaner: get tables needing cleaning ──
+async function handleFloorCleanerTables(db, staff, json, t = '') {
+  const now = Date.now();
+  const tables = await db.prepare(
+    `SELECT id, table_number, odoo_order_name, paid_at, clean_status, cleaner_id, clean_ack_at, cleaned_at, total_items
+     FROM ${t}floor_orders
+     WHERE clean_status IN ('needs_cleaning', 'cleaning')
+     ORDER BY paid_at ASC`
+  ).all();
+
+  const result = tables.results.map(row => ({
+    order_id: row.id,
+    table_number: row.table_number,
+    order_name: row.odoo_order_name,
+    paid_at: row.paid_at,
+    clean_status: row.clean_status,
+    cleaner_id: row.cleaner_id,
+    clean_ack_at: row.clean_ack_at,
+    total_items: row.total_items,
+    waiting_seconds: row.paid_at ? Math.round((now - new Date(row.paid_at).getTime()) / 1000) : 0
+  }));
+
+  return json({ tables: result, on_shift: !!staff.on_shift });
+}
+
+// ── Cleaner: acknowledge (start cleaning a table) ──
+async function handleFloorCleanAck(db, staff, body, json, err, t = '') {
+  const { order_id } = body;
+  if (!order_id) return err('order_id required');
+
+  const order = await db.prepare(
+    `SELECT * FROM ${t}floor_orders WHERE id = ? AND clean_status = 'needs_cleaning'`
+  ).bind(order_id).first();
+  if (!order) return err('Table not found or already being cleaned');
+
+  const now = new Date().toISOString();
+  await db.prepare(
+    `UPDATE ${t}floor_orders SET clean_status = 'cleaning', cleaner_id = ?, clean_ack_at = ?, updated_at = ? WHERE id = ?`
+  ).bind(staff.id, now, now, order_id).run();
+
+  return json({ ok: true, order_id, clean_status: 'cleaning' });
+}
+
+// ── Cleaner: done cleaning ──
+async function handleFloorCleanDone(db, staff, body, json, err, t = '') {
+  const { order_id } = body;
+  if (!order_id) return err('order_id required');
+
+  const order = await db.prepare(
+    `SELECT * FROM ${t}floor_orders WHERE id = ? AND clean_status = 'cleaning'`
+  ).bind(order_id).first();
+  if (!order) return err('Table not found or not in cleaning state');
+
+  const now = new Date().toISOString();
+  await db.prepare(
+    `UPDATE ${t}floor_orders SET clean_status = 'cleaned', cleaned_at = ?, status = 'closed', updated_at = ? WHERE id = ?`
+  ).bind(now, now, order_id).run();
+
+  return json({ ok: true, order_id, clean_status: 'cleaned' });
+}
+
+// ── KPI: serving + cleaning performance for today ──
+async function handleFloorKPI(db, json, t = '') {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayISO = todayStart.toISOString();
+
+  // Waiter KPIs: orders served today with serve times
+  const waiterStats = await db.prepare(
+    `SELECT fs.name, fs.id,
+       COUNT(fo.id) as orders_served,
+       AVG(CAST((julianday(fo.served_at) - julianday(fo.assigned_at)) * 24 * 60 AS REAL)) as avg_serve_min
+     FROM ${t}floor_orders fo
+     JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id
+     WHERE fo.served_at IS NOT NULL AND fo.served_at > ?
+     GROUP BY fs.id`
+  ).bind(todayISO).all();
+
+  // Cleaner KPIs: tables cleaned today with clean times
+  const cleanerStats = await db.prepare(
+    `SELECT fs.name, fs.id,
+       COUNT(fo.id) as tables_cleaned,
+       AVG(CAST((julianday(fo.cleaned_at) - julianday(fo.paid_at)) * 24 * 60 AS REAL)) as avg_clean_min,
+       AVG(CAST((julianday(fo.clean_ack_at) - julianday(fo.paid_at)) * 24 * 60 AS REAL)) as avg_response_min
+     FROM ${t}floor_orders fo
+     JOIN ${t}floor_staff fs ON fo.cleaner_id = fs.id
+     WHERE fo.cleaned_at IS NOT NULL AND fo.cleaned_at > ?
+     GROUP BY fs.id`
+  ).bind(todayISO).all();
+
+  return json({
+    waiters: waiterStats.results.map(w => ({
+      name: w.name, staff_id: w.id,
+      orders_served: w.orders_served,
+      avg_serve_time_min: w.avg_serve_min ? Math.round(w.avg_serve_min * 10) / 10 : null
+    })),
+    cleaners: cleanerStats.results.map(c => ({
+      name: c.name, staff_id: c.id,
+      tables_cleaned: c.tables_cleaned,
+      avg_clean_time_min: c.avg_clean_min ? Math.round(c.avg_clean_min * 10) / 10 : null,
+      avg_response_time_min: c.avg_response_min ? Math.round(c.avg_response_min * 10) / 10 : null
+    }))
+  });
+}
+
 // ── Staff management (Captain) ──
 async function handleFloorManageStaff(db, body, json, err, t = '') {
-  const { operation, staff_id, name, pin, role, can_captain, can_waiter } = body;
+  const { operation, staff_id, name, pin, role, can_captain, can_waiter, can_clean } = body;
   const now = new Date().toISOString();
 
   if (operation === 'add') {
@@ -3474,8 +3625,8 @@ async function handleFloorManageStaff(db, body, json, err, t = '') {
     const existing = await db.prepare(`SELECT id FROM ${t}floor_staff WHERE pin = ?`).bind(pin).first();
     if (existing) return err('PIN already in use');
     await db.prepare(
-      `INSERT INTO ${t}floor_staff (pin, name, role, can_captain, can_waiter, is_active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)`
-    ).bind(pin, name, role || 'waiter', can_captain ? 1 : 0, can_waiter !== false ? 1 : 0, now).run();
+      `INSERT INTO ${t}floor_staff (pin, name, role, can_captain, can_waiter, can_clean, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)`
+    ).bind(pin, name, role || 'waiter', can_captain ? 1 : 0, can_waiter !== false ? 1 : 0, can_clean ? 1 : 0, now).run();
     return json({ ok: true, operation: 'add' });
   }
 
@@ -3497,6 +3648,7 @@ async function handleFloorManageStaff(db, body, json, err, t = '') {
     if (role !== undefined) { updates.push('role = ?'); params.push(role); }
     if (can_captain !== undefined) { updates.push('can_captain = ?'); params.push(can_captain ? 1 : 0); }
     if (can_waiter !== undefined) { updates.push('can_waiter = ?'); params.push(can_waiter ? 1 : 0); }
+    if (can_clean !== undefined) { updates.push('can_clean = ?'); params.push(can_clean ? 1 : 0); }
     if (updates.length === 0) return err('Nothing to update');
     params.push(staff_id);
     await db.prepare(`UPDATE ${t}floor_staff SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
