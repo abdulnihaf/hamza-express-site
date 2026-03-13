@@ -1059,8 +1059,12 @@ async function removeStaff(id) {
 }
 
 // ── Financials: captain-live from settlement API ──
-// Map odoo_employee_id → settlement captain_id
-const EMP_TO_CAPTAIN = { 69: 'captain_1', 70: 'captain_2', 73: 'captain_1', 74: 'captain_2', 75: 'captain_3', 76: 'captain_4', 77: 'captain_5' };
+// Map odoo_employee_id → settlement captain_id (per-env, IDs differ across Odoo instances)
+const EMP_TO_CAPTAIN_MAP = {
+  nihaf: { 69: 'captain_1', 70: 'captain_2', 71: 'captain_3', 72: 'captain_4', 73: 'captain_5' },
+  default: { 69: 'captain_1', 70: 'captain_2', 73: 'captain_1', 74: 'captain_2', 75: 'captain_3', 76: 'captain_4', 77: 'captain_5' },
+};
+const EMP_TO_CAPTAIN = EMP_TO_CAPTAIN_MAP[ENV] || EMP_TO_CAPTAIN_MAP.default;
 let finData = null;
 
 function getCaptainId() {

@@ -95,7 +95,7 @@ const POINTS = {
 };
 
 // Captain settlement — employee-based tracking (mirrors NCH runner settlement)
-// Employee IDs on test.hamzahotel.com (production)
+// Employee IDs on test.hamzahotel.com (production default)
 const CAPTAINS = {
   captain_1: { id: 'captain_1', name: 'Captain 01', employeeId: 69, upiPM: 52, razorpayQR: 'qr_SFifm0HAq1e7GQ' },
   captain_2: { id: 'captain_2', name: 'Captain 02', employeeId: 70, upiPM: 52, razorpayQR: 'qr_SFifoDVOZG3MrI' },
@@ -103,6 +103,15 @@ const CAPTAINS = {
   captain_4: { id: 'captain_4', name: 'Captain 04', employeeId: null, upiPM: 52, razorpayQR: 'qr_SFifsQfqULs6bb' },
   captain_5: { id: 'captain_5', name: 'Captain 05', employeeId: null, upiPM: 52, razorpayQR: 'qr_SFifuWXskdwKNF' },
 };
+
+// Per-env employee ID overrides (nihaf/ops have different auto-increment IDs)
+const ENV_EMPLOYEE_IDS = {
+  nihaf: { captain_1: 69, captain_2: 70, captain_3: 71, captain_4: 72, captain_5: 73 },
+};
+
+function getCaptainEmployeeId(captainId, envParam) {
+  return ENV_EMPLOYEE_IDS[envParam]?.[captainId] ?? CAPTAINS[captainId]?.employeeId;
+}
 
 // Captain PINs for captain live dashboard (maps PIN → specific captain)
 const CAPTAIN_PINS = {
@@ -578,9 +587,10 @@ async function getCaptainLive(env, captainId, envParam) {
   const captain = CAPTAINS[captainId];
   if (!captain) return { success: false, error: 'Invalid captain' };
 
-  // Resolve Odoo URL based on env param (nihaf staging, test, or default)
+  // Resolve Odoo URL + employee ID based on env param
   const ENV_ODOO_MAP = { 'nihaf': 'https://nihaf.hamzahotel.com/jsonrpc' };
   const odooUrl = ENV_ODOO_MAP[envParam] || ODOO_URL;
+  const employeeId = getCaptainEmployeeId(captainId, envParam);
 
   const apiKey = env.ODOO_API_KEY;
 
@@ -613,7 +623,7 @@ async function getCaptainLive(env, captainId, envParam) {
       try {
         return await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.order', 'search_read',
           [[['config_id', '=', CAPTAIN_CONFIG_ID],
-            ['employee_id', '=', captain.employeeId],
+            ['employee_id', '=', employeeId],
             ['date_order', '>=', fromOdoo],
             ['state', 'in', ['paid', 'done', 'invoiced', 'posted']]]],
           { fields: ['id', 'name', 'date_order', 'amount_total', 'payment_ids'], order: 'date_order desc' });
