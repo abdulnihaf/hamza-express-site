@@ -149,6 +149,39 @@
     .alert-row .alert-time.warn{color:var(--orange)}
     .alert-row .alert-time.ok{color:var(--text2)}
 
+    /* Pipeline */
+    .pipeline{display:flex;gap:2px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+    .pipe-col{flex:1;min-width:60px}
+    .pipe-header{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text2);padding:5px 6px;text-align:center;border-radius:6px 6px 0 0;border-bottom:2px solid}
+    .pipe-header.h-cooking{border-color:var(--orange);background:var(--orange-dim)}
+    .pipe-header.h-served{border-color:var(--green);background:var(--green-dim)}
+    .pipe-header.h-dirty{border-color:var(--purple);background:var(--purple-dim)}
+    .pipe-header.h-cleaning{border-color:var(--blue);background:var(--blue-dim)}
+    .pipe-header.h-done{border-color:var(--text2);background:var(--bg2)}
+    .pipe-item{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 6px;margin:3px 1px;font-size:11px;text-align:center}
+    .pipe-item .tbl{font-weight:700;font-size:13px}
+    .pipe-item .pmeta{font-size:9px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+    /* Bottleneck alerts */
+    .bottleneck{background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;display:flex;align-items:center;gap:8px}
+    .bottleneck.warn{background:var(--orange-dim);border-color:rgba(249,115,22,.3)}
+    .bottleneck.clean{background:var(--purple-dim);border-color:rgba(168,85,247,.3)}
+    .bottleneck .bn-text{flex:1}
+    .bottleneck .bn-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);flex-shrink:0}
+
+    /* KPI compact table */
+    .kpi-table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    .kpi-table th{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+    .kpi-table td{font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border)}
+    .kpi-table td.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+    .kpi-table tr:last-child td{border-bottom:none}
+
+    /* Hourly bar chart */
+    .hourly-chart{display:flex;align-items:flex-end;gap:2px;height:60px;padding:0 2px;margin-bottom:4px}
+    .hour-bar{flex:1;background:var(--amber);border-radius:2px 2px 0 0;min-width:10px;position:relative;transition:height .3s}
+    .hour-bar .h-label{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .hour-bar .h-val{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
     /* Empty */
     .empty-state{text-align:center;padding:40px 20px}
     .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
@@ -225,7 +258,13 @@
   <div class="screen active" id="screen-dashboard">
     <div class="stats-bar" id="stats-bar"></div>
 
-    <div class="section-title" style="margin-top:0">WAITERS</div>
+    <!-- Bottleneck alerts (only when issues exist) -->
+    <div id="bottleneck-section"></div>
+
+    <!-- Live pipeline -->
+    <div id="pipeline-section"></div>
+
+    <div class="section-title" style="margin-top:16px">WAITERS</div>
     <div class="waiter-scroll" id="waiter-scroll"></div>
 
     <div id="unassigned-section"></div>
@@ -239,6 +278,10 @@
 
     <div class="section-title" style="margin-top:20px">ACTIVE ORDERS</div>
     <div id="active-orders"></div>
+
+    <!-- KPI + Hourly -->
+    <div id="kpi-section"></div>
+    <div id="hourly-section"></div>
   </div>
 
   <!-- Staff Management Screen -->
@@ -280,6 +323,7 @@ const API_BASE = '/api/whatsapp';
 let token = localStorage.getItem('floor_token') || '';
 let staffInfo = JSON.parse(localStorage.getItem('floor_staff') || 'null');
 let dashboardData = null;
+let intelData = null;
 let dashboardInterval = null;
 let pollInterval = null;
 let reassigningOrderId = null;
@@ -434,7 +478,12 @@ function switchTab(tab) {
 // ── Dashboard ──
 async function refreshDashboard() {
   try {
-    dashboardData = await api('floor-dashboard');
+    const [dash, intel] = await Promise.all([
+      api('floor-dashboard'),
+      api('floor-intel').catch(() => null)
+    ]);
+    dashboardData = dash;
+    intelData = intel;
     renderDashboard();
   } catch (e) { console.error('Dashboard error:', e); }
 }
@@ -583,6 +632,102 @@ function renderDashboard() {
     aDiv.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No active orders</p><p style="margin-top:6px;font-size:12px;color:var(--text2)">Orders auto-assigned to on-shift waiters</p></div>';
   } else {
     aDiv.innerHTML = '';
+  }
+
+  // ── Intel sections (from floor-intel endpoint) ──
+  renderIntel();
+}
+
+function renderIntel() {
+  const intel = intelData;
+
+  // Pipeline
+  const pipeDiv = document.getElementById('pipeline-section');
+  if (intel && intel.live_orders) {
+    const orders = intel.live_orders;
+    const cooking = orders.filter(o => o.status === 'assigned' || o.status === 'in_progress' || o.status === 'new');
+    const served = orders.filter(o => o.status === 'served' && !o.paid_at);
+    const dirty = orders.filter(o => o.paid_at && o.clean_status === 'needs_cleaning');
+    const cleaning = orders.filter(o => o.clean_status === 'cleaning');
+    const done = orders.filter(o => o.status === 'closed').slice(0, 5);
+    const total = cooking.length + served.length + dirty.length + cleaning.length;
+
+    if (total > 0 || done.length > 0) {
+      function pipeItems(items) {
+        if (items.length === 0) return '<div class="pipe-item" style="opacity:.3;font-size:10px">--</div>';
+        return items.map(o => {
+          const mins = Math.round((Date.now() - new Date(o.created_at).getTime()) / 60000);
+          return `<div class="pipe-item"><div class="tbl">${o.table_number || '?'}</div><div class="pmeta">${mins}m</div></div>`;
+        }).join('');
+      }
+      pipeDiv.innerHTML = `<div class="section-title" style="margin-top:0">LIVE PIPELINE</div>
+        <div class="pipeline">
+          <div class="pipe-col"><div class="pipe-header h-cooking">Active (${cooking.length})</div>${pipeItems(cooking)}</div>
+          <div class="pipe-col"><div class="pipe-header h-served">Served (${served.length})</div>${pipeItems(served)}</div>
+          <div class="pipe-col"><div class="pipe-header h-dirty">Dirty (${dirty.length})</div>${pipeItems(dirty)}</div>
+          <div class="pipe-col"><div class="pipe-header h-cleaning">Clean (${cleaning.length})</div>${pipeItems(cleaning)}</div>
+          <div class="pipe-col"><div class="pipe-header h-done">Done (${done.length})</div>${pipeItems(done)}</div>
+        </div>`;
+    } else {
+      pipeDiv.innerHTML = '';
+    }
+  } else {
+    pipeDiv.innerHTML = '';
+  }
+
+  // Bottleneck alerts
+  const bnDiv = document.getElementById('bottleneck-section');
+  if (intel && intel.bottlenecks && intel.bottlenecks.length > 0) {
+    bnDiv.innerHTML = intel.bottlenecks.slice(0, 5).map(b => {
+      const cls = b.type === 'cleaning' ? 'bottleneck clean' : b.type === 'payment' ? 'bottleneck warn' : 'bottleneck';
+      return `<div class="${cls}"><span class="bn-text">${b.message}</span><span class="bn-time">${b.wait_min}m</span></div>`;
+    }).join('');
+  } else {
+    bnDiv.innerHTML = '';
+  }
+
+  // KPI tables
+  const kpiDiv = document.getElementById('kpi-section');
+  if (intel) {
+    let kpiHtml = '';
+    // Waiter KPIs
+    if (intel.waiter_kpis && intel.waiter_kpis.length > 0) {
+      kpiHtml += '<div class="section-title" style="margin-top:20px">WAITER PERFORMANCE</div>';
+      kpiHtml += '<table class="kpi-table"><tr><th>Waiter</th><th>Served</th><th>Avg Time</th></tr>';
+      kpiHtml += intel.waiter_kpis.map(w => `<tr><td>${w.name}</td><td class="mono">${w.orders_served}</td><td class="mono">${w.avg_serve_min ?? '--'}m</td></tr>`).join('');
+      kpiHtml += '</table>';
+    }
+    // Cleaner KPIs
+    if (intel.cleaner_kpis && intel.cleaner_kpis.length > 0) {
+      kpiHtml += '<div class="section-title" style="margin-top:16px">CLEANER PERFORMANCE</div>';
+      kpiHtml += '<table class="kpi-table"><tr><th>Cleaner</th><th>Done</th><th>Avg</th><th>Resp</th></tr>';
+      kpiHtml += intel.cleaner_kpis.map(c => `<tr><td>${c.name}</td><td class="mono">${c.tables_cleaned}</td><td class="mono">${c.avg_clean_min ?? '--'}m</td><td class="mono">${c.avg_response_min ?? '--'}m</td></tr>`).join('');
+      kpiHtml += '</table>';
+    }
+    kpiDiv.innerHTML = kpiHtml;
+  } else {
+    kpiDiv.innerHTML = '';
+  }
+
+  // Hourly chart
+  const hourlyDiv = document.getElementById('hourly-section');
+  if (intel && intel.hourly && intel.hourly.length > 0) {
+    const hourly = intel.hourly;
+    const maxOrders = Math.max(...hourly.map(h => h.orders), 1);
+    const minHour = Math.min(...hourly.map(h => h.hour));
+    const maxHour = Math.max(...hourly.map(h => h.hour));
+    const hourMap = {};
+    for (const h of hourly) hourMap[h.hour] = h.orders;
+
+    let bars = '';
+    for (let h = minHour; h <= maxHour; h++) {
+      const count = hourMap[h] || 0;
+      const pct = Math.max(5, (count / maxOrders) * 100);
+      bars += `<div class="hour-bar" style="height:${pct}%"><span class="h-val">${count || ''}</span><span class="h-label">${h}</span></div>`;
+    }
+    hourlyDiv.innerHTML = `<div class="section-title" style="margin-top:20px">ORDERS BY HOUR</div><div class="hourly-chart">${bars}</div><div style="height:18px"></div>`;
+  } else {
+    hourlyDiv.innerHTML = '';
   }
 }
 
