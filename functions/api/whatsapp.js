@@ -3234,10 +3234,10 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     }
   }
 
-  // ── Payment detection: check if served/in_progress orders have been paid in Odoo ──
+  // ── Payment detection: check ALL unpaid orders (including 'new' — order may be paid before waiter assigns) ──
   let newlyPaid = 0;
   const unpaidOrders = await db.prepare(
-    `SELECT id, odoo_order_id FROM ${t}floor_orders WHERE paid_at IS NULL AND status IN ('assigned', 'in_progress', 'served') AND odoo_order_id IS NOT NULL`
+    `SELECT id, odoo_order_id, status FROM ${t}floor_orders WHERE paid_at IS NULL AND status IN ('new', 'assigned', 'in_progress', 'served') AND odoo_order_id IS NOT NULL`
   ).all();
 
   if (unpaidOrders.results.length > 0 && !odooError) {
@@ -3254,14 +3254,16 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
         const paidIds = new Set(paidOrders.map(p => p.id));
         for (const uo of unpaidOrders.results) {
           if (paidIds.has(uo.odoo_order_id)) {
-            // Mark as served + paid — removes from active orders, appears in dirty tables
+            // Mark as paid — set status to 'served', remove from active view, trigger cleaning
             await db.prepare(
               `UPDATE ${t}floor_orders SET status = 'served', served_at = COALESCE(served_at, ?), paid_at = ?, clean_status = 'needs_cleaning', updated_at = ? WHERE id = ?`
             ).bind(now, now, now, uo.id).run();
-            // Decrement waiter load since order is now served
-            await db.prepare(
-              `UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = (SELECT waiter_id FROM ${t}floor_orders WHERE id = ?)`
-            ).bind(uo.id).run();
+            // Decrement waiter load if order had a waiter
+            if (uo.status === 'assigned' || uo.status === 'in_progress') {
+              await db.prepare(
+                `UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = (SELECT waiter_id FROM ${t}floor_orders WHERE id = ?)`
+              ).bind(uo.id).run();
+            }
             newlyPaid++;
           }
         }

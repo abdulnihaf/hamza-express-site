@@ -466,11 +466,18 @@ function enterApp() {
   document.getElementById('shift-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('staff-name').textContent = staffInfo.name;
-  refreshDashboard();
-  pollOdoo();
-  dashboardInterval = setInterval(refreshDashboard, 10000);
-  pollInterval = setInterval(pollOdoo, 30000);
+  pollAndRefresh();
+  // Combined poll+refresh every 5s for near-realtime updates
+  pollInterval = setInterval(pollAndRefresh, 5000);
 }
+
+async function pollAndRefresh() {
+  try {
+    await api('floor-poll');
+  } catch (e) { /* poll failure is non-fatal */ }
+  refreshDashboard();
+}
+
 
 // ── Tab switching ──
 function switchTab(tab) {
