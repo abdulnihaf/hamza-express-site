@@ -3176,15 +3176,15 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
 
   if (apiKey) {
     try {
-      // Get last poll time
-      const pollState = await db.prepare(`SELECT value FROM ${t}floor_poll_state WHERE key = 'last_poll_time'`).first();
-      const lastPollTime = pollState?.value || '2026-02-26 00:00:00';
-      const odooLastPoll = lastPollTime.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
+      // Use write_date with 2-hour lookback to catch orders previously skipped (no lines yet)
+      // write_date updates when items are added/sent, so orders that were draft+empty get re-visited
+      const lookback = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const lookbackStr = lookback.toISOString().slice(0, 19).replace('T', ' ');
 
-      // Query Odoo for new config 6 dine-in orders since last poll
+      // Query Odoo for config 6 dine-in orders modified in last 2 hours
       const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
-        [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', odooLastPoll], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
-        { fields: ['id', 'name', 'date_order', 'state'], order: 'date_order asc' },
+        [[['config_id', '=', 6], ['preset_id', '=', 1], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+        { fields: ['id', 'name', 'date_order', 'write_date', 'state'], order: 'write_date asc', limit: 50 },
         odooUrl
       );
 
@@ -3248,8 +3248,7 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
           }
         } catch (e) { /* best-effort */ }
 
-        // Advance poll cursor
-        await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
+        // No cursor advance needed — using 2-hour lookback window instead
       }
     } catch (e) {
       pollResult.odoo_error = true;
@@ -3386,18 +3385,14 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
   const t = cfg?.t || '';
   const odooUrl = cfg?.odooUrl || ODOO_URL;
 
-  // Get last poll time
-  const pollState = await db.prepare(`SELECT value FROM ${t}floor_poll_state WHERE key = 'last_poll_time'`).first();
-  const lastPollTime = pollState?.value || '2026-02-26 00:00:00';
+  // Use write_date with 2-hour lookback to catch orders previously skipped (no lines yet)
+  const lookback = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const lookbackStr = lookback.toISOString().slice(0, 19).replace('T', ' ');
 
-  // Convert stored time to Odoo datetime format: YYYY-MM-DD HH:MM:SS (no T, no Z, no ms)
-  const odooLastPoll = lastPollTime.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '');
-
-  // Query Odoo for new config 6 dine-in orders since last poll
-  // Note: only need id + state here; createFloorOrderFromOdoo fetches full details separately
+  // Query Odoo for config 6 dine-in orders modified in last 2 hours
   const newOrders = await odooRPC(apiKey, 'pos.order', 'search_read',
-    [[['config_id', '=', 6], ['preset_id', '=', 1], ['date_order', '>', odooLastPoll], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
-    { fields: ['id', 'name', 'date_order', 'state'], order: 'date_order asc' },
+    [[['config_id', '=', 6], ['preset_id', '=', 1], ['write_date', '>', lookbackStr], ['state', 'in', ['draft', 'paid', 'done', 'invoiced']]]],
+    { fields: ['id', 'name', 'date_order', 'write_date', 'state'], order: 'write_date asc', limit: 50 },
     odooUrl
   );
 
@@ -3509,10 +3504,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
     } catch (e) { /* session check is best-effort */ }
   }
 
-  // Only advance poll cursor if Odoo call succeeded
-  if (!odooError) {
-    await db.prepare(`UPDATE ${t}floor_poll_state SET value = ? WHERE key = 'last_poll_time'`).bind(now).run();
-  }
+  // No cursor advance needed — using 2-hour lookback window instead
 
   return json({ ok: true, created, cancelled, newly_paid: newlyPaid, polled_at: now, odoo_error: odooError || undefined, odoo_error_detail: odooError ? (odooRPC._lastError || 'unknown') : undefined });
 }
