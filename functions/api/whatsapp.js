@@ -1966,14 +1966,16 @@ async function handleKdsWebhook(context, url, corsHeaders) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders });
     }
 
-    // Detect test mode from webhook URL (?env=test added by test SA 944)
-    const isTestWebhook = url.searchParams.get('env') === 'test';
-    const webhookOdooUrl = isTestWebhook ? TEST_ODOO_URL : undefined;
+    // Detect env from webhook URL (?env=test|nihaf added by Odoo server action)
+    const webhookEnv = url.searchParams.get('env'); // 'test', 'nihaf', or null (production)
+    const isTestWebhook = !!webhookEnv; // any non-prod env
+    const WEBHOOK_ODOO_MAP = { 'test': TEST_ODOO_URL, 'nihaf': 'https://nihaf.hamzahotel.com/jsonrpc' };
+    const webhookOdooUrl = WEBHOOK_ODOO_MAP[webhookEnv] || undefined;
 
     const body = await context.request.json();
     const { stage_id, todo, prep_line_id, pos_order_id: clientPosOrderId, product_id: clientProductId } = body;
 
-    await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, pos_order_id=${clientPosOrderId||'none'}, env=${isTestWebhook?'test':'prod'}`);
+    await debugLog(`WEBHOOK: stage_id=${stage_id}, todo=${todo}, prep_line_id=${prep_line_id}, pos_order_id=${clientPosOrderId||'none'}, env=${webhookEnv||'prod'}`);
 
     // Resolve: prep_line_id → pos.prep.order → pos.order → config_id
     const apiKey = context.env.ODOO_API_KEY;
@@ -2047,10 +2049,12 @@ async function handleKdsWebhook(context, url, corsHeaders) {
 
     if (configId === 6 && presetId === 1) {
       // Captain dine-in order — floor tracking flow
-      // Use test config if webhook came from test Odoo
-      const floorCfg = isTestWebhook
-        ? { isTest: true, odooUrl: TEST_ODOO_URL, stageMap: TEST_FLOOR_STAGE_MAP, t: 'test_' }
-        : { isTest: false, odooUrl: ODOO_URL, stageMap: FLOOR_STAGE_MAP, t: '' };
+      // Resolve env-specific config (test/nihaf/production)
+      const WEBHOOK_FLOOR_CFG = {
+        'test': { isTest: true, odooUrl: TEST_ODOO_URL, stageMap: TEST_FLOOR_STAGE_MAP, t: 'test_' },
+        'nihaf': { isTest: true, odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', stageMap: NIHAF_FLOOR_STAGE_MAP, t: 'nihaf_' },
+      };
+      const floorCfg = WEBHOOK_FLOOR_CFG[webhookEnv] || { isTest: false, odooUrl: ODOO_URL, stageMap: FLOOR_STAGE_MAP, t: '' };
       return handleKdsWebhookFloor(context, corsHeaders, {
         stage_id, todo, prep_line_id, posOrderId, configId, trackingNumber, productId
       }, floorCfg);
@@ -2256,6 +2260,28 @@ const TEST_FLOOR_STAGE_MAP = {
   50: { counter: 'Bain Marie', status: 'at_counter' },
 };
 
+// Nihaf stage map — full tracking like ops, but nihaf Odoo has different stage IDs
+// Nihaf KDS stages: Indian→83, Chinese→84, Tandoor→89, FC→92 (ops: 78,79,80,81)
+// KP/counter stages are identical across ops/nihaf
+const NIHAF_FLOOR_STAGE_MAP = {
+  // Station Prepared → cooked (nihaf-specific stage IDs)
+  83: { counter: 'Kitchen Pass', status: 'cooked' },    // Indian Prepared (ops: 78)
+  84: { counter: 'Kitchen Pass', status: 'cooked' },    // Chinese Prepared (ops: 79)
+  89: { counter: 'Kitchen Pass', status: 'cooked' },    // Tandoor Prepared (ops: 80)
+  92: { counter: 'Kitchen Pass', status: 'cooked' },    // FC Prepared (ops: 81)
+  // KP stages — same as ops
+  74: { counter: 'Kitchen Pass', status: 'at_counter' },
+  63: { counter: 'Kitchen Pass', status: 'picked_up' },
+  // Counter stages — same as ops
+  47: { counter: 'Juice Counter', status: 'at_counter' },
+  50: { counter: 'Bain Marie', status: 'at_counter' },
+  53: { counter: 'Shawarma Counter', status: 'at_counter' },
+  56: { counter: 'Grill Counter', status: 'at_counter' },
+  48: { counter: 'Juice Counter', status: 'picked_up' },
+  54: { counter: 'Shawarma Counter', status: 'picked_up' },
+  57: { counter: 'Grill Counter', status: 'picked_up' },
+};
+
 // Category → counter mapping for floor items
 // Includes both parent categories (22-30) and new subcategories (70-90)
 const FLOOR_COUNTER_MAP = {
@@ -2282,7 +2308,7 @@ function getFloorConfig(url) {
   const env = new URL(url).searchParams.get('env');
   const envMap = {
     'test': { odooUrl: TEST_ODOO_URL, t: 'test_', stageMap: TEST_FLOOR_STAGE_MAP },
-    'nihaf': { odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', t: 'nihaf_', stageMap: TEST_FLOOR_STAGE_MAP },
+    'nihaf': { odooUrl: 'https://nihaf.hamzahotel.com/jsonrpc', t: 'nihaf_', stageMap: NIHAF_FLOOR_STAGE_MAP },
   };
   const cfg = envMap[env] || { odooUrl: ODOO_URL, t: '', stageMap: FLOOR_STAGE_MAP };
   return {
