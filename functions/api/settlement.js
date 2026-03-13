@@ -99,9 +99,9 @@ const POINTS = {
 const CAPTAINS = {
   captain_1: { id: 'captain_1', name: 'Captain 01', employeeId: 69, upiPM: 52, razorpayQR: 'qr_SFifm0HAq1e7GQ' },
   captain_2: { id: 'captain_2', name: 'Captain 02', employeeId: 70, upiPM: 52, razorpayQR: 'qr_SFifoDVOZG3MrI' },
-  captain_3: { id: 'captain_3', name: 'Captain 03', employeeId: null, upiPM: 52, razorpayQR: 'qr_SFifqWG1QRnmoj' },
-  captain_4: { id: 'captain_4', name: 'Captain 04', employeeId: null, upiPM: 52, razorpayQR: 'qr_SFifsQfqULs6bb' },
-  captain_5: { id: 'captain_5', name: 'Captain 05', employeeId: null, upiPM: 52, razorpayQR: 'qr_SFifuWXskdwKNF' },
+  captain_3: { id: 'captain_3', name: 'Captain 03', employeeId: 71, upiPM: 52, razorpayQR: 'qr_SFifqWG1QRnmoj' },
+  captain_4: { id: 'captain_4', name: 'Captain 04', employeeId: 72, upiPM: 52, razorpayQR: 'qr_SFifsQfqULs6bb' },
+  captain_5: { id: 'captain_5', name: 'Captain 05', employeeId: 73, upiPM: 52, razorpayQR: 'qr_SFifuWXskdwKNF' },
 };
 
 // Per-env employee ID overrides (nihaf/ops have different auto-increment IDs)
