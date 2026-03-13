@@ -2933,6 +2933,11 @@ async function handleFloorAction(context, action, corsHeaders) {
     return handleFloorKPI(db, json, t);
   }
 
+  // ── Floor Intel: comprehensive operations data for management dashboard ──
+  if (action === 'floor-intel' && method === 'GET') {
+    return handleFloorIntel(db, json, t);
+  }
+
   // ── Manage staff (Captain) ──
   if (action === 'floor-manage-staff' && method === 'POST') {
     if (!staff.can_captain) return err('Captain access required', 403);
@@ -3253,6 +3258,27 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
     `SELECT COUNT(*) as cnt FROM ${t}floor_staff WHERE is_active = 1 AND role = 'waiter' AND on_shift = 1`
   ).first();
 
+  // Cleaner data
+  const cleaners = await db.prepare(
+    `SELECT fs.id, fs.name, fs.role, fs.can_clean, fs.current_load,
+      fs.on_shift, fs.shift_started_at, fs.last_seen_at,
+      (SELECT COUNT(*) FROM ${t}floor_orders WHERE cleaner_id = fs.id AND clean_status = 'cleaning') as active_cleaning,
+      (SELECT COUNT(*) FROM ${t}floor_orders WHERE cleaner_id = fs.id AND cleaned_at IS NOT NULL AND DATE(cleaned_at) = DATE(?)) as cleaned_today
+     FROM ${t}floor_staff fs WHERE fs.is_active = 1 AND fs.can_clean = 1 ORDER BY fs.name`
+  ).bind(now).all();
+
+  // Tables needing cleaning
+  const dirtyTables = await db.prepare(
+    `SELECT id, table_number, odoo_order_name, paid_at, clean_status, cleaner_id, clean_ack_at
+     FROM ${t}floor_orders WHERE clean_status IN ('needs_cleaning', 'cleaning') ORDER BY paid_at ASC`
+  ).all();
+
+  // Served orders (awaiting payment)
+  const servedOrders = await db.prepare(
+    `SELECT id, table_number, odoo_order_name, served_at, paid_at
+     FROM ${t}floor_orders WHERE status = 'served' AND paid_at IS NULL ORDER BY served_at ASC`
+  ).all();
+
   // Get items for active orders + unassigned orders
   const allOrderIds = [...active.results.map(o => o.id), ...unassigned.results.map(o => o.id)];
   let itemsByOrder = {};
@@ -3271,6 +3297,9 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
     unassigned: unassigned.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
     active: active.results.map(o => ({ ...o, items: itemsByOrder[o.id] || [] })),
     waiters: waiters.results,
+    cleaners: cleaners.results,
+    dirty_tables: dirtyTables.results,
+    served_awaiting_payment: servedOrders.results,
     stats: { ...(stats || { total_orders: 0, unassigned: 0, active: 0, served: 0 }), on_shift_waiters: onShiftCount?.cnt || 0 },
     staff_id: staff.id
   });
@@ -3612,6 +3641,127 @@ async function handleFloorKPI(db, json, t = '') {
       avg_clean_time_min: c.avg_clean_min ? Math.round(c.avg_clean_min * 10) / 10 : null,
       avg_response_time_min: c.avg_response_min ? Math.round(c.avg_response_min * 10) / 10 : null
     }))
+  });
+}
+
+// ── Floor Intel: comprehensive management dashboard data ──
+async function handleFloorIntel(db, json, t = '') {
+  const now = new Date();
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayISO = todayStart.toISOString();
+
+  // Live state: all active orders with status breakdown
+  const liveOrders = await db.prepare(
+    `SELECT fo.id, fo.table_number, fo.odoo_order_name, fo.status, fo.created_at,
+       fo.assigned_at, fo.served_at, fo.paid_at, fo.clean_status, fo.cleaned_at,
+       fo.total_items, fo.items_ready, fo.items_delivered,
+       w.name as waiter_name, c.name as cleaner_name
+     FROM ${t}floor_orders fo
+     LEFT JOIN ${t}floor_staff w ON fo.waiter_id = w.id
+     LEFT JOIN ${t}floor_staff c ON fo.cleaner_id = c.id
+     WHERE fo.status NOT IN ('cancelled') AND DATE(fo.created_at) = DATE(?)
+     ORDER BY fo.created_at DESC`
+  ).bind(todayISO).all();
+
+  // Staff status: all active staff with shift info
+  const allStaff = await db.prepare(
+    `SELECT id, name, role, can_captain, can_waiter, can_clean,
+       on_shift, shift_started_at, current_load, last_seen_at, last_delivery_at
+     FROM ${t}floor_staff WHERE is_active = 1 ORDER BY role, name`
+  ).all();
+
+  // Today's aggregates
+  const todayAgg = await db.prepare(
+    `SELECT
+       COUNT(*) as total_orders,
+       SUM(CASE WHEN status IN ('new','assigned','in_progress') THEN 1 ELSE 0 END) as active,
+       SUM(CASE WHEN status = 'served' AND paid_at IS NULL THEN 1 ELSE 0 END) as awaiting_payment,
+       SUM(CASE WHEN paid_at IS NOT NULL AND clean_status = 'needs_cleaning' THEN 1 ELSE 0 END) as needs_cleaning,
+       SUM(CASE WHEN clean_status = 'cleaning' THEN 1 ELSE 0 END) as being_cleaned,
+       SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) as completed,
+       AVG(CASE WHEN served_at IS NOT NULL AND created_at IS NOT NULL
+         THEN CAST((julianday(served_at) - julianday(created_at)) * 24 * 60 AS REAL) END) as avg_order_to_serve_min,
+       AVG(CASE WHEN cleaned_at IS NOT NULL AND paid_at IS NOT NULL
+         THEN CAST((julianday(cleaned_at) - julianday(paid_at)) * 24 * 60 AS REAL) END) as avg_clean_min,
+       AVG(CASE WHEN cleaned_at IS NOT NULL AND created_at IS NOT NULL
+         THEN CAST((julianday(cleaned_at) - julianday(created_at)) * 24 * 60 AS REAL) END) as avg_total_turnover_min
+     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'`
+  ).bind(todayISO).first();
+
+  // Per-staff KPIs today
+  const waiterKPIs = await db.prepare(
+    `SELECT fs.id, fs.name,
+       COUNT(fo.id) as orders_served,
+       AVG(CAST((julianday(fo.served_at) - julianday(fo.created_at)) * 24 * 60 AS REAL)) as avg_serve_min
+     FROM ${t}floor_orders fo
+     JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id
+     WHERE fo.served_at IS NOT NULL AND DATE(fo.served_at) = DATE(?)
+     GROUP BY fs.id ORDER BY orders_served DESC`
+  ).bind(todayISO).all();
+
+  const cleanerKPIs = await db.prepare(
+    `SELECT fs.id, fs.name,
+       COUNT(fo.id) as tables_cleaned,
+       AVG(CAST((julianday(fo.cleaned_at) - julianday(fo.paid_at)) * 24 * 60 AS REAL)) as avg_clean_min,
+       AVG(CAST((julianday(fo.clean_ack_at) - julianday(fo.paid_at)) * 24 * 60 AS REAL)) as avg_response_min
+     FROM ${t}floor_orders fo
+     JOIN ${t}floor_staff fs ON fo.cleaner_id = fs.id
+     WHERE fo.cleaned_at IS NOT NULL AND DATE(fo.cleaned_at) = DATE(?)
+     GROUP BY fs.id ORDER BY tables_cleaned DESC`
+  ).bind(todayISO).all();
+
+  // Hourly order distribution
+  const hourly = await db.prepare(
+    `SELECT CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as orders
+     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'
+     GROUP BY hour ORDER BY hour`
+  ).bind(todayISO).all();
+
+  // Bottleneck detection: longest-waiting items in each stage
+  const bottlenecks = [];
+  const nowMs = Date.now();
+  for (const order of liveOrders.results) {
+    if (order.status === 'served' && !order.paid_at) {
+      const waitMin = Math.round((nowMs - new Date(order.served_at).getTime()) / 60000);
+      if (waitMin > 5) bottlenecks.push({ type: 'payment', table: order.table_number, wait_min: waitMin, message: `Table ${order.table_number} served ${waitMin}m ago, awaiting payment` });
+    }
+    if (order.clean_status === 'needs_cleaning') {
+      const waitMin = Math.round((nowMs - new Date(order.paid_at).getTime()) / 60000);
+      if (waitMin > 2) bottlenecks.push({ type: 'cleaning', table: order.table_number, wait_min: waitMin, message: `Table ${order.table_number} needs cleaning for ${waitMin}m` });
+    }
+    if (order.status === 'assigned' || order.status === 'in_progress') {
+      const waitMin = Math.round((nowMs - new Date(order.created_at).getTime()) / 60000);
+      if (waitMin > 10) bottlenecks.push({ type: 'serving', table: order.table_number, wait_min: waitMin, message: `Table ${order.table_number} waiting ${waitMin}m since order` });
+    }
+  }
+  bottlenecks.sort((a, b) => b.wait_min - a.wait_min);
+
+  return json({
+    live_orders: liveOrders.results,
+    staff: allStaff.results,
+    today: {
+      total_orders: todayAgg?.total_orders || 0,
+      active: todayAgg?.active || 0,
+      awaiting_payment: todayAgg?.awaiting_payment || 0,
+      needs_cleaning: todayAgg?.needs_cleaning || 0,
+      being_cleaned: todayAgg?.being_cleaned || 0,
+      completed: todayAgg?.completed || 0,
+      avg_order_to_serve_min: todayAgg?.avg_order_to_serve_min ? Math.round(todayAgg.avg_order_to_serve_min * 10) / 10 : null,
+      avg_clean_min: todayAgg?.avg_clean_min ? Math.round(todayAgg.avg_clean_min * 10) / 10 : null,
+      avg_total_turnover_min: todayAgg?.avg_total_turnover_min ? Math.round(todayAgg.avg_total_turnover_min * 10) / 10 : null
+    },
+    waiter_kpis: waiterKPIs.results.map(w => ({
+      name: w.name, orders_served: w.orders_served,
+      avg_serve_min: w.avg_serve_min ? Math.round(w.avg_serve_min * 10) / 10 : null
+    })),
+    cleaner_kpis: cleanerKPIs.results.map(c => ({
+      name: c.name, tables_cleaned: c.tables_cleaned,
+      avg_clean_min: c.avg_clean_min ? Math.round(c.avg_clean_min * 10) / 10 : null,
+      avg_response_min: c.avg_response_min ? Math.round(c.avg_response_min * 10) / 10 : null
+    })),
+    hourly: hourly.results,
+    bottlenecks: bottlenecks.slice(0, 10)
   });
 }
 

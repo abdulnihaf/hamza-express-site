@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Floor Intel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:linear-gradient(180deg,var(--amber),var(--green),var(--purple));border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+    .last-update{font-size:11px;color:var(--text2)}
+
+    .content{padding:16px;max-width:700px;margin:0 auto;padding-bottom:40px}
+
+    /* ── Hero metrics ── */
+    .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+    .hero-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+    .hero-card .val{font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .hero-card .label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+    .hero-card .sub{font-size:11px;color:var(--text2);margin-top:2px}
+    .hero-card.amber .val{color:var(--amber)}
+    .hero-card.green .val{color:var(--green)}
+    .hero-card.purple .val{color:var(--purple)}
+    .hero-card.blue .val{color:var(--blue)}
+    .hero-card.orange .val{color:var(--orange)}
+    .hero-card.red .val{color:var(--red)}
+
+    /* ── Section ── */
+    .section{margin-bottom:20px}
+    .section-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .section-title .dot{width:8px;height:8px;border-radius:50%}
+
+    /* ── Bottleneck alerts ── */
+    .alert-card{background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;display:flex;align-items:center;gap:10px}
+    .alert-card.warn{background:var(--orange-dim);border-color:rgba(249,115,22,.3)}
+    .alert-card.clean{background:var(--purple-dim);border-color:rgba(168,85,247,.3)}
+    .alert-icon{font-size:18px;flex-shrink:0}
+    .alert-text{flex:1}
+    .alert-time{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);flex-shrink:0}
+
+    /* ── Staff grid ── */
+    .staff-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+    .staff-card{background:var(--card);border:2px solid var(--border);border-radius:10px;padding:10px 12px;min-width:120px;flex-shrink:0}
+    .staff-card.on{border-color:var(--green)}
+    .staff-card.off{opacity:.35}
+    .staff-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px}
+    .staff-name .dot{width:6px;height:6px;border-radius:50%}
+    .staff-name .dot.on{background:var(--green)}
+    .staff-name .dot.off{background:var(--text2)}
+    .staff-meta{font-size:11px;color:var(--text2);margin-top:3px}
+    .staff-kpi{font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:4px;font-weight:500}
+
+    /* ── KPI table ── */
+    .kpi-table{width:100%;border-collapse:collapse}
+    .kpi-table th{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+    .kpi-table td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--border)}
+    .kpi-table td.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+    .kpi-table tr:last-child td{border-bottom:none}
+
+    /* ── Live table pipeline ── */
+    .pipeline{display:flex;gap:2px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+    .pipe-col{flex:1;min-width:80px}
+    .pipe-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);padding:6px 8px;text-align:center;border-radius:8px 8px 0 0;border-bottom:2px solid}
+    .pipe-header.cooking{border-color:var(--orange);background:var(--orange-dim)}
+    .pipe-header.serving{border-color:var(--green);background:var(--green-dim)}
+    .pipe-header.payment{border-color:var(--blue);background:var(--blue-dim)}
+    .pipe-header.cleaning{border-color:var(--purple);background:var(--purple-dim)}
+    .pipe-header.done{border-color:var(--text2);background:var(--bg2)}
+    .pipe-item{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin:4px 2px;font-size:12px;text-align:center}
+    .pipe-item .tbl{font-weight:700;font-size:14px}
+    .pipe-item .meta{font-size:10px;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+    /* ── Hourly bar chart ── */
+    .hourly-chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding:0 4px}
+    .hour-bar{flex:1;background:var(--amber);border-radius:3px 3px 0 0;min-width:12px;position:relative;transition:height .3s}
+    .hour-bar .hour-label{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .hour-bar .hour-val{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+    .empty-state{text-align:center;padding:30px 20px;color:var(--text2);font-size:14px}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="accent"></span>Floor Intel</h1>
+  <div class="header-right">
+    <span class="last-update" id="last-update">Loading...</span>
+    <div class="conn-dot" id="conn-dot"></div>
+    <button class="icon-btn" onclick="refresh()">&#x21bb;</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- Hero metrics -->
+  <div class="hero-grid" id="hero-grid"></div>
+
+  <!-- Bottleneck alerts -->
+  <div class="section" id="alerts-section" style="display:none">
+    <div class="section-title"><span class="dot" style="background:var(--red)"></span>BOTTLENECKS</div>
+    <div id="alerts-content"></div>
+  </div>
+
+  <!-- Live pipeline -->
+  <div class="section">
+    <div class="section-title">LIVE PIPELINE</div>
+    <div class="pipeline" id="pipeline"></div>
+  </div>
+
+  <!-- Staff status -->
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:var(--amber)"></span>CAPTAINS</div>
+    <div class="staff-scroll" id="captain-staff"></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:var(--green)"></span>WAITERS</div>
+    <div class="staff-scroll" id="waiter-staff"></div>
+  </div>
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:var(--purple)"></span>CLEANERS</div>
+    <div class="staff-scroll" id="cleaner-staff"></div>
+  </div>
+
+  <!-- Waiter KPIs -->
+  <div class="section" id="waiter-kpi-section">
+    <div class="section-title">WAITER PERFORMANCE</div>
+    <table class="kpi-table" id="waiter-kpi-table"></table>
+  </div>
+
+  <!-- Cleaner KPIs -->
+  <div class="section" id="cleaner-kpi-section">
+    <div class="section-title">CLEANER PERFORMANCE</div>
+    <table class="kpi-table" id="cleaner-kpi-table"></table>
+  </div>
+
+  <!-- Hourly distribution -->
+  <div class="section">
+    <div class="section-title">ORDERS BY HOUR</div>
+    <div class="hourly-chart" id="hourly-chart"></div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+// Floor intel uses a staff token for auth — admin PIN 5882 or any captain
+let token = localStorage.getItem('floor_intel_token') || '';
+let data = null;
+let pollInterval = null;
+
+async function api(action) {
+  const res = await fetch(`${API_BASE}?action=${action}`, {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  const d = await res.json();
+  if (!res.ok) {
+    if (res.status === 401) { promptLogin(); throw new Error('Auth required'); }
+    throw new Error(d.error || 'Failed');
+  }
+  document.getElementById('conn-dot').className = 'conn-dot';
+  return d;
+}
+
+function promptLogin() {
+  const pin = prompt('Enter captain PIN to access Floor Intel:');
+  if (!pin) return;
+  fetch(`${API_BASE}?action=floor-login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin })
+  }).then(r => r.json()).then(d => {
+    if (d.error) { alert(d.error); return; }
+    token = d.token;
+    localStorage.setItem('floor_intel_token', token);
+    refresh();
+  });
+}
+
+async function refresh() {
+  try {
+    data = await api('floor-intel');
+    render();
+    document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    console.error('Refresh error:', e);
+    document.getElementById('conn-dot').className = 'conn-dot offline';
+  }
+}
+
+function render() {
+  if (!data) return;
+  renderHero();
+  renderAlerts();
+  renderPipeline();
+  renderStaff();
+  renderKPIs();
+  renderHourly();
+}
+
+function renderHero() {
+  const t = data.today;
+  document.getElementById('hero-grid').innerHTML = `
+    <div class="hero-card amber"><div class="val">${t.total_orders}</div><div class="label">Orders</div></div>
+    <div class="hero-card green"><div class="val">${t.completed}</div><div class="label">Completed</div></div>
+    <div class="hero-card orange"><div class="val">${t.active}</div><div class="label">Active</div></div>
+    <div class="hero-card blue"><div class="val">${t.avg_order_to_serve_min ?? '--'}</div><div class="label">Avg Serve</div><div class="sub">minutes</div></div>
+    <div class="hero-card purple"><div class="val">${t.avg_clean_min ?? '--'}</div><div class="label">Avg Clean</div><div class="sub">minutes</div></div>
+    <div class="hero-card"><div class="val" style="color:var(--text)">${t.avg_total_turnover_min ?? '--'}</div><div class="label">Turnover</div><div class="sub">order → clean</div></div>
+  `;
+}
+
+function renderAlerts() {
+  const section = document.getElementById('alerts-section');
+  const div = document.getElementById('alerts-content');
+  if (!data.bottlenecks || data.bottlenecks.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  div.innerHTML = data.bottlenecks.map(b => {
+    const cls = b.type === 'cleaning' ? 'alert-card clean' : b.type === 'payment' ? 'alert-card warn' : 'alert-card';
+    const icon = b.type === 'cleaning' ? '&#x1F9F9;' : b.type === 'payment' ? '&#x1F4B3;' : '&#x23F1;';
+    return `<div class="${cls}">
+      <span class="alert-icon">${icon}</span>
+      <span class="alert-text">${b.message}</span>
+      <span class="alert-time">${b.wait_min}m</span>
+    </div>`;
+  }).join('');
+}
+
+function renderPipeline() {
+  const orders = data.live_orders;
+  const cooking = orders.filter(o => o.status === 'assigned' || o.status === 'in_progress' || o.status === 'new');
+  const served = orders.filter(o => o.status === 'served' && !o.paid_at);
+  const payment = orders.filter(o => o.paid_at && o.clean_status === 'needs_cleaning');
+  const cleaning = orders.filter(o => o.clean_status === 'cleaning');
+  const done = orders.filter(o => o.status === 'closed').slice(0, 5);
+
+  function pipeItems(items) {
+    if (items.length === 0) return '<div class="pipe-item" style="opacity:.3;font-size:11px">--</div>';
+    return items.map(o => {
+      const mins = Math.round((Date.now() - new Date(o.created_at).getTime()) / 60000);
+      return `<div class="pipe-item"><div class="tbl">${o.table_number || '?'}</div><div class="meta">${mins}m</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('pipeline').innerHTML = `
+    <div class="pipe-col"><div class="pipe-header cooking">Active (${cooking.length})</div>${pipeItems(cooking)}</div>
+    <div class="pipe-col"><div class="pipe-header serving">Served (${served.length})</div>${pipeItems(served)}</div>
+    <div class="pipe-col"><div class="pipe-header payment">Dirty (${payment.length})</div>${pipeItems(payment)}</div>
+    <div class="pipe-col"><div class="pipe-header cleaning">Cleaning (${cleaning.length})</div>${pipeItems(cleaning)}</div>
+    <div class="pipe-col"><div class="pipe-header done">Done (${done.length})</div>${pipeItems(done)}</div>
+  `;
+}
+
+function renderStaff() {
+  const staff = data.staff;
+  const captains = staff.filter(s => s.can_captain);
+  const waiters = staff.filter(s => s.can_waiter);
+  const cleaners = staff.filter(s => s.can_clean);
+
+  function staffCards(list, kpiMap, kpiLabel) {
+    return list.map(s => {
+      const isOn = !!s.on_shift;
+      const kpi = kpiMap[s.id];
+      const seenAgo = s.last_seen_at ? Math.round((Date.now() - new Date(s.last_seen_at).getTime()) / 60000) : null;
+      const online = seenAgo !== null && seenAgo < 2;
+      return `<div class="staff-card ${isOn ? 'on' : 'off'}">
+        <div class="staff-name"><span class="dot ${online ? 'on' : 'off'}"></span>${s.name}</div>
+        <div class="staff-meta">${isOn ? 'On shift' : 'Off'}${s.current_load > 0 ? ' &middot; ' + s.current_load + ' tables' : ''}</div>
+        ${kpi ? `<div class="staff-kpi" style="color:var(--green)">${kpi} ${kpiLabel}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // Build KPI maps
+  const waiterKpiMap = {};
+  for (const w of (data.waiter_kpis || [])) waiterKpiMap[w.name] = w.orders_served;
+  // Map by name since staff IDs in kpi may not match staff list IDs
+  const waiterKpiById = {};
+  for (const s of waiters) { if (waiterKpiMap[s.name] !== undefined) waiterKpiById[s.id] = waiterKpiMap[s.name]; }
+
+  const cleanerKpiMap = {};
+  for (const c of (data.cleaner_kpis || [])) cleanerKpiMap[c.name] = c.tables_cleaned;
+  const cleanerKpiById = {};
+  for (const s of cleaners) { if (cleanerKpiMap[s.name] !== undefined) cleanerKpiById[s.id] = cleanerKpiMap[s.name]; }
+
+  document.getElementById('captain-staff').innerHTML = staffCards(captains, {}, '') || '<div class="empty-state">No captains</div>';
+  document.getElementById('waiter-staff').innerHTML = staffCards(waiters, waiterKpiById, 'served') || '<div class="empty-state">No waiters</div>';
+  document.getElementById('cleaner-staff').innerHTML = staffCards(cleaners, cleanerKpiById, 'cleaned') || '<div class="empty-state">No cleaners</div>';
+}
+
+function renderKPIs() {
+  // Waiter KPIs
+  const wTable = document.getElementById('waiter-kpi-table');
+  if (data.waiter_kpis.length === 0) {
+    wTable.innerHTML = '<tr><td colspan="3" style="color:var(--text2);text-align:center;padding:16px">No waiter data yet</td></tr>';
+  } else {
+    wTable.innerHTML = `<tr><th>Waiter</th><th>Served</th><th>Avg Time</th></tr>` +
+      data.waiter_kpis.map(w => `<tr>
+        <td>${w.name}</td>
+        <td class="mono">${w.orders_served}</td>
+        <td class="mono">${w.avg_serve_min ?? '--'} min</td>
+      </tr>`).join('');
+  }
+
+  // Cleaner KPIs
+  const cTable = document.getElementById('cleaner-kpi-table');
+  if (data.cleaner_kpis.length === 0) {
+    cTable.innerHTML = '<tr><td colspan="4" style="color:var(--text2);text-align:center;padding:16px">No cleaner data yet</td></tr>';
+  } else {
+    cTable.innerHTML = `<tr><th>Cleaner</th><th>Cleaned</th><th>Avg Time</th><th>Response</th></tr>` +
+      data.cleaner_kpis.map(c => `<tr>
+        <td>${c.name}</td>
+        <td class="mono">${c.tables_cleaned}</td>
+        <td class="mono">${c.avg_clean_min ?? '--'} min</td>
+        <td class="mono">${c.avg_response_min ?? '--'} min</td>
+      </tr>`).join('');
+  }
+}
+
+function renderHourly() {
+  const hourly = data.hourly || [];
+  if (hourly.length === 0) {
+    document.getElementById('hourly-chart').innerHTML = '<div class="empty-state">No hourly data</div>';
+    return;
+  }
+  const maxOrders = Math.max(...hourly.map(h => h.orders), 1);
+  // Fill all hours from min to max
+  const minHour = Math.min(...hourly.map(h => h.hour));
+  const maxHour = Math.max(...hourly.map(h => h.hour));
+  const hourMap = {};
+  for (const h of hourly) hourMap[h.hour] = h.orders;
+
+  let html = '';
+  for (let h = minHour; h <= maxHour; h++) {
+    const count = hourMap[h] || 0;
+    const pct = Math.max(4, (count / maxOrders) * 100);
+    html += `<div class="hour-bar" style="height:${pct}%">
+      <span class="hour-val">${count || ''}</span>
+      <span class="hour-label">${h}</span>
+    </div>`;
+  }
+  document.getElementById('hourly-chart').innerHTML = html;
+}
+
+// Init
+if (token) {
+  refresh();
+  pollInterval = setInterval(refresh, 10000);
+} else {
+  promptLogin();
+}
+</script>
+</body>
+</html>
