@@ -122,16 +122,26 @@ CREATE TABLE IF NOT EXISTS nihaf_floor_poll_state (
 INSERT OR IGNORE INTO nihaf_floor_poll_state VALUES ('last_poll_time', '2026-03-13T00:00:00');
 
 -- ═══════════════════════════════════════════════════════════════
--- SEED: Default staff for nihaf staging (same PINs as ops)
+-- SEED: Staff matching ops.hamzahotel.com exactly
+-- Captains: 2101-2105, Waiters: 2001-2005, Cleaners: 3001-3005
 -- ═══════════════════════════════════════════════════════════════
 
-INSERT OR IGNORE INTO nihaf_floor_staff (pin, name, role, can_captain, can_waiter, can_clean, is_active, created_at)
+INSERT OR IGNORE INTO nihaf_floor_staff (pin, name, role, can_captain, can_waiter, can_clean, is_active, odoo_employee_id, created_at)
 VALUES
-  ('1001', 'CAPT001', 'captain', 1, 1, 0, 1, datetime('now')),
-  ('1002', 'CAPT002', 'captain', 1, 1, 0, 1, datetime('now')),
-  ('1003', 'CAPT003', 'captain', 1, 1, 0, 1, datetime('now')),
-  ('1004', 'WAIT001', 'waiter', 0, 1, 0, 1, datetime('now')),
-  ('1005', 'WAIT002', 'waiter', 0, 1, 0, 1, datetime('now')),
-  ('1006', 'WAIT003', 'waiter', 0, 1, 0, 1, datetime('now')),
-  ('1011', 'CLEAN001', 'waiter', 0, 0, 1, 1, datetime('now')),
-  ('1012', 'CLEAN002', 'waiter', 0, 0, 1, 1, datetime('now'));
+  ('0305', 'Nihaf', 'captain', 1, 1, 0, 1, NULL, datetime('now')),
+  ('3679', 'Farooq', 'captain', 1, 1, 0, 1, NULL, datetime('now')),
+  ('2101', 'CAPT001', 'captain', 1, 0, 0, 1, 69, datetime('now')),
+  ('2102', 'CAPT002', 'captain', 1, 0, 0, 1, 70, datetime('now')),
+  ('2103', 'CAPT003', 'captain', 1, 0, 0, 1, 71, datetime('now')),
+  ('2104', 'CAPT004', 'captain', 1, 0, 0, 1, 72, datetime('now')),
+  ('2105', 'CAPT005', 'captain', 1, 0, 0, 1, 73, datetime('now')),
+  ('2001', 'WAIT001', 'waiter', 0, 1, 0, 1, NULL, datetime('now')),
+  ('2002', 'WAIT002', 'waiter', 0, 1, 0, 1, NULL, datetime('now')),
+  ('2003', 'WAIT003', 'waiter', 0, 1, 0, 1, NULL, datetime('now')),
+  ('2004', 'WAIT004', 'waiter', 0, 1, 0, 1, NULL, datetime('now')),
+  ('2005', 'WAIT005', 'waiter', 0, 1, 0, 1, NULL, datetime('now')),
+  ('3001', 'CLEAN001', 'cleaner', 0, 0, 1, 1, NULL, datetime('now')),
+  ('3002', 'CLEAN002', 'cleaner', 0, 0, 1, 1, NULL, datetime('now')),
+  ('3003', 'CLEAN003', 'cleaner', 0, 0, 1, 1, NULL, datetime('now')),
+  ('3004', 'CLEAN004', 'cleaner', 0, 0, 1, 1, NULL, datetime('now')),
+  ('3005', 'CLEAN005', 'cleaner', 0, 0, 1, 1, NULL, datetime('now'));
