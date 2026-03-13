@@ -638,22 +638,25 @@ async function getCaptainLive(env, captainId, envParam) {
     })(),
   ]);
 
-  // 4. Fetch payment methods to decompose cash/UPI/card/comp
+  // 4. Fetch payment methods to decompose cash/UPI/card/comp (total + per-order)
   let cash = 0, upi = 0, card = 0, comp = 0;
+  const paymentsByOrder = {}; // { orderId: { cash, upi, card, comp } }
   if (orders.length > 0 && apiKey) {
     try {
       const paymentIds = orders.flatMap(o => o.payment_ids || []);
       if (paymentIds.length > 0) {
         const payments = await rpc(odooUrl, ODOO_DB, ODOO_UID, apiKey, 'pos.payment', 'search_read',
           [[['id', 'in', paymentIds]]],
-          { fields: ['amount', 'payment_method_id'] });
+          { fields: ['amount', 'payment_method_id', 'pos_order_id'] });
         for (const p of payments) {
           const pmId = p.payment_method_id ? p.payment_method_id[0] : 0;
           const amt = p.amount || 0;
-          if (pmId === CAPTAIN_CASH_PM) cash += amt;
-          else if (pmId === captain.upiPM) upi += amt;
-          else if (pmId === CAPTAIN_CARD_PM) card += amt;
-          else if (pmId === CAPTAIN_COMP_PM) comp += amt;
+          const oid = p.pos_order_id ? p.pos_order_id[0] : 0;
+          if (!paymentsByOrder[oid]) paymentsByOrder[oid] = { cash: 0, upi: 0, card: 0, comp: 0 };
+          if (pmId === CAPTAIN_CASH_PM) { cash += amt; paymentsByOrder[oid].cash += amt; }
+          else if (pmId === captain.upiPM) { upi += amt; paymentsByOrder[oid].upi += amt; }
+          else if (pmId === CAPTAIN_CARD_PM) { card += amt; paymentsByOrder[oid].card += amt; }
+          else if (pmId === CAPTAIN_COMP_PM) { comp += amt; paymentsByOrder[oid].comp += amt; }
         }
       }
     } catch (e) { console.error('Captain-live payments error:', e.message); }
@@ -698,6 +701,7 @@ async function getCaptainLive(env, captainId, envParam) {
       orderDetails = orders.map(o => ({
         id: o.id, name: o.name, amount: o.amount_total, time: o.date_order,
         items: linesByOrder[o.id] || [],
+        pm: paymentsByOrder[o.id] || { cash: 0, upi: 0, card: 0, comp: 0 },
       }));
     } catch (e) { console.error('Captain-live order details error:', e.message); }
   }
