@@ -2895,8 +2895,42 @@ async function handleFloorAction(context, action, corsHeaders) {
 
   // ── Waiter's orders + ready batches ──
   if (action === 'floor-my-orders' && method === 'GET') {
-    if (!staff.can_waiter) return err('Waiter access required', 403);
+    if (!staff.can_waiter && !staff.can_captain) return err('Access required', 403);
     return handleFloorMyOrders(db, staff, json, t);
+  }
+
+  // ── Accept order (Waiter/Captain acknowledges assignment) ──
+  if (action === 'floor-accept-order' && method === 'POST') {
+    const body = await context.request.json();
+    const { order_id } = body;
+    if (!order_id) return err('order_id required');
+    const now = new Date().toISOString();
+    await db.prepare(
+      `UPDATE ${t}floor_orders SET status = 'in_progress', updated_at = ? WHERE id = ? AND status IN ('new', 'assigned')`
+    ).bind(now, order_id).run();
+    return json({ ok: true });
+  }
+
+  // ── Serve table (mark entire order as served — all items delivered) ──
+  if (action === 'floor-serve-table' && method === 'POST') {
+    const body = await context.request.json();
+    const { order_id } = body;
+    if (!order_id) return err('order_id required');
+    const now = new Date().toISOString();
+    // Mark all items as delivered
+    await db.prepare(
+      `UPDATE ${t}floor_items SET status = 'delivered', delivered_at = COALESCE(delivered_at, ?), updated_at = ? WHERE floor_order_id = ?`
+    ).bind(now, now, order_id).run();
+    // Mark order as served
+    const totalItems = await db.prepare(`SELECT COUNT(*) as cnt FROM ${t}floor_items WHERE floor_order_id = ?`).bind(order_id).first();
+    await db.prepare(
+      `UPDATE ${t}floor_orders SET status = 'served', served_at = ?, items_delivered = ?, updated_at = ? WHERE id = ? AND status IN ('new', 'assigned', 'in_progress')`
+    ).bind(now, totalItems?.cnt || 0, now, order_id).run();
+    // Decrement waiter load
+    await db.prepare(
+      `UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = (SELECT waiter_id FROM ${t}floor_orders WHERE id = ?)`
+    ).bind(order_id).run();
+    return json({ ok: true });
   }
 
   // ── Mark items picked up (any floor staff can help) ──
@@ -2911,18 +2945,18 @@ async function handleFloorAction(context, action, corsHeaders) {
     return handleFloorDeliver(db, staff, body, json, err, t);
   }
 
-  // ── Cleaner: tables needing cleaning ──
+  // ── Cleaner: tables needing cleaning (any staff can access) ──
   if (action === 'floor-cleaner-tables' && method === 'GET') {
     return handleFloorCleanerTables(db, staff, json, t);
   }
 
-  // ── Cleaner: acknowledge (start cleaning) ──
+  // ── Cleaner: acknowledge (start cleaning — any staff can help) ──
   if (action === 'floor-clean-ack' && method === 'POST') {
     const body = await context.request.json();
     return handleFloorCleanAck(db, staff, body, json, err, t);
   }
 
-  // ── Cleaner: done cleaning ──
+  // ── Cleaner: done cleaning (any staff can help) ──
   if (action === 'floor-clean-done' && method === 'POST') {
     const body = await context.request.json();
     return handleFloorCleanDone(db, staff, body, json, err, t);
@@ -2935,7 +2969,7 @@ async function handleFloorAction(context, action, corsHeaders) {
 
   // ── Floor Intel: comprehensive operations data for management dashboard ──
   if (action === 'floor-intel' && method === 'GET') {
-    return handleFloorIntel(db, json, t);
+    return handleFloorIntel(db, staff, json, t);
   }
 
   // ── Manage staff (Captain) ──
@@ -3220,9 +3254,14 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
         const paidIds = new Set(paidOrders.map(p => p.id));
         for (const uo of unpaidOrders.results) {
           if (paidIds.has(uo.odoo_order_id)) {
+            // Mark as served + paid — removes from active orders, appears in dirty tables
             await db.prepare(
-              `UPDATE ${t}floor_orders SET paid_at = ?, clean_status = 'needs_cleaning', updated_at = ? WHERE id = ?`
-            ).bind(now, now, uo.id).run();
+              `UPDATE ${t}floor_orders SET status = 'served', served_at = COALESCE(served_at, ?), paid_at = ?, clean_status = 'needs_cleaning', updated_at = ? WHERE id = ?`
+            ).bind(now, now, now, uo.id).run();
+            // Decrement waiter load since order is now served
+            await db.prepare(
+              `UPDATE ${t}floor_staff SET current_load = MAX(0, current_load - 1) WHERE id = (SELECT waiter_id FROM ${t}floor_orders WHERE id = ?)`
+            ).bind(uo.id).run();
             newlyPaid++;
           }
         }
@@ -3260,14 +3299,18 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
 async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '') {
   const now = new Date().toISOString();
 
+  // Captain scope: if staff has odoo_employee_id, show only their orders
+  const captainFilter = staff.odoo_employee_id ? ` AND fo.captain_id = ${staff.id}` : '';
+  const captainFilterSimple = staff.odoo_employee_id ? ` AND captain_id = ${staff.id}` : '';
+
   // Unassigned orders
   const unassigned = await db.prepare(
-    `SELECT * FROM ${t}floor_orders WHERE waiter_id IS NULL AND status IN ('new') ORDER BY created_at ASC`
+    `SELECT * FROM ${t}floor_orders fo WHERE waiter_id IS NULL AND status IN ('new')${captainFilter} ORDER BY created_at ASC`
   ).all();
 
   // Active orders (assigned, not yet closed)
   const active = await db.prepare(
-    `SELECT fo.*, fs.name as waiter_name, cs.name as captain_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id LEFT JOIN ${t}floor_staff cs ON fo.captain_id = cs.id WHERE fo.status IN ('new', 'assigned', 'in_progress') ORDER BY fo.created_at ASC`
+    `SELECT fo.*, fs.name as waiter_name, cs.name as captain_name FROM ${t}floor_orders fo LEFT JOIN ${t}floor_staff fs ON fo.waiter_id = fs.id LEFT JOIN ${t}floor_staff cs ON fo.captain_id = cs.id WHERE fo.status IN ('new', 'assigned', 'in_progress')${captainFilter} ORDER BY fo.created_at ASC`
   ).all();
 
   // Waiter data with shift info + today's served count
@@ -3286,7 +3329,7 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
        SUM(CASE WHEN waiter_id IS NULL AND status = 'new' THEN 1 ELSE 0 END) as unassigned,
        SUM(CASE WHEN status IN ('assigned', 'in_progress') THEN 1 ELSE 0 END) as active,
        SUM(CASE WHEN status = 'served' THEN 1 ELSE 0 END) as served
-     FROM ${t}floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)`
+     FROM ${t}floor_orders WHERE status NOT IN ('cancelled', 'closed') AND DATE(created_at) = DATE(?)${captainFilterSimple}`
   ).bind(now).first();
 
   // On-shift waiter count
@@ -3306,13 +3349,13 @@ async function handleFloorDashboard(context, db, staff, json, corsHeaders, t = '
   // Tables needing cleaning
   const dirtyTables = await db.prepare(
     `SELECT id, table_number, odoo_order_name, paid_at, clean_status, cleaner_id, clean_ack_at
-     FROM ${t}floor_orders WHERE clean_status IN ('needs_cleaning', 'cleaning') ORDER BY paid_at ASC`
+     FROM ${t}floor_orders WHERE clean_status IN ('needs_cleaning', 'cleaning')${captainFilterSimple} ORDER BY paid_at ASC`
   ).all();
 
   // Served orders (awaiting payment)
   const servedOrders = await db.prepare(
     `SELECT id, table_number, odoo_order_name, served_at, paid_at
-     FROM ${t}floor_orders WHERE status = 'served' AND paid_at IS NULL ORDER BY served_at ASC`
+     FROM ${t}floor_orders WHERE status = 'served' AND paid_at IS NULL${captainFilterSimple} ORDER BY served_at ASC`
   ).all();
 
   // Get items for active orders + unassigned orders
@@ -3389,10 +3432,19 @@ async function handleFloorReassign(db, body, json, err, t = '') {
 
 // ── Waiter's orders (v2: My Orders + Deliver batches by table) ──
 async function handleFloorMyOrders(db, staff, json, t = '') {
-  // Get ALL active orders (any waiter sees all tables for manual coordination)
-  const orders = await db.prepare(
-    `SELECT * FROM ${t}floor_orders WHERE status IN ('new', 'assigned', 'in_progress') ORDER BY created_at ASC`
-  ).all();
+  // Waiter sees orders assigned to them; Captain sees their own captain orders
+  let orders;
+  if (staff.can_captain && staff.odoo_employee_id) {
+    // Captain doing waiter work — sees their own orders
+    orders = await db.prepare(
+      `SELECT * FROM ${t}floor_orders WHERE captain_id = ? AND status IN ('new', 'assigned', 'in_progress') ORDER BY created_at ASC`
+    ).bind(staff.id).all();
+  } else {
+    // Waiter sees orders assigned to them
+    orders = await db.prepare(
+      `SELECT * FROM ${t}floor_orders WHERE waiter_id = ? AND status IN ('new', 'assigned', 'in_progress') ORDER BY created_at ASC`
+    ).bind(staff.id).all();
+  }
 
   if (orders.results.length === 0) {
     return json({
@@ -3681,13 +3733,17 @@ async function handleFloorKPI(db, json, t = '') {
 }
 
 // ── Floor Intel: comprehensive management dashboard data ──
-async function handleFloorIntel(db, json, t = '') {
+async function handleFloorIntel(db, staff, json, t = '') {
   const now = new Date();
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
   const todayISO = todayStart.toISOString();
 
-  // Live state: all active orders with status breakdown
+  // Captain scope: if staff has odoo_employee_id, show only their orders
+  const captainFilter = staff?.odoo_employee_id ? ` AND fo.captain_id = ${staff.id}` : '';
+  const captainFilterSimple = staff?.odoo_employee_id ? ` AND captain_id = ${staff.id}` : '';
+
+  // Live state: active orders with status breakdown
   const liveOrders = await db.prepare(
     `SELECT fo.id, fo.table_number, fo.odoo_order_name, fo.status, fo.created_at,
        fo.assigned_at, fo.served_at, fo.paid_at, fo.clean_status, fo.cleaned_at,
@@ -3696,7 +3752,7 @@ async function handleFloorIntel(db, json, t = '') {
      FROM ${t}floor_orders fo
      LEFT JOIN ${t}floor_staff w ON fo.waiter_id = w.id
      LEFT JOIN ${t}floor_staff c ON fo.cleaner_id = c.id
-     WHERE fo.status NOT IN ('cancelled') AND DATE(fo.created_at) = DATE(?)
+     WHERE fo.status NOT IN ('cancelled') AND DATE(fo.created_at) = DATE(?)${captainFilter}
      ORDER BY fo.created_at DESC`
   ).bind(todayISO).all();
 
@@ -3722,7 +3778,7 @@ async function handleFloorIntel(db, json, t = '') {
          THEN CAST((julianday(cleaned_at) - julianday(paid_at)) * 24 * 60 AS REAL) END) as avg_clean_min,
        AVG(CASE WHEN cleaned_at IS NOT NULL AND created_at IS NOT NULL
          THEN CAST((julianday(cleaned_at) - julianday(created_at)) * 24 * 60 AS REAL) END) as avg_total_turnover_min
-     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'`
+     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'${captainFilterSimple}`
   ).bind(todayISO).first();
 
   // Per-staff KPIs today
@@ -3750,7 +3806,7 @@ async function handleFloorIntel(db, json, t = '') {
   // Hourly order distribution
   const hourly = await db.prepare(
     `SELECT CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as orders
-     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'
+     FROM ${t}floor_orders WHERE DATE(created_at) = DATE(?) AND status != 'cancelled'${captainFilterSimple}
      GROUP BY hour ORDER BY hour`
   ).bind(todayISO).all();
 

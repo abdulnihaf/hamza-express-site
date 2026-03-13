@@ -100,6 +100,15 @@
     .reassign-btn{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text2);font-family:inherit}
     .reassign-btn:active{background:var(--border)}
 
+    /* Secondary action buttons (captain doing waiter/cleaner work) */
+    .action-row{display:flex;gap:6px;margin:6px 14px 10px;flex-wrap:wrap}
+    .action-btn{flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;min-width:80px}
+    .action-btn:active{opacity:.7;transform:scale(.97)}
+    .action-btn.accept{border-color:var(--orange);color:var(--orange);background:var(--orange-dim)}
+    .action-btn.serve{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+    .action-btn.clean-ack{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+    .action-btn.clean-done{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+
     /* Modal */
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center}
     .modal-overlay.show{display:flex}
@@ -570,6 +579,7 @@ function renderDashboard() {
           <div class="alert-table">Table ${t.table_number || '?'}</div>
           <div class="alert-meta">${t.odoo_order_name || ''} &middot; Paid ${waitMin}m ago</div>
         </div>
+        <button class="action-btn clean-ack" style="margin:0;flex-shrink:0" onclick="captainCleanAck(${t.id})">Clean</button>
         <div class="alert-time ${urgency}">${waitMin}m</div>
       </div>`;
     }
@@ -580,6 +590,7 @@ function renderDashboard() {
           <div class="alert-table">Table ${t.table_number || '?'}</div>
           <div class="alert-meta">Being cleaned &middot; ${cleanMin}m</div>
         </div>
+        <button class="action-btn clean-done" style="margin:0;flex-shrink:0" onclick="captainCleanDone(${t.id})">Done</button>
         <div class="alert-time" style="color:var(--purple)">${cleanMin}m</div>
       </div>`;
     }
@@ -785,6 +796,18 @@ function renderActiveTableCard(tbl) {
       ).join('') + '</div>'
     : '';
 
+  // Action buttons for captain doing waiter work
+  const needsAccept = tbl.orders.some(o => o.status === 'new' || o.status === 'assigned');
+  const isInProgress = tbl.orders.some(o => o.status === 'in_progress');
+  const orderIdList = tbl.orders.map(o => o.id);
+  let actionsHtml = '';
+  if (needsAccept || isInProgress) {
+    actionsHtml = '<div class="action-row">';
+    if (needsAccept) actionsHtml += `<button class="action-btn accept" onclick="captainAccept([${orderIdList}])">Accept</button>`;
+    if (isInProgress) actionsHtml += `<button class="action-btn serve" onclick="captainServe([${orderIdList}])">Mark Served</button>`;
+    actionsHtml += '</div>';
+  }
+
   return `<div class="order-card">
     <div class="order-top">
       <span class="table-num">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}</span>
@@ -804,7 +827,44 @@ function renderActiveTableCard(tbl) {
     </div>
     ${itemsHtml}
     <div class="progress-bar"><div class="fill ${pClass}" style="width:${progressPct}%"></div></div>
+    ${actionsHtml}
   </div>`;
+}
+
+// ── Captain doing waiter work: accept orders ──
+async function captainAccept(orderIds) {
+  try {
+    for (const id of orderIds) await api('floor-accept-order', 'POST', { order_id: id });
+    toast('Order accepted');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing waiter work: mark served ──
+async function captainServe(orderIds) {
+  try {
+    for (const id of orderIds) await api('floor-serve-table', 'POST', { order_id: id });
+    toast('Table served!');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing cleaner work: acknowledge cleaning ──
+async function captainCleanAck(orderId) {
+  try {
+    await api('floor-clean-ack', 'POST', { order_id: orderId });
+    toast('Cleaning started');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing cleaner work: done cleaning ──
+async function captainCleanDone(orderId) {
+  try {
+    await api('floor-clean-done', 'POST', { order_id: orderId });
+    toast('Table cleaned!');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // ── Force shift (Captain toggles waiter shift) ──

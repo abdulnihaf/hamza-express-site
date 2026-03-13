@@ -107,9 +107,13 @@
     .st-collected{color:var(--blue);background:var(--blue-dim)}
     .st-served{color:var(--text2);background:var(--bg)}
 
-    /* Table card SERVED button */
+    /* Table card action buttons */
     .table-serve-btn{width:calc(100% - 28px);margin:4px 14px 12px;padding:14px;background:var(--green);color:#000;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
     .table-serve-btn:active{opacity:.8;transform:scale(.98)}
+    .table-accept-btn{width:calc(100% - 28px);margin:4px 14px 12px;padding:16px;background:var(--orange);color:#000;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;animation:acceptPulse 2s infinite}
+    .table-accept-btn:active{opacity:.8;transform:scale(.98)}
+    @keyframes acceptPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.4)}50%{box-shadow:0 0 0 8px rgba(249,115,22,0)}}
+    .table-card.new-order{border-color:var(--orange);border-width:2px}
 
     /* Deliver cards */
     .deliver-card{background:var(--card);border:2px solid var(--blue);border-radius:14px;padding:16px;margin-bottom:12px}
@@ -601,7 +605,11 @@ function renderTables() {
     const orderNames = tbl.orders.map(o => o.odoo_order_name).filter(Boolean).join(', ');
     const e = elapsedSince(tbl.earliest_created);
     const tc = timerClass(e.total);
-    const hasPickedUp = items.some(i => i.status === 'picked_up');
+
+    // Determine order state for action buttons
+    const needsAccept = tbl.orders.some(o => o.status === 'new' || o.status === 'assigned');
+    const isInProgress = tbl.orders.some(o => o.status === 'in_progress');
+    const firstOrderId = tbl.orders[0]?.id;
 
     // Group items by counter
     const byCounter = {};
@@ -611,7 +619,7 @@ function renderTables() {
       byCounter[counter].push(item);
     }
 
-    let card = '<div class="table-card">';
+    let card = `<div class="table-card${needsAccept ? ' new-order' : ''}">`;
     card += `<div class="table-card-header">
       <span class="tbl">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}
         <span class="serve-timer ${tc}" data-timer-from="${tbl.earliest_created}">${formatTimer(e.min, e.sec)}</span>
@@ -633,10 +641,13 @@ function renderTables() {
 
     card += '</div>';
 
-    // One-tap SERVED button (visible when any items are picked up)
-    if (hasPickedUp) {
-      const pickedCount = items.filter(i => i.status === 'picked_up').length;
-      card += `<button class="table-serve-btn" onclick="serveTable('${tbl.table_number}')">&#x2713; SERVED (${pickedCount} item${pickedCount > 1 ? 's' : ''})</button>`;
+    // Action buttons: ACCEPT for new/assigned, SERVED for in_progress
+    if (needsAccept) {
+      const orderIds = tbl.orders.filter(o => o.status === 'new' || o.status === 'assigned').map(o => o.id);
+      card += `<button class="table-accept-btn" onclick="acceptOrders([${orderIds.join(',')}])">ACCEPT ORDER</button>`;
+    } else if (isInProgress) {
+      const orderIds = tbl.orders.filter(o => o.status === 'in_progress').map(o => o.id);
+      card += `<button class="table-serve-btn" onclick="serveOrders([${orderIds.join(',')}])">&#x2713; SERVED</button>`;
     }
 
     card += '</div>';
@@ -698,7 +709,31 @@ function renderDeliver() {
   ).join('');
 }
 
-// ── Serve Table (one-tap) ──
+// ── Accept Orders (waiter acknowledges) ──
+async function acceptOrders(orderIds) {
+  try {
+    for (const id of orderIds) {
+      await api('floor-accept-order', 'POST', { order_id: id });
+    }
+    vibrate([100, 50, 100]);
+    toast('Order accepted!');
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Serve Orders (mark all items delivered + order served) ──
+async function serveOrders(orderIds) {
+  try {
+    for (const id of orderIds) {
+      await api('floor-serve-table', 'POST', { order_id: id });
+    }
+    vibrate([100]);
+    toast('Table served!');
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Legacy serve by table (for deliver tab) ──
 async function serveTable(tableNumber) {
   try {
     await api('floor-deliver', 'POST', { table_number: tableNumber });
