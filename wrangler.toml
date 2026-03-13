@@ -7,8 +7,10 @@ compatibility_flags = ["nodejs_compat"]
 ODOO_URL = "https://ops.hamzahotel.com/jsonrpc"
 ODOO_DB = "main"
 ODOO_UID = "2"
+VAPID_PUBLIC_KEY = "BPpmu5i8gica_zlVUgKHD7Tk81biJSviatNFuL23Y66htjsjYtly4sHm_y-e9wOloubbbeH0DxCll6P_RjtYi1w"
 
 # Secrets (set via: wrangler pages secret put <NAME>)
+# VAPID_PRIVATE_KEY      — Web Push ECDSA P-256 private key (JWK JSON string)
 # WA_ACCESS_TOKEN       — Meta WhatsApp Cloud API bearer token
 # WA_PHONE_ID           — HE phone number ID (987158291152067)
 # WA_VERIFY_TOKEN       — Webhook verification token

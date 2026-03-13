@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>HE Cleaner</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b}
@@ -294,7 +296,40 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
   }
 });
 
+// ── Web Push Notifications ──
+const VAPID_PUBLIC_KEY = 'BPpmu5i8gica_zlVUgKHD7Tk81biJSviatNFuL23Y66htjsjYtly4sHm_y-e9wOloubbbeH0DxCll6P_RjtYi1w';
+function urlBase64ToUint8Array(base64String) {
+  const p = base64String.replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(p + '='.repeat((4 - p.length % 4) % 4));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+async function setupPush() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    await api('floor-push-subscribe', 'POST', { subscription: sub.toJSON() });
+  } catch (e) { console.warn('Push setup failed:', e); }
+}
+async function teardownPush() {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    if (!reg) return;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+    api('floor-push-unsubscribe', 'POST').catch(() => {});
+  } catch (e) { /* best effort */ }
+}
+
 function logout() {
+  teardownPush();
   token = ''; staffInfo = null;
   localStorage.removeItem('floor_cleaner_token');
   localStorage.removeItem('floor_cleaner_staff');
@@ -328,6 +363,7 @@ async function toggleShift() {
     localStorage.setItem('floor_cleaner_staff', JSON.stringify(staffInfo));
     vibrate([200]);
     toast('Shift started!');
+    setupPush();
     enterApp();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -338,6 +374,7 @@ function showEndShift() {
 
 async function endShift() {
   try {
+    teardownPush();
     await api('floor-end-shift', 'POST');
     staffInfo.on_shift = false;
     localStorage.setItem('floor_cleaner_staff', JSON.stringify(staffInfo));
@@ -491,6 +528,7 @@ async function doneClean(orderId) {
 // ── Init ──
 if (token && staffInfo) {
   afterLogin();
+  if (staffInfo.on_shift) setupPush();
 } else {
   document.getElementById('pin-screen').style.display = 'flex';
 }

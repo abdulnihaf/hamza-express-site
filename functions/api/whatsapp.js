@@ -2441,7 +2441,7 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
     floorOrder = await createFloorOrderFromOdoo(context, posOrderId, configId, floorCfg);
     if (!floorOrder) return ok('could not create floor order');
     // Auto-assign to on-shift waiter
-    await autoAssignOrder(db, floorOrder.id, t);
+    await autoAssignOrder(db, floorOrder.id, t, context);
     // Re-read to get assignment data
     floorOrder = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(floorOrder.id).first();
   }
@@ -2487,6 +2487,16 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
     await db.prepare(
       `UPDATE ${t}floor_orders SET items_ready = items_ready + 1, status = CASE WHEN status = 'served' THEN status ELSE 'in_progress' END, updated_at = ? WHERE id = ?`
     ).bind(now, floorOrder.id).run();
+    // Push notification to waiter: items ready at counter
+    if (floorOrder.waiter_id && context?.env?.VAPID_PRIVATE_KEY) {
+      context.waitUntil(pushToStaff(context.env, db, floorOrder.waiter_id, {
+        title: 'Items Ready',
+        body: `${floorItem.product_name} at ${stageInfo.counter}`,
+        vibrate: [300, 100, 300],
+        tag: `ready-${floorOrder.waiter_id}`,
+        url: '/ops/waiter/'
+      }, t));
+    }
   }
 
   // Update tracking number if we have it
@@ -2784,6 +2794,169 @@ async function handleKPSync(context, corsHeaders) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// WEB PUSH NOTIFICATIONS — RFC 8291 aes128gcm + VAPID (ES256)
+// Pure crypto.subtle, zero dependencies. Fire-and-forget via waitUntil.
+// ═══════════════════════════════════════════════════════════════════
+
+function b64UrlEncode(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
+async function createVapidJwt(endpoint, privateKeyJwk) {
+  const aud = new URL(endpoint).origin;
+  const exp = Math.floor(Date.now() / 1000) + 12 * 3600;
+  const header = { typ: 'JWT', alg: 'ES256' };
+  const payload = { aud, exp, sub: 'mailto:ops@hamzaexpress.in' };
+  const enc = (obj) => b64UrlEncode(new TextEncoder().encode(JSON.stringify(obj)));
+  const unsigned = enc(header) + '.' + enc(payload);
+  const key = await crypto.subtle.importKey('jwk', privateKeyJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
+  // Convert DER signature to raw r||s (64 bytes)
+  const sigBytes = new Uint8Array(sig);
+  let r, s;
+  if (sigBytes.length === 64) {
+    r = sigBytes.slice(0, 32); s = sigBytes.slice(32);
+  } else {
+    // DER: 0x30 len 0x02 rLen r 0x02 sLen s
+    const rLen = sigBytes[3];
+    const rStart = 4 + (rLen - 32 > 0 ? rLen - 32 : 0);
+    r = sigBytes.slice(4, 4 + rLen); if (r.length > 32) r = r.slice(r.length - 32);
+    const sOffset = 4 + rLen;
+    const sLen = sigBytes[sOffset + 1];
+    s = sigBytes.slice(sOffset + 2, sOffset + 2 + sLen); if (s.length > 32) s = s.slice(s.length - 32);
+    // Pad to 32 bytes
+    if (r.length < 32) { const p = new Uint8Array(32); p.set(r, 32 - r.length); r = p; }
+    if (s.length < 32) { const p = new Uint8Array(32); p.set(s, 32 - s.length); s = p; }
+  }
+  const rawSig = new Uint8Array(64);
+  rawSig.set(r, 0); rawSig.set(s, 32);
+  return unsigned + '.' + b64UrlEncode(rawSig);
+}
+
+async function encryptPushPayload(subscription, payloadStr) {
+  // RFC 8291: aes128gcm content encoding for Web Push
+  const clientPubB64 = subscription.keys.p256dh;
+  const authB64 = subscription.keys.auth;
+  const clientPub = b64UrlDecode(clientPubB64);
+  const auth = b64UrlDecode(authB64);
+
+  // Generate ephemeral ECDH keypair
+  const localKp = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const localPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', localKp.publicKey));
+
+  // Import client public key
+  const clientKey = await crypto.subtle.importKey('raw', clientPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+
+  // ECDH shared secret
+  const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: clientKey }, localKp.privateKey, 256));
+
+  // HKDF: extract with auth as salt, then derive PRK
+  const authInfo = new TextEncoder().encode('WebPush: info\0');
+  const infoConcat = new Uint8Array(authInfo.length + clientPub.length + localPubRaw.length);
+  infoConcat.set(authInfo, 0);
+  infoConcat.set(clientPub, authInfo.length);
+  infoConcat.set(localPubRaw, authInfo.length + clientPub.length);
+
+  const prkKey = await crypto.subtle.importKey('raw', sharedSecret, 'HKDF', false, ['deriveBits']);
+  const ikm = new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt: auth, info: infoConcat }, prkKey, 256));
+
+  // Derive CEK (content encryption key) and nonce
+  const ikmKey = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cekInfo = new TextEncoder().encode('Content-Encoding: aes128gcm\0');
+  const nonceInfo = new TextEncoder().encode('Content-Encoding: nonce\0');
+  const cekBits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: cekInfo }, ikmKey, 128));
+  const nonce = new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: nonceInfo }, ikmKey, 96));
+
+  // Pad plaintext (add delimiter 0x02 + zero padding)
+  const plaintext = new TextEncoder().encode(payloadStr);
+  const padded = new Uint8Array(plaintext.length + 1); // minimal padding
+  padded.set(plaintext, 0);
+  padded[plaintext.length] = 2; // delimiter
+
+  // AES-128-GCM encrypt
+  const aesKey = await crypto.subtle.importKey('raw', cekBits, 'AES-GCM', false, ['encrypt']);
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, padded));
+
+  // aes128gcm header: salt(16) + rs(4) + idLen(1) + keyId(65) + ciphertext
+  const rs = plaintext.length + 1 + 16 + 1; // record size (padded + tag + delimiter overhead)
+  const header = new Uint8Array(16 + 4 + 1 + 65);
+  header.set(salt, 0);
+  new DataView(header.buffer).setUint32(16, 4096); // record size
+  header[20] = 65; // keyId length (uncompressed EC point)
+  header.set(localPubRaw, 21);
+
+  const body = new Uint8Array(header.length + encrypted.length);
+  body.set(header, 0);
+  body.set(encrypted, header.length);
+  return body;
+}
+
+async function sendPush(env, subscription, payload) {
+  try {
+    const privJwk = JSON.parse(env.VAPID_PRIVATE_KEY);
+    const jwt = await createVapidJwt(subscription.endpoint, privJwk);
+    const vapidPub = env.VAPID_PUBLIC_KEY;
+    const body = await encryptPushPayload(subscription, JSON.stringify(payload));
+
+    const resp = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `vapid t=${jwt}, k=${vapidPub}`,
+        'Content-Encoding': 'aes128gcm',
+        'Content-Type': 'application/octet-stream',
+        'TTL': '86400',
+        'Urgency': 'high'
+      },
+      body
+    });
+
+    if (resp.status === 410 || resp.status === 404) return { expired: true };
+    if (resp.ok || resp.status === 201) return { ok: true };
+    console.error(`Push failed: ${resp.status} ${await resp.text().catch(() => '')}`);
+    return { error: resp.status };
+  } catch (e) {
+    console.error('Push send error:', e.message);
+    return { error: e.message };
+  }
+}
+
+async function pushToStaff(env, db, staffId, payload, t = '') {
+  const staff = await db.prepare(`SELECT push_subscription FROM ${t}floor_staff WHERE id = ?`).bind(staffId).first();
+  if (!staff?.push_subscription) return;
+  try {
+    const sub = JSON.parse(staff.push_subscription);
+    const result = await sendPush(env, sub, payload);
+    if (result.expired) {
+      await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(staffId).run();
+      console.log(`Push: cleared expired subscription for staff ${staffId}`);
+    }
+  } catch (e) { console.error(`Push to staff ${staffId} error:`, e.message); }
+}
+
+async function pushToRole(env, db, role, payload, t = '') {
+  const col = role === 'captain' ? 'can_captain' : role === 'cleaner' ? 'can_clean' : 'can_waiter';
+  const staff = await db.prepare(
+    `SELECT id, push_subscription FROM ${t}floor_staff WHERE ${col} = 1 AND on_shift = 1 AND push_subscription IS NOT NULL`
+  ).all();
+  for (const s of (staff.results || [])) {
+    try {
+      const sub = JSON.parse(s.push_subscription);
+      const result = await sendPush(env, sub, payload);
+      if (result.expired) {
+        await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(s.id).run();
+      }
+    } catch (e) { /* best effort */ }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // FLOOR OPERATIONS — Captain/Waiter Coordination System
 // ═══════════════════════════════════════════════════════════════════
 
@@ -2808,7 +2981,7 @@ async function validateFloorToken(db, token, requireRole, t) {
 }
 
 // ── Auto-assign order to lowest-load on-shift waiter ──
-async function autoAssignOrder(db, orderId, t = '') {
+async function autoAssignOrder(db, orderId, t = '', context = null) {
   // Check if order is already assigned
   const order = await db.prepare(`SELECT * FROM ${t}floor_orders WHERE id = ?`).bind(orderId).first();
   if (!order || order.waiter_id) return false; // already assigned or not found
@@ -2829,6 +3002,17 @@ async function autoAssignOrder(db, orderId, t = '') {
 
   if (!waiters.results || waiters.results.length === 0) {
     console.log(`AutoAssign${t ? '[TEST]' : ''}: no on-shift waiters for order ${orderId}`);
+    // Push to captains: unassigned order alert
+    if (context?.env?.VAPID_PRIVATE_KEY) {
+      const tableNum = order.table_number || '?';
+      context.waitUntil(pushToRole(context.env, db, 'captain', {
+        title: 'Unassigned Order',
+        body: `Table ${tableNum} — no waiters on shift`,
+        vibrate: [800, 200, 800],
+        tag: 'unassigned',
+        url: '/ops/captain/'
+      }, t));
+    }
     return false; // No on-shift staff — captain will see unassigned alert
   }
 
@@ -2847,6 +3031,20 @@ async function autoAssignOrder(db, orderId, t = '') {
   await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter.id).run();
 
   console.log(`AutoAssign${t ? '[TEST]' : ''}: order ${orderId} → ${waiter.name} (load: ${waiter.current_load + 1})`);
+
+  // Push notification to assigned waiter: new order
+  if (context?.env?.VAPID_PRIVATE_KEY) {
+    const itemCount = order.total_items || '?';
+    const tableNum = order.table_number || '?';
+    context.waitUntil(pushToStaff(context.env, db, waiter.id, {
+      title: `New Order — Table ${tableNum}`,
+      body: `${itemCount} items assigned to you`,
+      vibrate: [500, 200, 500, 200, 500],
+      tag: `new-order-${waiter.id}`,
+      url: '/ops/waiter/'
+    }, t));
+  }
+
   return true;
 }
 
@@ -2871,10 +3069,10 @@ async function handleFloorAction(context, action, corsHeaders) {
     const staff = await db.prepare(`SELECT * FROM ${t}floor_staff WHERE pin = ? AND is_active = 1`).bind(pin).first();
     if (!staff) return err('Invalid PIN', 401);
 
-    // Generate session token (32-char hex, valid 12h)
+    // Generate session token (32-char hex, valid 30 days — eliminates daily re-login friction)
     const token = Array.from(crypto.getRandomValues(new Uint8Array(16)))
       .map(b => b.toString(16).padStart(2, '0')).join('');
-    const expires = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     await db.prepare(`UPDATE ${t}floor_staff SET session_token = ?, token_expires_at = ?, last_seen_at = ? WHERE id = ?`)
       .bind(token, expires, new Date().toISOString(), staff.id).run();
 
@@ -3030,6 +3228,23 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({ staff: staffList.results });
   }
 
+  // ── Push subscribe (any staff) ──
+  if (action === 'floor-push-subscribe' && method === 'POST') {
+    const body = await context.request.json();
+    const sub = body.subscription;
+    if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return err('Invalid subscription');
+    await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = ? WHERE id = ?`)
+      .bind(JSON.stringify(sub), staff.id).run();
+    return json({ ok: true });
+  }
+
+  // ── Push unsubscribe (any staff) ──
+  if (action === 'floor-push-unsubscribe' && method === 'POST') {
+    await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`)
+      .bind(staff.id).run();
+    return json({ ok: true });
+  }
+
   // ── Start shift (any staff) ──
   if (action === 'floor-start-shift' && method === 'POST') {
     const now = new Date().toISOString();
@@ -3058,7 +3273,7 @@ async function handleFloorAction(context, action, corsHeaders) {
         `UPDATE ${t}floor_staff SET current_load = 0 WHERE id = ?`
       ).bind(staff.id).run();
       for (const o of activeOrders.results) {
-        const ok = await autoAssignOrder(db, o.id, t);
+        const ok = await autoAssignOrder(db, o.id, t, context);
         if (ok) reassigned++; else unassigned++;
       }
     }
@@ -3092,7 +3307,7 @@ async function handleFloorAction(context, action, corsHeaders) {
           `UPDATE ${t}floor_staff SET current_load = 0 WHERE id = ?`
         ).bind(staff_id).run();
         for (const o of activeOrders.results) {
-          await autoAssignOrder(db, o.id, t);
+          await autoAssignOrder(db, o.id, t, context);
         }
       }
     }
@@ -3236,7 +3451,7 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
           const result = await createFloorOrderFromOdoo(context, order.id, 6, cfg);
           if (result) {
             pollResult.created++;
-            await autoAssignOrder(db, result.id, t);
+            await autoAssignOrder(db, result.id, t, context);
           }
         }
 
@@ -3266,6 +3481,18 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
                     ).bind(uo.id).run();
                   }
                   pollResult.newly_paid++;
+                  // Push notification to cleaners: table needs cleaning
+                  if (context?.env?.VAPID_PRIVATE_KEY) {
+                    const paidOrder = await db.prepare(`SELECT table_number FROM ${t}floor_orders WHERE id = ?`).bind(uo.id).first();
+                    const tbl = paidOrder?.table_number || '?';
+                    context.waitUntil(pushToRole(context.env, db, 'cleaner', {
+                      title: `Table ${tbl} Needs Cleaning`,
+                      body: 'Paid and ready to clean',
+                      vibrate: [500, 200, 500],
+                      tag: 'clean-table',
+                      url: '/ops/cleaner/'
+                    }, t));
+                  }
                 }
               }
             }
@@ -3456,7 +3683,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
       const result = await createFloorOrderFromOdoo(context, order.id, 6, cfg);
       if (result) {
         created++;
-        await autoAssignOrder(db, result.id, t);
+        await autoAssignOrder(db, result.id, t, context);
       }
     }
   }
@@ -3517,6 +3744,18 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
               ).bind(uo.id).run();
             }
             newlyPaid++;
+            // Push notification to cleaners: table needs cleaning
+            if (context?.env?.VAPID_PRIVATE_KEY) {
+              const paidOrder = await db.prepare(`SELECT table_number FROM ${t}floor_orders WHERE id = ?`).bind(uo.id).first();
+              const tbl = paidOrder?.table_number || '?';
+              context.waitUntil(pushToRole(context.env, db, 'cleaner', {
+                title: `Table ${tbl} Needs Cleaning`,
+                body: 'Paid and ready to clean',
+                vibrate: [500, 200, 500],
+                tag: 'clean-table',
+                url: '/ops/cleaner/'
+              }, t));
+            }
           }
         }
       }
