@@ -2806,7 +2806,7 @@ async function autoAssignOrder(db, orderId, t = '') {
   const now = new Date().toISOString();
 
   await db.prepare(
-    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', auto_assigned = 1, updated_at = ? WHERE id = ?`
+    `UPDATE ${t}floor_orders SET waiter_id = ?, assigned_at = ?, status = 'assigned', updated_at = ? WHERE id = ?`
   ).bind(waiter.id, now, now, orderId).run();
   await db.prepare(`UPDATE ${t}floor_staff SET current_load = current_load + 1 WHERE id = ?`).bind(waiter.id).run();
 
