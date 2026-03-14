@@ -16,6 +16,7 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -33,8 +34,13 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
         requestAllPermissions();
-        getFcmTokenAndInject();
-        exposeJsBridge();
+        setupBackNavigation();
+
+        // Delay bridge injection slightly to ensure WebView is fully ready
+        getBridge().getWebView().post(() -> {
+            exposeJsBridge();
+            getFcmTokenAndInject();
+        });
     }
 
     private void createNotificationChannel() {
@@ -94,6 +100,33 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    /**
+     * Handle Android back button — navigate back in WebView history.
+     * If no history, go to ops hub. If already at hub, minimize app.
+     */
+    private void setupBackNavigation() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                WebView webView = getBridge().getWebView();
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    // Check if we're on the hub — if so, minimize to home
+                    String url = webView != null ? webView.getUrl() : "";
+                    if (url != null && (url.endsWith("/ops/") || url.endsWith("/ops"))) {
+                        moveTaskToBack(true);
+                    } else {
+                        // Navigate to hub
+                        if (webView != null) {
+                            webView.loadUrl("https://hamzaexpress.in/ops/");
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     private void getFcmTokenAndInject() {
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
@@ -127,12 +160,13 @@ public class MainActivity extends BridgeActivity {
      * This allows the FirebaseMessagingService to send token refreshes to the server.
      */
     private void exposeJsBridge() {
-        runOnUiThread(() -> {
-            WebView webView = getBridge().getWebView();
-            if (webView != null) {
-                webView.addJavascriptInterface(new HEJsBridge(), "HENative");
-            }
-        });
+        WebView webView = getBridge().getWebView();
+        if (webView != null) {
+            webView.addJavascriptInterface(new HEJsBridge(), "HENative");
+            Log.d(TAG, "HENative JS bridge injected");
+        } else {
+            Log.w(TAG, "WebView not ready for JS bridge injection");
+        }
     }
 
     /**

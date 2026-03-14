@@ -157,6 +157,7 @@
 
 <!-- PIN Screen -->
 <div id="pin-screen">
+  <a href="/ops/" style="color:var(--text2);font-size:13px;text-decoration:none;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px">&larr; Back to Hub</a>
   <div class="pin-title">Waiter Login</div>
   <div class="pin-sub">Enter your 4-digit PIN</div>
   <div class="pin-dots" id="pin-dots">
@@ -842,9 +843,17 @@ async function serveTable(tableNumber) {
 // ── Init ──
 if (token && staffInfo) {
   afterLogin();
+  // Always register FCM token for native app (token may have changed or device may be new)
   if (staffInfo.on_shift) setupPush();
+  else if (isNativeApp()) setupPush(); // native: register FCM even before shift starts
 } else {
   document.getElementById('pin-screen').style.display = 'flex';
+}
+// Force re-register FCM token when native app fires the token event (handles late injection)
+if (isNativeApp()) {
+  window.addEventListener('fcmTokenReady', (e) => {
+    if (token && e.detail) sendFcmTokenToServer(e.detail);
+  });
 }
 </script>
 </body>
