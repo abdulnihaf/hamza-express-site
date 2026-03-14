@@ -2,70 +2,197 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>HE Ops</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--orange:#f97316;--yellow:#f59e0b}
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--green-dim:rgba(16,185,129,.12);--red:#ef4444;--orange:#f97316;--yellow:#f59e0b}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
     .container{max-width:440px;width:100%;padding:20px}
     h1{font-size:22px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
     h1::before{content:'';width:5px;height:24px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:3px}
     .grid{display:flex;flex-direction:column;gap:10px}
-    a{text-decoration:none;display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:all .15s}
-    a:hover{border-color:var(--orange);transform:translateX(4px)}
+    a.link-card{text-decoration:none;display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;transition:all .15s;cursor:pointer}
+    a.link-card:hover{border-color:var(--orange);transform:translateX(4px)}
     .label{font-size:15px;font-weight:600;color:var(--text)}
     .desc{font-size:12px;color:var(--muted);margin-top:2px}
     .arrow{color:var(--muted);font-size:18px}
-    a:hover .arrow{color:var(--orange)}
+    a.link-card:hover .arrow{color:var(--orange)}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--green);border-color:var(--green)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Hub (post-login) */
+    #hub-screen{display:none}
+    .hub-greeting{font-size:16px;color:var(--text2);margin-bottom:20px}
+    .hub-greeting b{color:var(--text)}
+    .hub-logout{color:var(--text2);font-size:13px;text-decoration:underline;cursor:pointer;margin-top:20px;text-align:center}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+    .toast.show{opacity:1}.toast.error{border-color:var(--red);color:var(--red)}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>HE Ops</h1>
-    <div class="grid">
-      <a href="/ops/captain/">
-        <div><div class="label">Captain</div><div class="desc">Floor captain POS dashboard</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/waiter/">
-        <div><div class="label">Waiter</div><div class="desc">Floor waiter operations</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/cleaner/">
-        <div><div class="label">Cleaner</div><div class="desc">Table cleaning alerts</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/settlement/">
-        <div><div class="label">Settlement</div><div class="desc">Cash settlement + collection</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/sales/">
-        <div><div class="label">Sales</div><div class="desc">Sales insights dashboard</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/item-counter/">
-        <div><div class="label">Item Counter</div><div class="desc">Mobile item count tracker</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/inventory/">
-        <div><div class="label">Inventory</div><div class="desc">Stock management</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/receive/">
-        <div><div class="label">Receiving</div><div class="desc">Stock receiving + RGP</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/kp-printer/">
-        <div><div class="label">KP Printer</div><div class="desc">Kitchen printer config</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
-      <a href="/ops/qr-links/">
-        <div><div class="label">QR Links</div><div class="desc">Station QR redirect manager</div></div>
-        <div class="arrow">&rsaquo;</div>
-      </a>
+    <!-- PIN Screen (shown first) -->
+    <div id="pin-screen">
+      <div class="pin-title">HE Ops</div>
+      <div class="pin-sub">Enter your 4-digit PIN</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="pin-pad" id="pin-pad">
+        <button class="pin-key" data-key="1">1</button>
+        <button class="pin-key" data-key="2">2</button>
+        <button class="pin-key" data-key="3">3</button>
+        <button class="pin-key" data-key="4">4</button>
+        <button class="pin-key" data-key="5">5</button>
+        <button class="pin-key" data-key="6">6</button>
+        <button class="pin-key" data-key="7">7</button>
+        <button class="pin-key" data-key="8">8</button>
+        <button class="pin-key" data-key="9">9</button>
+        <button class="pin-key" style="visibility:hidden"></button>
+        <button class="pin-key" data-key="0">0</button>
+        <button class="pin-key del" data-key="del">DEL</button>
+      </div>
+    </div>
+
+    <!-- Hub Screen (shown after login, filtered by role) -->
+    <div id="hub-screen">
+      <h1>HE Ops</h1>
+      <div class="hub-greeting" id="hub-greeting"></div>
+      <div class="grid" id="hub-links"></div>
+      <div class="hub-logout" onclick="hubLogout()">Logout</div>
     </div>
   </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+const HUB_TOKEN_KEY = 'floor_hub_token';
+const HUB_STAFF_KEY = 'floor_hub_staff';
+
+let staffInfo = JSON.parse(localStorage.getItem(HUB_STAFF_KEY) || 'null');
+let hubToken = localStorage.getItem(HUB_TOKEN_KEY) || '';
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const res = await fetch(`${API_BASE}?action=floor-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      // Check if they have at least one floor role
+      if (!data.can_waiter && !data.can_captain && !data.can_clean) {
+        throw new Error('No floor roles assigned');
+      }
+
+      hubToken = data.token;
+      staffInfo = data;
+      localStorage.setItem(HUB_TOKEN_KEY, hubToken);
+      localStorage.setItem(HUB_STAFF_KEY, JSON.stringify(data));
+
+      showHub();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+// ── Show role-filtered hub ──
+function showHub() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('hub-screen').style.display = 'block';
+  document.getElementById('hub-greeting').innerHTML = 'Hello, <b>' + staffInfo.name + '</b>';
+
+  // Build role-filtered links
+  const links = [];
+  if (staffInfo.can_waiter) links.push({ href: '/ops/waiter/', label: 'Waiter', desc: 'Floor waiter operations' });
+  if (staffInfo.can_captain) links.push({ href: '/ops/captain/', label: 'Captain', desc: 'Floor captain dashboard' });
+  if (staffInfo.can_clean) links.push({ href: '/ops/cleaner/', label: 'Cleaner', desc: 'Table cleaning alerts' });
+
+  // If staff has exactly one role, auto-redirect straight to that page
+  if (links.length === 1) {
+    window.location.href = links[0].href;
+    return;
+  }
+
+  // Render links
+  const html = links.map(l =>
+    '<a class="link-card" href="' + l.href + '">' +
+      '<div><div class="label">' + l.label + '</div><div class="desc">' + l.desc + '</div></div>' +
+      '<div class="arrow">&rsaquo;</div>' +
+    '</a>'
+  ).join('');
+  document.getElementById('hub-links').innerHTML = html;
+}
+
+function hubLogout() {
+  hubToken = '';
+  staffInfo = null;
+  localStorage.removeItem(HUB_TOKEN_KEY);
+  localStorage.removeItem(HUB_STAFF_KEY);
+  // Also clear any role-specific tokens
+  localStorage.removeItem('floor_waiter_token');
+  localStorage.removeItem('floor_waiter_staff');
+  localStorage.removeItem('floor_token');
+  localStorage.removeItem('floor_staff');
+  localStorage.removeItem('floor_cleaner_token');
+  localStorage.removeItem('floor_cleaner_staff');
+  document.getElementById('hub-screen').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinBuffer = '';
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+}
+
+// ── Init ──
+if (hubToken && staffInfo) {
+  showHub();
+} else {
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+</script>
 </body>
 </html>

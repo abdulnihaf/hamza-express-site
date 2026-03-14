@@ -333,8 +333,16 @@
 
 <script>
 const API_BASE = '/api/whatsapp';
-let token = localStorage.getItem('floor_token') || '';
-let staffInfo = JSON.parse(localStorage.getItem('floor_staff') || 'null');
+// Auto-login from hub token if available
+let token = localStorage.getItem('floor_token') || localStorage.getItem('floor_hub_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_staff') || localStorage.getItem('floor_hub_staff') || 'null');
+// Block if staff doesn't have captain access
+if (staffInfo && !staffInfo.can_captain) { window.location.href = '/ops/'; }
+// Sync hub token to captain-specific storage
+if (!localStorage.getItem('floor_token') && localStorage.getItem('floor_hub_token') && staffInfo?.can_captain) {
+  localStorage.setItem('floor_token', localStorage.getItem('floor_hub_token'));
+  localStorage.setItem('floor_staff', localStorage.getItem('floor_hub_staff'));
+}
 let dashboardData = null;
 let intelData = null;
 let dashboardInterval = null;
@@ -465,13 +473,12 @@ function logout() {
   staffInfo = null;
   localStorage.removeItem('floor_token');
   localStorage.removeItem('floor_staff');
+  localStorage.removeItem('floor_hub_token');
+  localStorage.removeItem('floor_hub_staff');
   clearInterval(dashboardInterval);
   clearInterval(pollInterval);
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('shift-screen').style.display = 'none';
-  document.getElementById('pin-screen').style.display = 'flex';
-  pinBuffer = '';
-  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+  // Redirect to hub
+  window.location.href = '/ops/';
 }
 
 // ── After Login: captain goes straight to dashboard (shift detected from Odoo POS) ──
@@ -1061,7 +1068,8 @@ if (token && staffInfo) {
   // Always register FCM token for native app
   if (isNativeApp()) setupPush();
 } else {
-  document.getElementById('pin-screen').style.display = 'flex';
+  // No token — redirect to hub for login
+  window.location.href = '/ops/';
 }
 // Force re-register FCM token when native app fires the token event
 if (isNativeApp()) {

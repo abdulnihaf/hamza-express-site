@@ -230,8 +230,16 @@
 
 <script>
 const API_BASE = '/api/whatsapp';
-let token = localStorage.getItem('floor_waiter_token') || '';
-let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_staff') || 'null');
+// Auto-login from hub token if available
+let token = localStorage.getItem('floor_waiter_token') || localStorage.getItem('floor_hub_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_staff') || localStorage.getItem('floor_hub_staff') || 'null');
+// Block if staff doesn't have waiter access
+if (staffInfo && !staffInfo.can_waiter) { window.location.href = '/ops/'; }
+// Sync hub token to waiter-specific storage
+if (!localStorage.getItem('floor_waiter_token') && localStorage.getItem('floor_hub_token') && staffInfo?.can_waiter) {
+  localStorage.setItem('floor_waiter_token', localStorage.getItem('floor_hub_token'));
+  localStorage.setItem('floor_waiter_staff', localStorage.getItem('floor_hub_staff'));
+}
 let myData = null;
 let knownOrderIds = new Set();
 let prevAtCounterIds = new Set();
@@ -467,12 +475,14 @@ function logout() {
   staffInfo = null;
   localStorage.removeItem('floor_waiter_token');
   localStorage.removeItem('floor_waiter_staff');
+  localStorage.removeItem('floor_hub_token');
+  localStorage.removeItem('floor_hub_staff');
   clearInterval(pollInterval);
   clearInterval(timerInterval);
   stopAlarm();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('shift-screen').style.display = 'none';
-  document.getElementById('pin-screen').style.display = 'flex';
+  // Redirect to hub instead of showing local PIN screen
+  window.location.href = '/ops/';
+  return;
   pinBuffer = '';
   document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
 }
@@ -847,7 +857,8 @@ if (token && staffInfo) {
   if (staffInfo.on_shift) setupPush();
   else if (isNativeApp()) setupPush(); // native: register FCM even before shift starts
 } else {
-  document.getElementById('pin-screen').style.display = 'flex';
+  // No token — redirect to hub for login
+  window.location.href = '/ops/';
 }
 // Force re-register FCM token when native app fires the token event (handles late injection)
 if (isNativeApp()) {
