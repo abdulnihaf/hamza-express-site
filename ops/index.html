@@ -119,9 +119,10 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
 
       if (data.error) throw new Error(data.error);
 
-      // Check if they have at least one floor role or are admin
-      if (!data.can_waiter && !data.can_captain && !data.can_clean && !data.is_admin) {
-        throw new Error('No floor roles assigned');
+      // Check if they have any access at all
+      const pages = data.allowed_pages || [];
+      if (!data.can_waiter && !data.can_captain && !data.can_clean && !data.is_admin && pages.length === 0) {
+        throw new Error('No access assigned');
       }
 
       hubToken = data.token;
@@ -141,37 +142,46 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
   }
 });
 
+// ── All available ops pages ──
+const ALL_PAGES = [
+  { slug: 'captain', href: '/ops/captain/', label: 'Captain', desc: 'Floor captain dashboard' },
+  { slug: 'waiter', href: '/ops/waiter/', label: 'Waiter', desc: 'Floor waiter operations' },
+  { slug: 'cleaner', href: '/ops/cleaner/', label: 'Cleaner', desc: 'Table cleaning alerts' },
+  { slug: 'floor-intel', href: '/ops/floor-intel/', label: 'Floor Intel', desc: 'Live floor intelligence' },
+  { slug: 'kitchen-intel', href: '/ops/kitchen-intel/', label: 'Kitchen Intel', desc: 'Kitchen display system' },
+  { slug: 'assembly', href: '/ops/assembly/', label: 'Assembly', desc: 'Order assembly station' },
+  { slug: 'settlement', href: '/ops/settlement/', label: 'Settlement', desc: 'Cash settlement + collection' },
+  { slug: 'captain-settle', href: '/ops/captain-settle/', label: 'Captain Settle', desc: 'Captain settlement' },
+  { slug: 'sales', href: '/ops/sales/', label: 'Sales', desc: 'Sales insights dashboard' },
+  { slug: 'item-counter', href: '/ops/item-counter/', label: 'Item Counter', desc: 'Mobile item count tracker' },
+  { slug: 'inventory', href: '/ops/inventory/', label: 'Inventory', desc: 'Stock management' },
+  { slug: 'receive', href: '/ops/receive/', label: 'Receiving', desc: 'Stock receiving + RGP' },
+  { slug: 'kp-printer', href: '/ops/kp-printer/', label: 'KP Printer', desc: 'Kitchen printer config' },
+  { slug: 'qr-links', href: '/ops/qr-links/', label: 'QR Links', desc: 'Station QR redirect manager' },
+];
+
 // ── Show role-filtered hub ──
 function showHub() {
   document.getElementById('pin-screen').style.display = 'none';
   document.getElementById('hub-screen').style.display = 'block';
   document.getElementById('hub-greeting').innerHTML = 'Hello, <b>' + staffInfo.name + '</b>';
 
-  // Build role-filtered links
-  const links = [];
+  const allowed = staffInfo.allowed_pages || [];
+  const isAdmin = staffInfo.is_admin;
 
-  // Floor staff roles
-  if (staffInfo.can_captain) links.push({ href: '/ops/captain/', label: 'Captain', desc: 'Floor captain dashboard' });
-  if (staffInfo.can_waiter) links.push({ href: '/ops/waiter/', label: 'Waiter', desc: 'Floor waiter operations' });
-  if (staffInfo.can_clean) links.push({ href: '/ops/cleaner/', label: 'Cleaner', desc: 'Table cleaning alerts' });
+  // Filter pages: admin sees all, others see only their allowed_pages
+  // Also include legacy role flags for captain/waiter/cleaner
+  const links = ALL_PAGES.filter(p => {
+    if (isAdmin || allowed.includes('all')) return true;
+    if (allowed.includes(p.slug)) return true;
+    if (p.slug === 'captain' && staffInfo.can_captain) return true;
+    if (p.slug === 'waiter' && staffInfo.can_waiter) return true;
+    if (p.slug === 'cleaner' && staffInfo.can_clean) return true;
+    return false;
+  });
 
-  // Admin-only pages
-  if (staffInfo.is_admin) {
-    links.push({ href: '/ops/floor-intel/', label: 'Floor Intel', desc: 'Live floor intelligence' });
-    links.push({ href: '/ops/kitchen-intel/', label: 'Kitchen Intel', desc: 'Kitchen display system' });
-    links.push({ href: '/ops/assembly/', label: 'Assembly', desc: 'Order assembly station' });
-    links.push({ href: '/ops/settlement/', label: 'Settlement', desc: 'Cash settlement + collection' });
-    links.push({ href: '/ops/captain-settle/', label: 'Captain Settle', desc: 'Captain settlement' });
-    links.push({ href: '/ops/sales/', label: 'Sales', desc: 'Sales insights dashboard' });
-    links.push({ href: '/ops/item-counter/', label: 'Item Counter', desc: 'Mobile item count tracker' });
-    links.push({ href: '/ops/inventory/', label: 'Inventory', desc: 'Stock management' });
-    links.push({ href: '/ops/receive/', label: 'Receiving', desc: 'Stock receiving + RGP' });
-    links.push({ href: '/ops/kp-printer/', label: 'KP Printer', desc: 'Kitchen printer config' });
-    links.push({ href: '/ops/qr-links/', label: 'QR Links', desc: 'Station QR redirect manager' });
-  }
-
-  // If staff has exactly one role and is NOT admin, auto-redirect
-  if (links.length === 1 && !staffInfo.is_admin) {
+  // If staff has exactly one page, auto-redirect
+  if (links.length === 1) {
     window.location.href = links[0].href;
     return;
   }

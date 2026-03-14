@@ -3193,10 +3193,14 @@ async function handleFloorAction(context, action, corsHeaders) {
     await db.prepare(`UPDATE ${t}floor_staff SET session_token = ?, token_expires_at = ?, last_seen_at = ? WHERE id = ?`)
       .bind(token, expires, new Date().toISOString(), staff.id).run();
 
+    let allowedPages = [];
+    try { allowedPages = JSON.parse(staff.allowed_pages || '[]'); } catch(e) {}
+
     return json({
       token, name: staff.name, role: staff.role,
       can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
       can_clean: !!staff.can_clean, is_admin: !!staff.is_admin,
+      allowed_pages: allowedPages,
       staff_id: staff.id, on_shift: !!staff.on_shift,
       odoo_employee_id: staff.odoo_employee_id || null
     });
