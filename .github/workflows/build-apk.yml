@@ -33,7 +33,13 @@ jobs:
         run: npm install
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: |
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          ls -la node_modules/@capacitor/ || echo "No @capacitor modules"
+          ls -la www/ || echo "No www dir"
+          npx cap sync android --verbose 2>&1 || true
+          npx cap sync android
 
       - name: Make Gradle wrapper executable
         run: chmod +x android/gradlew
