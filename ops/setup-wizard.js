@@ -523,7 +523,7 @@
         body: JSON.stringify({
           title: 'Setup Complete! \u2705',
           body: 'Push notifications are working for ' + (config.appName || 'this app'),
-          vibrate: [800,400,800,400,800,400,800,400,800,400,800,400,800,400,800],
+          vibrate: [1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000],
           tag: 'setup-test',
           url: window.location.pathname
         })

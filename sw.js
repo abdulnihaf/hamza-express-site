@@ -9,7 +9,7 @@ self.addEventListener('push', (event) => {
       body: data.body || '',
       icon: '/assets/brand/he-icon.png',
       badge: '/assets/brand/he-icon.png',
-      vibrate: data.vibrate || [800,400,800,400,800,400,800,400,800,400,800,400,800,400,800],
+      vibrate: data.vibrate || [1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000],
       tag: data.tag || 'he-ops',
       renotify: true,
       requireInteraction: true,
@@ -21,7 +21,7 @@ self.addEventListener('push', (event) => {
     event.waitUntil(self.registration.showNotification('Hamza Express', {
       body: event.data.text(),
       icon: '/assets/brand/he-icon.png',
-      vibrate: [800,400,800,400,800,400,800,400,800,400,800,400,800,400,800],
+      vibrate: [1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000,300,1000],
       tag: 'he-ops',
       renotify: true,
       requireInteraction: true,

@@ -2494,7 +2494,7 @@ async function handleKdsWebhookFloor(context, corsHeaders, data, floorCfg) {
       context.waitUntil(pushToStaff(context.env, db, floorOrder.waiter_id, {
         title: 'Items Ready',
         body: `${floorItem.product_name} at ${stageInfo.counter}`,
-        vibrate: [300, 100, 300],
+        vibrate: [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
         tag: `ready-${floorOrder.waiter_id}`,
         url: '/ops/waiter/'
       }, t));
@@ -3010,7 +3010,7 @@ async function autoAssignOrder(db, orderId, t = '', context = null) {
       context.waitUntil(pushToRole(context.env, db, 'captain', {
         title: 'Unassigned Order',
         body: `Table ${tableNum} — no waiters on shift`,
-        vibrate: [800, 200, 800],
+        vibrate: [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
         tag: 'unassigned',
         url: '/ops/captain/'
       }, t));
@@ -3041,7 +3041,7 @@ async function autoAssignOrder(db, orderId, t = '', context = null) {
     context.waitUntil(pushToStaff(context.env, db, waiter.id, {
       title: `New Order — Table ${tableNum}`,
       body: `${itemCount} items assigned to you`,
-      vibrate: [500, 200, 500, 200, 500],
+      vibrate: [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
       tag: `new-order-${waiter.id}`,
       url: '/ops/waiter/'
     }, t));
@@ -3257,7 +3257,7 @@ async function handleFloorAction(context, action, corsHeaders) {
     const result = await sendPush(context.env, sub, {
       title: body.title || 'Test Buzz',
       body: body.body || 'Push notification test from Hamza Express',
-      vibrate: body.vibrate || [500, 200, 500, 200, 500],
+      vibrate: body.vibrate || [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
       tag: 'test-push',
       url: '/ops/waiter/'
     });
@@ -3507,7 +3507,7 @@ async function handleFloorLive(context, db, staff, json, corsHeaders, cfg) {
                     context.waitUntil(pushToRole(context.env, db, 'cleaner', {
                       title: `Table ${tbl} Needs Cleaning`,
                       body: 'Paid and ready to clean',
-                      vibrate: [500, 200, 500],
+                      vibrate: [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
                       tag: 'clean-table',
                       url: '/ops/cleaner/'
                     }, t));
@@ -3770,7 +3770,7 @@ async function handleFloorPoll(context, db, staff, json, corsHeaders, cfg) {
               context.waitUntil(pushToRole(context.env, db, 'cleaner', {
                 title: `Table ${tbl} Needs Cleaning`,
                 body: 'Paid and ready to clean',
-                vibrate: [500, 200, 500],
+                vibrate: [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
                 tag: 'clean-table',
                 url: '/ops/cleaner/'
               }, t));
