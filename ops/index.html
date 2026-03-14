@@ -119,8 +119,8 @@ document.getElementById('pin-pad').addEventListener('click', async (e) => {
 
       if (data.error) throw new Error(data.error);
 
-      // Check if they have at least one floor role
-      if (!data.can_waiter && !data.can_captain && !data.can_clean) {
+      // Check if they have at least one floor role or are admin
+      if (!data.can_waiter && !data.can_captain && !data.can_clean && !data.is_admin) {
         throw new Error('No floor roles assigned');
       }
 
@@ -149,12 +149,29 @@ function showHub() {
 
   // Build role-filtered links
   const links = [];
-  if (staffInfo.can_waiter) links.push({ href: '/ops/waiter/', label: 'Waiter', desc: 'Floor waiter operations' });
+
+  // Floor staff roles
   if (staffInfo.can_captain) links.push({ href: '/ops/captain/', label: 'Captain', desc: 'Floor captain dashboard' });
+  if (staffInfo.can_waiter) links.push({ href: '/ops/waiter/', label: 'Waiter', desc: 'Floor waiter operations' });
   if (staffInfo.can_clean) links.push({ href: '/ops/cleaner/', label: 'Cleaner', desc: 'Table cleaning alerts' });
 
-  // If staff has exactly one role, auto-redirect straight to that page
-  if (links.length === 1) {
+  // Admin-only pages
+  if (staffInfo.is_admin) {
+    links.push({ href: '/ops/floor-intel/', label: 'Floor Intel', desc: 'Live floor intelligence' });
+    links.push({ href: '/ops/kitchen-intel/', label: 'Kitchen Intel', desc: 'Kitchen display system' });
+    links.push({ href: '/ops/assembly/', label: 'Assembly', desc: 'Order assembly station' });
+    links.push({ href: '/ops/settlement/', label: 'Settlement', desc: 'Cash settlement + collection' });
+    links.push({ href: '/ops/captain-settle/', label: 'Captain Settle', desc: 'Captain settlement' });
+    links.push({ href: '/ops/sales/', label: 'Sales', desc: 'Sales insights dashboard' });
+    links.push({ href: '/ops/item-counter/', label: 'Item Counter', desc: 'Mobile item count tracker' });
+    links.push({ href: '/ops/inventory/', label: 'Inventory', desc: 'Stock management' });
+    links.push({ href: '/ops/receive/', label: 'Receiving', desc: 'Stock receiving + RGP' });
+    links.push({ href: '/ops/kp-printer/', label: 'KP Printer', desc: 'Kitchen printer config' });
+    links.push({ href: '/ops/qr-links/', label: 'QR Links', desc: 'Station QR redirect manager' });
+  }
+
+  // If staff has exactly one role and is NOT admin, auto-redirect
+  if (links.length === 1 && !staffInfo.is_admin) {
     window.location.href = links[0].href;
     return;
   }

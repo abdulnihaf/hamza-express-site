@@ -3196,7 +3196,7 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({
       token, name: staff.name, role: staff.role,
       can_captain: !!staff.can_captain, can_waiter: !!staff.can_waiter,
-      can_clean: !!staff.can_clean,
+      can_clean: !!staff.can_clean, is_admin: !!staff.is_admin,
       staff_id: staff.id, on_shift: !!staff.on_shift,
       odoo_employee_id: staff.odoo_employee_id || null
     });
