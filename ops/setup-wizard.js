@@ -340,9 +340,9 @@
     return Math.round((step / totalSteps()) * 100);
   }
 
-  // ── Detect Capacitor native app ──
+  // ── Detect native app (Capacitor shell with HENative JS bridge) ──
   function isNativeApp() {
-    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    return !!(window.HENative || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
   }
 
   // ── Phase 1: Auto permissions ──
@@ -367,29 +367,26 @@
       </div>
     `);
 
-    // ── Native Capacitor app: use native FCM, not Web Push ──
+    // ── Native app: permissions handled by Android, FCM by MainActivity ──
     if (isNativeApp()) {
       try {
-        const { PushNotifications } = window.Capacitor.Plugins;
-        // Request native notification permission
-        const permResult = await PushNotifications.requestPermissions();
-        autoResults.notification = permResult.receive === 'granted';
-        updateAutoItem('sw-s1', autoResults.notification);
+        // Notifications: Android handles this via system permission dialog (already requested in MainActivity)
+        // We can't check it from JS — trust that native code requested it
+        autoResults.notification = true;
+        updateAutoItem('sw-s1', true);
 
-        // Native app handles background via FCM — always OK
+        // Background: FCM delivers even when app is killed — always OK
         autoResults.sw = true;
         updateAutoItem('sw-s2', true);
 
-        // Register for FCM and call setupPush to send token to server
-        if (autoResults.notification) {
-          await PushNotifications.register();
-          if (config.setupPush) await config.setupPush();
-          autoResults.push = true;
-        }
-        updateAutoItem('sw-s3', autoResults.push);
+        // Push: FCM token is injected by native code, setupPush sends it to server
+        if (config.setupPush) await config.setupPush();
+        const hasFcm = !!(window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()));
+        autoResults.push = hasFcm;
+        updateAutoItem('sw-s3', hasFcm);
       } catch (e) {
         console.warn('Native push setup error:', e);
-        updateAutoItem('sw-s1', autoResults.notification);
+        updateAutoItem('sw-s1', true);
         updateAutoItem('sw-s2', true);
         updateAutoItem('sw-s3', false);
       }

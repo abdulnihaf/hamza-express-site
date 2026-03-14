@@ -411,20 +411,23 @@ function urlBase64ToUint8Array(base64String) {
 }
 async function setupPush() {
   try {
-    // Native Capacitor app: use FCM directly (works on locked screens)
-    if (window.Capacitor?.isNativePlatform?.()) {
-      const { PushNotifications } = window.Capacitor.Plugins;
-      if (!PushNotifications) return;
-      const perm = await PushNotifications.requestPermissions();
-      if (perm.receive !== 'granted') return;
-      await PushNotifications.register();
-      PushNotifications.addListener('registration', async (t) => {
-        await api('floor-push-subscribe', 'POST', { fcm_token: t.value, platform: 'native' });
-      });
-      PushNotifications.addListener('pushNotificationActionPerformed', (a) => {
-        const url = a.notification?.data?.url;
-        if (url) window.location.href = url;
-      });
+    // Native app: FCM token is injected by MainActivity.java via HENative JS bridge
+    if (window.HENative || window.nativeFcmToken) {
+      const fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken());
+      if (fcmToken) {
+        await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
+        // Save auth info to native so token refreshes can be sent to server
+        if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
+        return;
+      }
+      // Token not ready yet — listen for it
+      window.addEventListener('fcmTokenReady', async (e) => {
+        const t = e.detail;
+        if (t) {
+          await api('floor-push-subscribe', 'POST', { fcm_token: t, platform: 'native' });
+          if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
+        }
+      }, { once: true });
       return;
     }
     // Browser/PWA: use Web Push (VAPID)

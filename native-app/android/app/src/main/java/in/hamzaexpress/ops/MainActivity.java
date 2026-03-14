@@ -3,6 +3,7 @@ package in.hamzaexpress.ops;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
@@ -11,21 +12,29 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.util.Log;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends BridgeActivity {
 
+    private static final String TAG = "HEMain";
     private static final int NOTIFICATION_PERMISSION_CODE = 1001;
+    private static final String PREFS_NAME = "he_ops_prefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
         requestAllPermissions();
+        getFcmTokenAndInject();
+        exposeJsBridge();
     }
 
     private void createNotificationChannel() {
@@ -74,7 +83,7 @@ public class MainActivity extends BridgeActivity {
             }
         }
 
-        // 2. Request battery optimization exemption (critical for background push delivery)
+        // 2. Request battery optimization exemption
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
             if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
@@ -82,6 +91,68 @@ public class MainActivity extends BridgeActivity {
                 intent.setData(Uri.parse("package:" + getPackageName()));
                 startActivity(intent);
             }
+        }
+    }
+
+    private void getFcmTokenAndInject() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w(TAG, "FCM token fetch failed", task.getException());
+                        return;
+                    }
+                    String token = task.getResult();
+                    Log.d(TAG, "FCM Token: " + token);
+
+                    // Store in SharedPreferences for the MessagingService
+                    SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                    prefs.edit().putString("fcm_token", token).apply();
+
+                    // Inject into WebView so web app can send it to the server
+                    runOnUiThread(() -> {
+                        WebView webView = getBridge().getWebView();
+                        if (webView != null) {
+                            webView.evaluateJavascript(
+                                    "window.nativeFcmToken = '" + token + "';" +
+                                    "window.dispatchEvent(new CustomEvent('fcmTokenReady', { detail: '" + token + "' }));",
+                                    null
+                            );
+                        }
+                    });
+                });
+    }
+
+    /**
+     * Expose a JS bridge so the web app can store auth info back to native SharedPreferences.
+     * This allows the FirebaseMessagingService to send token refreshes to the server.
+     */
+    private void exposeJsBridge() {
+        runOnUiThread(() -> {
+            WebView webView = getBridge().getWebView();
+            if (webView != null) {
+                webView.addJavascriptInterface(new HEJsBridge(), "HENative");
+            }
+        });
+    }
+
+    /**
+     * JavaScript bridge — callable from web as HENative.setAuthInfo(token, staffId)
+     */
+    public class HEJsBridge {
+        @JavascriptInterface
+        public void setAuthInfo(String authToken, String staffId) {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            prefs.edit()
+                    .putString("auth_token", authToken)
+                    .putString("staff_id", staffId)
+                    .apply();
+            Log.d(TAG, "Auth info saved for staff: " + staffId);
+        }
+
+        @JavascriptInterface
+        public String getFcmToken() {
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            return prefs.getString("fcm_token", "");
         }
     }
 }
