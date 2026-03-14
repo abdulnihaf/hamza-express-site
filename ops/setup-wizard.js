@@ -91,6 +91,9 @@
       return steps;
     }
 
+    // Use app name based on whether running in native app or Chrome
+    const appLabel = isNativeApp() ? 'Hamza Express Ops' : 'Chrome';
+
     // Step: Battery optimization
     const battery = { id: 'battery', icon: '\u{1F50B}', title: 'Disable Battery Optimization', steps: [] };
     switch (device) {
@@ -98,7 +101,7 @@
         battery.steps = [
           'Open <b>Settings</b>',
           'Tap <b>Apps</b> → <b>Manage apps</b>',
-          'Find and tap <b>Chrome</b>',
+          'Find and tap <b>' + appLabel + '</b>',
           'Tap <b>Battery saver</b>',
           'Select <b>"No restrictions"</b>'
         ];
@@ -108,13 +111,13 @@
           'Open <b>Settings</b>',
           'Tap <b>Battery</b>',
           'Tap <b>Background power consumption</b>',
-          'Find <b>Chrome</b> and set to <b>"Allow"</b>'
+          'Find <b>' + appLabel + '</b> and set to <b>"Allow"</b>'
         ];
         break;
       case 'samsung':
         battery.steps = [
           'Open <b>Settings</b> → <b>Apps</b>',
-          'Find and tap <b>Chrome</b>',
+          'Find and tap <b>' + appLabel + '</b>',
           'Tap <b>Battery</b>',
           'Select <b>"Unrestricted"</b>'
         ];
@@ -124,7 +127,7 @@
           'Open <b>Settings</b> → <b>Battery</b>',
           'Tap <b>More battery settings</b>',
           'Tap <b>Optimize battery use</b>',
-          'Find <b>Chrome</b> → <b>"Don\'t optimize"</b>'
+          'Find <b>' + appLabel + '</b> → <b>"Don\'t optimize"</b>'
         ];
         break;
       case 'oneplus':
@@ -132,21 +135,21 @@
           'Open <b>Settings</b> → <b>Battery</b>',
           'Tap <b>Battery optimization</b>',
           'Switch to <b>"All apps"</b>',
-          'Find <b>Chrome</b> → <b>"Don\'t optimize"</b>'
+          'Find <b>' + appLabel + '</b> → <b>"Don\'t optimize"</b>'
         ];
         break;
       case 'huawei':
         battery.steps = [
           'Open <b>Settings</b> → <b>Battery</b>',
           'Tap <b>App launch</b>',
-          'Find <b>Chrome</b>, turn off auto management',
+          'Find <b>' + appLabel + '</b>, turn off auto management',
           'Enable ALL three toggles: <b>Auto-launch, Secondary launch, Run in background</b>'
         ];
         break;
       default:
         battery.steps = [
           'Open <b>Settings</b> → <b>Apps</b>',
-          'Find and tap <b>Chrome</b>',
+          'Find and tap <b>' + appLabel + '</b>',
           'Tap <b>Battery</b>',
           'Select <b>"Unrestricted"</b> or <b>"No restrictions"</b>'
         ];
@@ -161,7 +164,7 @@
           autostart.steps = [
             'Open <b>Settings</b> → <b>Apps</b>',
             'Tap <b>Permissions</b> → <b>Autostart</b>',
-            'Find <b>Chrome</b> and toggle <b>ON</b>'
+            'Find <b>' + appLabel + '</b> and toggle <b>ON</b>'
           ];
           break;
         case 'vivo':
@@ -169,20 +172,20 @@
             'Open <b>Settings</b>',
             'Tap <b>Apps & Permissions</b>',
             'Tap <b>Autostart Manager</b>',
-            'Enable <b>Chrome</b>'
+            'Enable <b>' + appLabel + '</b>'
           ];
           break;
         case 'oppo': case 'realme':
           autostart.steps = [
             'Open <b>Settings</b> → <b>App Management</b>',
-            'Find <b>Chrome</b>, tap it',
+            'Find <b>' + appLabel + '</b>, tap it',
             'Enable <b>"Allow auto-launch"</b>'
           ];
           break;
         case 'huawei':
           autostart.steps = [
             'Already covered in Battery step above',
-            'Confirm <b>Auto-launch</b> toggle is ON for Chrome'
+            'Confirm <b>Auto-launch</b> toggle is ON for ' + appLabel
           ];
           break;
       }
@@ -194,69 +197,74 @@
       id: 'pause', icon: '\u23F8\uFE0F', title: 'Disable "Pause App Activity"',
       steps: [
         'Open <b>Settings</b> → <b>Apps</b> → <b>Manage Apps</b>',
-        'Find and tap <b>Chrome</b>',
+        'Find and tap <b>' + appLabel + '</b>',
         'Turn <b>OFF</b> "Pause app activity if unused"'
       ]
     };
     steps.push(pause);
 
     // Step: Set notification sound to alarm/ringtone
-    const notifSound = { id: 'notif_sound', icon: '\u{1F50A}', title: 'Set Alarm Ringtone for Notifications', steps: [] };
-    switch (device) {
-      case 'xiaomi':
-        notifSound.steps = [
-          'Open <b>Settings</b> → <b>Apps</b> → <b>Manage apps</b>',
-          'Find and tap <b>Chrome</b>',
-          'Tap <b>Notifications</b>',
-          'Find <b>hamzaexpress.in</b> (or "HE ' + (config.appName || 'App') + '")',
-          'Tap it → tap <b>Sound</b>',
-          'Pick a <b>loud ringtone</b> (e.g. "Alarm" or "Ring") — NOT "Default"',
-          'Also set <b>Importance</b> to <b>Urgent</b>'
-        ];
-        break;
-      case 'vivo':
-        notifSound.steps = [
-          'Open <b>Settings</b> → <b>Notifications & Status Bar</b>',
-          'Tap <b>App Notifications</b> → find <b>Chrome</b>',
-          'Tap <b>Chrome</b> → find <b>hamzaexpress.in</b> channel',
-          'Tap it → tap <b>Sound</b>',
-          'Pick a <b>loud alarm tone</b> — something that sounds like a phone ringing',
-          'Set <b>Importance</b> to <b>Urgent</b>'
-        ];
-        break;
-      case 'samsung':
-        notifSound.steps = [
-          'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
-          'Tap <b>Notifications</b>',
-          'Find the <b>hamzaexpress.in</b> notification channel',
-          'Tap it → tap <b>Sound</b>',
-          'Pick a <b>loud alarm/ringtone</b>',
-          'Set to <b>Alert</b> (not Silent)'
-        ];
-        break;
-      default:
-        notifSound.steps = [
-          'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
-          'Tap <b>Notifications</b>',
-          'Find <b>hamzaexpress.in</b> notification channel',
-          'Tap it → change <b>Sound</b> to a <b>loud alarm/ringtone</b>',
-          'Set <b>Importance</b> to <b>Urgent</b>'
-        ];
+    // In native app, notification sound is set via the Android channel — skip this step
+    if (!isNativeApp()) {
+      const notifSound = { id: 'notif_sound', icon: '\u{1F50A}', title: 'Set Alarm Ringtone for Notifications', steps: [] };
+      switch (device) {
+        case 'xiaomi':
+          notifSound.steps = [
+            'Open <b>Settings</b> → <b>Apps</b> → <b>Manage apps</b>',
+            'Find and tap <b>Chrome</b>',
+            'Tap <b>Notifications</b>',
+            'Find <b>hamzaexpress.in</b> (or "HE ' + (config.appName || 'App') + '")',
+            'Tap it → tap <b>Sound</b>',
+            'Pick a <b>loud ringtone</b> (e.g. "Alarm" or "Ring") — NOT "Default"',
+            'Also set <b>Importance</b> to <b>Urgent</b>'
+          ];
+          break;
+        case 'vivo':
+          notifSound.steps = [
+            'Open <b>Settings</b> → <b>Notifications & Status Bar</b>',
+            'Tap <b>App Notifications</b> → find <b>Chrome</b>',
+            'Tap <b>Chrome</b> → find <b>hamzaexpress.in</b> channel',
+            'Tap it → tap <b>Sound</b>',
+            'Pick a <b>loud alarm tone</b> — something that sounds like a phone ringing',
+            'Set <b>Importance</b> to <b>Urgent</b>'
+          ];
+          break;
+        case 'samsung':
+          notifSound.steps = [
+            'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
+            'Tap <b>Notifications</b>',
+            'Find the <b>hamzaexpress.in</b> notification channel',
+            'Tap it → tap <b>Sound</b>',
+            'Pick a <b>loud alarm/ringtone</b>',
+            'Set to <b>Alert</b> (not Silent)'
+          ];
+          break;
+        default:
+          notifSound.steps = [
+            'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
+            'Tap <b>Notifications</b>',
+            'Find <b>hamzaexpress.in</b> notification channel',
+            'Tap it → change <b>Sound</b> to a <b>loud alarm/ringtone</b>',
+            'Set <b>Importance</b> to <b>Urgent</b>'
+          ];
+      }
+      steps.push(notifSound);
     }
-    steps.push(notifSound);
 
-    // Step: Lock in recents
-    const lock = {
-      id: 'lock_recents', icon: '\u{1F512}', title: 'Lock Chrome in Recent Apps',
-      steps: [
-        'Open Chrome with this app',
-        'Swipe up to see <b>Recent Apps</b>',
-        device === 'xiaomi' ? 'Long-press the Chrome card → tap the <b>lock icon</b>' :
-        device === 'vivo' ? 'Pull <b>down</b> on the Chrome card to lock it' :
-        'Long-press Chrome card → tap <b>Lock</b> or the lock icon'
-      ]
-    };
-    steps.push(lock);
+    // Step: Lock in recents (not needed for native app — FCM delivers even when app is killed)
+    if (!isNativeApp()) {
+      const lock = {
+        id: 'lock_recents', icon: '\u{1F512}', title: 'Lock Chrome in Recent Apps',
+        steps: [
+          'Open Chrome with this app',
+          'Swipe up to see <b>Recent Apps</b>',
+          device === 'xiaomi' ? 'Long-press the Chrome card → tap the <b>lock icon</b>' :
+          device === 'vivo' ? 'Pull <b>down</b> on the Chrome card to lock it' :
+          'Long-press Chrome card → tap <b>Lock</b> or the lock icon'
+        ]
+      };
+      steps.push(lock);
+    }
 
     return steps;
   }
@@ -332,6 +340,11 @@
     return Math.round((step / totalSteps()) * 100);
   }
 
+  // ── Detect Capacitor native app ──
+  function isNativeApp() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  }
+
   // ── Phase 1: Auto permissions ──
   async function runAutoPhase() {
     render(`
@@ -353,6 +366,49 @@
         <div class="sw-desc" id="sw-auto-status">Requesting permissions automatically...</div>
       </div>
     `);
+
+    // ── Native Capacitor app: use native FCM, not Web Push ──
+    if (isNativeApp()) {
+      try {
+        const { PushNotifications } = window.Capacitor.Plugins;
+        // Request native notification permission
+        const permResult = await PushNotifications.requestPermissions();
+        autoResults.notification = permResult.receive === 'granted';
+        updateAutoItem('sw-s1', autoResults.notification);
+
+        // Native app handles background via FCM — always OK
+        autoResults.sw = true;
+        updateAutoItem('sw-s2', true);
+
+        // Register for FCM and call setupPush to send token to server
+        if (autoResults.notification) {
+          await PushNotifications.register();
+          if (config.setupPush) await config.setupPush();
+          autoResults.push = true;
+        }
+        updateAutoItem('sw-s3', autoResults.push);
+      } catch (e) {
+        console.warn('Native push setup error:', e);
+        updateAutoItem('sw-s1', autoResults.notification);
+        updateAutoItem('sw-s2', true);
+        updateAutoItem('sw-s3', false);
+      }
+
+      const el = document.getElementById('sw-auto-status');
+      if (el) {
+        const allOk = autoResults.notification && autoResults.push;
+        el.textContent = allOk ? 'All permissions granted!' : 'Some permissions need attention.';
+      }
+      await sleep(1200);
+
+      if (!autoResults.notification) {
+        await showNotificationDenied();
+        return;
+      }
+      // Native app doesn't need manual Chrome steps — skip to test
+      showTestPush();
+      return;
+    }
 
     // iOS in Safari (not installed): push won't work — skip auto and go to install step
     if (isIOS() && !isStandalone() && typeof Notification === 'undefined') {
@@ -596,7 +652,8 @@
       const prefix = cfg.storagePrefix || 'floor';
 
       // Check if critical permissions are missing
-      const notifOk = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+      // In native Capacitor app, web Notification API doesn't exist — that's fine, FCM handles it
+      const notifOk = isNativeApp() || (typeof Notification !== 'undefined' && Notification.permission === 'granted');
       const complete = localStorage.getItem(prefix + '_setup_complete');
       const skippedAt = localStorage.getItem(prefix + '_setup_skipped_at');
 
