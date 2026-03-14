@@ -507,7 +507,7 @@ function enterApp() {
   document.getElementById('staff-name').textContent = staffInfo.name;
   refreshLive();
   // Single atomic poll+data every 5s (kitchen-intel pattern)
-  pollInterval = setInterval(refreshLive, 5000);
+  pollInterval = setInterval(refreshLive, 2000);
   // Setup wizard — auto-request permissions + device-specific guide
   if (window.SetupWizard) SetupWizard.init({
     apiBase: API_BASE, token, vapidPublicKey: VAPID_PUBLIC_KEY,

@@ -395,7 +395,7 @@ function enterApp() {
   document.getElementById('staff-name').textContent = staffInfo.name;
   firstLoad = true;
   refresh();
-  pollInterval = setInterval(refresh, 5000);
+  pollInterval = setInterval(refresh, 2000);
   timerInterval = setInterval(updateTimers, 1000);
   // Setup wizard — auto-request permissions + device-specific guide
   if (window.SetupWizard) SetupWizard.init({

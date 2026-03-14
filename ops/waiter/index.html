@@ -504,7 +504,7 @@ function enterApp() {
   document.getElementById('staff-name').textContent = staffInfo.name;
   firstLoad = true;
   refresh();
-  pollInterval = setInterval(refresh, 5000);
+  pollInterval = setInterval(refresh, 2000);
   // Update timers every second
   timerInterval = setInterval(updateTimers, 1000);
   // Setup wizard — auto-request permissions + device-specific guide
@@ -521,7 +521,7 @@ document.addEventListener('visibilitychange', () => {
     clearInterval(timerInterval);
   } else if (token && staffInfo?.on_shift) {
     refresh();
-    pollInterval = setInterval(refresh, 5000);
+    pollInterval = setInterval(refresh, 2000);
     timerInterval = setInterval(updateTimers, 1000);
   }
 });
