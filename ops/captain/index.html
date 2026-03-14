@@ -209,6 +209,7 @@
     .toast.error{border-color:var(--red);color:var(--red)}
     .toast.success{border-color:var(--green);color:var(--green)}
   </style>
+  <script src="/ops/setup-wizard.js"></script>
 </head>
 <body>
 
@@ -507,6 +508,11 @@ function enterApp() {
   refreshLive();
   // Single atomic poll+data every 5s (kitchen-intel pattern)
   pollInterval = setInterval(refreshLive, 5000);
+  // Setup wizard — auto-request permissions + device-specific guide
+  if (window.SetupWizard) SetupWizard.init({
+    apiBase: API_BASE, token, vapidPublicKey: VAPID_PUBLIC_KEY,
+    setupPush, appName: 'HE Captain', storagePrefix: 'floor_captain'
+  });
 }
 
 async function refreshLive() {
