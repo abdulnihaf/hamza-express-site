@@ -5,9 +5,14 @@
 (function() {
   'use strict';
 
-  // ── Device detection ──
+  // ── Platform & device detection ──
+  function isIOS() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function isAndroid() { return /Android/i.test(navigator.userAgent); }
+  function isStandalone() { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }
+
   function detectDevice() {
     const ua = navigator.userAgent;
+    if (isIOS()) return 'ios';
     if (/Xiaomi|Redmi|POCO|MIUI|Mi /i.test(ua)) return 'xiaomi';
     if (/vivo/i.test(ua)) return 'vivo';
     if (/Samsung|SM-/i.test(ua)) return 'samsung';
@@ -19,7 +24,7 @@
   }
 
   const DEVICE_NAMES = {
-    xiaomi: 'Xiaomi / Redmi', vivo: 'Vivo', samsung: 'Samsung',
+    ios: 'iPhone', xiaomi: 'Xiaomi / Redmi', vivo: 'Vivo', samsung: 'Samsung',
     oppo: 'OPPO', realme: 'Realme', oneplus: 'OnePlus',
     huawei: 'Huawei', android: 'Android'
   };
@@ -28,6 +33,32 @@
   // Each returns array of { title, steps[], skip? }
   function getManualSteps(device) {
     const steps = [];
+
+    // iOS: completely different flow — no battery/autostart, but needs PWA install
+    if (device === 'ios') {
+      if (!isStandalone()) {
+        steps.push({
+          id: 'ios_install', icon: '\u{1F4F2}', title: 'Install as App',
+          steps: [
+            'Tap the <b>Share button</b> (box with arrow) at the bottom of Safari',
+            'Scroll down and tap <b>"Add to Home Screen"</b>',
+            'Tap <b>"Add"</b> in the top right',
+            'Open the app from your <b>Home Screen</b>',
+            'Log in again — push notifications only work from the installed app'
+          ]
+        });
+      }
+      steps.push({
+        id: 'ios_focus', icon: '\u{1F515}', title: 'Check Focus / Do Not Disturb',
+        steps: [
+          'Open <b>Settings</b> → <b>Focus</b>',
+          'If any Focus mode is active, tap it',
+          'Make sure <b>Safari</b> or this app is in the <b>Allowed Apps</b> list',
+          'Or turn off Focus mode during shifts'
+        ]
+      });
+      return steps;
+    }
 
     // Step: Battery optimization
     const battery = { id: 'battery', icon: '\u{1F50B}', title: 'Disable Battery Optimization', steps: [] };
@@ -246,13 +277,27 @@
       </div>
     `);
 
+    // iOS in Safari (not installed): push won't work — skip auto and go to install step
+    if (isIOS() && !isStandalone() && typeof Notification === 'undefined') {
+      updateAutoItem('sw-s1', false);
+      updateAutoItem('sw-s2', false);
+      updateAutoItem('sw-s3', false);
+      const el = document.getElementById('sw-auto-status');
+      if (el) el.textContent = 'Push notifications require the installed app on iPhone.';
+      await sleep(1500);
+      if (manualSteps.length > 0) { currentManualStep = 0; showManualStep(); } else { showTestPush(); }
+      return;
+    }
+
     // 1. Notification permission
     try {
-      if (Notification.permission === 'granted') {
-        autoResults.notification = true;
-      } else if (Notification.permission !== 'denied') {
-        const perm = await Notification.requestPermission();
-        autoResults.notification = perm === 'granted';
+      if (typeof Notification !== 'undefined') {
+        if (Notification.permission === 'granted') {
+          autoResults.notification = true;
+        } else if (Notification.permission !== 'denied') {
+          const perm = await Notification.requestPermission();
+          autoResults.notification = perm === 'granted';
+        }
       }
     } catch (e) { /* denied */ }
     updateAutoItem('sw-s1', autoResults.notification);
@@ -461,8 +506,8 @@
   // ── Public API ──
   window.SetupWizard = {
     init: function(cfg) {
-      if (!('Android' === '' || /Android/i.test(navigator.userAgent))) {
-        // Not Android — push works fine, no setup needed
+      if (!isAndroid() && !isIOS()) {
+        // Desktop — push works fine, no setup needed
         return;
       }
 
