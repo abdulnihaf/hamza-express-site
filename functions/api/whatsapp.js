@@ -3369,21 +3369,27 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({ ok: true });
   }
 
-  // ── Test push (admin only) ──
+  // ── Test push (any staff) ──
   if (action === 'floor-test-push' && method === 'POST') {
     const body = await context.request.json();
     const targetId = body.staff_id || staff.id;
-    const targetStaff = await db.prepare(`SELECT id, name, push_subscription FROM ${t}floor_staff WHERE id = ?`).bind(targetId).first();
-    if (!targetStaff?.push_subscription) return json({ ok: false, error: 'No push subscription for staff ' + targetId });
-    const sub = JSON.parse(targetStaff.push_subscription);
-    const result = await sendPush(context.env, sub, {
+    const targetStaff = await db.prepare(`SELECT id, name, push_subscription, fcm_token FROM ${t}floor_staff WHERE id = ?`).bind(targetId).first();
+    if (!targetStaff?.push_subscription && !targetStaff?.fcm_token) return json({ ok: false, error: 'No push subscription for staff ' + targetId });
+    const pushPayload = {
       title: body.title || 'Test Buzz',
       body: body.body || 'Push notification test from Hamza Express',
       vibrate: body.vibrate || [1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000, 300, 1000],
       tag: 'test-push',
       url: '/ops/waiter/'
-    });
-    return json({ ok: result.ok || false, result, staff: targetStaff.name });
+    };
+    // Prefer FCM (native app), fall back to Web Push
+    if (targetStaff.fcm_token) {
+      const result = await sendFcmPush(context.env, targetStaff.fcm_token, pushPayload);
+      return json({ ok: !result.error, result, staff: targetStaff.name, type: 'fcm' });
+    }
+    const sub = JSON.parse(targetStaff.push_subscription);
+    const result = await sendPush(context.env, sub, pushPayload);
+    return json({ ok: result.ok || false, result, staff: targetStaff.name, type: 'web' });
   }
 
   // ── Start shift (any staff) ──

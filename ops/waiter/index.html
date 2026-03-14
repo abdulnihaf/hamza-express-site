@@ -409,25 +409,31 @@ function urlBase64ToUint8Array(base64String) {
   const raw = atob(p + '='.repeat((4 - p.length % 4) % 4));
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
+function isNativeApp() {
+  return !!(window.HENative || window.nativeFcmToken || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+}
+async function sendFcmTokenToServer(fcmToken) {
+  if (!fcmToken) return;
+  await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
+  if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
+  console.log('FCM token sent to server');
+}
 async function setupPush() {
   try {
-    // Native app: FCM token is injected by MainActivity.java via HENative JS bridge
-    if (window.HENative || window.nativeFcmToken) {
-      const fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken());
-      if (fcmToken) {
-        await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
-        // Save auth info to native so token refreshes can be sent to server
-        if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
-        return;
+    // Native app: FCM token injected by MainActivity.java
+    if (isNativeApp()) {
+      // Try getting token immediately
+      let fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+      if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
+      // Token not ready — listen for event + poll with retries
+      window.addEventListener('fcmTokenReady', (e) => sendFcmTokenToServer(e.detail), { once: true });
+      // Also retry a few times (token fetch is async in Java)
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+        if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
       }
-      // Token not ready yet — listen for it
-      window.addEventListener('fcmTokenReady', async (e) => {
-        const t = e.detail;
-        if (t) {
-          await api('floor-push-subscribe', 'POST', { fcm_token: t, platform: 'native' });
-          if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
-        }
-      }, { once: true });
+      console.warn('FCM token not available after retries');
       return;
     }
     // Browser/PWA: use Web Push (VAPID)

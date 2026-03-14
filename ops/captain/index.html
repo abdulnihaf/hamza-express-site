@@ -414,26 +414,27 @@ function urlBase64ToUint8Array(base64String) {
   const raw = atob(p + '='.repeat((4 - p.length % 4) % 4));
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
+function isNativeApp() {
+  return !!(window.HENative || window.nativeFcmToken || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+}
+async function sendFcmTokenToServer(fcmToken) {
+  if (!fcmToken) return;
+  await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
+  if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
+}
 async function setupPush() {
   try {
-    // Native app: FCM token is injected by MainActivity.java via HENative JS bridge
-    if (window.HENative || window.nativeFcmToken) {
-      const fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken());
-      if (fcmToken) {
-        await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
-        if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
-        return;
+    if (isNativeApp()) {
+      let fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+      if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
+      window.addEventListener('fcmTokenReady', (e) => sendFcmTokenToServer(e.detail), { once: true });
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+        if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
       }
-      window.addEventListener('fcmTokenReady', async (e) => {
-        const t = e.detail;
-        if (t) {
-          await api('floor-push-subscribe', 'POST', { fcm_token: t, platform: 'native' });
-          if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
-        }
-      }, { once: true });
       return;
     }
-    // Browser/PWA: use Web Push (VAPID)
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     const reg = await navigator.serviceWorker.register('/sw.js');
     await navigator.serviceWorker.ready;
