@@ -23,6 +23,37 @@
     return 'android';
   }
 
+  function detectModel() {
+    const ua = navigator.userAgent;
+    // Extract model from "Build/..." or known patterns
+    let m;
+    // Redmi: "Redmi Note 13" etc
+    m = ua.match(/(Redmi\s*\w[\w\s]*?)(?:\s*Build|[;)])/i);
+    if (m) return m[1].trim();
+    // Vivo: "vivo Y300" etc (also V2338 style codes)
+    m = ua.match(/(vivo\s*[\w\d]+[\w\d\s]*?)(?:\s*Build|[;)])/i);
+    if (m) return m[1].trim();
+    // POCO
+    m = ua.match(/(POCO\s*[\w\d]+[\w\d\s]*?)(?:\s*Build|[;)])/i);
+    if (m) return m[1].trim();
+    // Samsung SM-XXXX
+    m = ua.match(/(SM-[\w\d]+)/i);
+    if (m) return 'Samsung ' + m[1];
+    // OnePlus
+    m = ua.match(/((?:OnePlus|IN\d{4}|KB\d{4})[\w]*)/i);
+    if (m) return m[1].trim();
+    // OPPO CPH
+    m = ua.match(/(CPH[\d]+)/i);
+    if (m) return 'OPPO ' + m[1];
+    // Realme RMX
+    m = ua.match(/(RMX[\d]+)/i);
+    if (m) return 'Realme ' + m[1];
+    // Generic: try to grab model before "Build/"
+    m = ua.match(/;\s*([\w][\w\s\-\+\.]+?)\s*Build\//);
+    if (m) return m[1].trim();
+    return null;
+  }
+
   const DEVICE_NAMES = {
     ios: 'iPhone', xiaomi: 'Xiaomi / Redmi', vivo: 'Vivo', samsung: 'Samsung',
     oppo: 'OPPO', realme: 'Realme', oneplus: 'OnePlus',
@@ -169,6 +200,51 @@
     };
     steps.push(pause);
 
+    // Step: Set notification sound to alarm/ringtone
+    const notifSound = { id: 'notif_sound', icon: '\u{1F50A}', title: 'Set Alarm Ringtone for Notifications', steps: [] };
+    switch (device) {
+      case 'xiaomi':
+        notifSound.steps = [
+          'Open <b>Settings</b> → <b>Apps</b> → <b>Manage apps</b>',
+          'Find and tap <b>Chrome</b>',
+          'Tap <b>Notifications</b>',
+          'Find <b>hamzaexpress.in</b> (or "HE ' + (config.appName || 'App') + '")',
+          'Tap it → tap <b>Sound</b>',
+          'Pick a <b>loud ringtone</b> (e.g. "Alarm" or "Ring") — NOT "Default"',
+          'Also set <b>Importance</b> to <b>Urgent</b>'
+        ];
+        break;
+      case 'vivo':
+        notifSound.steps = [
+          'Open <b>Settings</b> → <b>Notifications & Status Bar</b>',
+          'Tap <b>App Notifications</b> → find <b>Chrome</b>',
+          'Tap <b>Chrome</b> → find <b>hamzaexpress.in</b> channel',
+          'Tap it → tap <b>Sound</b>',
+          'Pick a <b>loud alarm tone</b> — something that sounds like a phone ringing',
+          'Set <b>Importance</b> to <b>Urgent</b>'
+        ];
+        break;
+      case 'samsung':
+        notifSound.steps = [
+          'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
+          'Tap <b>Notifications</b>',
+          'Find the <b>hamzaexpress.in</b> notification channel',
+          'Tap it → tap <b>Sound</b>',
+          'Pick a <b>loud alarm/ringtone</b>',
+          'Set to <b>Alert</b> (not Silent)'
+        ];
+        break;
+      default:
+        notifSound.steps = [
+          'Open <b>Settings</b> → <b>Apps</b> → <b>Chrome</b>',
+          'Tap <b>Notifications</b>',
+          'Find <b>hamzaexpress.in</b> notification channel',
+          'Tap it → change <b>Sound</b> to a <b>loud alarm/ringtone</b>',
+          'Set <b>Importance</b> to <b>Urgent</b>'
+        ];
+    }
+    steps.push(notifSound);
+
     // Step: Lock in recents
     const lock = {
       id: 'lock_recents', icon: '\u{1F512}', title: 'Lock Chrome in Recent Apps',
@@ -231,6 +307,7 @@
   let overlay = null;
   let config = null;
   let device = null;
+  let model = null;
   let manualSteps = [];
   let currentManualStep = 0;
   let autoResults = { notification: false, sw: false, push: false };
@@ -266,7 +343,7 @@
       <div class="sw-body">
         <div class="sw-icon">\u{1F50D}</div>
         <div class="sw-title">Checking Permissions</div>
-        <div class="sw-device-tag">${DEVICE_NAMES[device] || 'Android'} detected</div>
+        <div class="sw-device-tag">${model || DEVICE_NAMES[device] || 'Android'} detected</div>
         <div class="sw-auto-items">
           <div class="sw-auto-item"><span class="label">\u{1F514} Notifications</span><span class="status wait" id="sw-s1">Checking...</span></div>
           <div class="sw-auto-item"><span class="label">\u2699\uFE0F Background Service</span><span class="status wait" id="sw-s2">Checking...</span></div>
@@ -391,13 +468,13 @@
     render(`
       <div class="sw-progress"><div class="sw-progress-bar" style="width:${pct}%"></div></div>
       <div class="sw-header">
-        <span class="sw-header-text">Step ${stepNum} of ${totalSteps()} \u2022 ${DEVICE_NAMES[device]}</span>
+        <span class="sw-header-text">Step ${stepNum} of ${totalSteps()} \u2022 ${model || DEVICE_NAMES[device]}</span>
         <button class="sw-skip-all" onclick="SetupWizard._skipAll()">Skip all</button>
       </div>
       <div class="sw-body">
         <div class="sw-icon">${step.icon}</div>
         <div class="sw-title">${step.title}</div>
-        <div class="sw-device-tag">${DEVICE_NAMES[device]}</div>
+        <div class="sw-device-tag">${model || DEVICE_NAMES[device]}</div>
         <div class="sw-steps-list">${stepsHtml}</div>
       </div>
       <div class="sw-footer">
@@ -446,7 +523,7 @@
         body: JSON.stringify({
           title: 'Setup Complete! \u2705',
           body: 'Push notifications are working for ' + (config.appName || 'this app'),
-          vibrate: [300, 100, 300],
+          vibrate: [800,400,800,400,800,400,800,400,800,400,800,400,800,400,800],
           tag: 'setup-test',
           url: window.location.pathname
         })
@@ -513,6 +590,7 @@
 
       config = cfg;
       device = detectDevice();
+      model = detectModel();
       manualSteps = getManualSteps(device);
 
       const prefix = cfg.storagePrefix || 'floor';
@@ -547,6 +625,7 @@
       config = cfg || config;
       if (!config) return;
       device = detectDevice();
+      model = detectModel();
       manualSteps = getManualSteps(device);
       injectStyles();
       createOverlay();
