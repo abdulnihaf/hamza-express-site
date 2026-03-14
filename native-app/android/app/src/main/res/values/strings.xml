@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hamza Express Ops</string>
+    <string name="title_activity_main">Hamza Express Ops</string>
+    <string name="package_name">in.hamzaexpress.ops</string>
+    <string name="custom_url_scheme">in.hamzaexpress.ops</string>
+</resources>

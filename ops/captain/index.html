@@ -416,6 +416,23 @@ function urlBase64ToUint8Array(base64String) {
 }
 async function setupPush() {
   try {
+    // Native Capacitor app: use FCM directly (works on locked screens)
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const { PushNotifications } = window.Capacitor.Plugins;
+      if (!PushNotifications) return;
+      const perm = await PushNotifications.requestPermissions();
+      if (perm.receive !== 'granted') return;
+      await PushNotifications.register();
+      PushNotifications.addListener('registration', async (t) => {
+        await api('floor-push-subscribe', 'POST', { fcm_token: t.value, platform: 'native' });
+      });
+      PushNotifications.addListener('pushNotificationActionPerformed', (a) => {
+        const url = a.notification?.data?.url;
+        if (url) window.location.href = url;
+      });
+      return;
+    }
+    // Browser/PWA: use Web Push (VAPID)
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     const reg = await navigator.serviceWorker.register('/sw.js');
     await navigator.serviceWorker.ready;

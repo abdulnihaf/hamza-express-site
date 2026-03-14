@@ -2900,6 +2900,98 @@ async function encryptPushPayload(subscription, payloadStr) {
   return body;
 }
 
+// ── FCM v1 API push (for native Capacitor apps) ──
+async function sendFcmPush(env, fcmToken, payload) {
+  try {
+    const serviceAccount = JSON.parse(env.FCM_SERVICE_ACCOUNT || '{}');
+    if (!serviceAccount.client_email || !serviceAccount.private_key) {
+      console.error('FCM: missing service account');
+      return { error: 'no_service_account' };
+    }
+
+    // Create JWT for Google OAuth2
+    const now = Math.floor(Date.now() / 1000);
+    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=/g, '');
+    const claims = btoa(JSON.stringify({
+      iss: serviceAccount.client_email,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging',
+      aud: 'https://oauth2.googleapis.com/token',
+      iat: now,
+      exp: now + 3600
+    })).replace(/=/g, '');
+
+    const signingInput = `${header}.${claims}`;
+
+    // Import RSA private key
+    const pemContent = serviceAccount.private_key
+      .replace(/-----BEGIN PRIVATE KEY-----/, '')
+      .replace(/-----END PRIVATE KEY-----/, '')
+      .replace(/\n/g, '');
+    const keyData = Uint8Array.from(atob(pemContent), c => c.charCodeAt(0));
+    const cryptoKey = await crypto.subtle.importKey('pkcs8', keyData, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(signingInput));
+    const sig = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    const jwt = `${signingInput}.${sig}`;
+
+    // Get OAuth2 access token
+    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
+    });
+    const tokenData = await tokenResp.json();
+    if (!tokenData.access_token) {
+      console.error('FCM: OAuth token failed', tokenData);
+      return { error: 'oauth_failed' };
+    }
+
+    // Send FCM v1 message
+    const projectId = serviceAccount.project_id;
+    const fcmResp = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: {
+          token: fcmToken,
+          notification: {
+            title: payload.title || 'Hamza Express',
+            body: payload.body || ''
+          },
+          data: {
+            title: payload.title || 'Hamza Express',
+            body: payload.body || '',
+            url: payload.url || '/ops/',
+            tag: payload.tag || 'he-ops'
+          },
+          android: {
+            priority: 'HIGH',
+            notification: {
+              channel_id: 'he_orders',
+              sound: 'default',
+              default_vibrate_timings: false,
+              vibrate_timings: ['0s','1s','0.3s','1s','0.3s','1s','0.3s','1s','0.3s','1s'],
+              notification_priority: 'PRIORITY_MAX',
+              visibility: 'PUBLIC'
+            }
+          }
+        }
+      })
+    });
+
+    if (fcmResp.ok) return { ok: true };
+    const errText = await fcmResp.text().catch(() => '');
+    if (errText.includes('NOT_FOUND') || errText.includes('UNREGISTERED')) return { expired: true };
+    console.error(`FCM push failed: ${fcmResp.status} ${errText}`);
+    return { error: fcmResp.status };
+  } catch (e) {
+    console.error('FCM push error:', e.message);
+    return { error: e.message };
+  }
+}
+
 async function sendPush(env, subscription, payload) {
   try {
     const privJwk = JSON.parse(env.VAPID_PRIVATE_KEY);
@@ -2930,14 +3022,27 @@ async function sendPush(env, subscription, payload) {
 }
 
 async function pushToStaff(env, db, staffId, payload, t = '') {
-  const staff = await db.prepare(`SELECT push_subscription FROM ${t}floor_staff WHERE id = ?`).bind(staffId).first();
-  if (!staff?.push_subscription) return;
+  const staff = await db.prepare(`SELECT push_subscription, fcm_token FROM ${t}floor_staff WHERE id = ?`).bind(staffId).first();
+  if (!staff?.push_subscription && !staff?.fcm_token) return;
   try {
-    const sub = JSON.parse(staff.push_subscription);
-    const result = await sendPush(env, sub, payload);
-    if (result.expired) {
-      await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(staffId).run();
-      console.log(`Push: cleared expired subscription for staff ${staffId}`);
+    // Prefer native FCM token (works on locked screens), fall back to Web Push
+    let result;
+    if (staff.fcm_token && env.FCM_SERVICE_ACCOUNT) {
+      result = await sendFcmPush(env, staff.fcm_token, payload);
+      if (result.expired) {
+        await db.prepare(`UPDATE ${t}floor_staff SET fcm_token = NULL WHERE id = ?`).bind(staffId).run();
+        console.log(`Push: cleared expired FCM token for staff ${staffId}`);
+      }
+    }
+    // Also send Web Push if subscription exists (staff might have both)
+    if (staff.push_subscription) {
+      const sub = JSON.parse(staff.push_subscription);
+      const webResult = await sendPush(env, sub, payload);
+      if (webResult.expired) {
+        await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(staffId).run();
+        console.log(`Push: cleared expired web subscription for staff ${staffId}`);
+      }
+      if (!result?.ok) result = webResult;
     }
   } catch (e) { console.error(`Push to staff ${staffId} error:`, e.message); }
 }
@@ -2945,14 +3050,24 @@ async function pushToStaff(env, db, staffId, payload, t = '') {
 async function pushToRole(env, db, role, payload, t = '') {
   const col = role === 'captain' ? 'can_captain' : role === 'cleaner' ? 'can_clean' : 'can_waiter';
   const staff = await db.prepare(
-    `SELECT id, push_subscription FROM ${t}floor_staff WHERE ${col} = 1 AND on_shift = 1 AND push_subscription IS NOT NULL`
+    `SELECT id, push_subscription, fcm_token FROM ${t}floor_staff WHERE ${col} = 1 AND on_shift = 1 AND (push_subscription IS NOT NULL OR fcm_token IS NOT NULL)`
   ).all();
   for (const s of (staff.results || [])) {
     try {
-      const sub = JSON.parse(s.push_subscription);
-      const result = await sendPush(env, sub, payload);
-      if (result.expired) {
-        await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(s.id).run();
+      // Send via native FCM if available
+      if (s.fcm_token && env.FCM_SERVICE_ACCOUNT) {
+        const fcmResult = await sendFcmPush(env, s.fcm_token, payload);
+        if (fcmResult.expired) {
+          await db.prepare(`UPDATE ${t}floor_staff SET fcm_token = NULL WHERE id = ?`).bind(s.id).run();
+        }
+      }
+      // Also send via Web Push if available
+      if (s.push_subscription) {
+        const sub = JSON.parse(s.push_subscription);
+        const result = await sendPush(env, sub, payload);
+        if (result.expired) {
+          await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = NULL WHERE id = ?`).bind(s.id).run();
+        }
       }
     } catch (e) { /* best effort */ }
   }
@@ -3230,14 +3345,21 @@ async function handleFloorAction(context, action, corsHeaders) {
     return json({ staff: staffList.results });
   }
 
-  // ── Push subscribe (any staff) ──
+  // ── Push subscribe (any staff) — supports Web Push subscription OR native FCM token ──
   if (action === 'floor-push-subscribe' && method === 'POST') {
     const body = await context.request.json();
+    // Native FCM token (from Capacitor app)
+    if (body.fcm_token && body.platform === 'native') {
+      await db.prepare(`UPDATE ${t}floor_staff SET fcm_token = ? WHERE id = ?`)
+        .bind(body.fcm_token, staff.id).run();
+      return json({ ok: true, type: 'fcm' });
+    }
+    // Web Push subscription (from browser/PWA)
     const sub = body.subscription;
     if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return err('Invalid subscription');
     await db.prepare(`UPDATE ${t}floor_staff SET push_subscription = ? WHERE id = ?`)
       .bind(JSON.stringify(sub), staff.id).run();
-    return json({ ok: true });
+    return json({ ok: true, type: 'web' });
   }
 
   // ── Push unsubscribe (any staff) ──
