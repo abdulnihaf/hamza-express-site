@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /ops/
+Disallow: /test/
+Disallow: /functions/
+Disallow: /native-app/
+Disallow: /node_modules/
+
+Sitemap: https://hamzaexpress.in/sitemap.xml
