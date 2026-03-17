@@ -589,6 +589,11 @@ export async function onRequest(context) {
     return handleFloorAction(context, action, corsHeaders);
   }
 
+  // POS Audit — records every captain/counter POS action (PIN-gated)
+  if (action && action.startsWith('pos-audit')) {
+    return handlePosAudit(context, action, corsHeaders);
+  }
+
   // Dashboard API (GET/POST with action param) — requires X-API-Key auth
   if (action) {
     const apiKey = context.request.headers.get('X-API-Key');
@@ -5319,4 +5324,448 @@ async function handleDashboardAPI(context, action, url, corsHeaders) {
   }
 
   return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers: corsHeaders });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// POS AUDIT — Records every single action on Captain & Counter POS
+// Diff-based: compares Odoo state with D1 snapshots, logs all changes
+// ═══════════════════════════════════════════════════════════════════
+
+async function handlePosAudit(context, action, corsHeaders) {
+  const db = context.env.DB;
+  const method = context.request.method;
+  const url = context.request.url;
+  const cfg = getFloorConfig(url);
+  const t = cfg.t;
+  const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: corsHeaders });
+  const err = (msg, status = 400) => json({ error: msg }, status);
+
+  if (method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+
+  // Auth via floor staff token (same as floor system)
+  const token = context.request.headers.get('Authorization')?.replace('Bearer ', '') || '';
+  const staff = await validateFloorToken(db, token, null, t);
+  if (!staff) return err('Unauthorized', 401);
+
+  const params = new URL(url).searchParams;
+  const posType = params.get('pos') || 'captain'; // 'captain' or 'counter'
+  const configId = posType === 'counter' ? 5 : 6;
+  const logTable = posType === 'counter' ? `${t}counter_pos_log` : `${t}captain_pos_log`;
+  const snapTable = posType === 'counter' ? `${t}counter_pos_snapshot` : `${t}captain_pos_snapshot`;
+
+  // ── Poll: run diff detection against Odoo ──
+  if (action === 'pos-audit-poll' && method === 'GET') {
+    const apiKey = context.env.ODOO_API_KEY;
+    if (!apiKey) return err('ODOO_API_KEY not configured');
+
+    const result = await posAuditPoll(db, apiKey, configId, logTable, snapTable, cfg.odooUrl);
+    return json(result);
+  }
+
+  // ── Log: retrieve audit events ──
+  if (action === 'pos-audit-log' && method === 'GET') {
+    const from = params.get('from'); // IST datetime
+    const to = params.get('to');
+    const eventType = params.get('type');
+    const orderId = params.get('order_id');
+    const limit = Math.min(parseInt(params.get('limit') || '500'), 2000);
+
+    let where = '1=1';
+    const binds = [];
+
+    if (from) { where += ' AND created_at >= ?'; binds.push(from); }
+    if (to) { where += ' AND created_at <= ?'; binds.push(to); }
+    if (eventType) { where += ' AND event_type = ?'; binds.push(eventType); }
+    if (orderId) { where += ' AND odoo_order_id = ?'; binds.push(parseInt(orderId)); }
+
+    const logs = await db.prepare(
+      `SELECT * FROM ${logTable} WHERE ${where} ORDER BY created_at DESC, id DESC LIMIT ?`
+    ).bind(...binds, limit).all();
+
+    // Also get summary stats
+    const stats = await db.prepare(
+      `SELECT event_type, COUNT(*) as count FROM ${logTable} WHERE ${where} GROUP BY event_type ORDER BY count DESC`
+    ).bind(...binds).all();
+
+    return json({ logs: logs.results, stats: stats.results, total: logs.results.length });
+  }
+
+  // ── Snapshots: current state of all tracked orders ──
+  if (action === 'pos-audit-snapshots' && method === 'GET') {
+    const snaps = await db.prepare(
+      `SELECT * FROM ${snapTable} ORDER BY last_seen_at DESC LIMIT 200`
+    ).all();
+    return json({ snapshots: snaps.results });
+  }
+
+  return err('Unknown audit action');
+}
+
+// ── Core audit engine: diff Odoo state against D1 snapshots ──
+async function posAuditPoll(db, apiKey, configId, logTable, snapTable, odooUrl) {
+  const nowIST = toIST(new Date());
+  const lookback = new Date(Date.now() - 4 * 60 * 60 * 1000); // 4-hour window
+  const lookbackStr = lookback.toISOString().slice(0, 19).replace('T', ' ');
+
+  // 1. Fetch all orders modified in last 4 hours from Odoo
+  const orders = await odooRPC(apiKey, 'pos.order', 'search_read',
+    [[['config_id', '=', configId], ['write_date', '>', lookbackStr]]],
+    { fields: ['id', 'name', 'date_order', 'write_date', 'state', 'amount_total', 'amount_tax',
+               'tracking_number', 'table_id', 'employee_id'],
+      order: 'write_date asc', limit: 100 },
+    odooUrl
+  );
+
+  if (!orders) return { error: true, message: 'Odoo unreachable' };
+
+  let created = 0, updated = 0, events = [];
+
+  for (const order of orders) {
+    const orderId = order.id;
+    const orderName = order.name || '/';
+    const tableName = order.table_id ? order.table_id[1] : null;
+    const tableId = order.table_id ? order.table_id[0] : null;
+    const empName = order.employee_id ? order.employee_id[1] : null;
+    const empId = order.employee_id ? order.employee_id[0] : null;
+
+    // Fetch current line items
+    const lines = await odooRPC(apiKey, 'pos.order.line', 'search_read',
+      [[['order_id', '=', orderId]]],
+      { fields: ['product_id', 'qty', 'price_subtotal_incl', 'price_unit', 'discount', 'full_product_name'] },
+      odooUrl
+    );
+    const itemsList = (lines || []).map(l => ({
+      product_id: l.product_id[0],
+      name: l.full_product_name || l.product_id[1],
+      qty: l.qty,
+      price: l.price_subtotal_incl,
+      unit_price: l.price_unit,
+      discount: l.discount || 0
+    }));
+    const itemsJson = JSON.stringify(itemsList);
+
+    // Fetch payments
+    const payments = await odooRPC(apiKey, 'pos.payment', 'search_read',
+      [[['pos_order_id', '=', orderId]]],
+      { fields: ['payment_method_id', 'amount'] },
+      odooUrl
+    );
+    const paymentsList = (payments || []).map(p => ({
+      method: p.payment_method_id[1],
+      method_id: p.payment_method_id[0],
+      amount: p.amount
+    }));
+    const paymentsJson = JSON.stringify(paymentsList);
+
+    // Get existing snapshot
+    const snap = await db.prepare(`SELECT * FROM ${snapTable} WHERE odoo_order_id = ?`).bind(orderId).first();
+
+    if (!snap) {
+      // ── NEW ORDER ──
+      created++;
+      const evt = {
+        event_type: order.state === 'cancel' ? 'order_cancelled' : 'order_created',
+        odoo_order_id: orderId,
+        odoo_order_name: orderName,
+        table_number: tableName,
+        captain: empName,
+        employee_id: empId,
+        tracking_number: order.tracking_number,
+        amount: order.amount_total,
+        details: JSON.stringify({
+          state: order.state,
+          items: itemsList,
+          payments: paymentsList,
+          date_order: order.date_order
+        }),
+        created_at: nowIST
+      };
+      await insertLog(db, logTable, evt);
+      events.push(evt);
+
+      // If order is already paid when first seen, also log payment
+      if (['paid', 'done', 'invoiced'].includes(order.state) && paymentsList.length > 0) {
+        for (const pay of paymentsList) {
+          const payEvt = {
+            event_type: 'payment_recorded',
+            odoo_order_id: orderId,
+            odoo_order_name: orderName,
+            table_number: tableName,
+            captain: empName,
+            employee_id: empId,
+            tracking_number: order.tracking_number,
+            amount: pay.amount,
+            details: JSON.stringify({ method: pay.method, method_id: pay.method_id }),
+            created_at: nowIST
+          };
+          await insertLog(db, logTable, payEvt);
+          events.push(payEvt);
+        }
+      }
+
+      // Create snapshot
+      await db.prepare(
+        `INSERT INTO ${snapTable} (odoo_order_id, odoo_order_name, state, amount_total, amount_tax, table_name, table_id, employee_id, employee_name, tracking_number, items_json, payments_json, line_count, write_date, first_seen_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(orderId, orderName, order.state, order.amount_total, order.amount_tax, tableName, tableId, empId, empName, order.tracking_number, itemsJson, paymentsJson, itemsList.length, order.write_date, nowIST, nowIST).run();
+
+    } else if (snap.write_date !== order.write_date) {
+      // ── EXISTING ORDER CHANGED ──
+      updated++;
+
+      // Detect state change
+      if (snap.state !== order.state) {
+        let evtType = 'state_changed';
+        if (order.state === 'cancel') evtType = 'order_cancelled';
+        else if (['paid', 'done', 'invoiced'].includes(order.state) && snap.state === 'draft') evtType = 'order_paid';
+
+        const evt = {
+          event_type: evtType,
+          odoo_order_id: orderId,
+          odoo_order_name: orderName,
+          table_number: tableName,
+          captain: empName,
+          employee_id: empId,
+          tracking_number: order.tracking_number,
+          amount: order.amount_total,
+          details: JSON.stringify({ from: snap.state, to: order.state }),
+          created_at: nowIST
+        };
+        await insertLog(db, logTable, evt);
+        events.push(evt);
+      }
+
+      // Detect amount change
+      if (Math.abs((snap.amount_total || 0) - order.amount_total) > 0.01) {
+        const evt = {
+          event_type: 'amount_changed',
+          odoo_order_id: orderId,
+          odoo_order_name: orderName,
+          table_number: tableName,
+          captain: empName,
+          employee_id: empId,
+          tracking_number: order.tracking_number,
+          amount: order.amount_total,
+          details: JSON.stringify({ from: snap.amount_total, to: order.amount_total, diff: order.amount_total - (snap.amount_total || 0) }),
+          created_at: nowIST
+        };
+        await insertLog(db, logTable, evt);
+        events.push(evt);
+      }
+
+      // Detect table change
+      if (snap.table_name !== tableName) {
+        const evt = {
+          event_type: 'table_changed',
+          odoo_order_id: orderId,
+          odoo_order_name: orderName,
+          table_number: tableName,
+          captain: empName,
+          employee_id: empId,
+          tracking_number: order.tracking_number,
+          amount: order.amount_total,
+          details: JSON.stringify({ from: snap.table_name, to: tableName }),
+          created_at: nowIST
+        };
+        await insertLog(db, logTable, evt);
+        events.push(evt);
+      }
+
+      // Detect captain/cashier change
+      if (snap.employee_id !== empId) {
+        const evt = {
+          event_type: 'captain_changed',
+          odoo_order_id: orderId,
+          odoo_order_name: orderName,
+          table_number: tableName,
+          captain: empName,
+          employee_id: empId,
+          tracking_number: order.tracking_number,
+          amount: order.amount_total,
+          details: JSON.stringify({ from: snap.employee_name, to: empName, from_id: snap.employee_id, to_id: empId }),
+          created_at: nowIST
+        };
+        await insertLog(db, logTable, evt);
+        events.push(evt);
+      }
+
+      // Detect item changes (added, removed, qty changed)
+      const oldItems = JSON.parse(snap.items_json || '[]');
+      const oldMap = new Map(oldItems.map(i => [i.product_id, i]));
+      const newMap = new Map(itemsList.map(i => [i.product_id, i]));
+
+      // Items added
+      for (const [pid, item] of newMap) {
+        if (!oldMap.has(pid)) {
+          const evt = {
+            event_type: 'item_added',
+            odoo_order_id: orderId,
+            odoo_order_name: orderName,
+            table_number: tableName,
+            captain: empName,
+            employee_id: empId,
+            tracking_number: order.tracking_number,
+            amount: item.price,
+            details: JSON.stringify({ product_id: pid, name: item.name, qty: item.qty, price: item.price }),
+            created_at: nowIST
+          };
+          await insertLog(db, logTable, evt);
+          events.push(evt);
+        } else if (oldMap.get(pid).qty !== item.qty) {
+          const evt = {
+            event_type: 'item_qty_changed',
+            odoo_order_id: orderId,
+            odoo_order_name: orderName,
+            table_number: tableName,
+            captain: empName,
+            employee_id: empId,
+            tracking_number: order.tracking_number,
+            amount: item.price,
+            details: JSON.stringify({ product_id: pid, name: item.name, from_qty: oldMap.get(pid).qty, to_qty: item.qty, price: item.price }),
+            created_at: nowIST
+          };
+          await insertLog(db, logTable, evt);
+          events.push(evt);
+        }
+      }
+
+      // Items removed
+      for (const [pid, item] of oldMap) {
+        if (!newMap.has(pid)) {
+          const evt = {
+            event_type: 'item_removed',
+            odoo_order_id: orderId,
+            odoo_order_name: orderName,
+            table_number: tableName,
+            captain: empName,
+            employee_id: empId,
+            tracking_number: order.tracking_number,
+            amount: item.price,
+            details: JSON.stringify({ product_id: pid, name: item.name, qty: item.qty, price: item.price }),
+            created_at: nowIST
+          };
+          await insertLog(db, logTable, evt);
+          events.push(evt);
+        }
+      }
+
+      // Detect new payments
+      const oldPayments = JSON.parse(snap.payments_json || '[]');
+      const oldPaySet = new Set(oldPayments.map(p => `${p.method_id}:${p.amount}`));
+      for (const pay of paymentsList) {
+        if (!oldPaySet.has(`${pay.method_id}:${pay.amount}`)) {
+          const evt = {
+            event_type: 'payment_recorded',
+            odoo_order_id: orderId,
+            odoo_order_name: orderName,
+            table_number: tableName,
+            captain: empName,
+            employee_id: empId,
+            tracking_number: order.tracking_number,
+            amount: pay.amount,
+            details: JSON.stringify({ method: pay.method, method_id: pay.method_id }),
+            created_at: nowIST
+          };
+          await insertLog(db, logTable, evt);
+          events.push(evt);
+        }
+      }
+
+      // Update snapshot
+      await db.prepare(
+        `UPDATE ${snapTable} SET odoo_order_name = ?, state = ?, amount_total = ?, amount_tax = ?, table_name = ?, table_id = ?, employee_id = ?, employee_name = ?, tracking_number = ?, items_json = ?, payments_json = ?, line_count = ?, write_date = ?, last_seen_at = ? WHERE odoo_order_id = ?`
+      ).bind(orderName, order.state, order.amount_total, order.amount_tax, tableName, tableId, empId, empName, order.tracking_number, itemsJson, paymentsJson, itemsList.length, order.write_date, nowIST, orderId).run();
+
+    } else {
+      // No change — just touch last_seen_at
+      await db.prepare(`UPDATE ${snapTable} SET last_seen_at = ? WHERE odoo_order_id = ?`).bind(nowIST, orderId).run();
+    }
+  }
+
+  // ── Ghost detection: find orders in snapshot that disappeared from Odoo ──
+  // (indicates possible offline order loss or manual deletion)
+  let ghosted = 0;
+  const odooIds = new Set(orders.map(o => o.id));
+  const recentSnaps = await db.prepare(
+    `SELECT odoo_order_id, odoo_order_name, state, amount_total, employee_name, table_name, tracking_number FROM ${snapTable} WHERE state = 'draft' AND last_seen_at < ? AND first_seen_at > ?`
+  ).bind(nowIST, lookback.toISOString().slice(0, 19)).all();
+
+  for (const snap of (recentSnaps.results || [])) {
+    if (!odooIds.has(snap.odoo_order_id)) {
+      // Order was in draft and has disappeared — likely deleted or lost
+      // Verify it's truly gone by direct lookup
+      const check = await odooRPC(apiKey, 'pos.order', 'search_read',
+        [[['id', '=', snap.odoo_order_id]]],
+        { fields: ['id', 'state'], limit: 1 },
+        odooUrl
+      );
+      if (check && check.length === 0) {
+        ghosted++;
+        const evt = {
+          event_type: 'order_deleted',
+          odoo_order_id: snap.odoo_order_id,
+          odoo_order_name: snap.odoo_order_name,
+          table_number: snap.table_name,
+          captain: snap.employee_name,
+          employee_id: null,
+          tracking_number: snap.tracking_number,
+          amount: snap.amount_total,
+          details: JSON.stringify({ last_state: snap.state, reason: 'Order disappeared from Odoo — possible offline loss or manual deletion' }),
+          created_at: nowIST
+        };
+        await insertLog(db, logTable, evt);
+        events.push(evt);
+        // Remove from snapshot
+        await db.prepare(`DELETE FROM ${snapTable} WHERE odoo_order_id = ?`).bind(snap.odoo_order_id).run();
+      }
+    }
+  }
+
+  // ── Sequence gap detection: find missing order numbers ──
+  const seqNumbers = orders
+    .filter(o => o.name && o.name !== '/')
+    .map(o => { const m = o.name.match(/(\d+)$/); return m ? parseInt(m[1]) : null; })
+    .filter(n => n !== null)
+    .sort((a, b) => a - b);
+
+  const seqGaps = [];
+  for (let i = 1; i < seqNumbers.length; i++) {
+    if (seqNumbers[i] - seqNumbers[i - 1] > 1) {
+      for (let j = seqNumbers[i - 1] + 1; j < seqNumbers[i]; j++) seqGaps.push(j);
+    }
+  }
+
+  // Tracking number gaps (KOT numbers)
+  const trackingNums = orders
+    .map(o => parseInt(o.tracking_number))
+    .filter(n => !isNaN(n))
+    .sort((a, b) => a - b);
+
+  const trackGaps = [];
+  for (let i = 1; i < trackingNums.length; i++) {
+    if (trackingNums[i] - trackingNums[i - 1] > 1) {
+      for (let j = trackingNums[i - 1] + 1; j < trackingNums[i]; j++) trackGaps.push(j);
+    }
+  }
+
+  return {
+    success: true, scanned: orders.length, created, updated, ghosted,
+    events_logged: events.length,
+    sequence_gaps: seqGaps,
+    tracking_gaps: trackGaps,
+    sequence_range: seqNumbers.length ? [seqNumbers[0], seqNumbers[seqNumbers.length - 1]] : null,
+    tracking_range: trackingNums.length ? [trackingNums[0], trackingNums[trackingNums.length - 1]] : null
+  };
+}
+
+// Helper: insert a log entry
+async function insertLog(db, table, evt) {
+  await db.prepare(
+    `INSERT INTO ${table} (event_type, odoo_order_id, odoo_order_name, table_number, captain, employee_id, tracking_number, amount, details, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(evt.event_type, evt.odoo_order_id, evt.odoo_order_name || null, evt.table_number || null, evt.captain || null, evt.employee_id || null, evt.tracking_number || null, evt.amount || null, evt.details || null, evt.created_at).run();
+}
+
+// Helper: convert UTC Date to IST string (no Z suffix)
+function toIST(date) {
+  const ist = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+  return ist.toISOString().slice(0, 19);
 }
