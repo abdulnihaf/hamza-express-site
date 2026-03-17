@@ -5419,6 +5419,8 @@ async function posAuditPoll(db, apiKey, configId, logTable, snapTable, odooUrl) 
   if (!orders) return { error: true, message: 'Odoo unreachable' };
 
   let created = 0, updated = 0, events = [];
+  const discountAlerts = [];
+  const compAlerts = [];
 
   for (const order of orders) {
     const orderId = order.id;
@@ -5456,6 +5458,33 @@ async function posAuditPoll(db, apiKey, configId, logTable, snapTable, odooUrl) 
       amount: p.amount
     }));
     const paymentsJson = JSON.stringify(paymentsList);
+
+    // Collect discount alerts from line items already fetched
+    const discountedItems = itemsList.filter(i => i.discount > 0);
+    for (const di of discountedItems) {
+      discountAlerts.push({
+        odoo_order_id: orderId,
+        odoo_order_name: order.name,
+        captain: order.employee_id ? order.employee_id[1] : null,
+        table: order.table_id ? order.table_id[1] : null,
+        product: di.name,
+        qty: di.qty,
+        discount_pct: di.discount,
+        amount_after: di.price
+      });
+    }
+
+    // Collect complimentary payment alerts from payments already fetched
+    const compPayments = paymentsList.filter(p => p.method_id === 57);
+    if (compPayments.length > 0) {
+      compAlerts.push({
+        odoo_order_id: orderId,
+        odoo_order_name: order.name,
+        captain: order.employee_id ? order.employee_id[1] : null,
+        table: order.table_id ? order.table_id[1] : null,
+        amount: compPayments.reduce((s, p) => s + p.amount, 0)
+      });
+    }
 
     // Get existing snapshot
     const snap = await db.prepare(`SELECT * FROM ${snapTable} WHERE odoo_order_id = ?`).bind(orderId).first();
@@ -5720,40 +5749,34 @@ async function posAuditPoll(db, apiKey, configId, logTable, snapTable, odooUrl) 
     }
   }
 
-  // ── Sequence gap detection: find missing order numbers ──
-  const seqNumbers = orders
-    .filter(o => o.name && o.name !== '/')
-    .map(o => { const m = o.name.match(/(\d+)$/); return m ? parseInt(m[1]) : null; })
-    .filter(n => n !== null)
-    .sort((a, b) => a - b);
-
-  const seqGaps = [];
-  for (let i = 1; i < seqNumbers.length; i++) {
-    if (seqNumbers[i] - seqNumbers[i - 1] > 1) {
-      for (let j = seqNumbers[i - 1] + 1; j < seqNumbers[i]; j++) seqGaps.push(j);
-    }
-  }
-
-  // Tracking number gaps (KOT numbers)
-  const trackingNums = orders
-    .map(o => parseInt(o.tracking_number))
-    .filter(n => !isNaN(n))
-    .sort((a, b) => a - b);
-
-  const trackGaps = [];
-  for (let i = 1; i < trackingNums.length; i++) {
-    if (trackingNums[i] - trackingNums[i - 1] > 1) {
-      for (let j = trackingNums[i - 1] + 1; j < trackingNums[i]; j++) trackGaps.push(j);
+  // ── Draft aging: orders in draft for too long ──
+  const draftAgingAlerts = [];
+  const agingThresholdMs = 30 * 60 * 1000; // 30 minutes
+  const nowMs = Date.now();
+  const draftSnaps = await db.prepare(
+    `SELECT odoo_order_id, odoo_order_name, employee_name, table_name, amount_total, first_seen_at FROM ${snapTable} WHERE state = 'draft'`
+  ).all();
+  for (const snap of (draftSnaps.results || [])) {
+    const seenAt = new Date(snap.first_seen_at + '+05:30').getTime(); // IST stored without offset
+    const ageMs = nowMs - seenAt;
+    if (ageMs > agingThresholdMs) {
+      draftAgingAlerts.push({
+        odoo_order_id: snap.odoo_order_id,
+        odoo_order_name: snap.odoo_order_name,
+        captain: snap.employee_name,
+        table: snap.table_name,
+        amount: snap.amount_total,
+        age_minutes: Math.round(ageMs / 60000)
+      });
     }
   }
 
   return {
     success: true, scanned: orders.length, created, updated, ghosted,
     events_logged: events.length,
-    sequence_gaps: seqGaps,
-    tracking_gaps: trackGaps,
-    sequence_range: seqNumbers.length ? [seqNumbers[0], seqNumbers[seqNumbers.length - 1]] : null,
-    tracking_range: trackingNums.length ? [trackingNums[0], trackingNums[trackingNums.length - 1]] : null
+    discount_alerts: discountAlerts,
+    comp_alerts: compAlerts,
+    draft_aging: draftAgingAlerts
   };
 }
 

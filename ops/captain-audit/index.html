@@ -226,7 +226,7 @@ async function pollNow() {
       text.textContent = `${data.scanned} scanned, ${data.events_logged} new`;
       if (data.events_logged > 0) fetchLogs();
       // Show gap warnings
-      renderGapWarnings(data);
+      renderAlerts(data);
     }
   } catch (e) {
     dot.className = 'status-dot offline';
@@ -525,30 +525,45 @@ function closeModal(e) {
   }
 }
 
-function renderGapWarnings(data) {
+function renderAlerts(data) {
   const el = document.getElementById('gapAlerts');
   let html = '';
 
-  if (data.sequence_gaps && data.sequence_gaps.length > 0) {
-    html += `<div style="background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:4px">Sequence Gap Detected</div>
-      <div style="font-size:11px;color:var(--text2)">Missing order numbers: <b style="color:var(--red)">${data.sequence_gaps.join(', ')}</b></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">Range: ${data.sequence_range ? data.sequence_range.join(' → ') : 'N/A'}</div>
-    </div>`;
-  }
-
-  if (data.tracking_gaps && data.tracking_gaps.length > 0) {
-    html += `<div style="background:rgba(245,158,11,.1);border:1px solid var(--yellow);border-radius:8px;padding:10px 14px;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:4px">KOT Tracking Gap</div>
-      <div style="font-size:11px;color:var(--text2)">Missing tracking numbers: <b style="color:var(--yellow)">${data.tracking_gaps.join(', ')}</b></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">Range: ${data.tracking_range ? data.tracking_range.join(' → ') : 'N/A'}</div>
-    </div>`;
-  }
-
+  // Ghost orders — most critical
   if (data.ghosted > 0) {
     html += `<div style="background:rgba(239,68,68,.15);border:1px solid var(--red);border-radius:8px;padding:10px 14px;margin-bottom:8px">
       <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:4px">LOST ORDERS DETECTED</div>
       <div style="font-size:11px;color:var(--text2)">${data.ghosted} order(s) disappeared from Odoo — possible offline loss or manual deletion. Check the event log for details.</div>
+    </div>`;
+  }
+
+  // Draft aging — orders not closed for 30+ minutes
+  if (data.draft_aging && data.draft_aging.length > 0) {
+    html += `<div style="background:rgba(245,158,11,.1);border:1px solid var(--yellow);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--yellow);margin-bottom:4px">STALE DRAFT ORDERS (${data.draft_aging.length})</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.8">${data.draft_aging.map(d =>
+        `<b>${d.odoo_order_name || '/'}</b> — Table ${d.table || '?'}, ${d.captain || '?'}, ₹${d.amount || 0} — <b style="color:var(--yellow)">${d.age_minutes} min</b>`
+      ).join('<br>')}</div>
+    </div>`;
+  }
+
+  // Discount alerts
+  if (data.discount_alerts && data.discount_alerts.length > 0) {
+    html += `<div style="background:rgba(236,72,153,.1);border:1px solid var(--pink);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--pink);margin-bottom:4px">DISCOUNTS APPLIED (${data.discount_alerts.length})</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.8">${data.discount_alerts.map(d =>
+        `<b>${d.odoo_order_name || '/'}</b> — ${cleanName(d.product)} x${d.qty} @ <b style="color:var(--pink)">${d.discount_pct}% off</b> — ${d.captain || '?'}`
+      ).join('<br>')}</div>
+    </div>`;
+  }
+
+  // Complimentary orders
+  if (data.comp_alerts && data.comp_alerts.length > 0) {
+    html += `<div style="background:rgba(139,92,246,.1);border:1px solid var(--purple);border-radius:8px;padding:10px 14px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:var(--purple);margin-bottom:4px">COMPLIMENTARY ORDERS (${data.comp_alerts.length})</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.8">${data.comp_alerts.map(d =>
+        `<b>${d.odoo_order_name || '/'}</b> — Table ${d.table || '?'}, ${d.captain || '?'}, <b style="color:var(--purple)">₹${d.amount}</b>`
+      ).join('<br>')}</div>
     </div>`;
   }
 
