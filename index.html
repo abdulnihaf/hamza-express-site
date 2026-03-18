@@ -1697,7 +1697,7 @@
                 <li><a href="#order">Order</a></li>
                 <li><a href="#location">Visit Us</a></li>
             </ul>
-            <a href="https://wa.me/918008002045" target="_blank" class="nav-cta">Order Now</a>
+            <a href="https://wa.me/918008002049" target="_blank" class="nav-cta">Order Now</a>
             <div class="nav-toggle" id="navToggle">
                 <span></span>
                 <span></span>
@@ -1730,7 +1730,7 @@
             <p class="hero-subtitle">From Hamza Hotel's kitchen on H.K.P. Road, Shivajinagar - the same recipes
                 Bangalore has loved for 106 years, now at your doorstep.</p>
             <div class="hero-cta-group">
-                <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary"><span>Order Now</span></a>
+                <a href="https://wa.me/918008002049" target="_blank" class="btn btn-primary"><span>Order Now</span></a>
                 <a href="/menu" class="btn"><span>View Menu</span></a>
             </div>
         </div>
@@ -2003,7 +2003,7 @@
                     <p class="order-card-text">The fastest way. Message us, we'll confirm, you'll eat. Ask for
                         customizations, check what's fresh today, get real answers. This is how Hamza Hotel has always
                         worked.</p>
-                    <a href="https://wa.me/918008002045" target="_blank" class="btn btn-primary"><span>Order on
+                    <a href="https://wa.me/918008002049" target="_blank" class="btn btn-primary"><span>Order on
                             WhatsApp</span></a>
                 </div>
             </div>
@@ -2050,11 +2050,11 @@
                         </div>
                     </div>
                     <div class="location-contact">
-                        <a href="tel:+918008002045">
+                        <a href="tel:+918008002049">
                             <span>📞</span>
-                            <span>+91 8008002045</span>
+                            <span>+91 8008002049</span>
                         </a>
-                        <a href="https://wa.me/918008002045" target="_blank" rel="noopener">
+                        <a href="https://wa.me/918008002049" target="_blank" rel="noopener">
                             <span>💬</span>
                             <span>WhatsApp Us</span>
                         </a>
@@ -2206,6 +2206,46 @@
                 document.body.style.setProperty('--animation-play-state', 'running');
             }
         });
+
+        // ═══════════════════════════════════════════════════════════
+        // MARKETING: Meta Pixel + GA4 Custom Event Tracking
+        // ═══════════════════════════════════════════════════════════
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a[href]');
+            if (!link) return;
+            const href = link.getAttribute('href') || '';
+
+            // WhatsApp click tracking
+            if (href.includes('wa.me/')) {
+                if (typeof fbq === 'function') fbq('track', 'Contact', { content_name: 'whatsapp_order' });
+                if (typeof gtag === 'function') gtag('event', 'click_whatsapp', { event_category: 'engagement', event_label: href });
+            }
+            // Phone call tracking
+            else if (href.startsWith('tel:')) {
+                if (typeof fbq === 'function') fbq('track', 'Contact', { content_name: 'phone_call' });
+                if (typeof gtag === 'function') gtag('event', 'click_call', { event_category: 'engagement', event_label: href });
+            }
+            // Google Maps / directions tracking
+            else if (href.includes('google.com/maps') || href.includes('maps.app.goo')) {
+                if (typeof fbq === 'function') fbq('track', 'FindLocation');
+                if (typeof gtag === 'function') gtag('event', 'click_directions', { event_category: 'engagement', event_label: 'google_maps' });
+            }
+        });
+
+        // Menu section view tracking
+        const menuSection = document.getElementById('menu') || document.getElementById('order');
+        if (menuSection) {
+            const menuObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        if (typeof fbq === 'function') fbq('track', 'ViewContent', { content_type: 'menu' });
+                        if (typeof gtag === 'function') gtag('event', 'view_menu', { event_category: 'engagement' });
+                        menuObserver.disconnect();
+                    }
+                });
+            }, { threshold: 0.3 });
+            menuObserver.observe(menuSection);
+        }
     </script>
 </body>
 
