@@ -298,6 +298,29 @@
       </div>
     </div>
 
+    <!-- POST HISTORY LOG -->
+    <div class="section-title">Post History</div>
+    <div class="card" style="padding:16px;overflow-x:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:12px;color:var(--muted)" id="logCount">0 posts logged</span>
+        <button onclick="exportLog()" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--tan);font-size:11px;cursor:pointer">📥 Export JSON</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px" id="logTable">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">DATE</th>
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">POST</th>
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">PLATFORM</th>
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">STATUS</th>
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">CAPTION</th>
+            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">LINK</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+      <div id="logEmpty" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No posts logged yet. Publish your first post to see it here.</div>
+    </div>
+
     <!-- QUICK ACTIONS -->
     <div class="section-title">Quick Actions</div>
     <div class="actions-grid" id="actionsGrid"></div>
@@ -776,11 +799,14 @@ async function publishToInstagram() {
     const result = await publishResp.json();
     if (result.error) throw new Error(result.error.message);
 
-    status.innerHTML = '✅ Published to Instagram! <a href="https://instagram.com/hamzaexpress1918" target="_blank" style="color:var(--tan)">View →</a>';
+    const igLink = 'https://instagram.com/hamzaexpress1918';
+    status.innerHTML = '✅ Published to Instagram! <a href="' + igLink + '" target="_blank" style="color:var(--tan)">View →</a>';
     status.style.color = 'var(--green)';
+    logPost('instagram', 'success', caption, igLink);
   } catch (e) {
     status.textContent = '❌ IG Error: ' + e.message;
     status.style.color = 'var(--red)';
+    logPost('instagram', 'error', caption, null);
   }
   document.getElementById('btnPublishIG').disabled = false;
 }
@@ -810,14 +836,96 @@ async function publishToFacebook() {
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message);
 
-    status.innerHTML = '✅ Published to Facebook! <a href="https://facebook.com/' + data.post_id + '" target="_blank" style="color:var(--tan)">View →</a>';
+    const fbLink = 'https://facebook.com/' + (data.post_id || data.id);
+    status.innerHTML = '✅ Published to Facebook! <a href="' + fbLink + '" target="_blank" style="color:var(--tan)">View →</a>';
     status.style.color = 'var(--green)';
+    logPost('facebook', 'success', caption, fbLink);
   } catch (e) {
     status.textContent = '❌ FB Error: ' + e.message;
     status.style.color = 'var(--red)';
+    logPost('facebook', 'error', caption, null);
   }
   document.getElementById('btnPublishFB').disabled = false;
 }
+
+// ═══════════════════════════════════════════════════════════
+// POST LOG — Saves every publish to localStorage
+// ═══════════════════════════════════════════════════════════
+function getPostLog() {
+  return JSON.parse(localStorage.getItem('he_post_log') || '[]');
+}
+
+function savePostLog(log) {
+  localStorage.setItem('he_post_log', JSON.stringify(log));
+  renderPostLog();
+}
+
+function logPost(platform, status, caption, link, postTitle) {
+  const log = getPostLog();
+  log.unshift({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    postTitle: postTitle || document.getElementById('genPostType')?.selectedOptions?.[0]?.text || 'Unknown',
+    platform,
+    status,
+    caption: caption?.substring(0, 100) + (caption?.length > 100 ? '...' : ''),
+    fullCaption: caption,
+    link: link || null,
+    imageUploaded: !!document.getElementById('publishImage')?.files?.[0]
+  });
+  savePostLog(log);
+}
+
+function renderPostLog() {
+  const log = getPostLog();
+  const body = document.getElementById('logBody');
+  const empty = document.getElementById('logEmpty');
+  const count = document.getElementById('logCount');
+  if (!body) return;
+
+  count.textContent = `${log.length} posts logged`;
+
+  if (log.length === 0) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const platformColors = {
+    instagram: 'linear-gradient(135deg,#833AB4,#E1306C)',
+    facebook: '#1877F2',
+    google: '#34A853'
+  };
+  const platformIcons = { instagram: '📸', facebook: '📘', google: '🔍' };
+  const statusColors = { success: 'var(--green)', error: 'var(--red)', manual: 'var(--yellow)' };
+
+  body.innerHTML = log.slice(0, 50).map(entry => {
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+    const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px;font-family:'JetBrains Mono',monospace;white-space:nowrap">${dateStr}<br><span style="color:var(--muted)">${timeStr}</span></td>
+      <td style="padding:8px">${entry.postTitle}</td>
+      <td style="padding:8px"><span style="display:inline-flex;align-items:center;gap:4px">${platformIcons[entry.platform] || '📌'} ${entry.platform}</span></td>
+      <td style="padding:8px"><span style="color:${statusColors[entry.status] || 'var(--muted)'};font-weight:500">${entry.status === 'success' ? '✅' : entry.status === 'error' ? '❌' : '⚡'} ${entry.status}</span></td>
+      <td style="padding:8px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="${(entry.fullCaption || entry.caption || '').replace(/"/g, '&quot;')}">${entry.caption || '—'}</td>
+      <td style="padding:8px">${entry.link ? `<a href="${entry.link}" target="_blank" style="color:var(--tan)">View →</a>` : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportLog() {
+  const log = getPostLog();
+  const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `he-post-log-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+// Render log on page load
+renderPostLog();
 
 function openRefFolder() {
   // This only works when opened locally, not from the web
