@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Marketing Engine</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --bg2: #111827;
+      --card: #1a2234;
+      --border: #2d3a4f;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,.12);
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      /* HE Brand */
+      --burnt-sienna: #713520;
+      --tan: #D2B48C;
+      --cream: #FFF8F0;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 6px; height: 28px; background: var(--brand-grad); border-radius: 3px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .date-badge { padding: 6px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--tan); }
+
+    /* Status Row */
+    .status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .status-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+    .status-card .icon { font-size: 24px; }
+    .status-card .info { flex: 1; }
+    .status-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .status-card .value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .status-card .value .of { color: var(--muted); font-size: 14px; }
+    .status-card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* Platform pills */
+    .platform-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .pill.active { background: var(--green-dim); color: var(--green); }
+    .pill.pending { background: rgba(245,158,11,.12); color: var(--yellow); }
+    .pill.inactive { background: rgba(100,116,139,.12); color: var(--muted); }
+
+    /* Section titles */
+    .section-title { font-size: 15px; font-weight: 600; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; width: 3px; height: 16px; background: var(--burnt-sienna); border-radius: 2px; }
+
+    /* Post Tracker Table */
+    .table-wrap { overflow-x: auto; margin-bottom: 20px; border-radius: 10px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 13px; }
+    thead th { background: var(--bg2); padding: 10px 12px; text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr:hover { background: rgba(113,53,32,.06); }
+    tbody tr:last-child td { border-bottom: none; }
+    .obj-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
+    .obj-awareness { background: rgba(59,130,246,.15); color: var(--blue); }
+    .obj-desire { background: rgba(236,72,153,.15); color: var(--pink); }
+    .obj-action { background: rgba(16,185,129,.15); color: var(--green); }
+    .obj-trust { background: rgba(139,92,246,.15); color: var(--purple); }
+    .st { font-size: 16px; text-align: center; cursor: default; }
+    .st-done { color: var(--green); }
+    .st-pending { color: var(--yellow); }
+    .st-skip { color: var(--muted); }
+
+    /* Editable cell */
+    [contenteditable] { cursor: text; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; transition: background .15s; }
+    [contenteditable]:hover { background: rgba(255,255,255,.04); }
+    [contenteditable]:focus { background: rgba(255,255,255,.08); outline: 1px solid var(--burnt-sienna); }
+
+    /* Offers Grid */
+    .offers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .offer-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; border-left: 3px solid var(--burnt-sienna); }
+    .offer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .offer-code { font-size: 11px; font-weight: 700; color: var(--tan); font-family: 'JetBrains Mono', monospace; background: rgba(113,53,32,.25); padding: 2px 8px; border-radius: 4px; }
+    .offer-price { font-size: 14px; font-weight: 700; color: var(--green); font-family: 'JetBrains Mono', monospace; }
+    .offer-name { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+    .offer-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .offer-stat { text-align: center; }
+    .offer-stat .stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; }
+    .offer-stat .stat-value { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+    /* Content Intelligence */
+    .intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .intel-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .intel-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--tan); }
+    .mix-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+    .mix-bar div { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: #fff; min-width: 30px; transition: width .3s; }
+    .mix-legend { display: flex; flex-wrap: wrap; gap: 10px; }
+    .mix-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+    .mix-legend-item .dot { width: 8px; height: 8px; border-radius: 2px; }
+    .next-rec { background: rgba(113,53,32,.15); border: 1px solid rgba(113,53,32,.3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--tan); margin-top: 12px; }
+    .next-rec strong { color: var(--cream); }
+    .notes-area { width: 100%; min-height: 80px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; resize: vertical; }
+    .notes-area:focus { outline: none; border-color: var(--burnt-sienna); }
+
+    /* Auth Status */
+    .auth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .auth-card .auth-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .auth-card .auth-name { font-size: 14px; font-weight: 600; }
+    .auth-badge { padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .auth-badge.active { background: var(--green-dim); color: var(--green); }
+    .auth-badge.expired { background: rgba(239,68,68,.12); color: var(--red); }
+    .auth-badge.pending { background: rgba(245,158,11,.12); color: var(--yellow); }
+    .auth-detail { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .auth-detail span { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+    /* Quick Actions */
+    .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 30px; }
+    a.action-btn { text-decoration: none; display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; transition: all .15s; cursor: pointer; }
+    a.action-btn:hover { border-color: var(--burnt-sienna); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(113,53,32,.15); }
+    a.action-btn .act-icon { font-size: 20px; }
+    a.action-btn .act-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    a.action-btn .act-sub { font-size: 10px; color: var(--muted); }
+    a.action-btn .arrow { margin-left: auto; color: var(--muted); font-size: 16px; }
+    a.action-btn:hover .arrow { color: var(--tan); }
+
+    /* Status cycle on click */
+    .cycle-status { cursor: pointer; user-select: none; }
+    .cycle-status:active { transform: scale(1.2); }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .intel-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .status-row { grid-template-columns: 1fr; }
+      .offers-grid { grid-template-columns: 1fr; }
+      .auth-grid { grid-template-columns: 1fr; }
+      .actions-grid { grid-template-columns: 1fr 1fr; }
+      .intel-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 12px; }
+      .header h1 { font-size: 18px; }
+      .actions-grid { grid-template-columns: 1fr; }
+      table { font-size: 12px; }
+      thead th, tbody td { padding: 8px 8px; }
+    }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--green); color: var(--green); padding: 10px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <header class="header">
+      <h1>Hamza Express Marketing Engine</h1>
+      <div class="header-right">
+        <div class="platform-pills" id="platformPills"></div>
+        <div class="date-badge" id="dateBadge"></div>
+      </div>
+    </header>
+
+    <!-- STATUS ROW -->
+    <div class="status-row" id="statusRow"></div>
+
+    <!-- POST TRACKER -->
+    <div class="section-title">Post Tracker</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Content</th>
+            <th>Objective</th>
+            <th>IG</th>
+            <th>FB</th>
+            <th>Google</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody id="postTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- OFFERS TRACKER -->
+    <div class="section-title">Offers Tracker (O1-O7)</div>
+    <div class="offers-grid" id="offersGrid"></div>
+
+    <!-- CONTENT INTELLIGENCE -->
+    <div class="section-title">Content Intelligence</div>
+    <div class="intel-grid">
+      <div class="intel-card">
+        <h3>Content Mix Breakdown</h3>
+        <div class="mix-bar" id="mixBar"></div>
+        <div class="mix-legend" id="mixLegend"></div>
+        <div class="next-rec" id="nextRec"></div>
+      </div>
+      <div class="intel-card">
+        <h3>What's Working</h3>
+        <textarea class="notes-area" id="notesWorking" placeholder="Add notes on what content is performing well..."></textarea>
+        <h3 style="margin-top:14px">What to Try Next</h3>
+        <textarea class="notes-area" id="notesTryNext" placeholder="Ideas for upcoming content..."></textarea>
+      </div>
+    </div>
+
+    <!-- AUTH STATUS -->
+    <div class="section-title">Auth & Platform Status</div>
+    <div class="auth-grid" id="authGrid"></div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="section-title">Quick Actions</div>
+    <div class="actions-grid" id="actionsGrid"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// STATE — Claude Code updates this, persisted in localStorage
+// ═══════════════════════════════════════════════════
+
+const STORAGE_KEY = 'he_marketing_state';
+
+const DEFAULT_STATE = {
+  posts: [
+    { id: 1, date: '2026-03-19', content: 'Identity — Authentic Dakhni Cuisine', objective: 'AWARENESS', ig: 'done', fb: 'done', google: 'done', perf: '' },
+    { id: 2, date: '', content: 'Biryani dum opening — sizzle + steam (Reel)', objective: 'AWARENESS', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 3, date: '', content: '5 Dishes You Must Try (Carousel)', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 4, date: '', content: 'Offer O1 — Biryani BOGO hero photo', objective: 'ACTION', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 5, date: '', content: 'Kitchen BTS — tandoor flames, plating (Reel)', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 6, date: '', content: 'Since 1918 heritage story (Carousel)', objective: 'AWARENESS', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 7, date: '', content: 'Brain Fry close-up hero shot', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 8, date: '', content: 'From raw to plate — biryani process (Reel)', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+    { id: 9, date: '', content: 'Customer review quote + stars', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
+  ],
+  offers: [
+    { code: 'O1', name: 'Biryani BOGO', price: 'POS (Buy 1 Get 1)', postsUsed: 1, wabaUsed: 0, score: '' },
+    { code: 'O2', name: 'Ghee Rice Meal', price: '₹149', postsUsed: 0, wabaUsed: 0, score: '' },
+    { code: 'O3', name: '₹99 Chicken Meal', price: '₹99', postsUsed: 0, wabaUsed: 0, score: '' },
+    { code: 'O4', name: 'Shawarma BOGO', price: 'POS (Buy 1 Get 1)', postsUsed: 0, wabaUsed: 0, score: '' },
+    { code: 'O5', name: 'Kebab Plate', price: '₹59', postsUsed: 0, wabaUsed: 0, score: '' },
+    { code: 'O6', name: 'Porotta + Curry', price: '₹79', postsUsed: 0, wabaUsed: 0, score: '' },
+    { code: 'O7', name: 'Family Daawat', price: '₹699', postsUsed: 0, wabaUsed: 0, score: '' },
+  ],
+  auth: [
+    { name: 'Meta Graph API', status: 'active', details: ['Page: Hamza Express (61584178871279)', 'IG: @hamzaexpress1918', 'Pixel: 881349531538961'] },
+    { name: 'Google Business Profile API', status: 'pending', details: ['Quota approval pending', 'GMB category: Biryani restaurant', 'GSC: Verified'] },
+    { name: 'Gemini / AI Studio', status: 'active', details: ['API key configured', 'Used for content generation'] },
+    { name: 'WABA (WhatsApp)', status: 'active', details: ['Phone: 8008002049', 'Phone ID: 970365416152029', 'Catalog: 1639757440737691'] },
+  ],
+  notesWorking: '',
+  notesTryNext: '',
+  lastUpdated: new Date().toISOString()
+};
+
+// ── Load / Save ──
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge with defaults for any new fields
+      return { ...DEFAULT_STATE, ...parsed };
+    }
+  } catch (e) { console.warn('Failed to load state', e); }
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function saveState() {
+  state.lastUpdated = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  toast('Saved');
+}
+
+let state = loadState();
+
+// ── Toast ──
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = 'toast', 1500);
+}
+
+// ── Date Badge ──
+function renderDate() {
+  const now = new Date();
+  const opts = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+  document.getElementById('dateBadge').textContent = now.toLocaleDateString('en-IN', opts);
+}
+
+// ── Platform Pills ──
+function renderPlatformPills() {
+  const platforms = [
+    { name: 'IG', status: 'active' },
+    { name: 'FB', status: 'active' },
+    { name: 'Google', status: 'pending' },
+    { name: 'WABA', status: 'active' },
+  ];
+  document.getElementById('platformPills').innerHTML = platforms.map(p =>
+    `<div class="pill ${p.status}">${p.status === 'active' ? '&#10003;' : '&#9203;'} ${p.name}</div>`
+  ).join('');
+}
+
+// ── Status Row ──
+function renderStatusRow() {
+  const today = new Date().toISOString().slice(0, 10);
+  const postsToday = state.posts.filter(p => p.date === today && (p.ig === 'done' || p.fb === 'done' || p.google === 'done')).length;
+  const totalDone = state.posts.filter(p => p.ig === 'done' || p.fb === 'done' || p.google === 'done').length;
+  const totalPlatformPosts = state.posts.reduce((sum, p) => {
+    return sum + (p.ig === 'done' ? 1 : 0) + (p.fb === 'done' ? 1 : 0) + (p.google === 'done' ? 1 : 0);
+  }, 0);
+
+  document.getElementById('statusRow').innerHTML = `
+    <div class="status-card">
+      <div class="icon">&#128196;</div>
+      <div class="info">
+        <div class="label">Posts Today</div>
+        <div class="value">${postsToday} <span class="of">/ 3</span></div>
+        <div class="sub">IG + FB + Google target</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="icon">&#128200;</div>
+      <div class="info">
+        <div class="label">9-Post Progress</div>
+        <div class="value">${totalDone} <span class="of">/ 9</span></div>
+        <div class="sub">${totalPlatformPosts} total platform posts</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="icon">&#127919;</div>
+      <div class="info">
+        <div class="label">Week Progress</div>
+        <div class="value">${totalPlatformPosts} <span class="of">/ 21</span></div>
+        <div class="sub">9 posts x 3 platforms</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Post Tracker Table ──
+const OBJ_CLASSES = { AWARENESS: 'obj-awareness', DESIRE: 'obj-desire', ACTION: 'obj-action', TRUST: 'obj-trust' };
+const STATUS_MAP = { done: ['&#10003;', 'st-done'], pending: ['&#9203;', 'st-pending'], skip: ['&mdash;', 'st-skip'] };
+const STATUS_CYCLE = ['pending', 'done', 'skip'];
+
+function renderPostTable() {
+  document.getElementById('postTableBody').innerHTML = state.posts.map(p => `
+    <tr data-id="${p.id}">
+      <td style="font-weight:700;color:var(--tan);font-family:'JetBrains Mono',monospace">${p.id}</td>
+      <td><span contenteditable="true" class="cell-date" data-field="date" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">${p.date || '—'}</span></td>
+      <td><span contenteditable="true" class="cell-content" data-field="content">${p.content}</span></td>
+      <td><span class="obj-tag ${OBJ_CLASSES[p.objective] || ''}">${p.objective}</span></td>
+      <td class="st cycle-status" data-field="ig" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.ig]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.ig]||STATUS_MAP.pending)[0]}</span></td>
+      <td class="st cycle-status" data-field="fb" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.fb]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.fb]||STATUS_MAP.pending)[0]}</span></td>
+      <td class="st cycle-status" data-field="google" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.google]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.google]||STATUS_MAP.pending)[0]}</span></td>
+      <td><span contenteditable="true" class="cell-perf" data-field="perf" style="font-size:11px;color:var(--text2)">${p.perf || '—'}</span></td>
+    </tr>
+  `).join('');
+
+  // Cycle status on click
+  document.querySelectorAll('.cycle-status').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = parseInt(el.dataset.id);
+      const field = el.dataset.field;
+      const post = state.posts.find(p => p.id === id);
+      if (!post) return;
+      const cur = post[field] || 'pending';
+      const idx = STATUS_CYCLE.indexOf(cur);
+      post[field] = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+      if (post[field] === 'done' && !post.date) {
+        post.date = new Date().toISOString().slice(0, 10);
+      }
+      saveState();
+      renderAll();
+    });
+  });
+
+  // Editable cells
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('blur', () => {
+      const tr = el.closest('tr');
+      const id = parseInt(tr.dataset.id);
+      const field = el.dataset.field;
+      const post = state.posts.find(p => p.id === id);
+      if (!post) return;
+      let val = el.textContent.trim();
+      if (val === '—') val = '';
+      post[field] = val;
+      saveState();
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    });
+  });
+}
+
+// ── Offers Grid ──
+function renderOffers() {
+  document.getElementById('offersGrid').innerHTML = state.offers.map(o => `
+    <div class="offer-card">
+      <div class="offer-header">
+        <div class="offer-code">${o.code}</div>
+        <div class="offer-price">${o.price}</div>
+      </div>
+      <div class="offer-name">${o.name}</div>
+      <div class="offer-stats">
+        <div class="offer-stat">
+          <div class="stat-label">Posts</div>
+          <div class="stat-value">${o.postsUsed}</div>
+        </div>
+        <div class="offer-stat">
+          <div class="stat-label">WABA</div>
+          <div class="stat-value">${o.wabaUsed}</div>
+        </div>
+        <div class="offer-stat">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" style="color:${o.score ? 'var(--green)' : 'var(--muted)'}">${o.score || '—'}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Content Intelligence ──
+function renderIntel() {
+  const counts = { AWARENESS: 0, DESIRE: 0, ACTION: 0, TRUST: 0 };
+  state.posts.forEach(p => { if (counts.hasOwnProperty(p.objective)) counts[p.objective]++; });
+  const total = state.posts.length || 1;
+  const colors = { AWARENESS: 'var(--blue)', DESIRE: 'var(--pink)', ACTION: 'var(--green)', TRUST: 'var(--purple)' };
+
+  document.getElementById('mixBar').innerHTML = Object.entries(counts).map(([k, v]) =>
+    `<div style="width:${(v/total*100)}%;background:${colors[k]}">${v}</div>`
+  ).join('');
+
+  document.getElementById('mixLegend').innerHTML = Object.entries(counts).map(([k, v]) =>
+    `<div class="mix-legend-item"><div class="dot" style="background:${colors[k]}"></div>${k} (${v}/${total})</div>`
+  ).join('');
+
+  // Find gap — recommend least-used objective
+  const min = Math.min(...Object.values(counts));
+  const gaps = Object.entries(counts).filter(([,v]) => v === min).map(([k]) => k);
+  const recMap = {
+    AWARENESS: 'Hero dish shot or brand story post',
+    DESIRE: 'Food close-up carousel or "must try" list',
+    ACTION: 'Offer post (O1-O7) with clear CTA',
+    TRUST: 'Customer review, BTS, or cooking process reel'
+  };
+  document.getElementById('nextRec').innerHTML = `<strong>Next recommended:</strong> ${gaps[0]} post — ${recMap[gaps[0]] || ''}`;
+
+  // Notes
+  document.getElementById('notesWorking').value = state.notesWorking || '';
+  document.getElementById('notesTryNext').value = state.notesTryNext || '';
+}
+
+// ── Auth Grid ──
+function renderAuth() {
+  document.getElementById('authGrid').innerHTML = state.auth.map(a => `
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-name">${a.name}</div>
+        <div class="auth-badge ${a.status}">${a.status}</div>
+      </div>
+      ${a.details.map(d => `<div class="auth-detail">${d}</div>`).join('')}
+    </div>
+  `).join('');
+}
+
+// ── Quick Actions ──
+function renderActions() {
+  const actions = [
+    { icon: '&#128240;', label: 'Meta Business Suite', sub: 'Schedule IG + FB posts', href: 'https://business.facebook.com' },
+    { icon: '&#128205;', label: 'Google Business Profile', sub: 'GMB posts & reviews', href: 'https://business.google.com' },
+    { icon: '&#9889;', label: 'AI Studio (Gemini)', sub: 'Content generation', href: 'https://aistudio.google.com' },
+    { icon: '&#128247;', label: 'Instagram', sub: '@hamzaexpress1918', href: 'https://instagram.com/hamzaexpress1918' },
+    { icon: '&#128172;', label: 'WhatsApp Business', sub: '8008002049', href: 'https://business.whatsapp.com' },
+    { icon: '&#127760;', label: 'hamzaexpress.in', sub: 'Live website', href: 'https://hamzaexpress.in' },
+  ];
+  document.getElementById('actionsGrid').innerHTML = actions.map(a => `
+    <a class="action-btn" href="${a.href}" target="_blank" rel="noopener">
+      <div class="act-icon">${a.icon}</div>
+      <div>
+        <div class="act-label">${a.label}</div>
+        <div class="act-sub">${a.sub}</div>
+      </div>
+      <div class="arrow">&#8250;</div>
+    </a>
+  `).join('');
+}
+
+// ── Notes auto-save ──
+function bindNotes() {
+  const w = document.getElementById('notesWorking');
+  const t = document.getElementById('notesTryNext');
+  let debounce;
+  const save = () => {
+    state.notesWorking = w.value;
+    state.notesTryNext = t.value;
+    clearTimeout(debounce);
+    debounce = setTimeout(() => saveState(), 800);
+  };
+  w.addEventListener('input', save);
+  t.addEventListener('input', save);
+}
+
+// ── Render All ──
+function renderAll() {
+  renderDate();
+  renderPlatformPills();
+  renderStatusRow();
+  renderPostTable();
+  renderOffers();
+  renderIntel();
+  renderAuth();
+  renderActions();
+  bindNotes();
+}
+
+renderAll();
+</script>
+</body>
+</html>
