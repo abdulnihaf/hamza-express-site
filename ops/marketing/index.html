@@ -265,10 +265,36 @@
         <button onclick="window.open('https://aistudio.google.com','_blank')" style="padding:10px 20px;background:var(--purple);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">Open AI Studio →</button>
         <span id="genStatus" style="font-size:13px;color:var(--muted)"></span>
       </div>
+      <!-- PUBLISH PANEL -->
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">CAPTION (ready to paste when posting)</label>
-        <div id="genCaption" style="background:var(--bg);padding:12px;border-radius:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;border:1px solid var(--border);color:var(--text2);min-height:60px"></div>
-        <button onclick="copyCaption()" style="margin-top:8px;padding:8px 16px;background:var(--green);border:none;border-radius:6px;color:white;font-size:12px;cursor:pointer">📋 Copy Caption</button>
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--tan)">Publish Panel</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <!-- Left: Image Upload + Preview -->
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">UPLOAD GENERATED IMAGE</label>
+            <input type="file" id="publishImage" accept="image/*" onchange="previewPublishImage(this)" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:8px">
+            <div id="publishPreview" style="display:none;margin-top:8px">
+              <img id="publishPreviewImg" style="width:100%;border-radius:8px;border:1px solid var(--border)">
+            </div>
+          </div>
+
+          <!-- Right: Caption + Publish Buttons -->
+          <div>
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">CAPTION <span style="color:var(--text2)">(editable)</span></label>
+            <textarea id="genCaption" rows="6" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;line-height:1.6"></textarea>
+
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button onclick="publishToInstagram()" id="btnPublishIG" style="padding:10px 18px;background:linear-gradient(135deg,#833AB4,#E1306C,#F77737);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">📸 Publish to Instagram</button>
+              <button onclick="publishToFacebook()" id="btnPublishFB" style="padding:10px 18px;background:#1877F2;border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">📘 Publish to Facebook</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+              <button onclick="window.open('https://business.google.com','_blank')" style="padding:10px 18px;background:#34A853;border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">🔍 Post to Google (manual)</button>
+              <button onclick="copyCaption()" style="padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-weight:600;font-size:13px;cursor:pointer;flex:1">📋 Copy Caption</button>
+            </div>
+            <div id="publishStatus" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -656,6 +682,141 @@ function copyCaption() {
   const text = document.getElementById('genCaption').textContent;
   navigator.clipboard.writeText(text);
   document.getElementById('genStatus').textContent = '📋 Caption copied!';
+}
+
+// ═══════════════════════════════════════════════════════════
+// PUBLISH ENGINE — Meta Graph API for IG + FB
+// ═══════════════════════════════════════════════════════════
+const META_TOKEN = 'EAAdjKyLVeusBQZBOk5dcqFidaEpPNfGnqraniQzju6U28B5AWXI7LcYK8fcCzaiFwdh9Ye6cMg50i6Bfov45WxIhDwSB7irr7PIqwXWJwHZBjJZCdw0pmsscc4I6ZAyiTLojrabU58iBmM9K60dFGlcgLmFpTQHNZCN4ZCraW0nnlo956JTqjHXuZAytJ4pdGgJ7gEN5ZCIQUPyGJFOjTJ57I2H5PBSWIPxHYDufm1KZBjE5dZCwliRAZDZD';
+const FB_PAGE_ID = '886791574518359';
+let IG_ACCOUNT_ID = null; // fetched dynamically
+
+function previewPublishImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('publishPreviewImg').src = e.target.result;
+    document.getElementById('publishPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function getPageToken() {
+  // Get page access token from user token
+  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=access_token&access_token=${META_TOKEN}`);
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.access_token;
+}
+
+async function getIGAccountId() {
+  if (IG_ACCOUNT_ID) return IG_ACCOUNT_ID;
+  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=instagram_business_account&access_token=${META_TOKEN}`);
+  const data = await resp.json();
+  if (data.instagram_business_account) {
+    IG_ACCOUNT_ID = data.instagram_business_account.id;
+    return IG_ACCOUNT_ID;
+  }
+  throw new Error('No Instagram business account linked to this page');
+}
+
+async function uploadImageToFB(file) {
+  // Upload photo to FB page (unpublished) to get a URL for IG
+  const pageToken = await getPageToken();
+  const formData = new FormData();
+  formData.append('source', file);
+  formData.append('published', 'false');
+  formData.append('access_token', pageToken);
+
+  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, {
+    method: 'POST', body: formData
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+
+  // Get the URL of the uploaded photo
+  const photoResp = await fetch(`https://graph.facebook.com/v24.0/${data.id}?fields=images&access_token=${pageToken}`);
+  const photoData = await photoResp.json();
+  return { photoId: data.id, url: photoData.images?.[0]?.source, pageToken };
+}
+
+async function publishToInstagram() {
+  const status = document.getElementById('publishStatus');
+  const file = document.getElementById('publishImage').files[0];
+  const caption = document.getElementById('genCaption').value;
+
+  if (!file) { status.textContent = '⚠️ Upload an image first'; status.style.color = 'var(--orange)'; return; }
+
+  try {
+    status.textContent = '⏳ Uploading image...';
+    status.style.color = 'var(--yellow)';
+    document.getElementById('btnPublishIG').disabled = true;
+
+    const igId = await getIGAccountId();
+    const { url } = await uploadImageToFB(file);
+
+    // Step 1: Create media container
+    status.textContent = '⏳ Creating Instagram media...';
+    const containerResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ image_url: url, caption, access_token: META_TOKEN })
+    });
+    const container = await containerResp.json();
+    if (container.error) throw new Error(container.error.message);
+
+    // Step 2: Publish
+    status.textContent = '⏳ Publishing to Instagram...';
+    const publishResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media_publish`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ creation_id: container.id, access_token: META_TOKEN })
+    });
+    const result = await publishResp.json();
+    if (result.error) throw new Error(result.error.message);
+
+    status.innerHTML = '✅ Published to Instagram! <a href="https://instagram.com/hamzaexpress1918" target="_blank" style="color:var(--tan)">View →</a>';
+    status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = '❌ IG Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  document.getElementById('btnPublishIG').disabled = false;
+}
+
+async function publishToFacebook() {
+  const status = document.getElementById('publishStatus');
+  const file = document.getElementById('publishImage').files[0];
+  const caption = document.getElementById('genCaption').value;
+
+  if (!file) { status.textContent = '⚠️ Upload an image first'; status.style.color = 'var(--orange)'; return; }
+
+  try {
+    status.textContent = '⏳ Publishing to Facebook...';
+    status.style.color = 'var(--yellow)';
+    document.getElementById('btnPublishFB').disabled = true;
+
+    const pageToken = await getPageToken();
+    const formData = new FormData();
+    formData.append('source', file);
+    formData.append('message', caption);
+    formData.append('published', 'true');
+    formData.append('access_token', pageToken);
+
+    const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, {
+      method: 'POST', body: formData
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+
+    status.innerHTML = '✅ Published to Facebook! <a href="https://facebook.com/' + data.post_id + '" target="_blank" style="color:var(--tan)">View →</a>';
+    status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = '❌ FB Error: ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  document.getElementById('btnPublishFB').disabled = false;
 }
 
 function openRefFolder() {
