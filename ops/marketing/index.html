@@ -710,7 +710,8 @@ function copyCaption() {
 // ═══════════════════════════════════════════════════════════
 // PUBLISH ENGINE — Meta Graph API for IG + FB
 // ═══════════════════════════════════════════════════════════
-const META_TOKEN = 'EAAdjKyLVeusBQZBOk5dcqFidaEpPNfGnqraniQzju6U28B5AWXI7LcYK8fcCzaiFwdh9Ye6cMg50i6Bfov45WxIhDwSB7irr7PIqwXWJwHZBjJZCdw0pmsscc4I6ZAyiTLojrabU58iBmM9K60dFGlcgLmFpTQHNZCN4ZCraW0nnlo956JTqjHXuZAytJ4pdGgJ7gEN5ZCIQUPyGJFOjTJ57I2H5PBSWIPxHYDufm1KZBjE5dZCwliRAZDZD';
+// NEVER-EXPIRING Page Access Token for Hamza Express (expires_at: 0)
+const META_TOKEN = 'EAAdjKyLVeusBQ5W4XrV2JNvYmUJXAnXYkPNwsu3oZBoTp3u3ETjRdC41dX4frN3xtiRtSrUP9X0eGLSPAKxxuuSxWQL20ffMZBA4PMdVAdmix1JFk9TmqFdGeMZBiZAZAJq32HE4lAslCqclCIl4swEBi9Ov9DdqThN2QJezGzj4zH05a0ky14caD2KEPJCs3SrnmlvbgGZCbLfZBHKVBy4yFZB6';
 const FB_PAGE_ID = '886791574518359';
 let IG_ACCOUNT_ID = null; // fetched dynamically
 
@@ -726,11 +727,8 @@ function previewPublishImage(input) {
 }
 
 async function getPageToken() {
-  // Get page access token from user token
-  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=access_token&access_token=${META_TOKEN}`);
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.access_token;
+  // META_TOKEN is already a never-expiring page token — use directly
+  return META_TOKEN;
 }
 
 async function getIGAccountId() {
