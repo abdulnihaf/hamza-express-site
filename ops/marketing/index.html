@@ -666,7 +666,7 @@ function loadPrompt() {
   const caption = CAPTIONS[type]?.[platform] || 'Caption not configured. Ask Claude Code to generate.';
 
   document.getElementById('genPromptArea').value = prompt;
-  document.getElementById('genCaption').textContent = caption;
+  document.getElementById('genCaption').value = caption;
   document.getElementById('genStatus').textContent = '✅ Prompt loaded — copy and paste to AI Studio';
   document.getElementById('genStatus').style.color = 'var(--green)';
 }
@@ -679,7 +679,7 @@ function copyPrompt() {
 }
 
 function copyCaption() {
-  const text = document.getElementById('genCaption').textContent;
+  const text = document.getElementById('genCaption').value;
   navigator.clipboard.writeText(text);
   document.getElementById('genStatus').textContent = '📋 Caption copied!';
 }
