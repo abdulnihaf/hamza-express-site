@@ -530,6 +530,140 @@ function renderAll() {
 }
 
 renderAll();
+
+// ═══════════════════════════════════════════════════════════
+// CREATIVE GENERATOR — Gemini API Image Generation
+// ═══════════════════════════════════════════════════════════
+// Image generation is done in AI Studio (Nano Banana 2 model — not available via API)
+// Dashboard prepares prompts + captions, user copies to AI Studio
+
+// Insert Creative Generator section before quick actions
+const actionsSection = document.querySelector('.section-title + .grid-actions')?.previousElementSibling;
+if (actionsSection) {
+  const genSection = document.createElement('div');
+  genSection.innerHTML = `
+    <div class="section-title" style="margin-top:24px">Creative Generator</div>
+    <div class="card" style="padding:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">POST TYPE</label>
+          <select id="genPostType" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
+            <option value="identity">Post 1: Identity (Biryani Hero)</option>
+            <option value="proof" selected>Post 2: Social Proof (Review)</option>
+            <option value="hook">Post 3: Hook (Offer O5 ₹59)</option>
+            <option value="signature">Post 4: Signature (Brain Fry)</option>
+            <option value="story">Post 5: Heritage Story (1918)</option>
+            <option value="surprise">Post 6: Surprise (Chinese/Shawarma)</option>
+            <option value="bigoffer">Post 7: Big Offer (O1 BOGO)</option>
+            <option value="place">Post 8: The Place (Venue/Vibe)</option>
+            <option value="menu">Post 9: Menu Reference</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">PLATFORM</label>
+          <select id="genPlatform" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
+            <option value="instagram">Instagram (1080×1080)</option>
+            <option value="facebook">Facebook (1200×630)</option>
+            <option value="google">Google Posts (1200×900)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">BRAND REFERENCES — Upload these to AI Studio each time</label>
+        <div style="background:var(--bg);padding:12px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">
+          📁 <code>social-media/reference/01-logo-brown-bg.png</code><br>
+          📁 <code>social-media/reference/02-menu-cover.png</code><br>
+          📁 <code>social-media/reference/03-social-post-reference.png</code><br>
+          📁 <code>social-media/reference/04-hero-biryani.jpg</code> <span style="color:var(--yellow)">← swap per post</span>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">AI STUDIO PROMPT <span style="color:var(--yellow)">(Nano Banana 2)</span></label>
+        <textarea id="genPromptArea" rows="8" readonly style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical;line-height:1.5"></textarea>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button onclick="loadPrompt()" style="padding:10px 20px;background:var(--brand-grad);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">Load Prompt</button>
+        <button onclick="copyPrompt()" style="padding:10px 20px;background:var(--blue);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">📋 Copy Prompt</button>
+        <button onclick="window.open('https://aistudio.google.com','_blank')" style="padding:10px 20px;background:var(--purple);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">Open AI Studio →</button>
+        <span id="genStatus" style="font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">CAPTION (ready to paste when posting)</label>
+        <div id="genCaption" style="background:var(--bg);padding:12px;border-radius:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;border:1px solid var(--border);color:var(--text2);min-height:60px"></div>
+        <button onclick="copyCaption()" style="margin-top:8px;padding:8px 16px;background:var(--green);border:none;border-radius:6px;color:white;font-size:12px;cursor:pointer">📋 Copy Caption</button>
+      </div>
+    </div>
+  `;
+  actionsSection.parentNode.insertBefore(genSection, actionsSection);
+}
+
+// Load prompt + caption when selectors change
+document.getElementById('genPostType')?.addEventListener('change', loadPrompt);
+document.getElementById('genPlatform')?.addEventListener('change', loadPrompt);
+
+// Default prompts per post type and platform
+const DEFAULT_PROMPTS = {
+  proof: {
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Use the uploaded brand images for style/color/font reference.\n\nTHIS IS A SOCIAL PROOF / REVIEW POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration, centered\n- MIDDLE: A large cream/parchment card containing:\n  - Five gold stars at top\n  - Quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend."\n  - "— Google Review" in italic\n- BOTTOM: "4.9 on Google · 30+ Reviews" in cream text\n- Ornamental borders\n\nSTYLE: Brown background (#713520), cream text (#D2B48C), gold stars (#D4A44C), heritage serif fonts, parchment review card.\nDO NOT: Add real names, hashtags, or URLs.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nDESIGN REFERENCES: Use uploaded brand images.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- LEFT (40%): Logo + "4.9 on Google" + "30+ Reviews"\n- RIGHT (60%): Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend." + "— Google Review"\n\nSTYLE: Brown (#713520), cream text, gold stars, heritage feel.\nDO NOT: Add real names, hashtags, URLs.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- TOP: Logo\n- MIDDLE: Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades."\n- BOTTOM: "4.9 on Google · 30+ Reviews"\n\nMust be readable at thumbnail. Brown bg, cream text, gold stars, heritage feel.`
+  },
+  hook: {
+    instagram: `Create an Instagram post (1080x1080, square) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT:\n- TOP: Logo small\n- MIDDLE: Food photo (from uploaded images) in rounded frame\n- BELOW: "Kebab Plate" in cream serif\n- PRICE: "₹59" in VERY LARGE gold (#D4A44C) text\n- BOTTOM: "Dine-in & Takeaway · Shivajinagar"\n\nBrown bg (#713520), cream text, gold price. ₹59 is the LARGEST text.\nDO NOT: Add hashtags/URLs.`,
+    facebook: `Create a Facebook post (1200x630, landscape) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT:\n- LEFT (50%): Food photo large\n- RIGHT (50%): Logo + "Kebab Plate" + "₹59" in LARGE gold + "Dine-in & Takeaway"\n\nBrown bg, cream text, gold price. Heritage feel.`,
+    google: `Create Google Business post (1200x900, 4:3) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT: Logo top, food photo middle, "Kebab Plate · ₹59" bottom (price in gold).\nReadable at thumbnail. Brown bg, cream text, gold price.`
+  }
+};
+
+// Add more post types as needed — these are the immediate 3
+['identity','signature','story','surprise','bigoffer','place','menu'].forEach(t => {
+  DEFAULT_PROMPTS[t] = DEFAULT_PROMPTS[t] || {
+    instagram: 'Post type prompt not yet configured. Use the custom prompt field.',
+    facebook: 'Post type prompt not yet configured. Use the custom prompt field.',
+    google: 'Post type prompt not yet configured. Use the custom prompt field.'
+  };
+});
+
+const CAPTIONS = {
+  proof: {
+    instagram: `The biryani Shivajinagar trusts — for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. The people have spoken.\n\nWhat's YOUR go-to order? Tell us 👇\n\n📍 HKP Road, Shivajinagar\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n\n#HamzaExpress #BangaloreBiryani #Shivajinagar #Since1918 #DakhniBiryani`,
+    facebook: `The biryani Shivajinagar has trusted for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. Same family. Same recipes. Same kitchen. The people have spoken.\n\nKnow someone who loves biryani? Tag them — this one's been waiting since 1918.\n\n📍 151-154, HKP Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | Dine-in & Takeaway`,
+    google: `Hamza Express — 4.9★ on Google with 30+ reviews. Authentic Dakhni biryani in Shivajinagar since 1918. Dine-in and takeaway open 1 PM to 5 AM daily. HKP Road, Shivajinagar, Bangalore.`
+  },
+  hook: {
+    instagram: `Kebab Plate. ₹59. That's it.\n\nSame recipe, same tandoor, same family. Just an offer you can't refuse.\n\nShare this with someone who'll thank you later 🔥\n\n📍 HKP Road, Shivajinagar | Order: 8008002049\n\n#HamzaExpress #KebabLovers #Shivajinagar #BangaloreFood #FoodDeals`,
+    facebook: `Kebab Plate. ₹59. That's it.\n\nSame recipe, same tandoor, same family since 1918. Just an offer you can't refuse.\n\nShare this with someone who'll thank you later.\n\n📍 151-154, HKP Road, Shivajinagar, Bangalore\nDine-in & Takeaway | Call: 8008002049`,
+    google: `Kebab Plate at just ₹59! Hamza Express, Shivajinagar — authentic Dakhni kebabs from our legacy kitchen since 1918. Dine-in and takeaway. HKP Road, Bangalore.`
+  }
+};
+
+function loadPrompt() {
+  const type = document.getElementById('genPostType').value;
+  const platform = document.getElementById('genPlatform').value;
+  const prompt = DEFAULT_PROMPTS[type]?.[platform] || 'Post type prompt not configured. Ask Claude Code to generate.';
+  const caption = CAPTIONS[type]?.[platform] || 'Caption not configured. Ask Claude Code to generate.';
+
+  document.getElementById('genPromptArea').value = prompt;
+  document.getElementById('genCaption').textContent = caption;
+  document.getElementById('genStatus').textContent = '✅ Prompt loaded — copy and paste to AI Studio';
+  document.getElementById('genStatus').style.color = 'var(--green)';
+}
+
+function copyPrompt() {
+  const text = document.getElementById('genPromptArea').value;
+  navigator.clipboard.writeText(text);
+  document.getElementById('genStatus').textContent = '📋 Prompt copied!';
+  document.getElementById('genStatus').style.color = 'var(--green)';
+}
+
+function copyCaption() {
+  const text = document.getElementById('genCaption').textContent;
+  navigator.clipboard.writeText(text);
+  document.getElementById('genStatus').textContent = '📋 Caption copied!';
+}
+
+// Auto-load prompt on page load
+loadPrompt();
 </script>
 </body>
 </html>
