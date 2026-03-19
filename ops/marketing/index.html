@@ -248,10 +248,11 @@
       <div style="margin-bottom:16px">
         <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">BRAND REFERENCES — Upload these to AI Studio each time</label>
         <div style="background:var(--bg);padding:12px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">
-          📁 <code>social-media/reference/01-logo-brown-bg.png</code><br>
-          📁 <code>social-media/reference/02-menu-cover.png</code><br>
-          📁 <code>social-media/reference/03-social-post-reference.png</code><br>
-          📁 <code>social-media/reference/04-hero-biryani.jpg</code> <span style="color:var(--yellow)">← swap per post</span>
+          📁 <code>Image-1-Logo-Brown-BG.png</code> — Brand logo on brown background<br>
+          📁 <code>Image-2-Menu-Cover.png</code> — Menu design reference<br>
+          📁 <code>Image-3-Social-Post-Reference.png</code> — Existing social post style<br>
+          📁 <code>Image-4-Food-Photo.jpg</code> <span style="color:var(--yellow)">← swap with dish photo per post</span><br>
+          <div style="margin-top:8px"><button onclick="openRefFolder()" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--tan);font-size:12px;cursor:pointer">📂 Open Reference Folder</button></div>
         </div>
       </div>
       <div style="margin-bottom:16px">
@@ -599,7 +600,7 @@ document.getElementById('genPlatform')?.addEventListener('change', loadPrompt);
 // Default prompts per post type and platform
 const DEFAULT_PROMPTS = {
   proof: {
-    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Use the uploaded brand images for style/color/font reference.\n\nTHIS IS A SOCIAL PROOF / REVIEW POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration, centered\n- MIDDLE: A large cream/parchment card containing:\n  - Five gold stars at top\n  - Quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend."\n  - "— Google Review" in italic\n- BOTTOM: "4.9 on Google · 30+ Reviews" in cream text\n- Ornamental borders\n\nSTYLE: Brown background (#713520), cream text (#D2B48C), gold stars (#D4A44C), heritage serif fonts, parchment review card.\nDO NOT: Add real names, hashtags, or URLs.`,
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image-1 (Logo on brown): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C).\n- Image-2 (Menu Cover): Design system reference.\n- Image-3 (Social Post): Existing social media style reference.\n\nTHIS IS A SOCIAL PROOF / REVIEW POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration, centered\n- MIDDLE: A large cream/parchment card containing:\n  - Five gold stars at top\n  - Quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend."\n  - "— Google Review" in italic\n- BOTTOM: "4.9 on Google · 30+ Reviews" in cream text\n- Ornamental borders\n\nSTYLE: Brown background (#713520), cream text (#D2B48C), gold stars (#D4A44C), heritage serif fonts, parchment review card.\nDO NOT: Add real names, hashtags, or URLs.`,
     facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nDESIGN REFERENCES: Use uploaded brand images.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- LEFT (40%): Logo + "4.9 on Google" + "30+ Reviews"\n- RIGHT (60%): Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend." + "— Google Review"\n\nSTYLE: Brown (#713520), cream text, gold stars, heritage feel.\nDO NOT: Add real names, hashtags, URLs.`,
     google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- TOP: Logo\n- MIDDLE: Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades."\n- BOTTOM: "4.9 on Google · 30+ Reviews"\n\nMust be readable at thumbnail. Brown bg, cream text, gold stars, heritage feel.`
   },
@@ -655,6 +656,11 @@ function copyCaption() {
   const text = document.getElementById('genCaption').textContent;
   navigator.clipboard.writeText(text);
   document.getElementById('genStatus').textContent = '📋 Caption copied!';
+}
+
+function openRefFolder() {
+  // This only works when opened locally, not from the web
+  alert('Open Finder → Navigate to:\\n\\nhamza-express-site/social-media/reference/\\n\\nOr use Desktop shortcut: HE-Brand-References');
 }
 
 // Auto-load prompt on page load
