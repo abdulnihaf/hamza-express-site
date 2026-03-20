@@ -309,13 +309,16 @@
             <span class="wf-step-badge manual">Manual</span>
           </div>
           <div class="wf-step-body">
+            After Claude Code finishes, the reel is saved to the Saved Reels table automatically (step 5 in the command). Then:
             <ul class="wf-checklist">
               <li>Watch the exported reel in ~/Downloads/</li>
               <li>Check audio mix (ambient 85%, music 15%)</li>
               <li>Upload to Instagram as Reel</li>
               <li>Cross-post to Facebook</li>
-              <li>Update reel status in Saved Reels below</li>
             </ul>
+            <div class="wf-actions">
+              <button class="btn" onclick="loadReels().then(loadStats); toast('Refreshed!','success')">Refresh Saved Reels</button>
+            </div>
           </div>
         </div>
       </div>
@@ -751,6 +754,11 @@ function updateMusicBrief(template) {
     return clip.source === 'hanin' ? HANIN + '/' + clip.filename : HAMZA + '/' + clip.filename;
   }).filter(Boolean);
 
+  const totalDur = sequence.reduce((s, id) => { const c = allClips.find(cl => cl.id === id); return s + (c?.duration_s || 0); }, 0).toFixed(1);
+  const reelNameClean = document.getElementById('reelName').value.trim() || 'Untitled Reel';
+  const concept = music.mood + ' — ' + music.genre;
+  const apiDomain = location.origin;
+
   const brief = `Search Epidemic Sound for a track matching:
 - Mood: ${music.mood}
 - BPM: ${music.bpm}
@@ -762,14 +770,19 @@ Then build the reel:
 - Reel name: ${name}
 - Clips (in order): ${sequence.join(', ')}
 - Files: ${clipList.join(', ')}
-- Total duration: ~${sequence.reduce((s, id) => { const c = allClips.find(cl => cl.id === id); return s + (c?.duration_s || 0); }, 0).toFixed(1)}s
+- Total duration: ~${totalDur}s
 - Output: ~/Downloads/HE_${name}.mp4
 
 Steps:
 1. Use Epidemic Sound MCP to search for "${music.search}" and download the best match
 2. Concatenate clips with FFmpeg: crop to 1080x1920 (9:16 vertical)
 3. Mix audio: ambient at 85%, music at 14%, 1s fade-in, 1.5s fade-out
-4. Export to ~/Downloads/HE_${name}.mp4`;
+4. Export to ~/Downloads/HE_${name}.mp4
+5. Save reel to dashboard — run this curl after export:
+   curl -X POST "${apiDomain}/api/clips?action=reel-save&key=${API_KEY}" -H "Content-Type: application/json" -d '{"name":"${reelNameClean}","concept":"${concept}","clip_sequence":${JSON.stringify(sequence)},"duration_s":${totalDur}}'
+6. Mark as exported:
+   curl -X POST "${apiDomain}/api/clips?action=reel-update-status&id=REEL_ID&key=${API_KEY}" -H "Content-Type: application/json" -d '{"status":"exported","export_path":"~/Downloads/HE_${name}.mp4"}'
+   (Replace REEL_ID with the id returned from step 5)`;
 
   document.getElementById('wfMusicBrief').textContent = brief;
 }
