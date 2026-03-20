@@ -58,36 +58,6 @@
     .kpi-value.neutral { color: var(--text2); }
     .kpi-value.warn { color: var(--yellow); }
 
-    /* Content Performance */
-    .perf-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-    .perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .perf-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-    .perf-panel h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
-    .format-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(45,58,79,.3); }
-    .format-row:last-child { border-bottom: none; }
-    .format-type { font-size: 12px; font-weight: 600; }
-    .format-stats { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
-    .trend-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
-    .trend-bar-row { display: flex; align-items: center; gap: 8px; }
-    .trend-bar-label { font-size: 11px; color: var(--text2); min-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .trend-bar { height: 18px; border-radius: 4px; min-width: 4px; transition: width .3s; display: flex; align-items: center; padding: 0 6px; }
-    .trend-bar span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: white; white-space: nowrap; }
-    .trend-bar.good { background: var(--green); }
-    .trend-bar.avg { background: var(--yellow); }
-    .trend-bar.low { background: var(--red); }
-    .trend-arrow { font-size: 13px; font-weight: 700; margin-top: 8px; text-align: right; }
-    .trend-arrow.declining { color: var(--red); }
-    .trend-arrow.rising { color: var(--green); }
-    .trend-arrow.stable { color: var(--text2); }
-
-    /* Recent Posts Table */
-    .posts-table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; margin-bottom: 16px; }
-    .posts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .posts-table thead th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
-    .posts-table tbody td { padding: 8px 12px; border-bottom: 1px solid rgba(45,58,79,.3); }
-    .posts-table .platform-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
-    .posts-table .platform-pill.ig { background: rgba(225,48,108,.15); color: #e1306c; }
-    .posts-table .platform-pill.fb { background: rgba(24,119,242,.15); color: #1877F2; }
 
     /* Recommendation Card */
     .rec-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--tan); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
@@ -209,14 +179,40 @@
     /* Analytics Loading */
     .analytics-loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
 
+    /* Music & Export Workflow */
+    .workflow-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .workflow-steps { display: flex; flex-direction: column; gap: 16px; }
+    .wf-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; position: relative; }
+    .wf-step.active { border-color: var(--tan); }
+    .wf-step.done { border-color: var(--green); opacity: .7; }
+    .wf-step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .wf-step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--burnt-sienna); color: var(--cream); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .wf-step.done .wf-step-num { background: var(--green); }
+    .wf-step-title { font-size: 14px; font-weight: 700; }
+    .wf-step-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-left: auto; }
+    .wf-step-badge.dashboard { background: rgba(59,130,246,.15); color: var(--blue); }
+    .wf-step-badge.claude { background: rgba(139,92,246,.15); color: var(--purple); }
+    .wf-step-badge.manual { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .wf-step-body { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .wf-step-body code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--bg); padding: 1px 5px; border-radius: 3px; color: var(--tan); }
+    .wf-music-brief { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text2); line-height: 1.5; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    .wf-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .wf-music-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .wf-music-tag { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; text-align: center; }
+    .wf-music-tag .tag-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .wf-music-tag .tag-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .wf-checklist { list-style: none; margin-top: 8px; }
+    .wf-checklist li { padding: 4px 0; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+    .wf-checklist li::before { content: ''; width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; }
+    .wf-checklist li.checked::before { background: var(--green); border-color: var(--green); }
+
     /* Responsive */
     @media (max-width: 600px) {
       .kpi-row { grid-template-columns: repeat(2, 1fr); }
-      .perf-grid { grid-template-columns: 1fr; }
       .clip-grid { grid-template-columns: 1fr; }
       .templates { grid-template-columns: 1fr; }
       .filter-bar input { width: 100%; }
-      .posts-table-wrap { font-size: 12px; }
+      .wf-music-meta { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -224,54 +220,26 @@
   <div class="container">
     <div class="header">
       <h1>Reels Engine</h1>
-      <a href="/ops/marketing/" class="back-link">Marketing Dashboard</a>
+      <a href="/ops/marketing/" class="back-link">Marketing Hub</a>
     </div>
 
-    <!-- KPI Row -->
+    <!-- Stats Row -->
     <div class="kpi-row" id="kpiRow">
-      <div class="kpi-card" id="kpiIg">
-        <div class="kpi-header"><div class="kpi-icon ig">IG</div><div class="kpi-name">Instagram</div></div>
-        <div class="kpi-metrics"><div class="analytics-loading">Loading...</div></div>
-      </div>
-      <div class="kpi-card" id="kpiFb">
-        <div class="kpi-header"><div class="kpi-icon fb">FB</div><div class="kpi-name">Facebook</div></div>
-        <div class="kpi-metrics"><div class="analytics-loading">Loading...</div></div>
-      </div>
-      <div class="kpi-card" id="kpiGoogle">
-        <div class="kpi-header"><div class="kpi-icon gb">G</div><div class="kpi-name">Google</div></div>
-        <div class="kpi-metrics">
-          <div class="kpi-metric"><span class="kpi-label">Rating</span><span class="kpi-value up">4.9</span></div>
-          <div class="kpi-metric"><span class="kpi-label">API</span><span class="kpi-value warn">Pending</span></div>
-        </div>
-      </div>
       <div class="kpi-card" id="kpiContent">
-        <div class="kpi-header"><div class="kpi-icon lib">C</div><div class="kpi-name">Content</div></div>
+        <div class="kpi-header"><div class="kpi-icon lib">C</div><div class="kpi-name">Clip Library</div></div>
         <div class="kpi-metrics" id="kpiContentMetrics"><div class="analytics-loading">Loading...</div></div>
       </div>
-    </div>
-
-    <!-- Content Performance -->
-    <div class="section-title">Content Performance</div>
-    <div class="perf-wrap">
-      <div class="perf-grid">
-        <div class="perf-panel" id="formatPanel">
-          <h4>Format Breakdown</h4>
-          <div id="formatBreakdown"><div class="analytics-loading">Loading...</div></div>
-        </div>
-        <div class="perf-panel" id="trendPanel">
-          <h4>Engagement Trend</h4>
-          <div id="engagementTrend"><div class="analytics-loading">Loading...</div></div>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-icon ig">IG</div><div class="kpi-name">Instagram</div></div>
+        <div class="kpi-metrics" id="kpiIgMini"><div class="analytics-loading">Loading...</div></div>
       </div>
-    </div>
-
-    <!-- Recent Posts -->
-    <div class="section-title">Recent Posts</div>
-    <div class="posts-table-wrap">
-      <table class="posts-table">
-        <thead><tr><th>Post</th><th>Platform</th><th>Date</th><th>Type</th><th>Likes</th><th>Comments</th><th>Eng%</th></tr></thead>
-        <tbody id="recentPostsBody"><tr><td colspan="7" class="analytics-loading">Loading...</td></tr></tbody>
-      </table>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-icon fb">FB</div><div class="kpi-name">Facebook</div></div>
+        <div class="kpi-metrics" id="kpiFbMini"><div class="analytics-loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;justify-content:center">
+        <a href="/ops/marketing/analytics/" style="color:var(--tan);text-decoration:none;font-size:13px;font-weight:600;text-align:center">Full Analytics<br><span style="font-size:11px;color:var(--muted);font-weight:400">All platforms</span></a>
+      </div>
     </div>
 
     <!-- Next Reel Recommendation -->
@@ -294,6 +262,62 @@
         <button class="btn btn-primary" onclick="saveReel()">Save Draft</button>
         <button class="btn" onclick="copyFFmpeg()">Copy FFmpeg</button>
         <button class="btn btn-danger" onclick="clearSequence()">Clear</button>
+      </div>
+    </div>
+
+    <!-- Music & Export Workflow -->
+    <div class="section-title">Music &amp; Export</div>
+    <div class="workflow-wrap" id="workflowWrap">
+      <div class="workflow-steps" id="workflowSteps">
+        <div class="wf-step" id="wfStep1">
+          <div class="wf-step-header">
+            <div class="wf-step-num">1</div>
+            <div class="wf-step-title">Build Sequence</div>
+            <span class="wf-step-badge dashboard">Dashboard</span>
+          </div>
+          <div class="wf-step-body">
+            Select clips above or load a template. The music brief auto-generates based on your clip selection.
+            <div id="wfClipSummary" style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">No clips selected</div>
+          </div>
+        </div>
+
+        <div class="wf-step" id="wfStep2">
+          <div class="wf-step-header">
+            <div class="wf-step-num">2</div>
+            <div class="wf-step-title">Music Selection</div>
+            <span class="wf-step-badge claude">Claude Code</span>
+          </div>
+          <div class="wf-step-body">
+            Music is matched to your reel's mood using Epidemic Sound. Copy the command below and paste into Claude Code terminal.
+            <div class="wf-music-meta" id="wfMusicMeta">
+              <div class="wf-music-tag"><div class="tag-label">Mood</div><div class="tag-value" id="wfMood">--</div></div>
+              <div class="wf-music-tag"><div class="tag-label">BPM</div><div class="tag-value" id="wfBpm">--</div></div>
+              <div class="wf-music-tag"><div class="tag-label">Genre</div><div class="tag-value" id="wfGenre">--</div></div>
+            </div>
+            <div class="wf-music-brief" id="wfMusicBrief">Select clips to generate music brief...</div>
+            <div class="wf-actions">
+              <button class="btn btn-primary" onclick="copyMusicCommand()">Copy Claude Command</button>
+              <button class="btn" onclick="copyFFmpegWithMusic()">Copy FFmpeg (No Music)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wf-step" id="wfStep3">
+          <div class="wf-step-header">
+            <div class="wf-step-num">3</div>
+            <div class="wf-step-title">Review &amp; Publish</div>
+            <span class="wf-step-badge manual">Manual</span>
+          </div>
+          <div class="wf-step-body">
+            <ul class="wf-checklist">
+              <li>Watch the exported reel in ~/Downloads/</li>
+              <li>Check audio mix (ambient 85%, music 15%)</li>
+              <li>Upload to Instagram as Reel</li>
+              <li>Cross-post to Facebook</li>
+              <li>Update reel status in Saved Reels below</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -508,6 +532,10 @@ function renderSequence() {
   const el = document.getElementById('builderSeq');
   const emptyEl = document.getElementById('builderEmpty');
 
+  // Update music brief when sequence changes
+  const matchedTemplate = TEMPLATES.find(t => t.clips.length === sequence.length && t.clips.every((c, i) => c === sequence[i]));
+  updateMusicBrief(matchedTemplate || null);
+
   if (sequence.length === 0) {
     el.innerHTML = '<div class="builder-empty">Click clips below to add them to the sequence</div>';
     document.getElementById('seqCount').textContent = '0';
@@ -635,16 +663,24 @@ async function deleteReel(id) {
   await Promise.all([loadReels(), loadStats()]);
 }
 
-// ── Templates ──
+// ── Templates (with music intelligence) ──
 const TEMPLATES = [
-  { name: 'The Kitchen', concept: 'Fire/cooking montage', clips: ['H10','H32','Z08','H05','H15','H14','H01','H17'], dur: '15-20s' },
-  { name: 'The Taste', concept: 'Food hero shots', clips: ['H25','H26','Z07','H11','H03','Z02'], dur: '12-15s' },
-  { name: '108 Years', concept: 'Heritage story', clips: ['Z09','Z06','H29','Z04','H27','H28'], dur: '15-20s' },
-  { name: 'Shivajinagar Nights', concept: 'Street energy', clips: ['H27','Z03','H31','Z04','Z05','H28'], dur: '15-20s' },
-  { name: 'The Place', concept: 'Venue reveal', clips: ['H18','H20','H19','Z05','Z06','H12'], dur: '12-15s' },
-  { name: 'Real People', concept: 'Testimonials', clips: ['Z01','Z02','Z10','H23','H24'], dur: '15-20s' },
-  { name: 'Tandoor', concept: 'Skewer close-ups', clips: ['Z08','Z07','H01','H02','H06','H32'], dur: '12-15s' },
-  { name: 'Full Spread', concept: 'Thali/table shots', clips: ['H25','H26','Z02','Z07','H17'], dur: '10-12s' },
+  { name: 'The Kitchen', concept: 'Fire/cooking montage', clips: ['H10','H32','Z08','H05','H15','H14','H01','H17'], dur: '15-20s',
+    music: { mood: 'High Energy', bpm: '120-140', genre: 'Dhol/Percussion', search: 'indian dhol percussion energetic', style: 'Fast cuts need driving beat — dhol/tabla at 120+ BPM, raw percussive. Start 8s in to skip intros.' } },
+  { name: 'The Taste', concept: 'Food hero shots', clips: ['H25','H26','Z07','H11','H03','Z02'], dur: '12-15s',
+    music: { mood: 'Warm & Inviting', bpm: '80-95', genre: 'Lo-fi/Acoustic', search: 'warm acoustic food cozy', style: 'Slow food close-ups need warm, minimal backing — acoustic guitar or lo-fi keys. Light and airy.' } },
+  { name: '108 Years', concept: 'Heritage story', clips: ['Z09','Z06','H29','Z04','H27','H28'], dur: '15-20s',
+    music: { mood: 'Cinematic & Heritage', bpm: '70-85', genre: 'Sitar/Strings', search: 'indian sitar cinematic heritage', style: 'Dark/dreamy cinematic — sitar or strings drone at 70-80 BPM. Builds slowly. Heritage feel.' } },
+  { name: 'Shivajinagar Nights', concept: 'Street energy', clips: ['H27','Z03','H31','Z04','Z05','H28'], dur: '15-20s',
+    music: { mood: 'Raw Street', bpm: '100-120', genre: 'Hip-hop/Trap', search: 'indian street night raw beats', style: 'Night street energy — bass-heavy, trap-influenced, raw vibe. Not polished — gritty and real.' } },
+  { name: 'The Place', concept: 'Venue reveal', clips: ['H18','H20','H19','Z05','Z06','H12'], dur: '12-15s',
+    music: { mood: 'Ambient & Moody', bpm: '85-100', genre: 'Ambient/Electronic', search: 'ambient moody restaurant reveal', style: 'Venue reveal needs atmospheric build — ambient synths, subtle bass, then payoff.' } },
+  { name: 'Real People', concept: 'Testimonials', clips: ['Z01','Z02','Z10','H23','H24'], dur: '15-20s',
+    music: { mood: 'Feel-good', bpm: '90-110', genre: 'Acoustic/Pop', search: 'feel good acoustic happy community', style: 'People-focused — light acoustic or feel-good pop. Keep low in mix, voices are primary.' } },
+  { name: 'Tandoor', concept: 'Skewer close-ups', clips: ['Z08','Z07','H01','H02','H06','H32'], dur: '12-15s',
+    music: { mood: 'ASMR/Minimal', bpm: '70-90', genre: 'Minimal/Percussion', search: 'asmr cooking fire minimal', style: 'ASMR fire content — very minimal music, let sizzle/flames dominate. Just subtle percussion undertone.' } },
+  { name: 'Full Spread', concept: 'Thali/table shots', clips: ['H25','H26','Z02','Z07','H17'], dur: '10-12s',
+    music: { mood: 'Upbeat & Appetizing', bpm: '100-115', genre: 'World/Fusion', search: 'indian food upbeat celebration feast', style: 'Feast/spread shots — upbeat world music, celebratory. Think "come eat with us" energy.' } },
 ];
 
 function renderTemplates() {
@@ -659,12 +695,93 @@ function renderTemplates() {
 
 function loadTemplate(idx) {
   const t = TEMPLATES[idx];
-  // Only add clips that exist in the DB
   sequence = t.clips.filter(id => allClips.some(c => c.id === id));
   document.getElementById('reelName').value = t.name;
   renderSequence();
   renderClips();
+  updateMusicBrief(t);
   toast('Template loaded: ' + t.name, 'success');
+}
+
+// ── Music Brief & Workflow ──
+function getClipTags() {
+  const tagCounts = {};
+  sequence.forEach(id => {
+    const clip = allClips.find(c => c.id === id);
+    if (clip) clip.tags.split(',').forEach(t => { const tag = t.trim().toUpperCase(); if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+  });
+  return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+}
+
+function inferMusicFromClips() {
+  const tags = getClipTags();
+  const dominant = tags.slice(0, 3);
+  if (dominant.includes('FIRE') || dominant.includes('TANDOOR')) return { mood: 'High Energy / ASMR', bpm: '100-130', genre: 'Dhol/Percussion', search: 'indian fire cooking percussion', style: 'Fire-heavy clips — driving dhol or minimal ASMR percussion depending on cut speed.' };
+  if (dominant.includes('FOOD')) return { mood: 'Warm & Appetizing', bpm: '85-100', genre: 'Acoustic/World', search: 'warm food acoustic indian', style: 'Food close-ups need warm, inviting backing — acoustic or world fusion.' };
+  if (dominant.includes('STREET') || dominant.includes('EXTERIOR')) return { mood: 'Raw Street Energy', bpm: '100-120', genre: 'Hip-hop/Trap', search: 'indian street night urban', style: 'Street/exterior clips — raw, bass-heavy beats. Gritty not polished.' };
+  if (dominant.includes('VENUE') || dominant.includes('BRAND')) return { mood: 'Ambient & Moody', bpm: '80-95', genre: 'Ambient/Electronic', search: 'ambient moody restaurant cinematic', style: 'Venue/brand clips — atmospheric build, subtle and cinematic.' };
+  if (dominant.includes('PEOPLE') || dominant.includes('TESTIMONIAL')) return { mood: 'Feel-good', bpm: '90-110', genre: 'Acoustic/Pop', search: 'feel good community happy', style: 'People-focused — light acoustic, keep low so voices come through.' };
+  return { mood: 'Cinematic', bpm: '85-100', genre: 'World/Fusion', search: 'cinematic indian fusion', style: 'Mixed content — versatile cinematic backing works best.' };
+}
+
+function updateMusicBrief(template) {
+  const music = template?.music || inferMusicFromClips();
+  document.getElementById('wfMood').textContent = music.mood;
+  document.getElementById('wfBpm').textContent = music.bpm;
+  document.getElementById('wfGenre').textContent = music.genre;
+
+  // Update clip summary in step 1
+  if (sequence.length > 0) {
+    let totalDur = 0;
+    sequence.forEach(id => { const c = allClips.find(cl => cl.id === id); totalDur += c?.duration_s || 0; });
+    document.getElementById('wfClipSummary').textContent = sequence.length + ' clips · ' + totalDur.toFixed(1) + 's · Tags: ' + getClipTags().slice(0, 4).join(', ');
+    document.getElementById('wfStep1').classList.add('done');
+  } else {
+    document.getElementById('wfClipSummary').textContent = 'No clips selected';
+    document.getElementById('wfStep1').classList.remove('done');
+  }
+
+  // Generate Claude command
+  const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+  const clipList = sequence.map(id => {
+    const clip = allClips.find(c => c.id === id);
+    if (!clip) return '';
+    return clip.source === 'hanin' ? HANIN + '/' + clip.filename : HAMZA + '/' + clip.filename;
+  }).filter(Boolean);
+
+  const brief = `Search Epidemic Sound for a track matching:
+- Mood: ${music.mood}
+- BPM: ${music.bpm}
+- Genre: ${music.genre}
+- Search keywords: "${music.search}"
+- Style notes: ${music.style}
+
+Then build the reel:
+- Reel name: ${name}
+- Clips (in order): ${sequence.join(', ')}
+- Files: ${clipList.join(', ')}
+- Total duration: ~${sequence.reduce((s, id) => { const c = allClips.find(cl => cl.id === id); return s + (c?.duration_s || 0); }, 0).toFixed(1)}s
+- Output: ~/Downloads/HE_${name}.mp4
+
+Steps:
+1. Use Epidemic Sound MCP to search for "${music.search}" and download the best match
+2. Concatenate clips with FFmpeg: crop to 1080x1920 (9:16 vertical)
+3. Mix audio: ambient at 85%, music at 14%, 1s fade-in, 1.5s fade-out
+4. Export to ~/Downloads/HE_${name}.mp4`;
+
+  document.getElementById('wfMusicBrief').textContent = brief;
+}
+
+function copyMusicCommand() {
+  const brief = document.getElementById('wfMusicBrief').textContent;
+  if (!brief || brief.includes('Select clips')) return toast('Select clips first', 'error');
+  navigator.clipboard.writeText(brief).then(() => toast('Claude command copied! Paste in Claude Code terminal.', 'success'));
+}
+
+function copyFFmpegWithMusic() {
+  copyFFmpeg(); // reuse existing function
 }
 
 // ── Live Intelligence System ──
@@ -685,8 +802,6 @@ async function loadIntelligence() {
   try {
     [igData, fbData] = await Promise.all([fetchIgData(), fetchFbData()]);
     renderKpiCards();
-    renderPerformance();
-    renderRecentPosts();
     generateRecommendation();
   } catch (err) {
     console.error('Intelligence load error:', err);
@@ -766,123 +881,20 @@ async function fetchFbData() {
   return result;
 }
 
-// ── Render KPI Cards ──
+// ── Render Mini KPI Cards ──
 function renderKpiCards() {
-  // Instagram KPI
-  const igMetrics = document.querySelector('#kpiIg .kpi-metrics');
+  const igEl = document.getElementById('kpiIgMini');
   const engClass = igData.avgEng > 5 ? 'up' : igData.avgEng > 2 ? 'neutral' : igData.avgEng !== null ? 'down' : '';
-  igMetrics.innerHTML = `
+  igEl.innerHTML = `
     <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${igData.followers ?? '--'}</span></div>
-    <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${igData.mediaCount ?? '--'}</span></div>
     <div class="kpi-metric"><span class="kpi-label">Avg Eng</span><span class="kpi-value ${engClass}">${igData.avgEng !== null ? igData.avgEng + '%' : '--'}</span></div>
   `;
 
-  // Facebook KPI
-  const fbMetrics = document.querySelector('#kpiFb .kpi-metrics');
-  fbMetrics.innerHTML = `
-    <div class="kpi-metric"><span class="kpi-label">Page Likes</span><span class="kpi-value">${fbData.likes ?? '--'}</span></div>
+  const fbEl = document.getElementById('kpiFbMini');
+  fbEl.innerHTML = `
     <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${fbData.followers ?? '--'}</span></div>
     <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${fbData.postCount ?? '--'}</span></div>
   `;
-}
-
-// ── Content Performance ──
-function renderPerformance() {
-  // Format Breakdown — group IG posts by media_type
-  const formatEl = document.getElementById('formatBreakdown');
-  const posts = igData.allPosts;
-  if (posts.length === 0) {
-    formatEl.innerHTML = '<div style="color:var(--muted);font-size:13px">No IG posts to analyze</div>';
-  } else {
-    const formats = {};
-    posts.forEach(p => {
-      const type = p.type === 'CAROUSEL_ALBUM' ? 'CAROUSEL' : p.type;
-      if (!formats[type]) formats[type] = { count: 0, totalEng: 0 };
-      formats[type].count++;
-      formats[type].totalEng += p.engagement;
-    });
-
-    const allFormats = ['IMAGE', 'VIDEO', 'CAROUSEL', 'REEL'];
-    formatEl.innerHTML = allFormats.map(f => {
-      const data = formats[f] || { count: 0, totalEng: 0 };
-      const avgEng = data.count > 0 && igData.followers > 0
-        ? Math.round((data.totalEng / data.count / igData.followers) * 1000) / 10 + '%'
-        : '--';
-      const countColor = data.count > 0 ? 'var(--text)' : 'var(--muted)';
-      return `<div class="format-row">
-        <span class="format-type" style="color:${countColor}">${f}</span>
-        <span class="format-stats">${data.count} posts${data.count > 0 ? ' · ' + avgEng + ' eng' : ''}</span>
-      </div>`;
-    }).join('');
-
-    // Highlight format gap
-    if (!formats['VIDEO'] && !formats['REEL']) {
-      formatEl.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--orange);font-weight:600">No video/reel content yet — first reel gets algorithm boost</div>';
-    }
-  }
-
-  // Engagement Trend — visual bars for last N posts
-  const trendEl = document.getElementById('engagementTrend');
-  const trendPosts = igData.allPosts.slice(0, 8).reverse(); // oldest first for left-to-right
-  if (trendPosts.length === 0) {
-    trendEl.innerHTML = '<div style="color:var(--muted);font-size:13px">No posts to show trend</div>';
-    return;
-  }
-
-  const maxEng = Math.max(...trendPosts.map(p => p.engagement), 1);
-  const engValues = trendPosts.map(p => p.engagement);
-
-  // Calculate trend direction
-  let trendDir = 'stable';
-  if (engValues.length >= 3) {
-    const firstHalf = engValues.slice(0, Math.floor(engValues.length / 2));
-    const secondHalf = engValues.slice(Math.floor(engValues.length / 2));
-    const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
-    const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
-    if (avgSecond > avgFirst * 1.15) trendDir = 'rising';
-    else if (avgSecond < avgFirst * 0.85) trendDir = 'declining';
-  }
-
-  const avgEng = engValues.reduce((a, b) => a + b, 0) / engValues.length;
-  trendEl.innerHTML = '<div class="trend-bar-wrap">' + trendPosts.map(p => {
-    const pct = Math.round((p.engagement / maxEng) * 100);
-    const barClass = p.engagement >= avgEng * 1.2 ? 'good' : p.engagement >= avgEng * 0.7 ? 'avg' : 'low';
-    return `<div class="trend-bar-row">
-      <span class="trend-bar-label">${p.captionShort.substring(0, 18)}...</span>
-      <div class="trend-bar ${barClass}" style="width:${Math.max(pct, 8)}%"><span>${p.engagement}</span></div>
-    </div>`;
-  }).join('') + '</div>' +
-  `<div class="trend-arrow ${trendDir}">${trendDir === 'rising' ? 'Trending Up' : trendDir === 'declining' ? 'Declining — format change needed' : 'Stable'}</div>`;
-}
-
-// ── Recent Posts Table ──
-function renderRecentPosts() {
-  const tbody = document.getElementById('recentPostsBody');
-  const allRecent = [
-    ...igData.recentPosts.map(p => ({ ...p, platform: 'ig' })),
-    ...fbData.recentPosts.map(p => ({ ...p, platform: 'fb' }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
-
-  if (allRecent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No posts found</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = allRecent.map(p => {
-    const dateStr = p.date ? new Date(p.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '--';
-    const followers = p.platform === 'ig' ? igData.followers : fbData.followers;
-    const engPct = followers > 0 ? Math.round((p.engagement / followers) * 1000) / 10 + '%' : '--';
-    const engClass = followers > 0 ? ((p.engagement / followers) > 0.05 ? 'up' : (p.engagement / followers) > 0.02 ? 'neutral' : 'down') : '';
-    return `<tr>
-      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.captionShort}</td>
-      <td><span class="platform-pill ${p.platform}">${p.platform === 'ig' ? 'IG' : 'FB'}</span></td>
-      <td style="font-size:12px;color:var(--muted)">${dateStr}</td>
-      <td style="font-size:12px">${p.type}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.likes}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.comments}</td>
-      <td><span class="kpi-value ${engClass}" style="font-size:12px">${engPct}</span></td>
-    </tr>`;
-  }).join('');
 }
 
 // ── Data-Driven Recommendation Engine ──
