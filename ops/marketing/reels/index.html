@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Reels Engine</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --bg2: #111827;
+      --card: #1a2234;
+      --border: #2d3a4f;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,.12);
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      --burnt-sienna: #713520;
+      --tan: #D2B48C;
+      --cream: #FFF8F0;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 5px; height: 24px; background: var(--brand-grad); border-radius: 3px; }
+    .back-link { color: var(--tan); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* Stats Row */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; }
+    .stat-card .value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+    /* Section Title */
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* Filter Bar */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+    .filter-bar input { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; width: 200px; }
+    .filter-bar input::placeholder { color: var(--muted); }
+    .filter-bar input:focus { outline: none; border-color: var(--tan); }
+    .filter-bar select { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; }
+    .filter-bar select:focus { outline: none; border-color: var(--tan); }
+
+    /* Tag Pills */
+    .tag-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tag-pill { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text2); transition: all .15s; text-transform: uppercase; letter-spacing: .5px; }
+    .tag-pill:hover { border-color: var(--tan); }
+    .tag-pill.active { background: var(--burnt-sienna); border-color: var(--tan); color: var(--cream); }
+    .tag-pill .count { font-weight: 400; opacity: .6; margin-left: 4px; }
+
+    /* Clip Grid */
+    .clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .clip-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all .15s; position: relative; }
+    .clip-card:hover { border-color: var(--tan); transform: translateY(-2px); }
+    .clip-card.selected { border-color: var(--green); background: rgba(16,185,129,.06); }
+    .clip-card .clip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .clip-id { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--tan); }
+    .clip-filename { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .clip-score { display: flex; align-items: center; gap: 4px; }
+    .clip-score .score-num { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
+    .clip-score .score-label { font-size: 10px; color: var(--muted); }
+    .score-high { color: var(--green); }
+    .score-mid { color: var(--yellow); }
+    .score-low { color: var(--muted); }
+    .clip-desc { font-size: 13px; color: var(--text2); line-height: 1.4; margin-bottom: 10px; min-height: 36px; }
+    .clip-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .clip-meta span { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; background: var(--bg2); border-radius: 4px; color: var(--text2); }
+    .clip-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .clip-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .clip-tag-FIRE { background: rgba(239,68,68,.15); color: var(--red); }
+    .clip-tag-COOK { background: rgba(249,115,22,.15); color: var(--orange); }
+    .clip-tag-FOOD { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .clip-tag-VENUE { background: rgba(139,92,246,.15); color: var(--purple); }
+    .clip-tag-EXTERIOR { background: rgba(6,182,212,.15); color: var(--cyan); }
+    .clip-tag-STREET { background: rgba(236,72,153,.15); color: var(--pink); }
+    .clip-tag-PEOPLE { background: rgba(59,130,246,.15); color: var(--blue); }
+    .clip-tag-BRAND { background: rgba(212,164,76,.15); color: var(--tan); }
+    .clip-tag-TANDOOR { background: rgba(239,68,68,.15); color: #f87171; }
+    .clip-tag-GRILL { background: rgba(249,115,22,.15); color: #fb923c; }
+    .clip-tag-TESTIMONIAL { background: rgba(16,185,129,.15); color: var(--green); }
+    .clip-add-btn { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--green); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+    .clip-card:hover .clip-add-btn { opacity: 1; }
+    .clip-card.selected .clip-add-btn { opacity: 1; background: var(--green); color: var(--bg); }
+
+    /* Reel Builder */
+    .builder-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .builder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .builder-header h3 { font-size: 15px; font-weight: 700; }
+    .builder-meta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--tan); }
+    .builder-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; border: 2px dashed var(--border); border-radius: 8px; }
+    .builder-seq { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
+    .seq-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: grab; }
+    .seq-chip .seq-id { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tan); }
+    .seq-chip .seq-dur { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .seq-chip .seq-remove { color: var(--red); cursor: pointer; font-size: 14px; margin-left: 4px; opacity: .6; }
+    .seq-chip .seq-remove:hover { opacity: 1; }
+    .seq-num { width: 20px; height: 20px; border-radius: 50%; background: var(--burnt-sienna); color: var(--cream); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .builder-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; }
+    .btn:hover { border-color: var(--tan); }
+    .btn-primary { background: var(--brand-grad); border: none; color: white; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-danger { color: var(--red); border-color: rgba(239,68,68,.3); }
+    .btn-danger:hover { border-color: var(--red); }
+
+    /* Reel Templates */
+    .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .template-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; transition: all .15s; }
+    .template-card:hover { border-color: var(--tan); }
+    .template-card h4 { font-size: 14px; margin-bottom: 4px; }
+    .template-card p { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+    .template-card .template-clips { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* Saved Reels */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(45,58,79,.5); }
+    .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .status-draft { background: rgba(59,130,246,.15); color: var(--blue); }
+    .status-exported { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .status-published { background: rgba(16,185,129,.15); color: var(--green); }
+
+    /* Reel name input */
+    .reel-name-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; width: 200px; }
+    .reel-name-input:focus { outline: none; border-color: var(--tan); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+    .toast.error { border-color: var(--red); color: var(--red); }
+    .toast.success { border-color: var(--green); }
+
+    /* Empty state */
+    .empty-state { padding: 40px; text-align: center; color: var(--muted); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .clip-grid { grid-template-columns: 1fr; }
+      .templates { grid-template-columns: 1fr; }
+      .filter-bar input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Reels Engine</h1>
+      <a href="/ops/marketing/" class="back-link">Marketing Dashboard</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="value" id="stat-total">--</div><div class="label">Total Clips</div></div>
+      <div class="stat-card"><div class="value" id="stat-hanin">--</div><div class="label">Hanin</div></div>
+      <div class="stat-card"><div class="value" id="stat-hamza">--</div><div class="label">Hamza</div></div>
+      <div class="stat-card"><div class="value" id="stat-reels">--</div><div class="label">Reels</div></div>
+    </div>
+
+    <!-- Reel Builder -->
+    <div class="section-title">Reel Builder</div>
+    <div class="builder-wrap">
+      <div class="builder-header">
+        <input type="text" class="reel-name-input" id="reelName" placeholder="Reel name..." value="Untitled Reel">
+        <div class="builder-meta"><span id="seqCount">0</span> clips &middot; <span id="seqDuration">0.0</span>s</div>
+      </div>
+      <div class="builder-seq" id="builderSeq">
+        <div class="builder-empty" id="builderEmpty">Click clips below to add them to the sequence</div>
+      </div>
+      <div class="builder-actions">
+        <button class="btn btn-primary" onclick="saveReel()">Save Draft</button>
+        <button class="btn" onclick="copyFFmpeg()">Copy FFmpeg</button>
+        <button class="btn btn-danger" onclick="clearSequence()">Clear</button>
+      </div>
+    </div>
+
+    <!-- Reel Templates -->
+    <div class="section-title">Quick Templates</div>
+    <div class="templates" id="templates"></div>
+
+    <!-- Tag Filter -->
+    <div class="section-title">Clip Library</div>
+    <div class="tag-pills" id="tagPills"></div>
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="Search descriptions...">
+      <select id="sourceFilter">
+        <option value="">All Sources</option>
+        <option value="hanin">Hanin</option>
+        <option value="hamza">Hamza</option>
+      </select>
+      <select id="sortSelect">
+        <option value="viral_score">Viral Score</option>
+        <option value="duration_s">Duration</option>
+        <option value="id">ID</option>
+      </select>
+    </div>
+
+    <!-- Clip Grid -->
+    <div class="clip-grid" id="clipGrid"></div>
+
+    <!-- Saved Reels -->
+    <div class="section-title">Saved Reels</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Clips</th><th>Duration</th><th>Status</th><th>Created</th><th></th></tr></thead>
+        <tbody id="reelsBody"><tr><td colspan="6" class="empty-state">No saved reels yet</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = localStorage.getItem('he_api_key') || '';
+const API_BASE = '/api/clips';
+
+let allClips = [];
+let allTags = [];
+let sequence = [];
+let activeTagFilter = '';
+let savedReels = [];
+
+// ── Init ──
+async function init() {
+  if (!API_KEY) {
+    promptApiKey();
+    return;
+  }
+  await Promise.all([loadClips(), loadTags(), loadStats(), loadReels()]);
+  renderTemplates();
+}
+
+function promptApiKey() {
+  const key = prompt('Enter your Dashboard API Key:');
+  if (key) {
+    localStorage.setItem('he_api_key', key);
+    location.reload();
+  }
+}
+
+// ── API helpers ──
+async function api(action, params = {}, method = 'GET', body = null) {
+  const url = new URL(API_BASE, location.origin);
+  url.searchParams.set('action', action);
+  url.searchParams.set('key', API_KEY);
+  for (const [k, v] of Object.entries(params)) {
+    if (v) url.searchParams.set(k, v);
+  }
+  const opts = { method };
+  if (body) {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem('he_api_key');
+    toast('Invalid API key — reloading...', 'error');
+    setTimeout(() => location.reload(), 1000);
+    throw new Error('Unauthorized');
+  }
+  return res.json();
+}
+
+// ── Load data ──
+async function loadClips() {
+  const data = await api('list', { sort: 'viral_score', order: 'DESC' });
+  allClips = data.clips || [];
+  renderClips();
+}
+
+async function loadTags() {
+  const data = await api('tags');
+  allTags = data.tags || [];
+  renderTagPills();
+}
+
+async function loadStats() {
+  const data = await api('stats');
+  document.getElementById('stat-total').textContent = data.total_clips || 0;
+  document.getElementById('stat-reels').textContent = data.total_reels || 0;
+  const sources = data.sources || [];
+  const hanin = sources.find(s => s.source === 'hanin');
+  const hamza = sources.find(s => s.source === 'hamza');
+  document.getElementById('stat-hanin').textContent = hanin ? hanin.count : 0;
+  document.getElementById('stat-hamza').textContent = hamza ? hamza.count : 0;
+}
+
+async function loadReels() {
+  const data = await api('reels');
+  savedReels = data.reels || [];
+  renderReels();
+}
+
+// ── Render tag pills ──
+function renderTagPills() {
+  const el = document.getElementById('tagPills');
+  el.innerHTML = '<div class="tag-pill ' + (!activeTagFilter ? 'active' : '') + '" onclick="filterTag(\'\')">ALL<span class="count">' + allClips.length + '</span></div>' +
+    allTags.map(t =>
+      '<div class="tag-pill ' + (activeTagFilter === t.tag ? 'active' : '') + '" onclick="filterTag(\'' + t.tag + '\')">' + t.tag + '<span class="count">' + t.count + '</span></div>'
+    ).join('');
+}
+
+function filterTag(tag) {
+  activeTagFilter = tag;
+  renderTagPills();
+  renderClips();
+}
+
+// ── Render clips ──
+function renderClips() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const source = document.getElementById('sourceFilter').value;
+  const sort = document.getElementById('sortSelect').value;
+
+  let filtered = allClips.filter(c => {
+    if (activeTagFilter && !c.tags.toUpperCase().includes(activeTagFilter)) return false;
+    if (source && c.source !== source) return false;
+    if (search && !c.description?.toLowerCase().includes(search) && !c.id.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    if (sort === 'viral_score') return (b.viral_score || 0) - (a.viral_score || 0);
+    if (sort === 'duration_s') return (b.duration_s || 0) - (a.duration_s || 0);
+    return a.id.localeCompare(b.id);
+  });
+
+  const grid = document.getElementById('clipGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No clips match filters</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const inSeq = sequence.includes(c.id);
+    const scoreClass = c.viral_score >= 9 ? 'score-high' : c.viral_score >= 7 ? 'score-mid' : 'score-low';
+    const tags = c.tags.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
+    return `<div class="clip-card ${inSeq ? 'selected' : ''}" onclick="toggleClip('${c.id}')">
+      <button class="clip-add-btn">${inSeq ? '✓' : '+'}</button>
+      <div class="clip-header">
+        <div>
+          <div class="clip-id">${c.id}</div>
+          <div class="clip-filename">${c.filename}</div>
+        </div>
+        <div class="clip-score">
+          <span class="score-num ${scoreClass}">${c.viral_score || '?'}</span>
+          <span class="score-label">/10</span>
+        </div>
+      </div>
+      <div class="clip-desc">${c.description || 'No description'}</div>
+      <div class="clip-meta">
+        <span>${c.duration_s ? c.duration_s + 's' : '?s'}</span>
+        <span>${c.resolution || '?'}</span>
+        <span>${c.source}</span>
+      </div>
+      <div class="clip-tags">${tags.map(t => '<span class="clip-tag clip-tag-' + t + '">' + t + '</span>').join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Sequence management ──
+function toggleClip(id) {
+  const idx = sequence.indexOf(id);
+  if (idx >= 0) {
+    sequence.splice(idx, 1);
+  } else {
+    sequence.push(id);
+  }
+  renderSequence();
+  renderClips();
+}
+
+function removeFromSequence(idx) {
+  sequence.splice(idx, 1);
+  renderSequence();
+  renderClips();
+}
+
+function renderSequence() {
+  const el = document.getElementById('builderSeq');
+  const emptyEl = document.getElementById('builderEmpty');
+
+  if (sequence.length === 0) {
+    el.innerHTML = '<div class="builder-empty">Click clips below to add them to the sequence</div>';
+    document.getElementById('seqCount').textContent = '0';
+    document.getElementById('seqDuration').textContent = '0.0';
+    return;
+  }
+
+  let totalDur = 0;
+  el.innerHTML = sequence.map((id, i) => {
+    const clip = allClips.find(c => c.id === id);
+    const dur = clip?.duration_s || 0;
+    totalDur += dur;
+    return `<div class="seq-chip" draggable="true" ondragstart="dragStart(event, ${i})" ondragover="event.preventDefault()" ondrop="drop(event, ${i})">
+      <span class="seq-num">${i + 1}</span>
+      <span class="seq-id">${id}</span>
+      <span class="seq-dur">${dur}s</span>
+      <span class="seq-remove" onclick="event.stopPropagation(); removeFromSequence(${i})">x</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('seqCount').textContent = sequence.length;
+  document.getElementById('seqDuration').textContent = totalDur.toFixed(1);
+}
+
+// ── Drag-and-drop reorder ──
+let dragIdx = null;
+function dragStart(e, idx) { dragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function drop(e, idx) {
+  e.preventDefault();
+  if (dragIdx === null || dragIdx === idx) return;
+  const item = sequence.splice(dragIdx, 1)[0];
+  sequence.splice(idx, 0, item);
+  dragIdx = null;
+  renderSequence();
+}
+
+// ── Clear sequence ──
+function clearSequence() {
+  sequence = [];
+  document.getElementById('reelName').value = 'Untitled Reel';
+  renderSequence();
+  renderClips();
+}
+
+// ── Save reel ──
+async function saveReel() {
+  if (sequence.length === 0) return toast('Add clips to the sequence first', 'error');
+  const name = document.getElementById('reelName').value.trim() || 'Untitled Reel';
+  let totalDur = 0;
+  sequence.forEach(id => { const c = allClips.find(cl => cl.id === id); totalDur += c?.duration_s || 0; });
+
+  await api('reel-save', {}, 'POST', {
+    name,
+    clip_sequence: sequence,
+    duration_s: Math.round(totalDur * 10) / 10,
+  });
+
+  toast('Reel saved!', 'success');
+  await Promise.all([loadReels(), loadStats()]);
+}
+
+// ── Copy FFmpeg command ──
+function copyFFmpeg() {
+  if (sequence.length === 0) return toast('Add clips first', 'error');
+
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+
+  const lines = sequence.map(id => {
+    const clip = allClips.find(c => c.id === id);
+    if (!clip) return '';
+    const dir = clip.source === 'hanin' ? HANIN : HAMZA;
+    return `file '${dir}/${clip.filename}'`;
+  }).filter(Boolean);
+
+  const concatList = lines.join('\n');
+  const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
+  const cmd = `# Write concat list\ncat > /tmp/${name}_concat.txt << 'EOF'\n${concatList}\nEOF\n\n# Concatenate and export\nffmpeg -y -f concat -safe 0 -i /tmp/${name}_concat.txt \\\n  -vf "crop=ih*9/16:ih:iw/2-ih*9/32:0,scale=1080:1920" \\\n  -c:v libx264 -preset fast -crf 18 \\\n  -c:a aac -b:a 128k -ar 44100 \\\n  -movflags +faststart \\\n  ~/Downloads/HE_${name}.mp4`;
+
+  navigator.clipboard.writeText(cmd).then(() => toast('FFmpeg command copied!', 'success'));
+}
+
+// ── Render saved reels ──
+function renderReels() {
+  const tbody = document.getElementById('reelsBody');
+  if (savedReels.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No saved reels yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = savedReels.map(r => {
+    const clips = JSON.parse(r.clip_sequence || '[]');
+    const date = r.created_at ? new Date(r.created_at + 'Z').toLocaleDateString() : '';
+    return `<tr>
+      <td><strong>${r.name}</strong>${r.concept ? '<br><span style="font-size:11px;color:var(--muted)">' + r.concept + '</span>' : ''}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${clips.length} clips</span></td>
+      <td><span style="font-family:'JetBrains Mono',monospace">${r.duration_s || '?'}s</span></td>
+      <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${date}</td>
+      <td>
+        <button class="btn" style="padding:4px 10px;font-size:11px" onclick="loadReel(${r.id})">Load</button>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteReel(${r.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Load reel into builder ──
+function loadReel(id) {
+  const reel = savedReels.find(r => r.id === id);
+  if (!reel) return;
+  sequence = JSON.parse(reel.clip_sequence || '[]');
+  document.getElementById('reelName').value = reel.name;
+  renderSequence();
+  renderClips();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Loaded: ' + reel.name, 'success');
+}
+
+// ── Delete reel ──
+async function deleteReel(id) {
+  if (!confirm('Delete this reel?')) return;
+  await api('reel-delete', { id });
+  toast('Reel deleted', 'success');
+  await Promise.all([loadReels(), loadStats()]);
+}
+
+// ── Templates ──
+const TEMPLATES = [
+  { name: 'The Kitchen', concept: 'Fire/cooking montage', clips: ['H10','H32','Z08','H05','H15','H14','H01','H17'], dur: '15-20s' },
+  { name: 'The Taste', concept: 'Food hero shots', clips: ['H25','H26','Z07','H11','H03','Z02'], dur: '12-15s' },
+  { name: '108 Years', concept: 'Heritage story', clips: ['Z09','Z06','H29','Z04','H27','H28'], dur: '15-20s' },
+  { name: 'Shivajinagar Nights', concept: 'Street energy', clips: ['H27','Z03','H31','Z04','Z05','H28'], dur: '15-20s' },
+  { name: 'The Place', concept: 'Venue reveal', clips: ['H18','H20','H19','Z05','Z06','H12'], dur: '12-15s' },
+  { name: 'Real People', concept: 'Testimonials', clips: ['Z01','Z02','Z10','H23','H24'], dur: '15-20s' },
+  { name: 'Tandoor', concept: 'Skewer close-ups', clips: ['Z08','Z07','H01','H02','H06','H32'], dur: '12-15s' },
+  { name: 'Full Spread', concept: 'Thali/table shots', clips: ['H25','H26','Z02','Z07','H17'], dur: '10-12s' },
+];
+
+function renderTemplates() {
+  document.getElementById('templates').innerHTML = TEMPLATES.map((t, i) =>
+    `<div class="template-card" onclick="loadTemplate(${i})">
+      <h4>${t.name}</h4>
+      <p>${t.concept}</p>
+      <div class="template-clips">${t.clips.length} clips &middot; ~${t.dur}</div>
+    </div>`
+  ).join('');
+}
+
+function loadTemplate(idx) {
+  const t = TEMPLATES[idx];
+  // Only add clips that exist in the DB
+  sequence = t.clips.filter(id => allClips.some(c => c.id === id));
+  document.getElementById('reelName').value = t.name;
+  renderSequence();
+  renderClips();
+  toast('Template loaded: ' + t.name, 'success');
+}
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── Event listeners ──
+document.getElementById('searchInput').addEventListener('input', renderClips);
+document.getElementById('sourceFilter').addEventListener('change', renderClips);
+document.getElementById('sortSelect').addEventListener('change', () => {
+  const sort = document.getElementById('sortSelect').value;
+  allClips.sort((a, b) => {
+    if (sort === 'viral_score') return (b.viral_score || 0) - (a.viral_score || 0);
+    if (sort === 'duration_s') return (b.duration_s || 0) - (a.duration_s || 0);
+    return a.id.localeCompare(b.id);
+  });
+  renderClips();
+});
+
+// ── Go ──
+init();
+</script>
+</body>
+</html>
