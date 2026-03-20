@@ -23,7 +23,6 @@
       --purple: #8b5cf6;
       --cyan: #06b6d4;
       --pink: #ec4899;
-      /* HE Brand */
       --burnt-sienna: #713520;
       --tan: #D2B48C;
       --cream: #FFF8F0;
@@ -31,147 +30,209 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    .container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
 
     /* Header */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .header h1 { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    .header h1::before { content: ''; width: 6px; height: 28px; background: var(--brand-grad); border-radius: 3px; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-    .date-badge { padding: 6px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--tan); }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 5px; height: 24px; background: var(--brand-grad); border-radius: 3px; }
+    .date-badge { padding: 5px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--tan); }
+
+    /* How This Works */
+    .guide-toggle { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; cursor: pointer; }
+    .guide-toggle summary { font-size: 14px; font-weight: 600; color: var(--tan); list-style: none; display: flex; align-items: center; gap: 8px; }
+    .guide-toggle summary::before { content: '📖'; }
+    .guide-toggle summary::after { content: ' ▸'; font-size: 12px; color: var(--muted); }
+    .guide-toggle[open] summary::after { content: ' ▾'; }
+    .guide-content { margin-top: 12px; font-size: 13px; color: var(--text2); line-height: 1.8; }
+    .guide-content ol, .guide-content ul { padding-left: 20px; }
+    .guide-content li { margin-bottom: 4px; }
+    .guide-content strong { color: var(--text); }
 
     /* Status Row */
-    .status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-    .status-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-    .status-card .icon { font-size: 24px; }
-    .status-card .info { flex: 1; }
-    .status-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-    .status-card .value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .status-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; text-align: center; }
+    .status-card .value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
     .status-card .value .of { color: var(--muted); font-size: 14px; }
-    .status-card .sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .status-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
 
-    /* Platform pills */
-    .platform-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-    .pill { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-    .pill.active { background: var(--green-dim); color: var(--green); }
-    .pill.pending { background: rgba(245,158,11,.12); color: var(--yellow); }
-    .pill.inactive { background: rgba(100,116,139,.12); color: var(--muted); }
+    /* Next Post Banner */
+    .next-banner { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--tan); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .next-banner .next-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .next-banner .next-title { font-size: 18px; font-weight: 700; color: var(--tan); }
+    .next-banner .next-obj { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .next-banner .start-btn { padding: 12px 24px; background: var(--brand-grad); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+    .next-banner .start-btn:hover { opacity: .9; }
 
-    /* Section titles */
-    .section-title { font-size: 15px; font-weight: 600; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
-    .section-title::before { content: ''; width: 3px; height: 16px; background: var(--burnt-sienna); border-radius: 2px; }
+    /* Section Title */
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; }
 
     /* Post Tracker Table */
-    .table-wrap { overflow-x: auto; margin-bottom: 20px; border-radius: 10px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; background: var(--card); font-size: 13px; }
-    thead th { background: var(--bg2); padding: 10px 12px; text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; border-bottom: 1px solid var(--border); position: sticky; top: 0; }
-    tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tbody tr:hover { background: rgba(113,53,32,.06); }
-    tbody tr:last-child td { border-bottom: none; }
-    .obj-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; white-space: nowrap; }
-    .obj-awareness { background: rgba(59,130,246,.15); color: var(--blue); }
-    .obj-desire { background: rgba(236,72,153,.15); color: var(--pink); }
-    .obj-action { background: rgba(16,185,129,.15); color: var(--green); }
-    .obj-trust { background: rgba(139,92,246,.15); color: var(--purple); }
-    .st { font-size: 16px; text-align: center; cursor: default; }
-    .st-done { color: var(--green); }
-    .st-pending { color: var(--yellow); }
-    .st-skip { color: var(--muted); }
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; margin-bottom: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(45,58,79,.5); }
+    tbody tr.row-done { opacity: .6; }
+    tbody tr.row-next { background: rgba(212,164,76,.06); }
+    .status-icon { font-size: 16px; cursor: pointer; user-select: none; }
+    .status-icon:active { transform: scale(1.2); }
+    .obj-tag { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .obj-AWARENESS { background: rgba(59,130,246,.15); color: var(--blue); }
+    .obj-DESIRE { background: rgba(236,72,153,.15); color: var(--pink); }
+    .obj-ACTION { background: rgba(16,185,129,.15); color: var(--green); }
+    .obj-TRUST { background: rgba(139,92,246,.15); color: var(--purple); }
 
-    /* Editable cell */
-    [contenteditable] { cursor: text; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; transition: background .15s; }
-    [contenteditable]:hover { background: rgba(255,255,255,.04); }
-    [contenteditable]:focus { background: rgba(255,255,255,.08); outline: 1px solid var(--burnt-sienna); }
+    /* Workflow Section */
+    .workflow { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .workflow-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .workflow-title { font-size: 16px; font-weight: 700; }
+    .workflow-obj { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .platform-tabs { display: flex; gap: 6px; }
+    .platform-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; }
+    .platform-tab.active { background: var(--burnt-sienna); color: white; border-color: var(--burnt-sienna); }
+    .platform-tab.tab-done { position: relative; }
+    .platform-tab.tab-done::after { content: '✓'; position: absolute; top: -4px; right: -4px; background: var(--green); color: white; font-size: 9px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-    /* Offers Grid */
-    .offers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .offer-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; border-left: 3px solid var(--burnt-sienna); }
-    .offer-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .offer-code { font-size: 11px; font-weight: 700; color: var(--tan); font-family: 'JetBrains Mono', monospace; background: rgba(113,53,32,.25); padding: 2px 8px; border-radius: 4px; }
-    .offer-price { font-size: 14px; font-weight: 700; color: var(--green); font-family: 'JetBrains Mono', monospace; }
-    .offer-name { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
-    .offer-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .offer-stat { text-align: center; }
-    .offer-stat .stat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; }
-    .offer-stat .stat-value { font-size: 16px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    /* Steps */
+    .step { margin-bottom: 20px; }
+    .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--brand-grad); color: white; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-label { font-size: 14px; font-weight: 600; }
+    .step-body { margin-left: 38px; }
+    .step-instructions { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 10px; }
+    .step-instructions ol { padding-left: 18px; }
+    .step-instructions li { margin-bottom: 3px; }
+    .step-instructions code { background: rgba(212,164,76,.12); color: var(--tan); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+    .step-note { background: rgba(249,115,22,.08); border: 1px solid rgba(249,115,22,.2); border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--orange); margin-bottom: 10px; }
 
-    /* Content Intelligence */
-    .intel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-    .intel-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-    .intel-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--tan); }
-    .mix-bar { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
-    .mix-bar div { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: #fff; min-width: 30px; transition: width .3s; }
-    .mix-legend { display: flex; flex-wrap: wrap; gap: 10px; }
-    .mix-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-    .mix-legend-item .dot { width: 8px; height: 8px; border-radius: 2px; }
-    .next-rec { background: rgba(113,53,32,.15); border: 1px solid rgba(113,53,32,.3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--tan); margin-top: 12px; }
-    .next-rec strong { color: var(--cream); }
-    .notes-area { width: 100%; min-height: 80px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; color: var(--text); font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; resize: vertical; }
-    .notes-area:focus { outline: none; border-color: var(--burnt-sienna); }
+    /* Prompt area */
+    .prompt-toggle { font-size: 12px; color: var(--tan); cursor: pointer; background: none; border: none; padding: 4px 0; margin-bottom: 6px; }
+    .prompt-area { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 11px; font-family: 'JetBrains Mono', monospace; resize: vertical; line-height: 1.5; }
 
-    /* Auth Status */
-    .auth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-    .auth-card .auth-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .auth-card .auth-name { font-size: 14px; font-weight: 600; }
-    .auth-badge { padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
-    .auth-badge.active { background: var(--green-dim); color: var(--green); }
-    .auth-badge.expired { background: rgba(239,68,68,.12); color: var(--red); }
-    .auth-badge.pending { background: rgba(245,158,11,.12); color: var(--yellow); }
-    .auth-detail { font-size: 12px; color: var(--text2); margin-top: 4px; }
-    .auth-detail span { color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    /* Buttons */
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-brand { background: var(--brand-grad); color: white; }
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-purple { background: var(--purple); color: white; }
+    .btn-ig { background: linear-gradient(135deg,#833AB4,#E1306C,#F77737); color: white; }
+    .btn-fb { background: #1877F2; color: white; }
+    .btn-google { background: #34A853; color: white; }
+    .btn-outline { background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+    /* Image upload */
+    .upload-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color .2s; }
+    .upload-zone:hover { border-color: var(--tan); }
+    .upload-zone input { display: none; }
+    .upload-zone .upload-label { font-size: 13px; color: var(--text2); }
+    .upload-preview { margin-top: 10px; display: none; }
+    .upload-preview img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--border); }
+
+    /* Caption */
+    .caption-area { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; resize: vertical; line-height: 1.6; min-height: 120px; }
+
+    /* Publish status */
+    .publish-status { margin-top: 10px; font-size: 13px; padding: 8px 12px; border-radius: 8px; }
+
+    /* Post History */
+    .log-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; overflow-x: auto; }
+    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .log-empty { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+
+    /* Collapsible */
+    .collapsible { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; }
+    .collapsible summary { padding: 14px 16px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .collapsible summary::after { content: '▸'; font-size: 12px; }
+    .collapsible[open] summary::after { content: '▾'; }
+    .collapsible-body { padding: 0 16px 16px; }
+
+    /* Auth bar */
+    .auth-bar { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; margin-bottom: 16px; }
+    .auth-item { display: flex; align-items: center; gap: 5px; color: var(--text2); }
 
     /* Quick Actions */
-    .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 30px; }
-    a.action-btn { text-decoration: none; display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; transition: all .15s; cursor: pointer; }
-    a.action-btn:hover { border-color: var(--burnt-sienna); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(113,53,32,.15); }
-    a.action-btn .act-icon { font-size: 20px; }
-    a.action-btn .act-label { font-size: 13px; font-weight: 600; color: var(--text); }
-    a.action-btn .act-sub { font-size: 10px; color: var(--muted); }
-    a.action-btn .arrow { margin-left: auto; color: var(--muted); font-size: 16px; }
-    a.action-btn:hover .arrow { color: var(--tan); }
-
-    /* Status cycle on click */
-    .cycle-status { cursor: pointer; user-select: none; }
-    .cycle-status:active { transform: scale(1.2); }
-
-    /* Responsive */
-    @media (max-width: 1024px) {
-      .intel-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 768px) {
-      .status-row { grid-template-columns: 1fr; }
-      .offers-grid { grid-template-columns: 1fr; }
-      .auth-grid { grid-template-columns: 1fr; }
-      .actions-grid { grid-template-columns: 1fr 1fr; }
-      .intel-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 480px) {
-      .container { padding: 12px; }
-      .header h1 { font-size: 18px; }
-      .actions-grid { grid-template-columns: 1fr; }
-      table { font-size: 12px; }
-      thead th, tbody td { padding: 8px 8px; }
-    }
+    .actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .action-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); font-size: 13px; transition: border-color .2s; }
+    .action-btn:hover { border-color: var(--tan); }
+    .action-btn .act-icon { font-size: 18px; }
+    .action-btn .act-label { font-weight: 500; }
+    .action-btn .act-sub { font-size: 11px; color: var(--muted); }
 
     /* Toast */
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--green); color: var(--green); padding: 10px 20px; border-radius: 10px; font-size: 13px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
     .toast.show { opacity: 1; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .status-row { grid-template-columns: 1fr; }
+      .actions-grid { grid-template-columns: 1fr 1fr; }
+      .next-banner { flex-direction: column; align-items: stretch; text-align: center; }
+      .platform-tabs { justify-content: center; }
+      .step-body { margin-left: 0; }
+      .auth-bar { flex-direction: column; gap: 6px; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 10px; }
+      .actions-grid { grid-template-columns: 1fr; }
+      table { font-size: 12px; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- HEADER -->
     <header class="header">
-      <h1>Hamza Express Marketing Engine</h1>
-      <div class="header-right">
-        <div class="platform-pills" id="platformPills"></div>
-        <div class="date-badge" id="dateBadge"></div>
-      </div>
+      <h1>Hamza Express Marketing</h1>
+      <div class="date-badge" id="dateBadge"></div>
     </header>
+
+    <!-- HOW THIS WORKS -->
+    <details class="guide-toggle" id="guideToggle">
+      <summary>How This Works — Read this first</summary>
+      <div class="guide-content">
+        <p>This dashboard helps you post to <strong>Instagram</strong>, <strong>Facebook</strong>, and <strong>Google</strong> for Hamza Express.</p>
+        <p style="margin:8px 0"><strong>Your daily job:</strong></p>
+        <ol>
+          <li>Open this page — the <strong>next post</strong> is highlighted at the top</li>
+          <li>Follow the <strong>4 steps</strong>: Generate Image → Upload → Caption → Publish</li>
+          <li>Do it <strong>3 times</strong> — once for Instagram, once for Facebook, once for Google</li>
+          <li>The post tracker updates automatically when you publish</li>
+        </ol>
+        <p style="margin:10px 0"><strong>Tools you'll use:</strong></p>
+        <ul>
+          <li><strong>AI Studio</strong> (aistudio.google.com) — generates images from a text prompt you copy from here</li>
+          <li><strong>This dashboard</strong> — publishes to Instagram and Facebook automatically</li>
+          <li><strong>Google Business</strong> (business.google.com) — for Google posts (manual upload for now)</li>
+        </ul>
+        <p style="margin:10px 0"><strong>Reference images to upload to AI Studio each time:</strong></p>
+        <ul>
+          <li><code>Image-1-Logo-Brown-BG.png</code> — Brand logo</li>
+          <li><code>Image-2-Menu-Cover.png</code> — Design reference</li>
+          <li><code>Image-3-Social-Post-Reference.png</code> — Style reference</li>
+          <li><code>Image-4-Food-Photo.jpg</code> — Swap with the right dish photo per post (some posts don't need it)</li>
+        </ul>
+        <p style="margin:10px 0;color:var(--muted)">These files are in: <code>hamza-express-site/social-media/reference/</code></p>
+      </div>
+    </details>
+
+    <!-- AUTH BAR -->
+    <div class="auth-bar">
+      <div class="auth-item"><span style="color:var(--green)">●</span> Meta API (IG + FB)</div>
+      <div class="auth-item"><span style="color:var(--yellow)">●</span> Google Posts (manual)</div>
+      <div class="auth-item"><span style="color:var(--green)">●</span> WABA 8008002049</div>
+      <div class="auth-item" style="margin-left:auto;color:var(--muted)">Token: never-expires</div>
+    </div>
 
     <!-- STATUS ROW -->
     <div class="status-row" id="statusRow"></div>
+
+    <!-- NEXT POST BANNER -->
+    <div class="next-banner" id="nextBanner"></div>
+
+    <!-- GUIDED WORKFLOW -->
+    <div class="section-title">Posting Workflow</div>
+    <div class="workflow" id="workflow"></div>
 
     <!-- POST TRACKER -->
     <div class="section-title">Post Tracker</div>
@@ -180,215 +241,636 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Date</th>
             <th>Content</th>
             <th>Objective</th>
             <th>IG</th>
             <th>FB</th>
             <th>Google</th>
-            <th>Performance</th>
           </tr>
         </thead>
         <tbody id="postTableBody"></tbody>
       </table>
     </div>
 
-    <!-- OFFERS TRACKER -->
-    <div class="section-title">Offers Tracker (O1-O7)</div>
-    <div class="offers-grid" id="offersGrid"></div>
-
-    <!-- CONTENT INTELLIGENCE -->
-    <div class="section-title">Content Intelligence</div>
-    <div class="intel-grid">
-      <div class="intel-card">
-        <h3>Content Mix Breakdown</h3>
-        <div class="mix-bar" id="mixBar"></div>
-        <div class="mix-legend" id="mixLegend"></div>
-        <div class="next-rec" id="nextRec"></div>
-      </div>
-      <div class="intel-card">
-        <h3>What's Working</h3>
-        <textarea class="notes-area" id="notesWorking" placeholder="Add notes on what content is performing well..."></textarea>
-        <h3 style="margin-top:14px">What to Try Next</h3>
-        <textarea class="notes-area" id="notesTryNext" placeholder="Ideas for upcoming content..."></textarea>
-      </div>
-    </div>
-
-    <!-- AUTH STATUS -->
-    <div class="section-title">Auth & Platform Status</div>
-    <div class="auth-grid" id="authGrid"></div>
-
-    <!-- CREATIVE GENERATOR -->
-    <div class="section-title">Creative Generator</div>
-    <div class="card" style="padding:20px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div>
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">POST TYPE</label>
-          <select id="genPostType" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
-            <option value="identity">Post 1: Identity (Biryani Hero)</option>
-            <option value="proof" selected>Post 2: Social Proof (Review)</option>
-            <option value="hook">Post 3: Hook (Offer O5 ₹59)</option>
-            <option value="signature">Post 4: Signature (Brain Fry)</option>
-            <option value="story">Post 5: Heritage Story (1918)</option>
-            <option value="surprise">Post 6: Surprise (Chinese/Shawarma)</option>
-            <option value="bigoffer">Post 7: Big Offer (O1 BOGO)</option>
-            <option value="place">Post 8: The Place (Venue/Vibe)</option>
-            <option value="menu">Post 9: Menu Reference</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">PLATFORM</label>
-          <select id="genPlatform" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
-            <option value="instagram">Instagram (1080x1080)</option>
-            <option value="facebook">Facebook (1200x630)</option>
-            <option value="google">Google Posts (1200x900)</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">BRAND REFERENCES — Upload these to AI Studio each time</label>
-        <div style="background:var(--bg);padding:12px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.6">
-          📁 <code>Image-1-Logo-Brown-BG.png</code> — Brand logo on brown background<br>
-          📁 <code>Image-2-Menu-Cover.png</code> — Menu design reference<br>
-          📁 <code>Image-3-Social-Post-Reference.png</code> — Existing social post style<br>
-          📁 <code>Image-4-Food-Photo.jpg</code> <span style="color:var(--yellow)">← swap with dish photo per post</span><br>
-          <div style="margin-top:8px"><button onclick="openRefFolder()" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--tan);font-size:12px;cursor:pointer">📂 Open Reference Folder</button></div>
-        </div>
-      </div>
-      <div style="margin-bottom:16px">
-        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">AI STUDIO PROMPT <span style="color:var(--yellow)">(Nano Banana 2)</span></label>
-        <textarea id="genPromptArea" rows="8" readonly style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace;resize:vertical;line-height:1.5"></textarea>
-      </div>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button onclick="loadPrompt()" style="padding:10px 20px;background:var(--brand-grad);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">Load Prompt</button>
-        <button onclick="copyPrompt()" style="padding:10px 20px;background:var(--blue);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">📋 Copy Prompt</button>
-        <button onclick="window.open('https://aistudio.google.com','_blank')" style="padding:10px 20px;background:var(--purple);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer">Open AI Studio →</button>
-        <span id="genStatus" style="font-size:13px;color:var(--muted)"></span>
-      </div>
-      <!-- PUBLISH PANEL -->
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-        <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--tan)">Publish Panel</div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-          <!-- Left: Image Upload + Preview -->
-          <div>
-            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">UPLOAD GENERATED IMAGE</label>
-            <input type="file" id="publishImage" accept="image/*" onchange="previewPublishImage(this)" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:8px">
-            <div id="publishPreview" style="display:none;margin-top:8px">
-              <img id="publishPreviewImg" style="width:100%;border-radius:8px;border:1px solid var(--border)">
-            </div>
-          </div>
-
-          <!-- Right: Caption + Publish Buttons -->
-          <div>
-            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">CAPTION <span style="color:var(--text2)">(editable)</span></label>
-            <textarea id="genCaption" rows="6" style="width:100%;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;resize:vertical;line-height:1.6"></textarea>
-
-            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-              <button onclick="publishToInstagram()" id="btnPublishIG" style="padding:10px 18px;background:linear-gradient(135deg,#833AB4,#E1306C,#F77737);border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">📸 Publish to Instagram</button>
-              <button onclick="publishToFacebook()" id="btnPublishFB" style="padding:10px 18px;background:#1877F2;border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">📘 Publish to Facebook</button>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-              <button onclick="window.open('https://business.google.com','_blank')" style="padding:10px 18px;background:#34A853;border:none;border-radius:8px;color:white;font-weight:600;font-size:13px;cursor:pointer;flex:1">🔍 Post to Google (manual)</button>
-              <button onclick="copyCaption()" style="padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-weight:600;font-size:13px;cursor:pointer;flex:1">📋 Copy Caption</button>
-            </div>
-            <div id="publishStatus" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- POST HISTORY LOG -->
+    <!-- POST HISTORY -->
     <div class="section-title">Post History</div>
-    <div class="card" style="padding:16px;overflow-x:auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:12px;color:var(--muted)" id="logCount">0 posts logged</span>
-        <button onclick="exportLog()" style="padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--tan);font-size:11px;cursor:pointer">📥 Export JSON</button>
+    <div class="log-card">
+      <div class="log-header">
+        <span style="font-size:12px;color:var(--muted)" id="logCount">0 posts</span>
+        <button onclick="exportLog()" class="btn btn-outline" style="padding:5px 12px;font-size:11px">Export JSON</button>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:12px" id="logTable">
         <thead>
           <tr style="border-bottom:1px solid var(--border)">
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">DATE</th>
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">POST</th>
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">PLATFORM</th>
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">STATUS</th>
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">CAPTION</th>
-            <th style="text-align:left;padding:8px;color:var(--muted);font-weight:500">LINK</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px">DATE</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px">POST</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px">PLATFORM</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px">STATUS</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:500;font-size:10px">LINK</th>
           </tr>
         </thead>
         <tbody id="logBody"></tbody>
       </table>
-      <div id="logEmpty" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No posts logged yet. Publish your first post to see it here.</div>
+      <div id="logEmpty" class="log-empty">No posts logged yet.</div>
     </div>
 
+    <!-- OFFERS TRACKER (collapsed) -->
+    <details class="collapsible" style="margin-top:16px">
+      <summary>Offers Tracker (O1-O7) — after 9-post foundation</summary>
+      <div class="collapsible-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Offers will be used after the 9-post brand foundation is complete. No offers in the first 9 posts.</p>
+        <div id="offersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
+      </div>
+    </details>
+
     <!-- QUICK ACTIONS -->
-    <div class="section-title">Quick Actions</div>
-    <div class="actions-grid" id="actionsGrid"></div>
+    <div class="section-title">Quick Links</div>
+    <div class="actions-grid">
+      <a class="action-btn" href="https://aistudio.google.com" target="_blank"><span class="act-icon">⚡</span><div><div class="act-label">AI Studio</div><div class="act-sub">Generate images</div></div></a>
+      <a class="action-btn" href="https://business.google.com" target="_blank"><span class="act-icon">📍</span><div><div class="act-label">Google Business</div><div class="act-sub">Google posts</div></div></a>
+      <a class="action-btn" href="https://business.facebook.com" target="_blank"><span class="act-icon">📊</span><div><div class="act-label">Meta Business</div><div class="act-sub">Analytics</div></div></a>
+      <a class="action-btn" href="https://instagram.com/hamzaexpress1918" target="_blank"><span class="act-icon">📸</span><div><div class="act-label">Instagram</div><div class="act-sub">@hamzaexpress1918</div></div></a>
+      <a class="action-btn" href="https://hamzaexpress.in" target="_blank"><span class="act-icon">🌐</span><div><div class="act-label">Website</div><div class="act-sub">hamzaexpress.in</div></div></a>
+      <a class="action-btn" href="https://wa.me/918008002049" target="_blank"><span class="act-icon">💬</span><div><div class="act-label">WhatsApp</div><div class="act-sub">8008002049</div></div></a>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
 <script>
 // ═══════════════════════════════════════════════════
-// STATE — Claude Code updates this, persisted in localStorage
+// STATE
 // ═══════════════════════════════════════════════════
+const STORAGE_KEY = 'he_marketing_v2';
+const LOG_KEY = 'he_post_log_v2';
 
-const STORAGE_KEY = 'he_marketing_state';
+const POSTS = [
+  { id: 1, content: 'Identity — Authentic Dakhni Cuisine', objective: 'AWARENESS', ig: 'done', fb: 'done', google: 'done', date: '2026-03-19' },
+  { id: 2, content: 'Social Proof — Google Review Quote', objective: 'TRUST', ig: 'done', fb: 'done', google: 'done', date: '2026-03-19' },
+  { id: 3, content: 'Heritage Story — Founded 1918, 4 Generations', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 4, content: 'Signature Dish — Brain Fry / Pepper Roast', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 5, content: 'The Place — Venue, Neon Counter, Late Night', objective: 'AWARENESS', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 6, content: 'Menu Breadth — Not Just Biryani', objective: 'AWARENESS', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 7, content: 'Kitchen — Cooking Process, Flames, Dum', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 8, content: 'Community — Shivajinagar, Russell Market', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+  { id: 9, content: 'The Spread — Full Table, Family Style', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', date: '' },
+];
 
-const DEFAULT_STATE = {
-  posts: [
-    { id: 1, date: '2026-03-19', content: 'Identity — Authentic Dakhni Cuisine', objective: 'AWARENESS', ig: 'done', fb: 'done', google: 'done', perf: '' },
-    { id: 2, date: '2026-03-19', content: 'Social Proof — Google Review Quote', objective: 'TRUST', ig: 'done', fb: 'done', google: 'done', perf: '' },
-    { id: 3, date: '', content: 'Hook — Kebab Plate ₹59 (O5)', objective: 'ACTION', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 4, date: '', content: 'Signature — Brain Fry / Pepper Roast', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 5, date: '', content: 'Heritage Story — Since 1918', objective: 'TRUST', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 6, date: '', content: 'Surprise — Chinese / Shawarma / Tandoor', objective: 'AWARENESS', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 7, date: '', content: 'Big Offer — Biryani BOGO (O1)', objective: 'ACTION', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 8, date: '', content: 'The Place — Venue / Late Night Vibe', objective: 'ACTION', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-    { id: 9, date: '', content: 'Menu Reference — What to Order + Prices', objective: 'DESIRE', ig: 'pending', fb: 'pending', google: 'pending', perf: '' },
-  ],
-  offers: [
-    { code: 'O1', name: 'Biryani BOGO', price: 'POS (Buy 1 Get 1)', postsUsed: 1, wabaUsed: 0, score: '' },
-    { code: 'O2', name: 'Ghee Rice Meal', price: '₹149', postsUsed: 0, wabaUsed: 0, score: '' },
-    { code: 'O3', name: '₹99 Chicken Meal', price: '₹99', postsUsed: 0, wabaUsed: 0, score: '' },
-    { code: 'O4', name: 'Shawarma BOGO', price: 'POS (Buy 1 Get 1)', postsUsed: 0, wabaUsed: 0, score: '' },
-    { code: 'O5', name: 'Kebab Plate', price: '₹59', postsUsed: 0, wabaUsed: 0, score: '' },
-    { code: 'O6', name: 'Porotta + Curry', price: '₹79', postsUsed: 0, wabaUsed: 0, score: '' },
-    { code: 'O7', name: 'Family Daawat', price: '₹699', postsUsed: 0, wabaUsed: 0, score: '' },
-  ],
-  auth: [
-    { name: 'Meta Graph API', status: 'active', details: ['Page: Hamza Express (61584178871279)', 'IG: @hamzaexpress1918', 'Pixel: 881349531538961'] },
-    { name: 'Google Business Profile API', status: 'pending', details: ['Quota approval pending', 'GMB category: Biryani restaurant', 'GSC: Verified'] },
-    { name: 'Gemini / AI Studio', status: 'active', details: ['API key configured', 'Used for content generation'] },
-    { name: 'WABA (WhatsApp)', status: 'active', details: ['Phone: 8008002049', 'Phone ID: 970365416152029', 'Catalog: 1639757440737691'] },
-  ],
-  notesWorking: '',
-  notesTryNext: '',
-  lastUpdated: new Date().toISOString()
-};
+const DEFAULT_LOG = [
+  { id: 6, date: '2026-03-19T18:00:00+05:30', postTitle: 'Post 2: Social Proof', platform: 'google', status: 'manual', caption: 'Hamza Express — 4.9★ on Google with 30+ reviews...', link: null },
+  { id: 5, date: '2026-03-19T17:30:00+05:30', postTitle: 'Post 2: Social Proof', platform: 'facebook', status: 'success', caption: 'The biryani Shivajinagar has trusted for over 100 years...', link: 'https://facebook.com/886791574518359' },
+  { id: 4, date: '2026-03-19T17:00:00+05:30', postTitle: 'Post 2: Social Proof', platform: 'instagram', status: 'success', caption: 'The biryani Shivajinagar trusts — for over 100 years...', link: 'https://instagram.com/hamzaexpress1918' },
+  { id: 3, date: '2026-03-19T15:00:00+05:30', postTitle: 'Post 1: Identity', platform: 'google', status: 'manual', caption: 'Authentic Dakhni biryani in Shivajinagar since 1918...', link: null },
+  { id: 2, date: '2026-03-19T14:30:00+05:30', postTitle: 'Post 1: Identity', platform: 'facebook', status: 'success', caption: 'Some restaurants open. Some never close...', link: 'https://facebook.com/886791574518359' },
+  { id: 1, date: '2026-03-19T14:00:00+05:30', postTitle: 'Post 1: Identity', platform: 'instagram', status: 'success', caption: 'Before Russell Market was built. Before Shivajinagar had a name...', link: 'https://instagram.com/hamzaexpress1918' },
+];
 
-// ── Load / Save ──
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Merge with defaults for any new fields
-      return { ...DEFAULT_STATE, ...parsed };
-    }
-  } catch (e) { console.warn('Failed to load state', e); }
-  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch(e) {}
+  return { posts: JSON.parse(JSON.stringify(POSTS)) };
 }
-
 function saveState() {
-  state.lastUpdated = new Date().toISOString();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  toast('Saved');
 }
-
 let state = loadState();
 
-// ── Toast ──
+function getLog() {
+  try {
+    const l = localStorage.getItem(LOG_KEY);
+    if (l) { const parsed = JSON.parse(l); if (parsed.length > 0) return parsed; }
+  } catch(e) {}
+  // Seed with default log for Posts 1 & 2
+  localStorage.setItem(LOG_KEY, JSON.stringify(DEFAULT_LOG));
+  return JSON.parse(JSON.stringify(DEFAULT_LOG));
+}
+function saveLog(log) { localStorage.setItem(LOG_KEY, JSON.stringify(log)); }
+
+// ═══════════════════════════════════════════════════
+// PROMPTS & CAPTIONS — All 9 posts x 3 platforms
+// ═══════════════════════════════════════════════════
+const PROMPTS = {
+  1: { // Identity
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C).\n- Image 2 (Menu Cover): Design system.\n- Image 3 (Social Post): Style reference.\n\nBRAND IDENTITY POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration\n- CENTER: Hero food photo in rounded frame\n- TEXT: "Authentic Dakhni Cuisine" in cream serif\n- BOTTOM: "Shivajinagar, Bangalore · Since 1918" on dark brown strip\n\nBrown bg (#713520), cream text (#D2B48C), ornamental borders, heritage serif fonts.\nDO NOT: Add hashtags, prices, or URLs.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nBRAND IDENTITY POST.\n\nLAYOUT:\n- LEFT (40%): Logo + "Authentic Dakhni Cuisine" + "Since 1918"\n- RIGHT (60%): Hero food photo\n\nBrown bg (#713520), cream text, heritage serif. Ornamental borders.\nDO NOT: Add hashtags, prices, URLs.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nBRAND IDENTITY POST.\n\nLAYOUT:\n- TOP: Logo\n- MIDDLE: Hero food photo\n- BOTTOM: "Authentic Dakhni Cuisine · Shivajinagar · Since 1918"\n\nReadable at thumbnail. Brown bg, cream text, heritage feel.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload food photo (Image-4) as the hero image.',
+  },
+  2: { // Social Proof
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image-1 (Logo on brown): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C).\n- Image-2 (Menu Cover): Design system reference.\n- Image-3 (Social Post): Existing social media style reference.\n\nTHIS IS A SOCIAL PROOF / REVIEW POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration, centered\n- MIDDLE: A large cream/parchment card containing:\n  - Five gold stars at top\n  - Quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend."\n  - "— Google Review" in italic\n- BOTTOM: "4.9 on Google · 30+ Reviews" in cream text\n- Ornamental borders\n\nSTYLE: Brown background (#713520), cream text (#D2B48C), gold stars (#D4A44C), heritage serif fonts, parchment review card.\nDO NOT: Add real names, hashtags, or URLs.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- LEFT (40%): Logo + "4.9 on Google" + "30+ Reviews"\n- RIGHT (60%): Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend." + "— Google Review"\n\nSTYLE: Brown (#713520), cream text, gold stars, heritage feel.\nDO NOT: Add real names, hashtags, URLs.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- TOP: Logo\n- MIDDLE: Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades."\n- BOTTOM: "4.9 on Google · 30+ Reviews"\n\nMust be readable at thumbnail. Brown bg, cream text, gold stars, heritage feel.`,
+    note: 'No food photo needed — this is a review/text post.',
+  },
+  3: { // Heritage Story
+    instagram: `Create an Instagram post image (1080x1080 pixels, square format) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown) and Image 2 (Menu Cover): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C), aged parchment textures, ornamental borders, serif typography.\n- Image 3 (Social post reference): Existing social media style.\n\nTHIS IS A HERITAGE STORY POST about the restaurant's founding in 1918.\n\nLAYOUT:\n- FULL BACKGROUND: Aged, textured parchment paper — like an old letter or historical document. Warm sepia tones, slightly torn/weathered edges.\n- TOP CENTER: Hamza Express logo with founder illustration, small scale\n- CENTER: Large serif text in dark brown, centered:\n  Line 1: "1918" in very large, bold serif (this is the hero element)\n  Line 2: "H.K.P. Road, Shivajinagar" in medium serif below\n  Line 3: Small ornamental divider\n  Line 4: "Four Generations. One Kitchen." in elegant italic serif\n- BOTTOM: "Bangalore's Oldest Biryani Kitchen" in smaller cream text on a dark brown strip\n\nSTYLE RULES:\n- This should feel like a piece of history — aged paper, sepia tones, vintage feel\n- Main background: aged parchment/cream with brown stains and texture\n- Text: dark brown (#4A2C17) on parchment, cream (#E8D4B8) on dark strip\n- "1918" should be the LARGEST, most prominent element\n- Ornamental vintage borders (thin, aged)\n- NO food photos on this post — it's about the story, not the dish\n\nDO NOT: Add hashtags, prices, CTAs, or food images on the creative.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape, 1.91:1 aspect ratio) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown) and Image 2 (Menu Cover): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C), ornamental borders, serif typography.\n- Image 3 (Social post reference): Style reference.\n\nTHIS IS A HERITAGE STORY POST about the restaurant's founding in 1918.\n\nLAYOUT (landscape):\n- LEFT SIDE (40%): A vertical dark brown panel with:\n  - "EST." in small cream text\n  - "1918" in very large bold cream serif (hero element)\n  - Ornamental divider\n  - "H.K.P. Road" in small cream text\n  - "Shivajinagar" in small cream text\n- RIGHT SIDE (60%): Aged parchment background with:\n  - Hamza Express logo (small, top right)\n  - Center text in dark brown serif:\n    "Four Generations. One Kitchen."\n    "Bangalore's Oldest Biryani Kitchen."\n  - Bottom: "Same address. Same recipes. Since before Independence." in smaller italic\n\nSTYLE:\n- Left panel: solid dark brown (#713520) or darker (#4A2C17)\n- Right panel: aged parchment texture, cream/sepia\n- Vintage ornamental borders\n- "1918" is the visual anchor — largest element\n- NO food photos — story post\n\nDO NOT: Add hashtags, prices, URLs, or food images.`,
+    google: `Create a Google Business post image (1200x900 pixels, 4:3 aspect ratio) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown) and Image 2 (Menu Cover): Brand identity.\n- Image 3 (Social post reference): Style reference.\n\nTHIS IS A HERITAGE STORY POST about the restaurant's founding in 1918.\n\nLAYOUT:\n- TOP 25%: Dark brown strip with Hamza Express logo centered\n- MIDDLE 50%: Aged parchment background with large centered text:\n  "1918" in very large bold dark brown serif (HERO — must be readable at thumbnail)\n  Below: "Four Generations. One Kitchen." in medium serif\n- BOTTOM 25%: Dark brown strip with "H.K.P. Road, Shivajinagar · Bangalore" in cream\n\nIMPORTANT: Google Posts show as SMALL THUMBNAILS. "1918" must be VERY LARGE and readable at small sizes. Keep text minimal.\n\nSTYLE: Vintage, aged paper texture, dark brown text on parchment, cream text on brown strips.\nDO NOT: Add food photos, prices, hashtags. This is a text-driven heritage post.`,
+    note: 'NO food photo for this post — it is a story/text post. Only upload the 3 brand reference images.',
+  },
+  4: { // Signature Dish
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown): Brand identity — browns (#713520), cream (#D2B48C), heritage serif.\n- Image 2 (Menu Cover): Design system.\n- Image 3 (Social Post): Style reference.\n- Image 4 (Food Photo): The hero dish photo — use this prominently.\n\nSIGNATURE DISH POST — showcasing Brain Fry or Mutton Pepper Roast.\n\nLAYOUT:\n- BACKGROUND: Rich dark brown (#4A2C17)\n- TOP: Hamza Express logo, small, centered\n- CENTER: Large food photo in elegant rounded frame with thin gold border\n- BELOW PHOTO: Dish name in large cream serif — "Brain Fry" or "Mutton Pepper Roast"\n- BOTTOM: "A Shivajinagar Legend" in small cream italic on brown strip\n\nSTYLE: Dark, moody food photography feel. The FOOD is the hero — make it fill most of the frame. Warm lighting, rich browns.\nDO NOT: Add prices, hashtags, offers, or CTA text.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nSIGNATURE DISH POST.\n\nLAYOUT:\n- LEFT (55%): Large food photo (hero element)\n- RIGHT (45%): Dark brown panel with logo, dish name in large cream serif, "A Shivajinagar Legend Since 1918" in small italic\n\nDark moody feel, food is the hero. Brown bg, cream text.\nDO NOT: Add prices, hashtags, offers.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nSIGNATURE DISH POST.\n\nLAYOUT:\n- TOP: Logo small\n- CENTER: Large food photo (fills most of the frame)\n- BOTTOM: Dish name in cream on dark brown strip\n\nFood must be LARGE and appetizing at thumbnail size.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload the Brain Fry or Mutton Pepper Roast photo as Image-4. Find it in: hamza_swiggy_photos/Mutton_Specials/',
+  },
+  5: { // The Place
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1-3: Brand identity references.\n- Image 4: Upload a VENUE photo (neon counter or exterior night shot).\n\nVENUE / AMBIANCE POST — showcasing the restaurant's atmosphere.\n\nLAYOUT:\n- FULL BLEED: Venue photo fills the entire frame\n- BOTTOM OVERLAY: Semi-transparent dark brown gradient from bottom\n- ON OVERLAY: Hamza Express logo (small) + "Open 1 PM – 5 AM" in cream + "H.K.P. Road, Shivajinagar" in smaller text\n\nSTYLE: The venue photo IS the post. Moody, atmospheric, neon lighting. Minimal text overlay.\nDO NOT: Add prices, offers, hashtags, or food photos.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nVENUE / AMBIANCE POST.\n\nLAYOUT:\n- FULL BLEED: Venue photo (landscape crop) fills frame\n- BOTTOM: Semi-transparent brown overlay with "Open 1 PM – 5 AM · H.K.P. Road, Shivajinagar" in cream\n- TOP RIGHT: Small logo\n\nAtmospheric, neon lighting feel. Venue is the hero.\nDO NOT: Add prices, offers, hashtags.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nVENUE POST.\n\nLAYOUT: Venue photo fills frame. Small logo top. "Open 1 PM – 5 AM" bottom overlay.\n\nMust look inviting at thumbnail. Atmospheric lighting.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload a venue photo as Image-4. Best options: 12-Interior-Neon.jpg or 13-Exterior-Night.jpg from social-media/reference/extras/',
+  },
+  6: { // Menu Breadth
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Brand images 1-3.\n\nMENU BREADTH POST — showing "Not Just Biryani" — the variety of cuisine.\n\nLAYOUT:\n- BACKGROUND: Rich brown (#713520)\n- TOP: Logo + "Not Just Biryani" in large cream serif\n- MIDDLE: 2x2 grid of 4 food photos in rounded frames:\n  - Chinese | Shawarma\n  - Tandoor | Kebabs\n- Each photo has a small label below it\n- BOTTOM: "Shivajinagar, Bangalore · Since 1918"\n\nSTYLE: Heritage feel with food variety showcase. Each photo should look appetizing.\nDO NOT: Add prices, offers, hashtags.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nMENU BREADTH POST — "Not Just Biryani".\n\nLAYOUT:\n- LEFT (35%): Logo + "Not Just Biryani" in large cream serif + "Chinese · Shawarma · Tandoor · Kebabs" list\n- RIGHT (65%): 2x2 grid of food photos\n\nBrown bg, cream text, heritage feel.\nDO NOT: Add prices, offers, hashtags.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nMENU BREADTH POST.\n\nLAYOUT:\n- TOP: Logo + "Not Just Biryani" in large text\n- MIDDLE: 2x2 food photo grid (Chinese, Shawarma, Tandoor, Kebabs)\n- BOTTOM: "Shivajinagar · Since 1918"\n\nText must be readable at thumbnail.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload 4 food photos from hamza_swiggy_photos/ — one each of Chinese, Shawarma/wrap, Tandoor item, and Kebab.',
+  },
+  7: { // Kitchen
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Brand images 1-3.\nImage 4: Upload a kitchen/cooking photo (flames, tandoor, or dum biryani process).\n\nKITCHEN / BEHIND-THE-SCENES POST.\n\nLAYOUT:\n- FULL BLEED: Kitchen action photo fills the frame\n- TOP LEFT: Small "From Our Kitchen" badge in cream on brown\n- BOTTOM: Semi-transparent overlay with logo + "Same fire. Same recipes. Since 1918." in cream\n\nSTYLE: Raw, authentic, behind-the-scenes feel. Fire, steam, cooking action. The kitchen IS the hero.\nDO NOT: Add prices, offers, hashtags, or styled food photos.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nKITCHEN BTS POST.\n\nLAYOUT:\n- FULL BLEED: Kitchen action photo (landscape crop)\n- OVERLAY: "From Our Kitchen" badge top-left, logo + "Same fire. Same recipes." bottom\n\nRaw, authentic feel. Fire and cooking action.\nDO NOT: Add prices, offers, hashtags.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nKITCHEN POST.\n\nLAYOUT: Kitchen action photo fills frame. "From Our Kitchen" badge. Logo bottom.\n\nMust look authentic and appetizing at thumbnail.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload a kitchen/cooking photo. If you don\'t have one, ask the owner for a photo of the tandoor, dum biryani pot, or flames.',
+  },
+  8: { // Community
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Brand images 1-3.\nImage 4: Upload the exterior storefront photo (13-Exterior-Night.jpg or 01-exterior-storefront.jpg).\n\nCOMMUNITY / NEIGHBORHOOD POST — celebrating Shivajinagar.\n\nLAYOUT:\n- BACKGROUND: Aged parchment texture (similar to heritage post)\n- TOP: Logo small\n- CENTER: "Heart of Shivajinagar" in large brown serif\n- BELOW: "Near Russell Market · H.K.P. Road" in medium text\n- BOTTOM: Storefront photo in a vintage frame + "Feeding the neighborhood since 1918" in italic\n\nSTYLE: Warm, community feel. Vintage parchment + real photo combination.\nDO NOT: Add prices, offers, hashtags.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nCOMMUNITY POST — celebrating Shivajinagar.\n\nLAYOUT:\n- LEFT (40%): Parchment bg + "Heart of Shivajinagar" + "Near Russell Market" + logo\n- RIGHT (60%): Storefront/exterior photo\n\nWarm community feel. Heritage + neighborhood pride.\nDO NOT: Add prices, offers, hashtags.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nCOMMUNITY POST.\n\nLAYOUT:\n- TOP: Logo + "Heart of Shivajinagar"\n- MIDDLE: Storefront photo\n- BOTTOM: "Near Russell Market · H.K.P. Road · Since 1918"\n\nReadable at thumbnail. Community warmth.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload exterior/storefront photo as Image-4. Find: 13-Exterior-Night.jpg from extras/ or 01-exterior-storefront.jpg from Hamza Express Photos/enhanced/',
+  },
+  9: { // The Spread
+    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES: Brand images 1-3.\nImage 4: Upload a photo with multiple dishes on a table (or use the biryani plated shot).\n\nFULL TABLE SPREAD POST — showing the range of food, family-style dining.\n\nLAYOUT:\n- FULL BLEED: Overhead/angled shot of multiple dishes on a table\n- TOP: Semi-transparent brown overlay with logo\n- BOTTOM: "The Hamza Spread" in large cream serif + "Shivajinagar · Since 1918"\n\nSTYLE: Abundance, variety, family dining feel. Multiple dishes visible. Warm, inviting.\nDO NOT: Add prices, offers, hashtags, or individual dish names.`,
+    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nFULL SPREAD POST.\n\nLAYOUT:\n- FULL BLEED: Wide shot of multiple dishes (landscape crop)\n- OVERLAY: Logo top-right + "The Hamza Spread" bottom-left in cream\n\nAbundance, family style. Warm and inviting.\nDO NOT: Add prices, offers, hashtags.`,
+    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nFULL SPREAD POST.\n\nLAYOUT: Multiple dishes photo fills frame. "The Hamza Spread" overlay. Logo.\n\nMust look abundant and inviting at thumbnail.\nDO NOT: Add prices, hashtags.`,
+    note: 'Upload a multi-dish photo or the biryani plated shot (11-Biryani-Plated.jpg from extras/). Best if you can get a fresh overhead shot of 4-5 dishes together.',
+  },
+};
+
+const CAPTIONS = {
+  1: {
+    instagram: `Before Russell Market was built. Before Shivajinagar had a name.\nA kitchen opened on H.K.P. Road — and never closed.\n\nAuthentic Dakhni cuisine, four generations strong.\nThe biryani your grandparents loved. The same one your kids will.\n\n📍 H.K.P. Road, Shivajinagar (near Russell Market)\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n📞 8008002049\n\n#HamzaExpress #Since1918 #DakhniBiryani #BangaloreFood #Shivajinagar`,
+    facebook: `Some restaurants open. Some never close.\n\nHamza Express has been on H.K.P. Road, Shivajinagar since 1918 — four generations of one family, one kitchen, one commitment to authentic Dakhni cuisine.\n\nThe taste your grandparents loved. The same one your kids will.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n📞 8008002049`,
+    google: `Authentic Dakhni biryani in Shivajinagar since 1918. Four generations, one kitchen. Dine-in and takeaway open 1 PM to 5 AM daily. H.K.P. Road, near Russell Market, Bangalore.`,
+  },
+  2: {
+    instagram: `The biryani Shivajinagar trusts — for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. The people have spoken.\n\nWhat's YOUR go-to order? Tell us 👇\n\n📍 HKP Road, Shivajinagar\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n\n#HamzaExpress #BangaloreBiryani #Shivajinagar #Since1918 #DakhniBiryani`,
+    facebook: `The biryani Shivajinagar has trusted for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. Same family. Same recipes. Same kitchen. The people have spoken.\n\nKnow someone who loves biryani? Tag them — this one's been waiting since 1918.\n\n📍 151-154, HKP Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | Dine-in & Takeaway`,
+    google: `Hamza Express — 4.9★ on Google with 30+ reviews. Authentic Dakhni biryani in Shivajinagar since 1918. Dine-in and takeaway open 1 PM to 5 AM daily. HKP Road, Shivajinagar, Bangalore.`,
+  },
+  3: {
+    instagram: `1918. H.K.P. Road. One family. One kitchen.\n\nBefore Russell Market was built. Before Shivajinagar had a name.\nA small kitchen on H.K.P. Road started serving Dakhni biryani to the workers and traders of old Bangalore.\n\nFour generations later, the address hasn't changed.\nThe recipes haven't changed.\nThe family is still here.\n\n108 years. Same road. Same fire. Same taste.\n\n📍 H.K.P. Road, Shivajinagar (near Russell Market)\n📞 8008002049\n\n#HamzaExpress #Since1918 #BangaloreHeritage #DakhniBiryani #ShivajinarFood #LegacyFood #BangaloreFood #FourGenerations #HKPRoad`,
+    facebook: `108 years ago, a small kitchen opened on H.K.P. Road, Shivajinagar.\n\nThere was no Russell Market yet (that came in 1927). There was no "Shivajinagar" — it was still called Blackpally. India was still under British rule.\n\nBut the biryani was already there.\n\nFour generations of one family have kept this kitchen running. Same address. Same recipes. Same Dakhni flavors that Bangalore has loved since before Independence.\n\nIf these walls could talk, they'd smell like ghee rice and slow-cooked masala.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\n📞 8008002049 | Order on WhatsApp`,
+    google: `Serving Shivajinagar since 1918 — four generations of authentic Dakhni biryani on H.K.P. Road. Bangalore's oldest biryani kitchen, near Russell Market. Same family. Same recipes. 108 years of taste.`,
+  },
+  4: {
+    instagram: `Some dishes don't need an introduction. They need a warning.\n\nOur Brain Fry has been pulling people across Bangalore since before most restaurants existed.\n\nIf you know, you know. If you don't — now you do.\n\n📍 H.K.P. Road, Shivajinagar\nOpen 1 PM – 5 AM\n📞 8008002049\n\n#HamzaExpress #BrainFry #MuttonLovers #BangaloreFood #Shivajinagar #Since1918`,
+    facebook: `Some dishes don't need an introduction. They need a warning.\n\nOur Brain Fry has been pulling people across Bangalore since before most restaurants existed. Crispy outside, melt-in-your-mouth inside. One plate is never enough.\n\nTag someone who'd come to Shivajinagar just for this.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | 📞 8008002049`,
+    google: `Hamza Express Brain Fry — the dish Bangalore drives across town for. Crispy, melt-in-your-mouth, unforgettable. Shivajinagar since 1918. Dine-in and takeaway, H.K.P. Road.`,
+  },
+  5: {
+    instagram: `1 PM to 5 AM. Every single day.\n\nWhen the rest of Bangalore sleeps, Shivajinagar eats.\nNeon lights, hot plates, and the sound of biryani being served at 3 AM.\n\nThis isn't just a restaurant. It's a Shivajinagar institution.\n\n📍 H.K.P. Road, Shivajinagar\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n\n#HamzaExpress #LateNightFood #Shivajinagar #BangaloreNights #Since1918`,
+    facebook: `1 PM to 5 AM. Every single day.\n\nWhen the rest of Bangalore sleeps, Shivajinagar eats. Neon lights, hot plates, and the sound of biryani being served at 3 AM.\n\nNext time you're up late and hungry — you know where to go.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | 📞 8008002049`,
+    google: `Open 1 PM to 5 AM daily — Hamza Express, Shivajinagar's late-night kitchen since 1918. Biryani, kebabs, and more on H.K.P. Road, Bangalore. Dine-in and takeaway.`,
+  },
+  6: {
+    instagram: `"Hamza Express? That's the biryani place, right?"\n\nYes. And also the Chinese place. And the Shawarma place. And the Tandoor place. And the Kebab place.\n\n107 items. One kitchen. Since 1918.\n\n📍 H.K.P. Road, Shivajinagar\nOpen 1 PM – 5 AM\n📞 8008002049\n\n#HamzaExpress #NotJustBiryani #BangaloreFood #Shivajinagar #ChineseFood #Shawarma #Kebabs`,
+    facebook: `"Hamza Express? That's the biryani place, right?"\n\nYes. And also the Chinese place. And the Shawarma place. And the Tandoor place. And the Kebab place.\n\n107 items on the menu. One kitchen. Four generations. Since 1918.\n\nWhat's YOUR unexpected favorite from our menu? Tell us 👇\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | 📞 8008002049`,
+    google: `Not just biryani — Hamza Express serves 107 items including Chinese, Shawarma, Tandoor, Kebabs, and more. Shivajinagar since 1918. H.K.P. Road, Bangalore. Open 1 PM to 5 AM.`,
+  },
+  7: {
+    instagram: `No shortcuts. No timers. Just a cook who knows by feel.\n\nThe same fire. The same hands. The same way it's been done for 108 years.\n\nFrom our kitchen to your plate — this is how Dakhni food is made.\n\n📍 H.K.P. Road, Shivajinagar\nOpen 1 PM – 5 AM\n📞 8008002049\n\n#HamzaExpress #FromOurKitchen #DakhniBiryani #BangaloreFood #Shivajinagar #KitchenBTS`,
+    facebook: `No shortcuts. No timers. Just a cook who knows by feel.\n\nThe same fire. The same hands. The same way it's been done for 108 years in this Shivajinagar kitchen.\n\nFrom our kitchen to your plate — this is how Dakhni food is made.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | 📞 8008002049`,
+    google: `From our kitchen — authentic Dakhni cooking the same way for 108 years. No shortcuts, just tradition. Hamza Express, H.K.P. Road, Shivajinagar, Bangalore. Open 1 PM to 5 AM.`,
+  },
+  8: {
+    instagram: `Shivajinagar isn't just where we are. It's who we are.\n\nRussell Market vendors grabbing lunch. Commercial Street shopkeepers on their break. Families after Friday prayers. Night owls at 3 AM.\n\nFor 108 years, this neighborhood has been our home — and our kitchen has been theirs.\n\n📍 H.K.P. Road, Shivajinagar (near Russell Market)\n📞 8008002049\n\n#HamzaExpress #Shivajinagar #RussellMarket #BangaloreHeritage #Since1918 #CommunityFirst`,
+    facebook: `Shivajinagar isn't just where we are. It's who we are.\n\nRussell Market vendors grabbing lunch. Commercial Street shopkeepers on their break. Families after Friday prayers. Night owls at 3 AM.\n\nFor 108 years, this neighborhood has been our home — and our kitchen has been theirs.\n\nShare this with someone who grew up eating at Hamza.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\n📞 8008002049`,
+    google: `Heart of Shivajinagar — Hamza Express has been feeding this neighborhood since 1918. Near Russell Market, H.K.P. Road. Dine-in and takeaway open 1 PM to 5 AM daily.`,
+  },
+  9: {
+    instagram: `This is the Hamza spread.\n\nBiryani. Brain Fry. Ghee Rice. Pepper Roast. Kebabs. Shawarma. And that's just the start.\n\nBring the family. Order everything. Share it all.\n\n📍 H.K.P. Road, Shivajinagar\nOpen 1 PM – 5 AM\n📞 8008002049\n\n#HamzaExpress #TheSpread #BangaloreFood #FamilyDining #Shivajinagar #Since1918`,
+    facebook: `This is the Hamza spread.\n\nBiryani. Brain Fry. Ghee Rice. Pepper Roast. Kebabs. Shawarma. And that's just the start of our 107-item menu.\n\nBring the family. Order everything. Share it all.\n\nTag someone you'd share this table with.\n\n📍 151-154, H.K.P. Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | 📞 8008002049`,
+    google: `The full Hamza spread — biryani, brain fry, ghee rice, kebabs, shawarma, and 107 more items. Family dining in Shivajinagar since 1918. H.K.P. Road, Bangalore. Open 1 PM to 5 AM.`,
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// PUBLISH ENGINE — Meta Graph API
+// ═══════════════════════════════════════════════════
+const META_TOKEN = 'EAAdjKyLVeusBQ5W4XrV2JNvYmUJXAnXYkPNwsu3oZBoTp3u3ETjRdC41dX4frN3xtiRtSrUP9X0eGLSPAKxxuuSxWQL20ffMZBA4PMdVAdmix1JFk9TmqFdGeMZBiZAZAJq32HE4lAslCqclCIl4swEBi9Ov9DdqThN2QJezGzj4zH05a0ky14caD2KEPJCs3SrnmlvbgGZCbLfZBHKVBy4yFZB6';
+const FB_PAGE_ID = '886791574518359';
+let IG_ACCOUNT_ID = null;
+
+async function getIGAccountId() {
+  if (IG_ACCOUNT_ID) return IG_ACCOUNT_ID;
+  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=instagram_business_account&access_token=${META_TOKEN}`);
+  const data = await resp.json();
+  if (data.instagram_business_account) { IG_ACCOUNT_ID = data.instagram_business_account.id; return IG_ACCOUNT_ID; }
+  throw new Error('No Instagram business account linked to this page');
+}
+
+async function uploadImageToFB(file) {
+  const formData = new FormData();
+  formData.append('source', file);
+  formData.append('published', 'false');
+  formData.append('access_token', META_TOKEN);
+  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, { method: 'POST', body: formData });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  const photoResp = await fetch(`https://graph.facebook.com/v24.0/${data.id}?fields=images&access_token=${META_TOKEN}`);
+  const photoData = await photoResp.json();
+  return { photoId: data.id, url: photoData.images?.[0]?.source };
+}
+
+async function publishIG() {
+  const status = document.getElementById('pubStatus');
+  const file = document.getElementById('pubImage').files[0];
+  const caption = document.getElementById('pubCaption').value;
+  if (!file) { showStatus('Upload an image first', 'warn'); return; }
+  try {
+    showStatus('Uploading image...', 'loading');
+    document.getElementById('btnIG').disabled = true;
+    const igId = await getIGAccountId();
+    const { url } = await uploadImageToFB(file);
+    showStatus('Creating Instagram media...', 'loading');
+    const containerResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ image_url: url, caption, access_token: META_TOKEN })
+    });
+    const container = await containerResp.json();
+    if (container.error) throw new Error(container.error.message);
+    showStatus('Publishing to Instagram...', 'loading');
+    const pubResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media_publish`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ creation_id: container.id, access_token: META_TOKEN })
+    });
+    const result = await pubResp.json();
+    if (result.error) throw new Error(result.error.message);
+    showStatus('Published to Instagram!', 'success');
+    logPublish('instagram', 'success', caption, 'https://instagram.com/hamzaexpress1918');
+    markPlatformDone('ig');
+  } catch(e) {
+    showStatus('IG Error: ' + e.message, 'error');
+    logPublish('instagram', 'error', caption, null);
+  }
+  document.getElementById('btnIG').disabled = false;
+}
+
+async function publishFB() {
+  const file = document.getElementById('pubImage').files[0];
+  const caption = document.getElementById('pubCaption').value;
+  if (!file) { showStatus('Upload an image first', 'warn'); return; }
+  try {
+    showStatus('Publishing to Facebook...', 'loading');
+    document.getElementById('btnFB').disabled = true;
+    const formData = new FormData();
+    formData.append('source', file);
+    formData.append('message', caption);
+    formData.append('published', 'true');
+    formData.append('access_token', META_TOKEN);
+    const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    showStatus('Published to Facebook!', 'success');
+    logPublish('facebook', 'success', caption, 'https://facebook.com/' + (data.post_id || data.id));
+    markPlatformDone('fb');
+  } catch(e) {
+    showStatus('FB Error: ' + e.message, 'error');
+    logPublish('facebook', 'error', caption, null);
+  }
+  document.getElementById('btnFB').disabled = false;
+}
+
+function markGoogleDone() {
+  logPublish('google', 'manual', document.getElementById('pubCaption').value, null);
+  markPlatformDone('google');
+  showStatus('Google post logged as done!', 'success');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('pubStatus');
+  const colors = { success: 'var(--green)', error: 'var(--red)', warn: 'var(--orange)', loading: 'var(--yellow)' };
+  const icons = { success: '✅', error: '❌', warn: '⚠️', loading: '⏳' };
+  el.textContent = (icons[type] || '') + ' ' + msg;
+  el.style.color = colors[type] || 'var(--muted)';
+}
+
+// ═══════════════════════════════════════════════════
+// WORKFLOW STATE
+// ═══════════════════════════════════════════════════
+let currentPlatform = 'instagram';
+
+function getNextPost() {
+  return state.posts.find(p => p.ig === 'pending' || p.fb === 'pending' || p.google === 'pending');
+}
+
+function markPlatformDone(platform) {
+  const next = getNextPost();
+  if (!next) return;
+  const post = state.posts.find(p => p.id === next.id);
+  if (!post) return;
+  post[platform] = 'done';
+  if (!post.date) post.date = new Date().toISOString().slice(0, 10);
+  saveState();
+  renderAll();
+}
+
+function logPublish(platform, status, caption, link) {
+  const next = getNextPost();
+  const log = getLog();
+  log.unshift({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    postTitle: next ? `Post ${next.id}: ${next.content.split('—')[0].trim()}` : 'Unknown',
+    platform, status,
+    caption: caption?.substring(0, 80) + (caption?.length > 80 ? '...' : ''),
+    link: link || null,
+  });
+  saveLog(log);
+  renderLog();
+}
+
+function switchPlatform(p) {
+  currentPlatform = p;
+  renderWorkflow();
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function renderDate() {
+  document.getElementById('dateBadge').textContent = new Date().toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+function renderStatus() {
+  const done = state.posts.filter(p => p.ig === 'done' && p.fb === 'done' && p.google === 'done').length;
+  const platformDone = state.posts.reduce((s, p) => s + (p.ig==='done'?1:0) + (p.fb==='done'?1:0) + (p.google==='done'?1:0), 0);
+  document.getElementById('statusRow').innerHTML = `
+    <div class="status-card"><div class="value">${done} <span class="of">/ 9</span></div><div class="label">Posts Complete</div></div>
+    <div class="status-card"><div class="value">${platformDone} <span class="of">/ 27</span></div><div class="label">Platform Posts</div></div>
+    <div class="status-card"><div class="value">${9 - done}</div><div class="label">Remaining</div></div>
+  `;
+}
+
+function renderNextBanner() {
+  const next = getNextPost();
+  if (!next) {
+    document.getElementById('nextBanner').innerHTML = '<div><div class="next-label">ALL DONE</div><div class="next-title" style="color:var(--green)">All 9 posts published!</div></div>';
+    return;
+  }
+  const platforms = [];
+  if (next.ig === 'pending') platforms.push('IG');
+  if (next.fb === 'pending') platforms.push('FB');
+  if (next.google === 'pending') platforms.push('Google');
+  document.getElementById('nextBanner').innerHTML = `
+    <div>
+      <div class="next-label">NEXT UP</div>
+      <div class="next-title">Post ${next.id}: ${next.content}</div>
+      <div class="next-obj"><span class="obj-tag obj-${next.objective}">${next.objective}</span> &nbsp; Pending: ${platforms.join(', ')}</div>
+    </div>
+    <button class="start-btn" onclick="document.getElementById('workflow').scrollIntoView({behavior:'smooth'})">Start Posting →</button>
+  `;
+}
+
+function renderPostTable() {
+  const next = getNextPost();
+  document.getElementById('postTableBody').innerHTML = state.posts.map(p => {
+    const allDone = p.ig === 'done' && p.fb === 'done' && p.google === 'done';
+    const isNext = next && p.id === next.id;
+    const statusIcon = (val, platform) => {
+      if (val === 'done') return `<span class="status-icon" onclick="toggleStatus(${p.id},'${platform}')" title="Click to change">✅</span>`;
+      if (val === 'skip') return `<span class="status-icon" onclick="toggleStatus(${p.id},'${platform}')" title="Click to change">⏭️</span>`;
+      return `<span class="status-icon" onclick="toggleStatus(${p.id},'${platform}')" title="Click to change">⬜</span>`;
+    };
+    return `<tr class="${allDone ? 'row-done' : ''} ${isNext ? 'row-next' : ''}">
+      <td style="font-weight:600;font-family:'JetBrains Mono',monospace">${p.id}</td>
+      <td>${p.content}</td>
+      <td><span class="obj-tag obj-${p.objective}">${p.objective}</span></td>
+      <td>${statusIcon(p.ig, 'ig')}</td>
+      <td>${statusIcon(p.fb, 'fb')}</td>
+      <td>${statusIcon(p.google, 'google')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleStatus(id, platform) {
+  const post = state.posts.find(p => p.id === id);
+  if (!post) return;
+  const cycle = { pending: 'done', done: 'skip', skip: 'pending' };
+  post[platform] = cycle[post[platform]] || 'pending';
+  if (!post.date && post[platform] === 'done') post.date = new Date().toISOString().slice(0, 10);
+  saveState();
+  renderAll();
+}
+
+function renderWorkflow() {
+  const next = getNextPost();
+  const wf = document.getElementById('workflow');
+  if (!next) {
+    wf.innerHTML = '<div style="text-align:center;padding:30px;color:var(--green);font-size:16px;font-weight:600">🎉 All 9 posts are done! Great work.</div>';
+    return;
+  }
+  const postPrompts = PROMPTS[next.id];
+  const postCaptions = CAPTIONS[next.id];
+  if (!postPrompts || !postCaptions) {
+    wf.innerHTML = '<div style="padding:20px;color:var(--muted)">Prompts not configured for this post yet.</div>';
+    return;
+  }
+
+  const platforms = ['instagram', 'facebook', 'google'];
+  const platformLabels = { instagram: 'Instagram (1080×1080)', facebook: 'Facebook (1200×630)', google: 'Google Posts (1200×900)' };
+  const platformStatus = { instagram: next.ig, facebook: next.fb, google: next.google };
+
+  const prompt = postPrompts[currentPlatform] || 'Not configured';
+  const caption = postCaptions[currentPlatform] || 'Not configured';
+  const note = postPrompts.note || '';
+
+  wf.innerHTML = `
+    <div class="workflow-header">
+      <div>
+        <div class="workflow-title">Post ${next.id}: ${next.content}</div>
+        <div class="workflow-obj"><span class="obj-tag obj-${next.objective}">${next.objective}</span></div>
+      </div>
+      <div class="platform-tabs">
+        ${platforms.map(p => `<button class="platform-tab ${p === currentPlatform ? 'active' : ''} ${platformStatus[p] === 'done' ? 'tab-done' : ''}" onclick="switchPlatform('${p}')">${p === 'instagram' ? '📸 IG' : p === 'facebook' ? '📘 FB' : '🔍 Google'}</button>`).join('')}
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-label">Generate the Image</div>
+      </div>
+      <div class="step-body">
+        ${note ? `<div class="step-note">💡 ${note}</div>` : ''}
+        <div class="step-instructions">
+          <ol>
+            <li><strong>Copy the prompt</strong> using the button below</li>
+            <li>Open <strong>AI Studio</strong> (aistudio.google.com)</li>
+            <li>Upload the <strong>3 brand reference images</strong> from the reference folder</li>
+            <li>Paste the prompt and click <strong>Generate</strong></li>
+            <li><strong>Download</strong> the generated image</li>
+          </ol>
+          <div style="margin-top:6px;font-size:12px;color:var(--muted)">Platform: <strong>${platformLabels[currentPlatform]}</strong></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-brand" onclick="copyText('promptArea')">📋 Copy Prompt</button>
+          <button class="btn btn-purple" onclick="window.open('https://aistudio.google.com','_blank')">Open AI Studio →</button>
+          <button class="prompt-toggle" onclick="togglePrompt()">Show/Hide Prompt ▾</button>
+        </div>
+        <textarea id="promptArea" class="prompt-area" rows="6" readonly style="display:none;margin-top:8px">${escapeHtml(prompt)}</textarea>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-label">Upload the Generated Image</div>
+      </div>
+      <div class="step-body">
+        <div class="upload-zone" onclick="document.getElementById('pubImage').click()">
+          <input type="file" id="pubImage" accept="image/*" onchange="previewImage(this)">
+          <div class="upload-label">Click to upload the image you downloaded from AI Studio</div>
+        </div>
+        <div class="upload-preview" id="uploadPreview">
+          <img id="previewImg">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-label">Review Caption</div>
+      </div>
+      <div class="step-body">
+        <textarea id="pubCaption" class="caption-area">${escapeHtml(caption)}</textarea>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="copyText('pubCaption')">📋 Copy Caption</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-label">Publish</div>
+      </div>
+      <div class="step-body">
+        ${currentPlatform === 'instagram' ? `
+          <button class="btn btn-ig" id="btnIG" onclick="publishIG()" style="width:100%;justify-content:center;padding:14px">📸 Publish to Instagram</button>
+        ` : currentPlatform === 'facebook' ? `
+          <button class="btn btn-fb" id="btnFB" onclick="publishFB()" style="width:100%;justify-content:center;padding:14px">📘 Publish to Facebook</button>
+        ` : `
+          <div class="step-instructions" style="margin-bottom:10px">
+            <ol>
+              <li>Click <strong>"Open Google Business"</strong> below</li>
+              <li>Click <strong>"Add update"</strong> on your profile</li>
+              <li>Upload the image and paste the caption</li>
+              <li>Click <strong>"Post"</strong></li>
+              <li>Come back here and click <strong>"Mark Google as Done"</strong></li>
+            </ol>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-google" onclick="window.open('https://business.google.com','_blank')" style="flex:1;justify-content:center">🔍 Open Google Business</button>
+            <button class="btn btn-outline" onclick="markGoogleDone()" style="flex:1;justify-content:center">✅ Mark Google as Done</button>
+          </div>
+        `}
+        <div id="pubStatus" class="publish-status" style="color:var(--muted)">Ready to publish</div>
+      </div>
+    </div>
+
+    ${platformStatus[currentPlatform] === 'done' ? `
+      <div style="text-align:center;padding:12px;background:var(--green-dim);border-radius:8px;color:var(--green);font-weight:600">
+        ✅ ${currentPlatform.charAt(0).toUpperCase() + currentPlatform.slice(1)} is done for this post!
+        ${next.ig === 'pending' ? '<br><button class="btn btn-outline" style="margin-top:8px" onclick="switchPlatform(\'instagram\')">→ Do Instagram next</button>' :
+          next.fb === 'pending' ? '<br><button class="btn btn-outline" style="margin-top:8px" onclick="switchPlatform(\'facebook\')">→ Do Facebook next</button>' :
+          next.google === 'pending' ? '<br><button class="btn btn-outline" style="margin-top:8px" onclick="switchPlatform(\'google\')">→ Do Google next</button>' : ''}
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderOffers() {
+  const offers = [
+    { code: 'O1', name: 'Biryani BOGO', price: 'Buy 1 Get 1' },
+    { code: 'O2', name: 'Ghee Rice Meal', price: '₹149' },
+    { code: 'O3', name: '₹99 Chicken Meal', price: '₹99' },
+    { code: 'O4', name: 'Shawarma BOGO', price: 'Buy 1 Get 1' },
+    { code: 'O5', name: 'Kebab Plate', price: '₹59' },
+    { code: 'O6', name: 'Porotta + Curry', price: '₹79' },
+    { code: 'O7', name: 'Family Daawat', price: '₹699' },
+  ];
+  document.getElementById('offersGrid').innerHTML = offers.map(o =>
+    `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-weight:700;color:var(--tan);font-size:12px">${o.code}</div>
+      <div style="font-size:12px;margin-top:2px">${o.name}</div>
+      <div style="font-size:11px;color:var(--muted)">${o.price}</div>
+    </div>`
+  ).join('');
+}
+
+function renderLog() {
+  const log = getLog();
+  const body = document.getElementById('logBody');
+  const empty = document.getElementById('logEmpty');
+  const count = document.getElementById('logCount');
+  count.textContent = `${log.length} posts`;
+  if (log.length === 0) { body.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const icons = { instagram: '📸', facebook: '📘', google: '🔍' };
+  const statusStyle = { success: 'color:var(--green)', error: 'color:var(--red)', manual: 'color:var(--yellow)' };
+  body.innerHTML = log.slice(0, 50).map(e => {
+    const d = new Date(e.date);
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}<br><span style="color:var(--muted)">${d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span></td>
+      <td style="padding:6px 8px;font-size:12px">${e.postTitle}</td>
+      <td style="padding:6px 8px;font-size:12px">${icons[e.platform]||'📌'} ${e.platform}</td>
+      <td style="padding:6px 8px;font-size:12px;${statusStyle[e.status]||''}">${e.status === 'success' ? '✅' : e.status === 'error' ? '❌' : '⚡'}</td>
+      <td style="padding:6px 8px">${e.link ? `<a href="${e.link}" target="_blank" style="color:var(--tan);font-size:12px">View →</a>` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function escapeHtml(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.value);
+  toast('Copied!');
+}
+
+function togglePrompt() {
+  const el = document.getElementById('promptArea');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('uploadPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function exportLog() {
+  const log = getLog();
+  const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `he-post-log-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
 let toastTimer;
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -398,540 +880,17 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.className = 'toast', 1500);
 }
 
-// ── Date Badge ──
-function renderDate() {
-  const now = new Date();
-  const opts = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
-  document.getElementById('dateBadge').textContent = now.toLocaleDateString('en-IN', opts);
-}
-
-// ── Platform Pills ──
-function renderPlatformPills() {
-  const platforms = [
-    { name: 'IG', status: 'active' },
-    { name: 'FB', status: 'active' },
-    { name: 'Google', status: 'pending' },
-    { name: 'WABA', status: 'active' },
-  ];
-  document.getElementById('platformPills').innerHTML = platforms.map(p =>
-    `<div class="pill ${p.status}">${p.status === 'active' ? '&#10003;' : '&#9203;'} ${p.name}</div>`
-  ).join('');
-}
-
-// ── Status Row ──
-function renderStatusRow() {
-  const today = new Date().toISOString().slice(0, 10);
-  const postsToday = state.posts.filter(p => p.date === today && (p.ig === 'done' || p.fb === 'done' || p.google === 'done')).length;
-  const totalDone = state.posts.filter(p => p.ig === 'done' || p.fb === 'done' || p.google === 'done').length;
-  const totalPlatformPosts = state.posts.reduce((sum, p) => {
-    return sum + (p.ig === 'done' ? 1 : 0) + (p.fb === 'done' ? 1 : 0) + (p.google === 'done' ? 1 : 0);
-  }, 0);
-
-  document.getElementById('statusRow').innerHTML = `
-    <div class="status-card">
-      <div class="icon">&#128196;</div>
-      <div class="info">
-        <div class="label">Posts Today</div>
-        <div class="value">${postsToday} <span class="of">/ 3</span></div>
-        <div class="sub">IG + FB + Google target</div>
-      </div>
-    </div>
-    <div class="status-card">
-      <div class="icon">&#128200;</div>
-      <div class="info">
-        <div class="label">9-Post Progress</div>
-        <div class="value">${totalDone} <span class="of">/ 9</span></div>
-        <div class="sub">${totalPlatformPosts} total platform posts</div>
-      </div>
-    </div>
-    <div class="status-card">
-      <div class="icon">&#127919;</div>
-      <div class="info">
-        <div class="label">Week Progress</div>
-        <div class="value">${totalPlatformPosts} <span class="of">/ 21</span></div>
-        <div class="sub">9 posts x 3 platforms</div>
-      </div>
-    </div>
-  `;
-}
-
-// ── Post Tracker Table ──
-const OBJ_CLASSES = { AWARENESS: 'obj-awareness', DESIRE: 'obj-desire', ACTION: 'obj-action', TRUST: 'obj-trust' };
-const STATUS_MAP = { done: ['&#10003;', 'st-done'], pending: ['&#9203;', 'st-pending'], skip: ['&mdash;', 'st-skip'] };
-const STATUS_CYCLE = ['pending', 'done', 'skip'];
-
-function renderPostTable() {
-  document.getElementById('postTableBody').innerHTML = state.posts.map(p => `
-    <tr data-id="${p.id}">
-      <td style="font-weight:700;color:var(--tan);font-family:'JetBrains Mono',monospace">${p.id}</td>
-      <td><span contenteditable="true" class="cell-date" data-field="date" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">${p.date || '—'}</span></td>
-      <td><span contenteditable="true" class="cell-content" data-field="content">${p.content}</span></td>
-      <td><span class="obj-tag ${OBJ_CLASSES[p.objective] || ''}">${p.objective}</span></td>
-      <td class="st cycle-status" data-field="ig" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.ig]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.ig]||STATUS_MAP.pending)[0]}</span></td>
-      <td class="st cycle-status" data-field="fb" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.fb]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.fb]||STATUS_MAP.pending)[0]}</span></td>
-      <td class="st cycle-status" data-field="google" data-id="${p.id}" title="Click to cycle"><span class="${(STATUS_MAP[p.google]||STATUS_MAP.pending)[1]}">${(STATUS_MAP[p.google]||STATUS_MAP.pending)[0]}</span></td>
-      <td><span contenteditable="true" class="cell-perf" data-field="perf" style="font-size:11px;color:var(--text2)">${p.perf || '—'}</span></td>
-    </tr>
-  `).join('');
-
-  // Cycle status on click
-  document.querySelectorAll('.cycle-status').forEach(el => {
-    el.addEventListener('click', () => {
-      const id = parseInt(el.dataset.id);
-      const field = el.dataset.field;
-      const post = state.posts.find(p => p.id === id);
-      if (!post) return;
-      const cur = post[field] || 'pending';
-      const idx = STATUS_CYCLE.indexOf(cur);
-      post[field] = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
-      if (post[field] === 'done' && !post.date) {
-        post.date = new Date().toISOString().slice(0, 10);
-      }
-      saveState();
-      renderAll();
-    });
-  });
-
-  // Editable cells
-  document.querySelectorAll('[contenteditable]').forEach(el => {
-    el.addEventListener('blur', () => {
-      const tr = el.closest('tr');
-      const id = parseInt(tr.dataset.id);
-      const field = el.dataset.field;
-      const post = state.posts.find(p => p.id === id);
-      if (!post) return;
-      let val = el.textContent.trim();
-      if (val === '—') val = '';
-      post[field] = val;
-      saveState();
-    });
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
-    });
-  });
-}
-
-// ── Offers Grid ──
-function renderOffers() {
-  document.getElementById('offersGrid').innerHTML = state.offers.map(o => `
-    <div class="offer-card">
-      <div class="offer-header">
-        <div class="offer-code">${o.code}</div>
-        <div class="offer-price">${o.price}</div>
-      </div>
-      <div class="offer-name">${o.name}</div>
-      <div class="offer-stats">
-        <div class="offer-stat">
-          <div class="stat-label">Posts</div>
-          <div class="stat-value">${o.postsUsed}</div>
-        </div>
-        <div class="offer-stat">
-          <div class="stat-label">WABA</div>
-          <div class="stat-value">${o.wabaUsed}</div>
-        </div>
-        <div class="offer-stat">
-          <div class="stat-label">Score</div>
-          <div class="stat-value" style="color:${o.score ? 'var(--green)' : 'var(--muted)'}">${o.score || '—'}</div>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ── Content Intelligence ──
-function renderIntel() {
-  const counts = { AWARENESS: 0, DESIRE: 0, ACTION: 0, TRUST: 0 };
-  state.posts.forEach(p => { if (counts.hasOwnProperty(p.objective)) counts[p.objective]++; });
-  const total = state.posts.length || 1;
-  const colors = { AWARENESS: 'var(--blue)', DESIRE: 'var(--pink)', ACTION: 'var(--green)', TRUST: 'var(--purple)' };
-
-  document.getElementById('mixBar').innerHTML = Object.entries(counts).map(([k, v]) =>
-    `<div style="width:${(v/total*100)}%;background:${colors[k]}">${v}</div>`
-  ).join('');
-
-  document.getElementById('mixLegend').innerHTML = Object.entries(counts).map(([k, v]) =>
-    `<div class="mix-legend-item"><div class="dot" style="background:${colors[k]}"></div>${k} (${v}/${total})</div>`
-  ).join('');
-
-  // Find gap — recommend least-used objective
-  const min = Math.min(...Object.values(counts));
-  const gaps = Object.entries(counts).filter(([,v]) => v === min).map(([k]) => k);
-  const recMap = {
-    AWARENESS: 'Hero dish shot or brand story post',
-    DESIRE: 'Food close-up carousel or "must try" list',
-    ACTION: 'Offer post (O1-O7) with clear CTA',
-    TRUST: 'Customer review, BTS, or cooking process reel'
-  };
-  document.getElementById('nextRec').innerHTML = `<strong>Next recommended:</strong> ${gaps[0]} post — ${recMap[gaps[0]] || ''}`;
-
-  // Notes
-  document.getElementById('notesWorking').value = state.notesWorking || '';
-  document.getElementById('notesTryNext').value = state.notesTryNext || '';
-}
-
-// ── Auth Grid ──
-function renderAuth() {
-  document.getElementById('authGrid').innerHTML = state.auth.map(a => `
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-name">${a.name}</div>
-        <div class="auth-badge ${a.status}">${a.status}</div>
-      </div>
-      ${a.details.map(d => `<div class="auth-detail">${d}</div>`).join('')}
-    </div>
-  `).join('');
-}
-
-// ── Quick Actions ──
-function renderActions() {
-  const actions = [
-    { icon: '&#128240;', label: 'Meta Business Suite', sub: 'Schedule IG + FB posts', href: 'https://business.facebook.com' },
-    { icon: '&#128205;', label: 'Google Business Profile', sub: 'GMB posts & reviews', href: 'https://business.google.com' },
-    { icon: '&#9889;', label: 'AI Studio (Gemini)', sub: 'Content generation', href: 'https://aistudio.google.com' },
-    { icon: '&#128247;', label: 'Instagram', sub: '@hamzaexpress1918', href: 'https://instagram.com/hamzaexpress1918' },
-    { icon: '&#128172;', label: 'WhatsApp Business', sub: '8008002049', href: 'https://business.whatsapp.com' },
-    { icon: '&#127760;', label: 'hamzaexpress.in', sub: 'Live website', href: 'https://hamzaexpress.in' },
-  ];
-  document.getElementById('actionsGrid').innerHTML = actions.map(a => `
-    <a class="action-btn" href="${a.href}" target="_blank" rel="noopener">
-      <div class="act-icon">${a.icon}</div>
-      <div>
-        <div class="act-label">${a.label}</div>
-        <div class="act-sub">${a.sub}</div>
-      </div>
-      <div class="arrow">&#8250;</div>
-    </a>
-  `).join('');
-}
-
-// ── Notes auto-save ──
-function bindNotes() {
-  const w = document.getElementById('notesWorking');
-  const t = document.getElementById('notesTryNext');
-  let debounce;
-  const save = () => {
-    state.notesWorking = w.value;
-    state.notesTryNext = t.value;
-    clearTimeout(debounce);
-    debounce = setTimeout(() => saveState(), 800);
-  };
-  w.addEventListener('input', save);
-  t.addEventListener('input', save);
-}
-
-// ── Render All ──
 function renderAll() {
   renderDate();
-  renderPlatformPills();
-  renderStatusRow();
+  renderStatus();
+  renderNextBanner();
   renderPostTable();
+  renderWorkflow();
   renderOffers();
-  renderIntel();
-  renderAuth();
-  renderActions();
-  bindNotes();
+  renderLog();
 }
 
 renderAll();
-
-// ═══════════════════════════════════════════════════════════
-// CREATIVE GENERATOR — Gemini API Image Generation
-// ═══════════════════════════════════════════════════════════
-// Image generation is done in AI Studio (Nano Banana 2 model — not available via API)
-// Dashboard prepares prompts + captions, user copies to AI Studio
-
-// Creative Generator is in HTML, no JS injection needed
-
-// Load prompt + caption when selectors change
-document.getElementById('genPostType')?.addEventListener('change', loadPrompt);
-document.getElementById('genPlatform')?.addEventListener('change', loadPrompt);
-
-// Default prompts per post type and platform
-const DEFAULT_PROMPTS = {
-  proof: {
-    instagram: `Create an Instagram post image (1080x1080 pixels, square) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image-1 (Logo on brown): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C).\n- Image-2 (Menu Cover): Design system reference.\n- Image-3 (Social Post): Existing social media style reference.\n\nTHIS IS A SOCIAL PROOF / REVIEW POST.\n\nLAYOUT:\n- TOP: Hamza Express logo with founder illustration, centered\n- MIDDLE: A large cream/parchment card containing:\n  - Five gold stars at top\n  - Quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend."\n  - "— Google Review" in italic\n- BOTTOM: "4.9 on Google · 30+ Reviews" in cream text\n- Ornamental borders\n\nSTYLE: Brown background (#713520), cream text (#D2B48C), gold stars (#D4A44C), heritage serif fonts, parchment review card.\nDO NOT: Add real names, hashtags, or URLs.`,
-    facebook: `Create a Facebook post image (1200x630 pixels, landscape) for Hamza Express.\n\nDESIGN REFERENCES: Use uploaded brand images.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- LEFT (40%): Logo + "4.9 on Google" + "30+ Reviews"\n- RIGHT (60%): Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades. A true Bangalore legend." + "— Google Review"\n\nSTYLE: Brown (#713520), cream text, gold stars, heritage feel.\nDO NOT: Add real names, hashtags, URLs.`,
-    google: `Create a Google Business post (1200x900 pixels, 4:3) for Hamza Express.\n\nSOCIAL PROOF POST.\n\nLAYOUT:\n- TOP: Logo\n- MIDDLE: Cream review card with gold stars + quote: "Best biryani in Shivajinagar! The taste hasn't changed in decades."\n- BOTTOM: "4.9 on Google · 30+ Reviews"\n\nMust be readable at thumbnail. Brown bg, cream text, gold stars, heritage feel.`
-  },
-  hook: {
-    instagram: `Create an Instagram post (1080x1080, square) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT:\n- TOP: Logo small\n- MIDDLE: Food photo (from uploaded images) in rounded frame\n- BELOW: "Kebab Plate" in cream serif\n- PRICE: "₹59" in VERY LARGE gold (#D4A44C) text\n- BOTTOM: "Dine-in & Takeaway · Shivajinagar"\n\nBrown bg (#713520), cream text, gold price. ₹59 is the LARGEST text.\nDO NOT: Add hashtags/URLs.`,
-    facebook: `Create a Facebook post (1200x630, landscape) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT:\n- LEFT (50%): Food photo large\n- RIGHT (50%): Logo + "Kebab Plate" + "₹59" in LARGE gold + "Dine-in & Takeaway"\n\nBrown bg, cream text, gold price. Heritage feel.`,
-    google: `Create Google Business post (1200x900, 4:3) for Hamza Express.\n\nOFFER POST.\n\nLAYOUT: Logo top, food photo middle, "Kebab Plate · ₹59" bottom (price in gold).\nReadable at thumbnail. Brown bg, cream text, gold price.`
-  }
-};
-
-// Add more post types as needed — these are the immediate 3
-['identity','signature','story','surprise','bigoffer','place','menu'].forEach(t => {
-  DEFAULT_PROMPTS[t] = DEFAULT_PROMPTS[t] || {
-    instagram: 'Post type prompt not yet configured. Use the custom prompt field.',
-    facebook: 'Post type prompt not yet configured. Use the custom prompt field.',
-    google: 'Post type prompt not yet configured. Use the custom prompt field.'
-  };
-});
-
-const CAPTIONS = {
-  proof: {
-    instagram: `The biryani Shivajinagar trusts — for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. The people have spoken.\n\nWhat's YOUR go-to order? Tell us 👇\n\n📍 HKP Road, Shivajinagar\nOpen 1 PM – 5 AM | Dine-in & Takeaway\n\n#HamzaExpress #BangaloreBiryani #Shivajinagar #Since1918 #DakhniBiryani`,
-    facebook: `The biryani Shivajinagar has trusted for over 100 years.\n\n4.9 ★ on Google. 30+ reviews. Same family. Same recipes. Same kitchen. The people have spoken.\n\nKnow someone who loves biryani? Tag them — this one's been waiting since 1918.\n\n📍 151-154, HKP Road, Shivajinagar, Bangalore\nOpen 1 PM – 5 AM | Dine-in & Takeaway`,
-    google: `Hamza Express — 4.9★ on Google with 30+ reviews. Authentic Dakhni biryani in Shivajinagar since 1918. Dine-in and takeaway open 1 PM to 5 AM daily. HKP Road, Shivajinagar, Bangalore.`
-  },
-  hook: {
-    instagram: `Kebab Plate. ₹59. That's it.\n\nSame recipe, same tandoor, same family. Just an offer you can't refuse.\n\nShare this with someone who'll thank you later 🔥\n\n📍 HKP Road, Shivajinagar | Order: 8008002049\n\n#HamzaExpress #KebabLovers #Shivajinagar #BangaloreFood #FoodDeals`,
-    facebook: `Kebab Plate. ₹59. That's it.\n\nSame recipe, same tandoor, same family since 1918. Just an offer you can't refuse.\n\nShare this with someone who'll thank you later.\n\n📍 151-154, HKP Road, Shivajinagar, Bangalore\nDine-in & Takeaway | Call: 8008002049`,
-    google: `Kebab Plate at just ₹59! Hamza Express, Shivajinagar — authentic Dakhni kebabs from our legacy kitchen since 1918. Dine-in and takeaway. HKP Road, Bangalore.`
-  }
-};
-
-function loadPrompt() {
-  const type = document.getElementById('genPostType').value;
-  const platform = document.getElementById('genPlatform').value;
-  const prompt = DEFAULT_PROMPTS[type]?.[platform] || 'Post type prompt not configured. Ask Claude Code to generate.';
-  const caption = CAPTIONS[type]?.[platform] || 'Caption not configured. Ask Claude Code to generate.';
-
-  document.getElementById('genPromptArea').value = prompt;
-  document.getElementById('genCaption').value = caption;
-  document.getElementById('genStatus').textContent = '✅ Prompt loaded — copy and paste to AI Studio';
-  document.getElementById('genStatus').style.color = 'var(--green)';
-}
-
-function copyPrompt() {
-  const text = document.getElementById('genPromptArea').value;
-  navigator.clipboard.writeText(text);
-  document.getElementById('genStatus').textContent = '📋 Prompt copied!';
-  document.getElementById('genStatus').style.color = 'var(--green)';
-}
-
-function copyCaption() {
-  const text = document.getElementById('genCaption').value;
-  navigator.clipboard.writeText(text);
-  document.getElementById('genStatus').textContent = '📋 Caption copied!';
-}
-
-// ═══════════════════════════════════════════════════════════
-// PUBLISH ENGINE — Meta Graph API for IG + FB
-// ═══════════════════════════════════════════════════════════
-// NEVER-EXPIRING Page Access Token for Hamza Express (expires_at: 0)
-const META_TOKEN = 'EAAdjKyLVeusBQ5W4XrV2JNvYmUJXAnXYkPNwsu3oZBoTp3u3ETjRdC41dX4frN3xtiRtSrUP9X0eGLSPAKxxuuSxWQL20ffMZBA4PMdVAdmix1JFk9TmqFdGeMZBiZAZAJq32HE4lAslCqclCIl4swEBi9Ov9DdqThN2QJezGzj4zH05a0ky14caD2KEPJCs3SrnmlvbgGZCbLfZBHKVBy4yFZB6';
-const FB_PAGE_ID = '886791574518359';
-let IG_ACCOUNT_ID = null; // fetched dynamically
-
-function previewPublishImage(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    document.getElementById('publishPreviewImg').src = e.target.result;
-    document.getElementById('publishPreview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-
-async function getPageToken() {
-  // META_TOKEN is already a never-expiring page token — use directly
-  return META_TOKEN;
-}
-
-async function getIGAccountId() {
-  if (IG_ACCOUNT_ID) return IG_ACCOUNT_ID;
-  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=instagram_business_account&access_token=${META_TOKEN}`);
-  const data = await resp.json();
-  if (data.instagram_business_account) {
-    IG_ACCOUNT_ID = data.instagram_business_account.id;
-    return IG_ACCOUNT_ID;
-  }
-  throw new Error('No Instagram business account linked to this page');
-}
-
-async function uploadImageToFB(file) {
-  // Upload photo to FB page (unpublished) to get a URL for IG
-  const pageToken = await getPageToken();
-  const formData = new FormData();
-  formData.append('source', file);
-  formData.append('published', 'false');
-  formData.append('access_token', pageToken);
-
-  const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, {
-    method: 'POST', body: formData
-  });
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error.message);
-
-  // Get the URL of the uploaded photo
-  const photoResp = await fetch(`https://graph.facebook.com/v24.0/${data.id}?fields=images&access_token=${pageToken}`);
-  const photoData = await photoResp.json();
-  return { photoId: data.id, url: photoData.images?.[0]?.source, pageToken };
-}
-
-async function publishToInstagram() {
-  const status = document.getElementById('publishStatus');
-  const file = document.getElementById('publishImage').files[0];
-  const caption = document.getElementById('genCaption').value;
-
-  if (!file) { status.textContent = '⚠️ Upload an image first'; status.style.color = 'var(--orange)'; return; }
-
-  try {
-    status.textContent = '⏳ Uploading image...';
-    status.style.color = 'var(--yellow)';
-    document.getElementById('btnPublishIG').disabled = true;
-
-    const igId = await getIGAccountId();
-    const { url } = await uploadImageToFB(file);
-
-    // Step 1: Create media container
-    status.textContent = '⏳ Creating Instagram media...';
-    const containerResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ image_url: url, caption, access_token: META_TOKEN })
-    });
-    const container = await containerResp.json();
-    if (container.error) throw new Error(container.error.message);
-
-    // Step 2: Publish
-    status.textContent = '⏳ Publishing to Instagram...';
-    const publishResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media_publish`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ creation_id: container.id, access_token: META_TOKEN })
-    });
-    const result = await publishResp.json();
-    if (result.error) throw new Error(result.error.message);
-
-    const igLink = 'https://instagram.com/hamzaexpress1918';
-    status.innerHTML = '✅ Published to Instagram! <a href="' + igLink + '" target="_blank" style="color:var(--tan)">View →</a>';
-    status.style.color = 'var(--green)';
-    logPost('instagram', 'success', caption, igLink);
-  } catch (e) {
-    status.textContent = '❌ IG Error: ' + e.message;
-    status.style.color = 'var(--red)';
-    logPost('instagram', 'error', caption, null);
-  }
-  document.getElementById('btnPublishIG').disabled = false;
-}
-
-async function publishToFacebook() {
-  const status = document.getElementById('publishStatus');
-  const file = document.getElementById('publishImage').files[0];
-  const caption = document.getElementById('genCaption').value;
-
-  if (!file) { status.textContent = '⚠️ Upload an image first'; status.style.color = 'var(--orange)'; return; }
-
-  try {
-    status.textContent = '⏳ Publishing to Facebook...';
-    status.style.color = 'var(--yellow)';
-    document.getElementById('btnPublishFB').disabled = true;
-
-    const pageToken = await getPageToken();
-    const formData = new FormData();
-    formData.append('source', file);
-    formData.append('message', caption);
-    formData.append('published', 'true');
-    formData.append('access_token', pageToken);
-
-    const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/photos`, {
-      method: 'POST', body: formData
-    });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
-
-    const fbLink = 'https://facebook.com/' + (data.post_id || data.id);
-    status.innerHTML = '✅ Published to Facebook! <a href="' + fbLink + '" target="_blank" style="color:var(--tan)">View →</a>';
-    status.style.color = 'var(--green)';
-    logPost('facebook', 'success', caption, fbLink);
-  } catch (e) {
-    status.textContent = '❌ FB Error: ' + e.message;
-    status.style.color = 'var(--red)';
-    logPost('facebook', 'error', caption, null);
-  }
-  document.getElementById('btnPublishFB').disabled = false;
-}
-
-// ═══════════════════════════════════════════════════════════
-// POST LOG — Saves every publish to localStorage
-// ═══════════════════════════════════════════════════════════
-function getPostLog() {
-  return JSON.parse(localStorage.getItem('he_post_log') || '[]');
-}
-
-function savePostLog(log) {
-  localStorage.setItem('he_post_log', JSON.stringify(log));
-  renderPostLog();
-}
-
-function logPost(platform, status, caption, link, postTitle) {
-  const log = getPostLog();
-  log.unshift({
-    id: Date.now(),
-    date: new Date().toISOString(),
-    postTitle: postTitle || document.getElementById('genPostType')?.selectedOptions?.[0]?.text || 'Unknown',
-    platform,
-    status,
-    caption: caption?.substring(0, 100) + (caption?.length > 100 ? '...' : ''),
-    fullCaption: caption,
-    link: link || null,
-    imageUploaded: !!document.getElementById('publishImage')?.files?.[0]
-  });
-  savePostLog(log);
-}
-
-function renderPostLog() {
-  const log = getPostLog();
-  const body = document.getElementById('logBody');
-  const empty = document.getElementById('logEmpty');
-  const count = document.getElementById('logCount');
-  if (!body) return;
-
-  count.textContent = `${log.length} posts logged`;
-
-  if (log.length === 0) {
-    body.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-
-  const platformColors = {
-    instagram: 'linear-gradient(135deg,#833AB4,#E1306C)',
-    facebook: '#1877F2',
-    google: '#34A853'
-  };
-  const platformIcons = { instagram: '📸', facebook: '📘', google: '🔍' };
-  const statusColors = { success: 'var(--green)', error: 'var(--red)', manual: 'var(--yellow)' };
-
-  body.innerHTML = log.slice(0, 50).map(entry => {
-    const d = new Date(entry.date);
-    const dateStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-    const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:8px;font-family:'JetBrains Mono',monospace;white-space:nowrap">${dateStr}<br><span style="color:var(--muted)">${timeStr}</span></td>
-      <td style="padding:8px">${entry.postTitle}</td>
-      <td style="padding:8px"><span style="display:inline-flex;align-items:center;gap:4px">${platformIcons[entry.platform] || '📌'} ${entry.platform}</span></td>
-      <td style="padding:8px"><span style="color:${statusColors[entry.status] || 'var(--muted)'};font-weight:500">${entry.status === 'success' ? '✅' : entry.status === 'error' ? '❌' : '⚡'} ${entry.status}</span></td>
-      <td style="padding:8px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="${(entry.fullCaption || entry.caption || '').replace(/"/g, '&quot;')}">${entry.caption || '—'}</td>
-      <td style="padding:8px">${entry.link ? `<a href="${entry.link}" target="_blank" style="color:var(--tan)">View →</a>` : '—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-function exportLog() {
-  const log = getPostLog();
-  const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `he-post-log-${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
-}
-
-// Render log on page load
-renderPostLog();
-
-function openRefFolder() {
-  // This only works when opened locally, not from the web
-  alert('Open Finder → Navigate to:\\n\\nhamza-express-site/social-media/reference/\\n\\nOr use Desktop shortcut: HE-Brand-References');
-}
-
-// Auto-load prompt on page load
-loadPrompt();
 </script>
 </body>
 </html>
