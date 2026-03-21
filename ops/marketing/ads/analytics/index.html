@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Paid Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a; --bg2: #111827; --card: #1a2234; --border: #2d3a4f;
+      --text: #f1f5f9; --text2: #94a3b8; --muted: #64748b;
+      --green: #10b981; --red: #ef4444; --orange: #f97316; --yellow: #f59e0b;
+      --blue: #3b82f6; --purple: #8b5cf6; --cyan: #06b6d4; --pink: #ec4899;
+      --tan: #D2B48C; --burnt-sienna: #713520;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 5px; height: 24px; background: var(--brand-grad); border-radius: 3px; }
+    .back-link { color: var(--tan); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* Date Range */
+    .range-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .range-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+    .range-btn.active { background: var(--brand-grad); border-color: transparent; color: white; }
+    .range-btn:hover { border-color: var(--tan); }
+
+    /* KPI Row */
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
+    .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+    /* Platform Split */
+    .platform-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .platform-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .platform-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .platform-card .meta-icon { color: var(--blue); }
+    .platform-card .google-icon { color: var(--green); }
+    .pm-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .pm-row:last-child { border: none; }
+    .pm-label { color: var(--text2); }
+    .pm-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: left; padding: 10px 8px; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); cursor: pointer; white-space: nowrap; }
+    th:hover { color: var(--tan); }
+    td { padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tr:hover { background: rgba(255,255,255,.02); }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .badge-meta { background: rgba(59,130,246,.15); color: var(--blue); }
+    .badge-google { background: rgba(16,185,129,.15); color: var(--green); }
+    .badge-active { background: rgba(16,185,129,.15); color: var(--green); }
+    .badge-completed { background: rgba(59,130,246,.15); color: var(--blue); }
+    .badge-draft { background: rgba(148,163,184,.15); color: var(--text2); }
+    .badge-paused { background: rgba(245,158,11,.15); color: var(--yellow); }
+
+    /* Spend Bars */
+    .spend-bar-wrap { margin-bottom: 16px; }
+    .spend-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .spend-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .spend-name { font-weight: 600; }
+    .spend-nums { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+    .spend-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .spend-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+    .spend-fill.green { background: var(--green); }
+    .spend-fill.yellow { background: var(--yellow); }
+    .spend-fill.red { background: var(--red); }
+
+    /* ROI Calculator */
+    .roi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .roi-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .roi-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .roi-field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+    .roi-field input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+    .roi-field input:focus { outline: none; border-color: var(--tan); }
+    .roi-results { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .roi-result { background: var(--bg); border-radius: 8px; padding: 12px; text-align: center; }
+    .roi-result-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .roi-result-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; }
+    .roi-result-value.positive { color: var(--green); }
+    .roi-result-value.negative { color: var(--red); }
+
+    /* Notes */
+    .notes-section { margin-bottom: 16px; }
+    .note-item { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .note-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .note-campaign { font-weight: 600; }
+    .note-date { color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    .note-text { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 13px; resize: vertical; min-height: 50px; }
+    .note-text:focus { outline: none; border-color: var(--tan); }
+
+    /* Empty State */
+    .empty { text-align: center; padding: 40px; color: var(--muted); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-text { font-size: 14px; margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; }
+    .empty-sub a { color: var(--tan); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+    .toast-success { background: var(--green); color: white; }
+    .toast-error { background: var(--red); color: white; }
+
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .platform-split { grid-template-columns: 1fr; }
+      .roi-inputs { grid-template-columns: 1fr; }
+      .roi-results { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Paid Analytics</h1>
+      <a href="/ops/marketing/ads/" class="back-link">← Campaign Builder</a>
+    </div>
+
+    <div class="range-bar">
+      <button class="range-btn active" onclick="setRange('week')">This Week</button>
+      <button class="range-btn" onclick="setRange('month')">This Month</button>
+      <button class="range-btn" onclick="setRange('all')">All Time</button>
+    </div>
+
+    <div class="kpi-row" id="kpiRow"></div>
+
+    <div class="section-title">PLATFORM BREAKDOWN</div>
+    <div class="platform-split" id="platformSplit"></div>
+
+    <div class="section-title">CAMPAIGN PERFORMANCE</div>
+    <div class="table-wrap" id="tableWrap"></div>
+
+    <div class="section-title">SPEND TRACKING</div>
+    <div class="spend-bar-wrap" id="spendBars"></div>
+
+    <div class="section-title">ROI CALCULATOR</div>
+    <div class="roi-card">
+      <h3>Estimate Return on Ad Spend</h3>
+      <div class="roi-inputs">
+        <div class="roi-field">
+          <label>Avg Ticket Size (₹)</label>
+          <input type="number" id="roiTicket" value="250" oninput="calcROI()">
+        </div>
+        <div class="roi-field">
+          <label>Foot Traffic Conversion (%)</label>
+          <input type="number" id="roiConv" value="2" step="0.1" oninput="calcROI()">
+        </div>
+      </div>
+      <div class="roi-results">
+        <div class="roi-result">
+          <div class="roi-result-label">Est. Revenue</div>
+          <div class="roi-result-value positive" id="roiRevenue">—</div>
+        </div>
+        <div class="roi-result">
+          <div class="roi-result-label">ROAS</div>
+          <div class="roi-result-value" id="roiRoas">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">CAMPAIGN NOTES</div>
+    <div class="notes-section" id="notesSection"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let currentRange = 'week';
+    let sortCol = 'date';
+    let sortDir = -1;
+
+    function loadCampaigns() {
+      return JSON.parse(localStorage.getItem('he_ads_campaigns') || '[]');
+    }
+
+    function saveCampaigns(data) {
+      localStorage.setItem('he_ads_campaigns', JSON.stringify(data));
+    }
+
+    function setRange(r) {
+      currentRange = r;
+      document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(r === 'week' ? 'week' : r === 'month' ? 'month' : 'all')));
+      render();
+    }
+
+    function filterByRange(campaigns) {
+      if (currentRange === 'all') return campaigns;
+      const now = new Date();
+      const start = new Date();
+      if (currentRange === 'week') start.setDate(now.getDate() - 7);
+      else if (currentRange === 'month') start.setDate(now.getDate() - 30);
+      return campaigns.filter(c => {
+        const d = new Date(c.date);
+        return d >= start && d <= now;
+      });
+    }
+
+    function computeMetrics(campaigns) {
+      const active = campaigns.filter(c => c.status === 'active').length;
+      const totalSpend = campaigns.reduce((s, c) => s + (c.spend || 0), 0);
+      const totalReach = campaigns.reduce((s, c) => s + (c.reach || 0), 0);
+      const totalImpressions = campaigns.reduce((s, c) => s + (c.impressions || c.reach || 0), 0);
+      const totalClicks = campaigns.reduce((s, c) => s + (c.clicks || 0), 0);
+      const avgCPM = totalImpressions > 0 ? (totalSpend / totalImpressions * 1000) : 0;
+      const avgCPC = totalClicks > 0 ? (totalSpend / totalClicks) : 0;
+      const avgCTR = totalImpressions > 0 ? (totalClicks / totalImpressions * 100) : 0;
+
+      const meta = campaigns.filter(c => c.platform === 'meta');
+      const google = campaigns.filter(c => c.platform === 'google');
+
+      return { active, totalSpend, totalReach, totalImpressions, totalClicks, avgCPM, avgCPC, avgCTR, meta, google };
+    }
+
+    function renderKPI(m) {
+      document.getElementById('kpiRow').innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Active Campaigns</div><div class="kpi-value">${m.active}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Spend</div><div class="kpi-value mono">₹${m.totalSpend.toLocaleString()}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Reach</div><div class="kpi-value mono">${m.totalReach.toLocaleString()}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg CPM</div><div class="kpi-value mono">₹${m.avgCPM.toFixed(1)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg CPC</div><div class="kpi-value mono">₹${m.avgCPC.toFixed(1)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg CTR</div><div class="kpi-value mono">${m.avgCTR.toFixed(2)}%</div></div>
+      `;
+    }
+
+    function platformMetrics(arr) {
+      const spend = arr.reduce((s, c) => s + (c.spend || 0), 0);
+      const reach = arr.reduce((s, c) => s + (c.reach || 0), 0);
+      const clicks = arr.reduce((s, c) => s + (c.clicks || 0), 0);
+      const impr = arr.reduce((s, c) => s + (c.impressions || c.reach || 0), 0);
+      const cpm = impr > 0 ? (spend / impr * 1000) : 0;
+      return { count: arr.length, spend, reach, clicks, cpm };
+    }
+
+    function renderPlatformSplit(m) {
+      const metaM = platformMetrics(m.meta);
+      const googleM = platformMetrics(m.google);
+      document.getElementById('platformSplit').innerHTML = `
+        <div class="platform-card">
+          <h3><span class="meta-icon">◉</span> Meta Ads</h3>
+          <div class="pm-row"><span class="pm-label">Campaigns</span><span class="pm-val">${metaM.count}</span></div>
+          <div class="pm-row"><span class="pm-label">Spend</span><span class="pm-val">₹${metaM.spend.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">Reach</span><span class="pm-val">${metaM.reach.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">Clicks</span><span class="pm-val">${metaM.clicks.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">CPM</span><span class="pm-val">₹${metaM.cpm.toFixed(1)}</span></div>
+        </div>
+        <div class="platform-card">
+          <h3><span class="google-icon">◉</span> Google Ads</h3>
+          <div class="pm-row"><span class="pm-label">Campaigns</span><span class="pm-val">${googleM.count}</span></div>
+          <div class="pm-row"><span class="pm-label">Spend</span><span class="pm-val">₹${googleM.spend.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">Reach</span><span class="pm-val">${googleM.reach.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">Clicks</span><span class="pm-val">${googleM.clicks.toLocaleString()}</span></div>
+          <div class="pm-row"><span class="pm-label">CPM</span><span class="pm-val">₹${googleM.cpm.toFixed(1)}</span></div>
+        </div>
+      `;
+    }
+
+    function renderTable(campaigns) {
+      if (!campaigns.length) {
+        document.getElementById('tableWrap').innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No campaigns yet</div><div class="empty-sub"><a href="/ops/marketing/ads/">Create your first campaign</a></div></div>`;
+        return;
+      }
+      const sorted = [...campaigns].sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+        if (typeof va === 'string') return sortDir * va.localeCompare(vb);
+        return sortDir * ((va || 0) - (vb || 0));
+      });
+      const rows = sorted.map((c, i) => {
+        const platformBadge = c.platform === 'meta' ? '<span class="badge badge-meta">META</span>' : '<span class="badge badge-google">GOOGLE</span>';
+        const statusBadge = `<span class="badge badge-${c.status || 'draft'}">${(c.status || 'draft').toUpperCase()}</span>`;
+        const ctr = (c.impressions || c.reach) > 0 ? ((c.clicks || 0) / (c.impressions || c.reach) * 100).toFixed(2) : '0.00';
+        const cpc = (c.clicks || 0) > 0 ? ((c.spend || 0) / c.clicks).toFixed(1) : '—';
+        const cpm = (c.impressions || c.reach) > 0 ? ((c.spend || 0) / (c.impressions || c.reach) * 1000).toFixed(1) : '—';
+        return `<tr>
+          <td style="font-weight:600">${c.name || '—'}</td>
+          <td>${platformBadge}</td>
+          <td class="mono" style="font-size:11px">${c.date || '—'}</td>
+          <td>${(c.objective || '—')}</td>
+          <td class="mono">₹${(c.budget || 0).toLocaleString()}</td>
+          <td class="mono">₹${(c.spend || 0).toLocaleString()}</td>
+          <td class="mono">${(c.reach || 0).toLocaleString()}</td>
+          <td class="mono">${(c.clicks || 0).toLocaleString()}</td>
+          <td class="mono">${ctr}%</td>
+          <td class="mono">₹${cpc}</td>
+          <td class="mono">₹${cpm}</td>
+          <td>${statusBadge}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('tableWrap').innerHTML = `<table>
+        <thead><tr>
+          <th onclick="sortBy('name')">Campaign</th>
+          <th onclick="sortBy('platform')">Platform</th>
+          <th onclick="sortBy('date')">Date</th>
+          <th onclick="sortBy('objective')">Objective</th>
+          <th onclick="sortBy('budget')">Budget</th>
+          <th onclick="sortBy('spend')">Spend</th>
+          <th onclick="sortBy('reach')">Reach</th>
+          <th onclick="sortBy('clicks')">Clicks</th>
+          <th onclick="sortBy('ctr')">CTR</th>
+          <th onclick="sortBy('cpc')">CPC</th>
+          <th onclick="sortBy('cpm')">CPM</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    function sortBy(col) {
+      if (sortCol === col) sortDir *= -1;
+      else { sortCol = col; sortDir = -1; }
+      render();
+    }
+
+    function renderSpendBars(campaigns) {
+      const active = campaigns.filter(c => c.budget > 0);
+      if (!active.length) {
+        document.getElementById('spendBars').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px">No campaigns with budget data</div>';
+        return;
+      }
+      document.getElementById('spendBars').innerHTML = active.map(c => {
+        const pct = c.budget > 0 ? Math.min((c.spend || 0) / c.budget * 100, 120) : 0;
+        const colorClass = pct < 80 ? 'green' : pct <= 100 ? 'yellow' : 'red';
+        const platformBadge = c.platform === 'meta' ? '<span class="badge badge-meta" style="margin-left:6px">META</span>' : '<span class="badge badge-google" style="margin-left:6px">GOOGLE</span>';
+        return `<div class="spend-item">
+          <div class="spend-header">
+            <span class="spend-name">${c.name}${platformBadge}</span>
+            <span class="spend-nums">₹${(c.spend || 0).toLocaleString()} / ₹${c.budget.toLocaleString()} (${pct.toFixed(0)}%)</span>
+          </div>
+          <div class="spend-track"><div class="spend-fill ${colorClass}" style="width:${Math.min(pct, 100)}%"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    function calcROI() {
+      const campaigns = filterByRange(loadCampaigns());
+      const totalSpend = campaigns.reduce((s, c) => s + (c.spend || 0), 0);
+      const totalReach = campaigns.reduce((s, c) => s + (c.reach || 0), 0);
+      const ticket = parseFloat(document.getElementById('roiTicket').value) || 0;
+      const conv = parseFloat(document.getElementById('roiConv').value) || 0;
+      const estFootTraffic = Math.round(totalReach * (conv / 100));
+      const estRevenue = estFootTraffic * ticket;
+      const roas = totalSpend > 0 ? (estRevenue / totalSpend) : 0;
+
+      const revEl = document.getElementById('roiRevenue');
+      const roasEl = document.getElementById('roiRoas');
+      revEl.textContent = totalSpend > 0 ? `₹${estRevenue.toLocaleString()}` : '—';
+      revEl.className = 'roi-result-value ' + (roas >= 1 ? 'positive' : roas > 0 ? 'negative' : '');
+      roasEl.textContent = totalSpend > 0 ? `${roas.toFixed(1)}x` : '—';
+      roasEl.className = 'roi-result-value ' + (roas >= 3 ? 'positive' : roas >= 1 ? '' : roas > 0 ? 'negative' : '');
+    }
+
+    function renderNotes(campaigns) {
+      if (!campaigns.length) {
+        document.getElementById('notesSection').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px">No campaigns yet</div>';
+        return;
+      }
+      document.getElementById('notesSection').innerHTML = campaigns.map((c, i) => {
+        const platformBadge = c.platform === 'meta' ? '<span class="badge badge-meta">META</span>' : '<span class="badge badge-google">GOOGLE</span>';
+        return `<div class="note-item">
+          <div class="note-header">
+            <span class="note-campaign">${c.name} ${platformBadge}</span>
+            <span class="note-date">${c.date || ''}</span>
+          </div>
+          <textarea class="note-text" placeholder="Add notes or learnings..." oninput="updateNote(${i}, this.value)">${c.notes || ''}</textarea>
+        </div>`;
+      }).join('');
+    }
+
+    function updateNote(i, text) {
+      const data = loadCampaigns();
+      if (data[i]) {
+        data[i].notes = text;
+        saveCampaigns(data);
+      }
+    }
+
+    function render() {
+      const all = loadCampaigns();
+      const filtered = filterByRange(all);
+      const m = computeMetrics(filtered);
+      renderKPI(m);
+      renderPlatformSplit(m);
+      renderTable(filtered);
+      renderSpendBars(filtered);
+      renderNotes(all);
+      calcROI();
+    }
+
+    function toast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // Init
+    render();
+  </script>
+</body>
+</html>

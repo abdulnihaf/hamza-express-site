@@ -34,13 +34,13 @@
     .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
     .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; }
 
-    /* Eid Banner */
-    .eid-banner { background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--orange); border-radius: 10px; padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
-    .eid-banner::after { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(249,115,22,.12) 0%, transparent 70%); pointer-events: none; }
-    .eid-title { font-size: 18px; font-weight: 700; color: var(--orange); margin-bottom: 6px; }
-    .eid-facts { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; }
-    .eid-facts strong { color: var(--text); }
-    .eid-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    /* Context Banner */
+    .context-banner { background: var(--card); border: 1px solid var(--border); border-left: 5px solid var(--orange); border-radius: 10px; padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; }
+    .context-banner::after { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(249,115,22,.12) 0%, transparent 70%); pointer-events: none; }
+    .context-title { font-size: 18px; font-weight: 700; color: var(--orange); margin-bottom: 6px; }
+    .context-facts { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 14px; }
+    .context-facts strong { color: var(--text); }
+    .context-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
     /* Buttons */
     .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
@@ -51,6 +51,14 @@
     .btn-orange:hover { opacity: .85; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     .btn-ghost { background: transparent; border: 1px solid var(--border); }
+    .btn-green { background: var(--green); border: none; color: white; }
+    .btn-red { background: var(--red); border: none; color: white; font-size: 12px; padding: 4px 10px; }
+    .btn-blue { background: var(--blue); border: none; color: white; }
+
+    /* Platform badges */
+    .platform-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+    .badge-meta { background: rgba(59,130,246,.15); color: var(--blue); }
+    .badge-google { background: rgba(245,158,11,.15); color: var(--yellow); }
 
     /* Wizard */
     .wizard-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
@@ -71,14 +79,14 @@
     .form-group { margin-bottom: 16px; }
     .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; }
     .form-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+    input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="url"], select, textarea {
       width: 100%; padding: 10px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
       color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--tan); }
     textarea { resize: vertical; min-height: 80px; }
 
-    /* Type Cards */
+    /* Type Cards / Platform Cards */
     .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .type-card { background: var(--bg2); border: 2px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: all .15s; }
     .type-card:hover { border-color: var(--text2); }
@@ -87,6 +95,12 @@
     .type-card-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
     .type-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
     .type-card-meta { font-size: 10px; color: var(--text2); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+    .platform-card { background: var(--bg2); border: 2px solid var(--border); border-radius: 12px; padding: 24px; cursor: pointer; transition: all .15s; text-align: center; }
+    .platform-card:hover { border-color: var(--text2); transform: translateY(-2px); }
+    .platform-card.selected { border-color: var(--tan); background: rgba(210,180,140,.06); }
+    .platform-card-icon { font-size: 40px; margin-bottom: 10px; }
+    .platform-card-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .platform-card-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
     /* Time Windows */
     .window-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -114,14 +128,32 @@
     .audience-estimate-number { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--green); }
     .audience-estimate-label { font-size: 12px; color: var(--muted); }
 
+    /* Search Themes */
+    .theme-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .theme-row { display: flex; gap: 8px; align-items: center; }
+    .theme-row input { flex: 1; }
+    .theme-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .theme-chip { padding: 5px 10px; border-radius: 6px; font-size: 11px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; transition: all .15s; }
+    .theme-chip:hover { border-color: var(--green); color: var(--green); }
+    .theme-chip .vol { font-size: 9px; color: var(--muted); margin-left: 4px; }
+
     /* Creative */
-    .creative-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-    .creative-tab { padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; }
-    .creative-tab.active { background: rgba(210,180,140,.12); border-color: var(--tan); color: var(--tan); }
-    .prompt-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 12px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
-    .dim-select { display: flex; gap: 8px; margin-bottom: 12px; }
+    .dim-select { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .dim-option { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; font-family: 'JetBrains Mono', monospace; }
     .dim-option.active { border-color: var(--tan); color: var(--tan); }
+    .prompt-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 12px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+
+    /* Image checklist */
+    .img-checklist { list-style: none; padding: 0; }
+    .img-checklist li { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .img-checklist .req { color: var(--red); font-weight: 700; font-size: 10px; text-transform: uppercase; }
+    .img-checklist .opt { color: var(--muted); font-size: 10px; }
+
+    /* Character Counter */
+    .char-counter { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-align: right; margin-top: 2px; }
+    .char-green { color: var(--green); }
+    .char-yellow { color: var(--yellow); }
+    .char-red { color: var(--red); }
 
     /* Ad Preview */
     .ad-preview { background: white; border-radius: 10px; max-width: 340px; overflow: hidden; color: #1c1e21; font-size: 13px; }
@@ -136,14 +168,52 @@
     .ad-preview-desc { font-size: 11px; color: #65676b; }
     .ad-preview-cta-btn { background: #e4e6eb; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 700; color: #050505; }
 
+    /* Google Headlines list */
+    .headline-list { display: flex; flex-direction: column; gap: 8px; }
+    .headline-row { display: flex; gap: 8px; align-items: center; }
+    .headline-row input { flex: 1; }
+
+    /* GBP checkbox */
+    .gbp-check { background: rgba(245,158,11,.08); border: 1px solid var(--yellow); border-radius: 8px; padding: 14px; margin-top: 12px; }
+    .gbp-check label { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text2); cursor: pointer; line-height: 1.4; }
+    .gbp-check input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--yellow); flex-shrink: 0; }
+
+    /* Use Existing Post checkbox */
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .toggle-row label { font-size: 13px; color: var(--text2); cursor: pointer; }
+    .toggle-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--tan); }
+
+    /* Budget type toggle */
+    .budget-toggle { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 14px; }
+    .budget-toggle-btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--bg2); color: var(--muted); transition: all .15s; border: none; font-family: inherit; }
+    .budget-toggle-btn.active { background: rgba(210,180,140,.12); color: var(--tan); }
+
+    /* Google budget indicator */
+    .budget-indicator { padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .budget-indicator.red { background: rgba(239,68,68,.1); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+    .budget-indicator.yellow { background: rgba(245,158,11,.1); color: var(--yellow); border: 1px solid rgba(245,158,11,.3); }
+    .budget-indicator.green { background: rgba(16,185,129,.1); color: var(--green); border: 1px solid rgba(16,185,129,.3); }
+
+    /* Intelligence cards */
+    .intel-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .intel-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .intel-card-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .intel-card-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+    .intel-pass { color: var(--green); }
+    .intel-warn { color: var(--yellow); }
+    .intel-fail { color: var(--red); }
+
     /* Export Config */
     .config-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
 
     /* Offer Library */
-    .offer-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .offer-table th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-    .offer-table td { padding: 8px 12px; border-bottom: 1px solid rgba(45,58,79,.3); }
-    .offer-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tan); }
+    .offer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .offer-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all .15s; }
+    .offer-card:hover { border-color: var(--tan); transform: translateY(-2px); }
+    .offer-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tan); font-size: 12px; }
+    .offer-name { font-size: 14px; font-weight: 700; margin: 4px 0; }
+    .offer-price { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--green); }
+    .offer-job { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
     /* Templates */
     .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
@@ -155,10 +225,13 @@
     .template-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(210,180,140,.1); color: var(--tan); }
 
     /* Campaign Tracker */
-    .tracker-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .tracker-wrap { overflow-x: auto; }
+    .tracker-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 800px; }
     .tracker-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
-    .tracker-table td { padding: 8px 10px; border-bottom: 1px solid rgba(45,58,79,.3); }
-    .tracker-table input, .tracker-table select { padding: 4px 8px; font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: 'JetBrains Mono', monospace; width: 100%; }
+    .tracker-table td { padding: 6px 8px; border-bottom: 1px solid rgba(45,58,79,.3); }
+    .tracker-table .editable { cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background .15s; min-width: 40px; display: inline-block; }
+    .tracker-table .editable:hover { background: rgba(210,180,140,.08); }
+    .tracker-table .edit-input { padding: 4px 6px; font-size: 11px; background: var(--bg); border: 1px solid var(--tan); border-radius: 4px; color: var(--text); font-family: 'JetBrains Mono', monospace; width: 100%; outline: none; }
     .status-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
     .status-draft { background: rgba(148,163,184,.15); color: var(--text2); }
     .status-active { background: rgba(16,185,129,.15); color: var(--green); }
@@ -179,16 +252,19 @@
     .toast.show { opacity: 1; }
 
     /* Responsive */
-    @media (max-width: 700px) {
+    @media (max-width: 600px) {
       .kpi-row { grid-template-columns: 1fr 1fr; }
       .type-grid { grid-template-columns: 1fr; }
       .audience-row { grid-template-columns: 1fr; }
       .window-row { grid-template-columns: 1fr 1fr; }
       .wizard-steps { gap: 0; }
-      .wizard-step-tab { padding: 10px 10px; font-size: 11px; }
-      .perf-grid { grid-template-columns: 1fr; }
+      .wizard-step-tab { padding: 10px 8px; font-size: 10px; }
       .template-grid { grid-template-columns: 1fr; }
+      .offer-grid { grid-template-columns: 1fr; }
       .ad-preview { max-width: 100%; }
+      .ad-copy-layout { grid-template-columns: 1fr !important; }
+      .platform-card { padding: 16px; }
+      .headline-row { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -197,89 +273,74 @@
     <!-- Header -->
     <div class="header">
       <h1>Paid Ads</h1>
-      <a class="back-link" href="/ops/marketing/">← Marketing Hub</a>
+      <a class="back-link" href="/ops/marketing/">&larr; Marketing Hub</a>
     </div>
 
     <!-- KPI Row -->
     <div class="kpi-row" id="kpiRow">
       <div class="kpi-card">
-        <div class="kpi-label">Total Spend (This Month)</div>
-        <div class="kpi-value" id="kpiSpend">₹0</div>
+        <div class="kpi-label">Total Spend</div>
+        <div class="kpi-value" id="kpiSpend">&mdash;</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total Reach</div>
-        <div class="kpi-value" id="kpiReach">—</div>
+        <div class="kpi-value" id="kpiReach">&mdash;</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Avg Cost Per Click</div>
-        <div class="kpi-value" id="kpiCPC">—</div>
+        <div class="kpi-label">Active Campaigns</div>
+        <div class="kpi-value" id="kpiActive">&mdash;</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Total Conversions</div>
-        <div class="kpi-value" id="kpiConv">—</div>
+        <div class="kpi-label">Avg CPM</div>
+        <div class="kpi-value" id="kpiCPM">&mdash;</div>
       </div>
     </div>
 
-    <!-- Eid Banner -->
-    <div class="eid-banner" id="eidBanner">
-      <div class="eid-title">EID CAMPAIGN — March 22</div>
-      <div class="eid-facts">
-        <strong>Open 1 PM – 1 AM</strong> · Most of Shivajinagar CLOSED<br>
-        Target: Foot traffic (80% takeaway, 20% dine-in)<br>
-        Budget: <strong>₹1,600</strong> dayparted — ₹600 lunch + ₹1,000 dinner<br>
-        CTA: Get Directions · Objective: Awareness (Reach)
-      </div>
-      <div class="eid-actions">
-        <button class="btn btn-orange" onclick="loadTemplate('eid')">Load Eid Template</button>
-        <a class="btn" href="https://business.facebook.com/latest/ad_center/create/expert" target="_blank">Open Ads Manager →</a>
-      </div>
-    </div>
+    <!-- Context Banner (dynamic) -->
+    <div class="context-banner" id="contextBanner" style="display:none"></div>
 
     <!-- Campaign Builder -->
     <div class="section-title">Campaign Builder</div>
     <div class="wizard-wrap">
-      <div class="wizard-steps" id="wizardTabs">
-        <div class="wizard-step-tab active" data-step="1" onclick="goStep(1)"><span class="step-num">1</span>Type</div>
-        <div class="wizard-step-tab" data-step="2" onclick="goStep(2)"><span class="step-num">2</span>Schedule</div>
-        <div class="wizard-step-tab" data-step="3" onclick="goStep(3)"><span class="step-num">3</span>Audience</div>
-        <div class="wizard-step-tab" data-step="4" onclick="goStep(4)"><span class="step-num">4</span>Creative</div>
-        <div class="wizard-step-tab" data-step="5" onclick="goStep(5)"><span class="step-num">5</span>Ad Copy</div>
-        <div class="wizard-step-tab" data-step="6" onclick="goStep(6)"><span class="step-num">6</span>Export</div>
-      </div>
+      <div class="wizard-steps" id="wizardTabs"></div>
       <div class="wizard-body">
 
-        <!-- Step 1: Campaign Type -->
-        <div class="wizard-panel active" id="step1">
-          <div class="form-label" style="margin-bottom:12px">Choose your campaign objective</div>
+        <!-- Step 0: Platform -->
+        <div class="wizard-panel active" id="step0">
+          <div class="form-label" style="margin-bottom:14px">Choose your advertising platform</div>
           <div class="type-grid">
-            <div class="type-card" data-type="awareness" onclick="selectType(this)">
-              <div class="type-card-icon">📢</div>
-              <div class="type-card-name">Awareness</div>
-              <div class="type-card-desc">Maximize reach. Best for "we're open" announcements, brand building, event pushes.</div>
-              <div class="type-card-meta">CPM ~₹80 · Best for Eid</div>
+            <div class="platform-card" data-platform="meta" onclick="selectPlatform('meta')">
+              <div class="platform-card-icon">📘</div>
+              <div class="platform-card-name">Meta Ads</div>
+              <div class="platform-card-desc">Facebook + Instagram. Awareness, traffic, engagement, WhatsApp messages.</div>
             </div>
-            <div class="type-card" data-type="traffic" onclick="selectType(this)">
-              <div class="type-card-icon">📍</div>
-              <div class="type-card-name">Traffic</div>
-              <div class="type-card-desc">Drive foot traffic + "Get Directions" clicks. Optimizes for link clicks.</div>
-              <div class="type-card-meta">CPC ~₹3-8 · CPM ~₹120</div>
-            </div>
-            <div class="type-card" data-type="engagement" onclick="selectType(this)">
-              <div class="type-card-icon">💬</div>
-              <div class="type-card-name">Engagement</div>
-              <div class="type-card-desc">Likes, comments, shares. Good for brand posts and retargeting pixel audiences.</div>
-              <div class="type-card-meta">CPE ~₹1-3 · CPM ~₹100</div>
-            </div>
-            <div class="type-card" data-type="messages" onclick="selectType(this)">
-              <div class="type-card-icon">💬</div>
-              <div class="type-card-name">Messages (CTWA)</div>
-              <div class="type-card-desc">Click-to-WhatsApp. Opens a WhatsApp conversation for ordering.</div>
-              <div class="type-card-meta">CPM ~₹150 · CPA ~₹15-40</div>
+            <div class="platform-card" data-platform="google" onclick="selectPlatform('google')">
+              <div class="platform-card-icon">🔍</div>
+              <div class="platform-card-name">Google Ads</div>
+              <div class="platform-card-desc">Performance Max (local) + Search. Maps visibility, "near me" keywords.</div>
             </div>
           </div>
           <div class="wizard-nav">
             <div></div>
-            <button class="btn btn-primary" onclick="goStep(2)">Next: Schedule →</button>
+            <button class="btn btn-primary" onclick="goStep(1)" id="step0Next" disabled>Select a platform to continue</button>
+          </div>
+        </div>
+
+        <!-- Step 1: Objective -->
+        <div class="wizard-panel" id="step1">
+          <div class="form-label" style="margin-bottom:12px">Choose your campaign objective</div>
+          <div id="objectiveGrid" class="type-grid"></div>
+          <div id="gbpCheckWrap" style="display:none">
+            <div class="gbp-check">
+              <label>
+                <input type="checkbox" id="gbpLinked" onchange="campaign.gbpLinked=this.checked;checkGbpGate()">
+                I confirm Hamza Express GBP is linked to Google Ads account 368-171-0084
+              </label>
+            </div>
+          </div>
+          <div class="wizard-nav">
+            <button class="btn" onclick="goStep(0)">&larr; Platform</button>
+            <button class="btn btn-primary" onclick="goStep(2)" id="step1Next">Next: Schedule &rarr;</button>
           </div>
         </div>
 
@@ -296,36 +357,60 @@
             </div>
           </div>
 
-          <div class="form-label">Time Windows (Dayparting)</div>
-          <div class="form-hint" style="margin-bottom:10px">Add time windows to control when ads run and how much budget each window gets. Uses Lifetime Budget in Ads Manager.</div>
+          <!-- Meta: Budget Type + Dayparting -->
+          <div id="metaBudgetSection">
+            <div class="form-label">Budget Type</div>
+            <div class="budget-toggle" style="margin-bottom:14px">
+              <button class="budget-toggle-btn" data-bt="daily" onclick="setBudgetType('daily')">Daily</button>
+              <button class="budget-toggle-btn active" data-bt="lifetime" onclick="setBudgetType('lifetime')">Lifetime</button>
+            </div>
+            <div class="form-hint" style="margin-bottom:14px">Use <strong>Lifetime Budget</strong> for dayparting (ad scheduling by hour). Daily Budget runs 24/7.</div>
 
-          <div class="window-list" id="windowList"></div>
-          <button class="btn btn-sm btn-ghost" onclick="addWindow()">+ Add Time Window</button>
+            <div class="toggle-row">
+              <input type="checkbox" id="useExistingPost" onchange="campaign.useExistingPost=this.checked">
+              <label for="useExistingPost">Use Existing Post (boost an already-published post)</label>
+            </div>
 
-          <div class="form-label" style="margin-top:16px">24h Budget Distribution</div>
-          <div class="timeline-bar" id="timelineBar"></div>
-          <div class="timeline-labels">
-            <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
+            <div class="form-label">Time Windows (Dayparting)</div>
+            <div class="form-hint" style="margin-bottom:10px">Add time windows to control when ads run and how much budget each window gets.</div>
+            <div class="window-list" id="windowList"></div>
+            <button class="btn btn-sm btn-ghost" onclick="addWindow()">+ Add Time Window</button>
+
+            <div class="form-label" style="margin-top:16px">24h Budget Distribution</div>
+            <div class="timeline-bar" id="timelineBar"></div>
+            <div class="timeline-labels">
+              <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
+            </div>
+          </div>
+
+          <!-- Google: Daily Budget -->
+          <div id="googleBudgetSection" style="display:none">
+            <div class="form-group">
+              <label class="form-label">Daily Budget (&rupee;)</label>
+              <input type="number" id="googleDailyBudget" value="0" min="0" step="100" onchange="updateGoogleBudget()">
+              <div id="googleBudgetIndicator" class="budget-indicator red" style="margin-top:8px">Set a budget above</div>
+            </div>
           </div>
 
           <div class="budget-summary" id="budgetSummary"></div>
 
           <div class="wizard-nav">
-            <button class="btn" onclick="goStep(1)">← Type</button>
-            <button class="btn btn-primary" onclick="goStep(3)">Next: Audience →</button>
+            <button class="btn" onclick="goStep(1)">&larr; Objective</button>
+            <button class="btn btn-primary" onclick="goStep(3)">Next: <span class="step3Label">Audience</span> &rarr;</button>
           </div>
         </div>
 
-        <!-- Step 3: Audience -->
+        <!-- Step 3: Audience / Search Themes -->
         <div class="wizard-panel" id="step3">
+          <!-- Shared: Radius -->
           <div class="audience-row">
             <div class="form-group">
               <label class="form-label">Location Radius</label>
               <select id="audienceRadius" onchange="updateAudience()">
-                <option value="1">1 km — Immediate vicinity</option>
-                <option value="2">2 km — Core HKP Road area</option>
-                <option value="3" selected>3 km — Shivajinagar + surrounds</option>
-                <option value="5">5 km — Extended (Frazer Town, Cox Town, Ulsoor)</option>
+                <option value="1">1 km &mdash; Immediate vicinity</option>
+                <option value="2">2 km &mdash; Core HKP Road area</option>
+                <option value="3" selected>3 km &mdash; Shivajinagar + surrounds</option>
+                <option value="5">5 km &mdash; Extended (Frazer Town, Cox Town, Ulsoor)</option>
               </select>
               <div class="form-hint">Center: Shivajinagar (12.9868, 77.6044)</div>
             </div>
@@ -343,27 +428,51 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Interests</label>
-            <div class="chip-group" id="interestChips">
-              <div class="chip active" data-val="biryani" onclick="toggleChip(this)">Biryani</div>
-              <div class="chip active" data-val="mughlai" onclick="toggleChip(this)">Mughlai Food</div>
-              <div class="chip active" data-val="nonveg" onclick="toggleChip(this)">Non-veg</div>
-              <div class="chip active" data-val="foodies" onclick="toggleChip(this)">Foodies</div>
-              <div class="chip active" data-val="restaurants" onclick="toggleChip(this)">Restaurant Dining</div>
-              <div class="chip active" data-val="latenight" onclick="toggleChip(this)">Late Night Food</div>
-              <div class="chip" data-val="delivery" onclick="toggleChip(this)">Food Delivery</div>
-              <div class="chip" data-val="swiggy" onclick="toggleChip(this)">Swiggy/Zomato Users</div>
+          <!-- Meta: Interests -->
+          <div id="metaAudienceSection">
+            <div class="form-group">
+              <label class="form-label">Interests</label>
+              <div class="chip-group" id="interestChips">
+                <div class="chip active" data-val="biryani" onclick="toggleChip(this,'interests')">Biryani</div>
+                <div class="chip" data-val="mughlai" onclick="toggleChip(this,'interests')">Mughlai Food</div>
+                <div class="chip active" data-val="nonveg" onclick="toggleChip(this,'interests')">Non-veg</div>
+                <div class="chip active" data-val="foodies" onclick="toggleChip(this,'interests')">Foodies</div>
+                <div class="chip active" data-val="restaurants" onclick="toggleChip(this,'interests')">Restaurant Dining</div>
+                <div class="chip active" data-val="latenight" onclick="toggleChip(this,'interests')">Late Night Food</div>
+                <div class="chip" data-val="delivery" onclick="toggleChip(this,'interests')">Food Delivery</div>
+                <div class="chip" data-val="swiggy" onclick="toggleChip(this,'interests')">Swiggy/Zomato Users</div>
+              </div>
             </div>
           </div>
 
+          <!-- Google: Search Themes -->
+          <div id="googleAudienceSection" style="display:none">
+            <div class="form-group">
+              <label class="form-label">Search Themes</label>
+              <div class="form-hint" style="margin-bottom:8px">Add search themes that describe your business. Google will match your ads to relevant searches.</div>
+              <div class="theme-list" id="themeList"></div>
+              <button class="btn btn-sm btn-ghost" onclick="addSearchTheme()">+ Add Theme</button>
+              <div class="form-label" style="margin-top:12px">Suggestions (click to add)</div>
+              <div class="theme-suggestions">
+                <div class="theme-chip" onclick="addSearchTheme('biryani near me')">biryani near me <span class="vol">high</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('restaurants open today')">restaurants open today <span class="vol">high</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('late night food bangalore')">late night food bangalore <span class="vol">high</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('best biryani shivajinagar')">best biryani shivajinagar <span class="vol">high</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('halal food near me')">halal food near me <span class="vol">med</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('kebab near me')">kebab near me <span class="vol">med</span></div>
+                <div class="theme-chip" onclick="addSearchTheme('non veg restaurant near me')">non veg restaurant near me <span class="vol">med</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shared: Languages -->
           <div class="form-group">
             <label class="form-label">Languages</label>
             <div class="chip-group" id="langChips">
-              <div class="chip active" data-val="en" onclick="toggleChip(this)">English</div>
-              <div class="chip active" data-val="hi" onclick="toggleChip(this)">Hindi</div>
-              <div class="chip active" data-val="kn" onclick="toggleChip(this)">Kannada</div>
-              <div class="chip active" data-val="ur" onclick="toggleChip(this)">Urdu</div>
+              <div class="chip active" data-val="en" onclick="toggleChip(this,'languages')">English</div>
+              <div class="chip active" data-val="hi" onclick="toggleChip(this,'languages')">Hindi</div>
+              <div class="chip active" data-val="kn" onclick="toggleChip(this,'languages')">Kannada</div>
+              <div class="chip active" data-val="ur" onclick="toggleChip(this,'languages')">Urdu</div>
             </div>
           </div>
 
@@ -375,133 +484,176 @@
           </div>
 
           <div class="wizard-nav">
-            <button class="btn" onclick="goStep(2)">← Schedule</button>
-            <button class="btn btn-primary" onclick="goStep(4)">Next: Creative →</button>
+            <button class="btn" onclick="goStep(2)">&larr; Schedule</button>
+            <button class="btn btn-primary" onclick="goStep(4)">Next: Creative &rarr;</button>
           </div>
         </div>
 
-        <!-- Step 4: Creative -->
+        <!-- Step 4: Creative / Assets -->
         <div class="wizard-panel" id="step4">
-          <div class="creative-tabs">
-            <div class="creative-tab active" onclick="switchCreative('static', this)">Static Image</div>
-            <div class="creative-tab" onclick="switchCreative('video', this)">Video / Reel</div>
-          </div>
-
-          <div id="creativeStatic">
+          <!-- Meta Creative -->
+          <div id="metaCreativeSection">
             <div class="form-label">Dimension</div>
             <div class="dim-select" id="dimSelect">
-              <div class="dim-option active" data-dim="1080x1080" onclick="selectDim(this)">Feed 1080×1080</div>
-              <div class="dim-option" data-dim="1200x628" onclick="selectDim(this)">Landscape 1200×628</div>
-              <div class="dim-option" data-dim="1080x1920" onclick="selectDim(this)">Stories 1080×1920</div>
+              <div class="dim-option active" data-dim="1080x1080" onclick="selectDim(this)">Feed 1080x1080</div>
+              <div class="dim-option" data-dim="1200x628" onclick="selectDim(this)">Landscape 1200x628</div>
+              <div class="dim-option" data-dim="1080x1920" onclick="selectDim(this)">Stories 1080x1920</div>
             </div>
-
+            <div id="existingPostNote" style="display:none;background:rgba(59,130,246,.08);border:1px solid var(--blue);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--blue)">
+              "Use Existing Post" is checked. You will boost an already-published post instead of uploading new creative. Skip AI Studio and select your post in Ads Manager.
+            </div>
             <div class="form-label" style="margin-top:12px">AI Studio Prompt (Ad-Optimized)</div>
-            <div class="prompt-box" id="adPrompt">Select a campaign type and offer to generate an ad-optimized prompt.</div>
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button class="btn btn-sm" onclick="copyPrompt()">📋 Copy Prompt</button>
-              <a class="btn btn-sm" href="https://aistudio.google.com" target="_blank">Open AI Studio →</a>
-              <a class="btn btn-sm" href="/ops/marketing/posts/" target="_blank">Use Posts Dashboard</a>
-            </div>
-            <div class="form-hint" style="margin-top:8px">
-              Upload these reference files in AI Studio:<br>
-              • Image-1-Logo-Brown-BG.png<br>
-              • Image-2-Menu-Cover.png<br>
-              • Image-3-Social-Post-Reference.png<br>
-              • Relevant food photo (if dish-specific ad)
+            <textarea id="adPrompt" rows="8" style="font-size:12px;line-height:1.5">Select a campaign type and offer to generate a prompt.</textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn btn-sm" onclick="copyPrompt()">Copy Prompt</button>
+              <a class="btn btn-sm" href="https://aistudio.google.com" target="_blank">Open AI Studio</a>
+              <a class="btn btn-sm" href="/ops/marketing/posts/" target="_blank">Posts Dashboard</a>
             </div>
           </div>
 
-          <div id="creativeVideo" style="display:none">
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px">
-              <div class="form-label">Recommended Reel for this Campaign</div>
-              <div id="reelRec" style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:12px">
-                Based on your campaign type, the <strong>Kitchen</strong> template (high-energy fire/cooking montage) works best for awareness campaigns. Already exported: <span class="mono">~/Downloads/HE_The_Kitchen.mp4</span>
-              </div>
-              <a class="btn btn-sm" href="/ops/marketing/reels/" target="_blank">Open Reels Engine →</a>
+          <!-- Google Creative -->
+          <div id="googleCreativeSection" style="display:none">
+            <div class="form-label" style="margin-bottom:10px">Image Asset Requirements</div>
+            <ul class="img-checklist">
+              <li><span class="req">REQUIRED</span> Logo (1:1 square) &mdash; 128x128 min, 1200x1200 recommended</li>
+              <li><span class="opt">recommended</span> Landscape (1200x628) &mdash; hero image, food photography</li>
+              <li><span class="opt">recommended</span> Square (1200x1200) &mdash; alternate display format</li>
+            </ul>
+            <div class="form-hint" style="margin-top:8px">Keep key elements in the center 80% of images &mdash; Google auto-crops for different placements. Avoid text on images.</div>
+
+            <div class="form-label" style="margin-top:16px">AI Studio Prompt (Google Ad Images)</div>
+            <textarea id="googleAdPrompt" rows="8" style="font-size:12px;line-height:1.5">Select a Google campaign type to generate a prompt.</textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn btn-sm" onclick="copyGooglePrompt()">Copy Prompt</button>
+              <a class="btn btn-sm" href="https://aistudio.google.com" target="_blank">Open AI Studio</a>
             </div>
           </div>
 
           <div class="wizard-nav">
-            <button class="btn" onclick="goStep(3)">← Audience</button>
-            <button class="btn btn-primary" onclick="goStep(5)">Next: Ad Copy →</button>
+            <button class="btn" onclick="goStep(3)">&larr; <span class="step3Label">Audience</span></button>
+            <button class="btn btn-primary" onclick="goStep(5)">Next: Ad Copy &rarr;</button>
           </div>
         </div>
 
         <!-- Step 5: Ad Copy -->
         <div class="wizard-panel" id="step5">
-          <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
-            <div>
-              <div class="form-group">
-                <label class="form-label">Primary Text</label>
-                <textarea id="adPrimaryText" rows="6" oninput="updatePreview()"></textarea>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Headline</label>
-                <input type="text" id="adHeadline" oninput="updatePreview()">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Description</label>
-                <input type="text" id="adDescription" oninput="updatePreview()">
-              </div>
-              <div class="audience-row">
+          <!-- Meta Ad Copy -->
+          <div id="metaCopySection">
+            <div class="ad-copy-layout" style="display:grid;grid-template-columns:1fr 340px;gap:20px">
+              <div>
                 <div class="form-group">
-                  <label class="form-label">CTA Button</label>
-                  <select id="adCta" onchange="updatePreview()">
-                    <option value="GET_DIRECTIONS">Get Directions</option>
-                    <option value="LEARN_MORE">Learn More</option>
-                    <option value="SEND_MESSAGE">Send WhatsApp Message</option>
-                    <option value="CALL_NOW">Call Now</option>
-                    <option value="ORDER_NOW">Order Now</option>
-                  </select>
+                  <label class="form-label">Primary Text</label>
+                  <textarea id="adPrimaryText" rows="6" oninput="updateMetaPreview()"></textarea>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Link URL</label>
-                  <input type="text" id="adLinkUrl" value="https://maps.app.goo.gl/YrXgY245eBT2HUzF9">
+                  <label class="form-label">Headline <span id="metaHeadlineCounter" class="char-counter char-green">0/40</span></label>
+                  <input type="text" id="adHeadline" maxlength="40" oninput="enforceCharLimit(this,40,'metaHeadlineCounter');updateMetaPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Description <span id="metaDescCounter" class="char-counter char-green">0/30</span></label>
+                  <input type="text" id="adDescription" maxlength="30" oninput="enforceCharLimit(this,30,'metaDescCounter');updateMetaPreview()">
+                </div>
+                <div class="audience-row">
+                  <div class="form-group">
+                    <label class="form-label">CTA Button</label>
+                    <select id="adCta" onchange="updateMetaPreview()">
+                      <option value="GET_DIRECTIONS">Get Directions</option>
+                      <option value="NO_BUTTON">No Button</option>
+                      <option value="SEND_MESSAGE">Send Message</option>
+                      <option value="CALL_NOW">Call Now</option>
+                      <option value="LEARN_MORE">Learn More</option>
+                      <option value="ORDER_NOW">Order Now</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Link URL</label>
+                    <input type="text" id="adLinkUrl" value="https://maps.app.goo.gl/YrXgY245eBT2HUzF9" oninput="campaign.linkUrl=this.value">
+                  </div>
                 </div>
               </div>
-            </div>
-            <div>
-              <div class="form-label" style="margin-bottom:8px">Ad Preview</div>
-              <div class="ad-preview" id="adPreview">
-                <div class="ad-preview-header">
-                  <div class="ad-preview-avatar"></div>
-                  <div>
-                    <div class="ad-preview-name">Hamza Express</div>
-                    <div class="ad-preview-sponsored">Sponsored</div>
+              <div>
+                <div class="form-label" style="margin-bottom:8px">Ad Preview</div>
+                <div class="ad-preview" id="adPreview">
+                  <div class="ad-preview-header">
+                    <div class="ad-preview-avatar"></div>
+                    <div>
+                      <div class="ad-preview-name">Hamza Express</div>
+                      <div class="ad-preview-sponsored">Sponsored</div>
+                    </div>
                   </div>
-                </div>
-                <div class="ad-preview-text" id="previewText"></div>
-                <div class="ad-preview-image">Upload creative in Step 4</div>
-                <div class="ad-preview-cta-bar">
-                  <div>
-                    <div class="ad-preview-headline" id="previewHeadline"></div>
-                    <div class="ad-preview-desc" id="previewDesc"></div>
+                  <div class="ad-preview-text" id="previewText">Your ad text will appear here...</div>
+                  <div class="ad-preview-image">Upload creative in Step 4</div>
+                  <div class="ad-preview-cta-bar">
+                    <div>
+                      <div class="ad-preview-headline" id="previewHeadline">Headline</div>
+                      <div class="ad-preview-desc" id="previewDesc">Description</div>
+                    </div>
+                    <div class="ad-preview-cta-btn" id="previewCta">Get Directions</div>
                   </div>
-                  <div class="ad-preview-cta-btn" id="previewCta">Get Directions</div>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Google Ad Copy -->
+          <div id="googleCopySection" style="display:none">
+            <div class="form-group">
+              <label class="form-label">Headlines (min 3, max 15) &mdash; 30 chars each</label>
+              <div class="headline-list" id="googleHeadlineList"></div>
+              <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="addGoogleHeadline()">+ Add Headline</button>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Long Headlines (max 5) &mdash; 90 chars each</label>
+              <div class="headline-list" id="googleLongHeadlineList"></div>
+              <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="addGoogleLongHeadline()">+ Add Long Headline</button>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Descriptions (max 4) &mdash; 90 chars each</label>
+              <div class="headline-list" id="googleDescList"></div>
+              <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="addGoogleDesc()">+ Add Description</button>
+            </div>
+            <div class="audience-row">
+              <div class="form-group">
+                <label class="form-label">Business Name <span id="gBizCounter" class="char-counter char-green">14/25</span></label>
+                <input type="text" id="googleBizName" value="Hamza Express" maxlength="25" oninput="enforceCharLimit(this,25,'gBizCounter');campaign.googleBusinessName=this.value">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CTA</label>
+                <select id="googleCtaSelect" onchange="campaign.googleCta=this.value">
+                  <option value="GET_DIRECTIONS">Get Directions</option>
+                  <option value="VISIT_STORE">Visit Store</option>
+                  <option value="CALL_NOW">Call Now</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Final URL</label>
+              <input type="text" id="googleFinalUrl" value="https://maps.app.goo.gl/YrXgY245eBT2HUzF9" oninput="campaign.googleFinalUrl=this.value">
+            </div>
+          </div>
+
           <div class="wizard-nav">
-            <button class="btn" onclick="goStep(4)">← Creative</button>
-            <button class="btn btn-primary" onclick="goStep(6)">Next: Export →</button>
+            <button class="btn" onclick="goStep(4)">&larr; Creative</button>
+            <button class="btn btn-primary" onclick="goStep(6)">Next: Export &rarr;</button>
           </div>
         </div>
 
-        <!-- Step 6: Export -->
+        <!-- Step 6: Intelligence Check + Export -->
         <div class="wizard-panel" id="step6">
+          <div class="form-label" style="margin-bottom:10px">Intelligence Check</div>
+          <div class="intel-grid" id="intelGrid"></div>
+
           <div class="form-label" style="margin-bottom:10px">Complete Campaign Config</div>
-          <div class="config-box" id="configBox">Build your campaign using Steps 1-5, then the export config will appear here.</div>
+          <div class="config-box" id="configBox">Build your campaign using the steps above, then the export config will appear here.</div>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="copyConfig()">📋 Copy Config</button>
-            <a class="btn" href="https://business.facebook.com/latest/ad_center/create/expert" target="_blank">Open Ads Manager →</a>
-            <button class="btn" onclick="saveDraft()">Save as Draft</button>
-            <button class="btn btn-sm" onclick="addToTracker()">Add to Tracker</button>
+            <button class="btn btn-primary" onclick="copyConfig()">Copy Config</button>
+            <button class="btn" id="adsManagerLink" href="#" target="_blank" onclick="openAdsManager()">Open Ads Manager</button>
+            <button class="btn" onclick="saveDraft()">Save Draft</button>
+            <button class="btn btn-green" onclick="addToTracker()">Add to Tracker</button>
           </div>
 
           <div class="wizard-nav">
-            <button class="btn" onclick="goStep(5)">← Ad Copy</button>
+            <button class="btn" onclick="goStep(5)">&larr; Ad Copy</button>
             <div></div>
           </div>
         </div>
@@ -510,36 +662,38 @@
     </div>
 
     <!-- Offer Library -->
-    <div class="section-title">Offer Library</div>
-    <div class="collapsible open" id="offerSection">
+    <div class="collapsible" id="offerSection">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        O1–O7 Offers <span class="collapsible-arrow">›</span>
+        Offer Library (O1&ndash;O7) <span class="collapsible-arrow">&rsaquo;</span>
       </div>
       <div class="collapsible-body">
-        <div style="overflow-x:auto">
-          <table class="offer-table">
-            <thead><tr><th>Code</th><th>Offer</th><th>Price</th><th>Type</th><th>Strategic Job</th><th></th></tr></thead>
-            <tbody id="offerTableBody"></tbody>
-          </table>
-        </div>
+        <div class="offer-grid" id="offerGrid"></div>
       </div>
     </div>
 
-    <!-- Ad Templates -->
-    <div class="section-title">Quick Templates</div>
-    <div class="template-grid" id="templateGrid"></div>
-
-    <!-- Campaign Tracker -->
-    <div class="section-title" style="margin-top:28px">Campaign Tracker</div>
-    <div class="collapsible open" id="trackerSection">
+    <!-- Templates -->
+    <div class="collapsible" id="templateSection">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        Active & Past Campaigns <span class="collapsible-arrow">›</span>
+        Quick Templates <span class="collapsible-arrow">&rsaquo;</span>
       </div>
       <div class="collapsible-body">
-        <div style="overflow-x:auto">
+        <div class="form-label" style="margin-bottom:8px">Meta Templates</div>
+        <div class="template-grid" id="metaTemplateGrid"></div>
+        <div class="form-label" style="margin-top:16px;margin-bottom:8px">Google Templates</div>
+        <div class="template-grid" id="googleTemplateGrid"></div>
+      </div>
+    </div>
+
+    <!-- Campaign Tracker -->
+    <div class="collapsible open" id="trackerSection">
+      <div class="collapsible-header" onclick="toggleCollapsible(this)">
+        Campaign Tracker <span class="collapsible-arrow">&rsaquo;</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="tracker-wrap">
           <table class="tracker-table" id="trackerTable">
             <thead><tr>
-              <th>Name</th><th>Date</th><th>Objective</th><th>Budget</th><th>Reach</th><th>Clicks</th><th>CTR</th><th>Results</th><th>Cost/Result</th><th>Status</th><th></th>
+              <th>Name</th><th>Platform</th><th>Date</th><th>Objective</th><th>Budget</th><th>Spend</th><th>Reach</th><th>Clicks</th><th>CTR</th><th>Status</th><th></th>
             </tr></thead>
             <tbody id="trackerBody"></tbody>
           </table>
@@ -549,70 +703,104 @@
     </div>
 
     <!-- Platform Guides -->
-    <div class="section-title" style="margin-top:28px">Platform Guides</div>
     <div class="collapsible" id="metaGuide">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        Meta Ads Manager — Step by Step <span class="collapsible-arrow">›</span>
+        Meta Ads Manager &mdash; Step by Step <span class="collapsible-arrow">&rsaquo;</span>
       </div>
       <div class="collapsible-body" style="font-size:13px;color:var(--text2);line-height:1.8">
-        <strong>Setting up a campaign in Ads Manager:</strong><br><br>
+        <strong>Setting up a campaign in Meta Ads Manager:</strong><br><br>
         1. Go to <strong>business.facebook.com/adsmanager</strong><br>
-        2. Click <strong>"+ Create"</strong> → Select objective (Awareness for reach, Traffic for directions)<br>
-        3. Name your campaign → Enable <strong>"Advantage Campaign Budget"</strong> OFF (we control per ad set)<br>
+        2. Click <strong>"+ Create"</strong> and select your objective (Awareness for reach, Traffic for directions)<br>
+        3. Name your campaign. Turn <strong>OFF</strong> "Advantage Campaign Budget" (we control per ad set)<br>
         4. <strong>Ad Set level</strong>:<br>
-        &nbsp;&nbsp;• Budget: <strong>Lifetime Budget</strong> (required for dayparting/scheduling)<br>
-        &nbsp;&nbsp;• Schedule: Set start/end dates<br>
-        &nbsp;&nbsp;• Run ads on schedule → Set the time windows from your config<br>
-        &nbsp;&nbsp;• Audience: Locations → Drop pin on Shivajinagar → Set radius<br>
-        &nbsp;&nbsp;• Location type: <strong>"Living in or recently in"</strong> (only option)<br>
-        &nbsp;&nbsp;• Age, languages, interests from config<br>
+        &nbsp;&nbsp;- Budget: <strong>Lifetime Budget</strong> (required for dayparting/scheduling)<br>
+        &nbsp;&nbsp;- Schedule: Set start/end dates<br>
+        &nbsp;&nbsp;- "Run ads on schedule" toggle ON, then set time windows from your config<br>
+        &nbsp;&nbsp;- Audience: Locations, drop pin on Shivajinagar, set radius<br>
+        &nbsp;&nbsp;- Location type: <strong>"Living in or recently in"</strong><br>
+        &nbsp;&nbsp;- Set age, languages, detailed targeting (interests) from config<br>
         5. <strong>Ad level</strong>:<br>
-        &nbsp;&nbsp;• Upload creative (image/video from AI Studio or Reels Engine)<br>
-        &nbsp;&nbsp;• Paste primary text, headline, description<br>
-        &nbsp;&nbsp;• Set CTA button + destination URL<br>
+        &nbsp;&nbsp;- Upload creative (image/video from AI Studio or Reels Engine)<br>
+        &nbsp;&nbsp;- Paste primary text, headline, description<br>
+        &nbsp;&nbsp;- Set CTA button + destination URL<br>
         6. Review + <strong>Publish</strong><br><br>
         <strong>Key tips:</strong><br>
-        • Use <strong>Lifetime Budget</strong> (not Daily) for dayparting control<br>
-        • Meta Pixel (881349531538961) should auto-attach if set up in Ad Account<br>
-        • For "Get Directions" CTA: use Google Maps link as destination<br>
-        • Review takes 15-60 mins — submit early!
+        - Use <strong>Lifetime Budget</strong> (not Daily) for dayparting control<br>
+        - Meta Pixel (881349531538961) auto-attaches from Ad Account settings<br>
+        - For "Get Directions" CTA, use Google Maps link as destination<br>
+        - Review takes 15-60 mins. Submit early!<br>
+        - Ad Account ID: 634959029638544<br>
+        - FB Page ID: 886791574518359
       </div>
     </div>
     <div class="collapsible" id="googleGuide">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        Google Ads — Coming Soon <span class="collapsible-arrow">›</span>
+        Google Ads &mdash; PMax + Search Setup <span class="collapsible-arrow">&rsaquo;</span>
       </div>
-      <div class="collapsible-body" style="font-size:13px;color:var(--text2);line-height:1.7">
-        <strong>Status:</strong> Account setup deferred. New accounts need 1-3 days verification.<br><br>
-        <strong>Planned focus:</strong><br>
-        • "biryani near me" + "restaurants open Shivajinagar" + "late night food Bangalore"<br>
-        • Integration with GA4 (G-LR6RKRV1G5) for conversion tracking<br>
-        • Google Local campaigns for foot traffic<br><br>
-        <strong>For Eid (organic only):</strong><br>
-        • Update Google Business Profile special hours<br>
-        • Create Google Post: "Open on Eid — 1 PM to 1 AM"<br>
-        • Add fresh photos to GBP
+      <div class="collapsible-body" style="font-size:13px;color:var(--text2);line-height:1.8">
+        <strong>Performance Max (Local) Setup:</strong><br><br>
+        1. Go to <strong>ads.google.com</strong> (Account: 368-171-0084)<br>
+        2. Click <strong>"+ New campaign"</strong>, select <strong>"Sales"</strong> or <strong>"Local store visits"</strong><br>
+        3. Campaign type: <strong>Performance Max</strong><br>
+        4. Select your Google Business Profile (Hamza Express, Shivajinagar)<br>
+        5. Set daily budget (minimum recommended: &rupee;1,500/day for PMax)<br>
+        6. <strong>Asset Group</strong>:<br>
+        &nbsp;&nbsp;- Final URL: your Google Maps link<br>
+        &nbsp;&nbsp;- Images: Upload logo (1:1), landscape (1200x628), square (1200x1200)<br>
+        &nbsp;&nbsp;- Headlines: 3-15 headlines, 30 chars each<br>
+        &nbsp;&nbsp;- Long Headlines: up to 5, 90 chars each<br>
+        &nbsp;&nbsp;- Descriptions: up to 4, 90 chars each<br>
+        &nbsp;&nbsp;- Business name: "Hamza Express"<br>
+        7. Audience Signals: Add search themes from your config<br>
+        8. Location: Set radius around Shivajinagar<br>
+        9. Languages: English, Hindi, Kannada, Urdu<br>
+        10. Review + <strong>Publish</strong><br><br>
+        <strong>Search Campaign Setup:</strong><br><br>
+        1. Click <strong>"+ New campaign"</strong>, select <strong>"Website traffic"</strong><br>
+        2. Campaign type: <strong>Search</strong><br>
+        3. Set daily budget (minimum: &rupee;100/day for Search)<br>
+        4. <strong>Ad Group</strong>:<br>
+        &nbsp;&nbsp;- Keywords: Add search themes as keywords (use phrase match or broad match)<br>
+        &nbsp;&nbsp;- Location: Radius targeting around Shivajinagar<br>
+        5. <strong>Responsive Search Ad</strong>:<br>
+        &nbsp;&nbsp;- Headlines (min 3, max 15): 30 chars each<br>
+        &nbsp;&nbsp;- Descriptions (min 2, max 4): 90 chars each<br>
+        &nbsp;&nbsp;- Final URL + display path<br>
+        6. Review + <strong>Publish</strong><br><br>
+        <strong>Key tips:</strong><br>
+        - PMax requires GBP linked. Verify in "Linked accounts"<br>
+        - GA4 property: G-LR6RKRV1G5 &mdash; set up conversion tracking<br>
+        - PMax needs 2-4 weeks to learn. Don't change budget in first 14 days<br>
+        - Search: Start with broad match + smart bidding, then refine<br>
+        - Add negative keywords: "recipe", "how to make", "ingredients"
       </div>
     </div>
     <div class="collapsible" id="creativeGuide">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
-        Creative Best Practices <span class="collapsible-arrow">›</span>
+        Creative Best Practices <span class="collapsible-arrow">&rsaquo;</span>
       </div>
       <div class="collapsible-body" style="font-size:13px;color:var(--text2);line-height:1.7">
         <strong>Dimensions:</strong><br>
-        • Feed: 1080×1080 (square) — works for both IG + FB feed<br>
-        • Stories/Reels: 1080×1920 (9:16 vertical)<br>
-        • FB Landscape: 1200×628 (1.91:1) — link ads, headers<br><br>
-        <strong>Text limits (Meta):</strong><br>
-        • Primary text: 125 chars visible (can be longer, truncated with "...See More")<br>
-        • Headline: 40 chars<br>
-        • Description: 30 chars<br>
-        • Image text: <20% of image area (Meta may reduce delivery otherwise)<br><br>
+        - Feed: 1080x1080 (square) &mdash; works for both IG + FB feed<br>
+        - Stories/Reels: 1080x1920 (9:16 vertical)<br>
+        - FB Landscape: 1200x628 (1.91:1) &mdash; link ads, headers<br>
+        - Google PMax: Logo 1:1, Landscape 1200x628, Square 1200x1200<br><br>
+        <strong>Meta text limits:</strong><br>
+        - Primary text: 125 chars visible (can be longer, truncated with "...See More")<br>
+        - Headline: 40 chars<br>
+        - Description: 30 chars<br>
+        - Image text: &lt;20% of image area (Meta may reduce delivery otherwise)<br><br>
+        <strong>Google text limits:</strong><br>
+        - Headline: 30 chars (3-15 headlines, Google combines them)<br>
+        - Long Headline: 90 chars (1-5)<br>
+        - Description: 90 chars (1-4)<br>
+        - Business name: 25 chars<br><br>
         <strong>Ad rejection risks:</strong><br>
-        • Too much text on image<br>
-        • Before/after claims<br>
-        • Misleading buttons or arrows on creative<br>
-        • All-caps text
+        - Too much text on image<br>
+        - Before/after claims<br>
+        - Misleading buttons or arrows on creative<br>
+        - All-caps text<br>
+        - For Google: text overlays on images can hurt performance
       </div>
     </div>
 
@@ -621,195 +809,372 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ==================== DATA ====================
+    // ==================== CONSTANTS ====================
+    const PLATFORM_IDS = {
+      META_AD_ACCOUNT: '634959029638544', META_PIXEL: '881349531538961',
+      FB_PAGE: '886791574518359', GOOGLE_ADS: '368-171-0084',
+      GA4: 'G-LR6RKRV1G5', MAPS_URL: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9',
+      WHATSAPP: 'wa.me/918008002049'
+    };
+    const CHAR_LIMITS = { meta: { headline: 40, description: 30 }, google: { headline: 30, longHeadline: 90, description: 90, businessName: 25 } };
+    const GOOGLE_BUDGET_MINS = { pmax: 1500, search: 100 };
+    const RADIUS_AUDIENCE = { 1: '~80K', 2: '~180K', 3: '~300K', 5: '~550K' };
+    const CTA_LABELS = { GET_DIRECTIONS: 'Get Directions', NO_BUTTON: 'No Button', SEND_MESSAGE: 'Send Message', CALL_NOW: 'Call Now', LEARN_MORE: 'Learn More', ORDER_NOW: 'Order Now', VISIT_STORE: 'Visit Store' };
+
     const OFFERS = [
       { code: 'O1', name: 'Biryani BOGO', price: 'POS Price (Buy 1 Get 1)', type: 'BOGO', job: 'Get them in the door', bestCampaign: 'Retargeting' },
-      { code: 'O2', name: 'Ghee Rice Meal', price: '₹149', type: 'Combo', job: 'Catch non-biryani segment', bestCampaign: 'Awareness' },
-      { code: 'O3', name: '₹99 Chicken Meal', price: '₹99', type: 'Combo', job: 'Youth magnet', bestCampaign: 'Traffic' },
+      { code: 'O2', name: 'Ghee Rice Meal', price: '\u20B9149', type: 'Combo', job: 'Catch non-biryani segment', bestCampaign: 'Awareness' },
+      { code: 'O3', name: '\u20B999 Chicken Meal', price: '\u20B999', type: 'Combo', job: 'Youth magnet', bestCampaign: 'Traffic' },
       { code: 'O4', name: 'Shawarma BOGO', price: 'POS Price (Buy 1 Get 1)', type: 'BOGO', job: 'Increase order value', bestCampaign: 'Retargeting' },
-      { code: 'O5', name: 'Kebab Plate @₹59', price: '₹59', type: 'Combo', job: 'Lowest barrier trial', bestCampaign: 'Traffic' },
-      { code: 'O6', name: 'Porotta + Curry @₹79', price: '₹79', type: 'Combo', job: 'Kill "expensive" perception', bestCampaign: 'Awareness' },
-      { code: 'O7', name: 'Family Daawat', price: '₹699', type: 'Package', job: 'Highest revenue per order', bestCampaign: 'Awareness' },
+      { code: 'O5', name: 'Kebab Plate @\u20B959', price: '\u20B959', type: 'Combo', job: 'Lowest barrier trial', bestCampaign: 'Traffic' },
+      { code: 'O6', name: 'Porotta + Curry @\u20B979', price: '\u20B979', type: 'Combo', job: 'Kill "expensive" perception', bestCampaign: 'Awareness' },
+      { code: 'O7', name: 'Family Daawat', price: '\u20B9699', type: 'Package', job: 'Highest revenue per order', bestCampaign: 'Awareness' },
     ];
 
-    const TEMPLATES = [
+    const META_TEMPLATES = [
       {
-        id: 'eid', name: 'Eid — We\'re Open', desc: 'Awareness push for Eid day. Dayparted lunch + dinner. Most restaurants closed.', tags: ['Awareness', 'Festival', 'Dayparted'],
+        id: 'eid', name: 'Eid \u2014 We\'re Open', desc: 'Awareness push for Eid day. Dayparted lunch + dinner. Most restaurants closed.', tags: ['Awareness', 'Festival', 'Dayparted'],
         data: {
-          type: 'awareness', dateStart: '2026-03-22', dateEnd: '2026-03-22',
+          platform: 'meta', type: 'awareness', dateStart: '2026-03-22', dateEnd: '2026-03-22',
+          budgetType: 'lifetime', useExistingPost: false,
           windows: [{ start: '11:00', end: '15:00', budget: 600, label: 'Lunch Push' }, { start: '17:30', end: '23:00', budget: 1000, label: 'Dinner Push' }],
           radius: 3, ageMin: 18, ageMax: 55,
           interests: ['biryani', 'nonveg', 'foodies', 'latenight', 'restaurants'],
           languages: ['en', 'hi', 'kn', 'ur'],
-          primaryText: 'Eid Mubarak \u{1F319}\n\nShivajinagar is closed today. We\'re open.\n\nHamza Express \u{2014} 1 PM to 1 AM\nBiryani \u{2022} Kebabs \u{2022} Ghee Rice \u{2022} Full Dakhni spread\n\nThe new face of Hamza Hotel \u{2014} 108 years, same kitchen.\n\u{2B50} 5.0 on Google (70+ reviews)\n\n\u{1F4CD} HKP Road, near Russell Market\nWalk in. Dine in. Take away.',
-          headline: 'Open on Eid \u{2014} Walk In', description: 'Biryani & more, 1 PM - 1 AM',
+          primaryText: 'Eid Mubarak \uD83C\uDF19\n\nShivajinagar is closed today. We\'re open.\n\nHamza Express \u2014 1 PM to 1 AM\nBiryani \u2022 Kebabs \u2022 Ghee Rice \u2022 Full Dakhni spread\n\nThe new face of Hamza Hotel \u2014 108 years, same kitchen.\n\u2B50 5.0 on Google (70+ reviews)\n\n\uD83D\uDCCD HKP Road, near Russell Market\nWalk in. Dine in. Take away.',
+          headline: 'Open on Eid \u2014 Walk In', description: 'Biryani & more, 1PM-1AM',
           cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
         id: 'weekend', name: 'Weekend Push', desc: 'Friday-Sunday traffic driver with offer. Get Directions CTA.', tags: ['Traffic', 'Offer', 'Recurring'],
         data: {
-          type: 'traffic', dateStart: '', dateEnd: '',
+          platform: 'meta', type: 'traffic', dateStart: '', dateEnd: '',
+          budgetType: 'lifetime', useExistingPost: false,
           windows: [{ start: '11:30', end: '14:30', budget: 300, label: 'Lunch' }, { start: '18:00', end: '22:00', budget: 500, label: 'Dinner' }],
           radius: 3, ageMin: 18, ageMax: 45,
           interests: ['biryani', 'foodies', 'restaurants'],
           languages: ['en', 'hi', 'kn', 'ur'],
-          primaryText: 'Weekend plans? Sorted.\n\nHamza Express \u{2014} Shivajinagar\u2019s newest Dakhni kitchen.\n\nBiryani \u{2022} Kebabs \u{2022} Ghee Rice \u{2022} Brain Fry\n\n108 years of taste. Brand new place.\n\u{1F4CD} HKP Road, near Russell Market\nOpen 1 PM \u{2013} 5 AM',
+          primaryText: 'Weekend plans? Sorted.\n\nHamza Express \u2014 Shivajinagar\u2019s newest Dakhni kitchen.\n\nBiryani \u2022 Kebabs \u2022 Ghee Rice \u2022 Brain Fry\n\n108 years of taste. Brand new place.\n\uD83D\uDCCD HKP Road, near Russell Market\nOpen 1 PM \u2013 5 AM',
           headline: 'Dakhni Weekend', description: 'HKP Road, Shivajinagar',
           cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
-        id: 'new_customer', name: 'New Customer — ₹59 Trial', desc: 'Low-barrier Kebab Plate at ₹59. Extended 5km radius for discovery.', tags: ['Traffic', 'O5', 'Discovery'],
+        id: 'new_customer', name: 'New Customer \u2014 \u20B959 Trial', desc: 'Low-barrier Kebab Plate at \u20B959. Extended 5km radius for discovery.', tags: ['Traffic', 'O5', 'Discovery'],
         data: {
-          type: 'traffic', dateStart: '', dateEnd: '',
+          platform: 'meta', type: 'traffic', dateStart: '', dateEnd: '',
+          budgetType: 'lifetime', useExistingPost: false,
           windows: [{ start: '12:00', end: '22:00', budget: 500, label: 'All Day' }],
           radius: 5, ageMin: 18, ageMax: 35,
           interests: ['biryani', 'nonveg', 'foodies', 'swiggy'],
           languages: ['en', 'hi', 'kn'],
-          primaryText: 'Try Shivajinagar\u2019s legendary taste for just \u{20B9}59.\n\nKebab Plate \u{2014} succulent tandoor kebabs, fresh from the clay oven.\n\nHamza Express \u{2022} The new face of Hamza Hotel (est. 1918)\n\u{2B50} 5.0 on Google\n\n\u{1F4CD} HKP Road, near Russell Market',
-          headline: 'Kebab Plate \u{20B9}59', description: 'Tandoor fresh, walk in',
+          primaryText: 'Try Shivajinagar\u2019s legendary taste for just \u20B959.\n\nKebab Plate \u2014 succulent tandoor kebabs, fresh from the clay oven.\n\nHamza Express \u2022 The new face of Hamza Hotel (est. 1918)\n\u2B50 5.0 on Google\n\n\uD83D\uDCCD HKP Road, near Russell Market',
+          headline: 'Kebab Plate \u20B959', description: 'Tandoor fresh, walk in',
           cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
-        id: 'retarget', name: 'Retargeting — BOGO', desc: 'Biryani BOGO for pixel audiences and WhatsApp engagers.', tags: ['Engagement', 'O1', 'Retarget'],
+        id: 'retarget', name: 'Retargeting \u2014 BOGO', desc: 'Biryani BOGO for pixel audiences and WhatsApp engagers.', tags: ['Engagement', 'O1', 'Retarget'],
         data: {
-          type: 'engagement', dateStart: '', dateEnd: '',
+          platform: 'meta', type: 'engagement', dateStart: '', dateEnd: '',
+          budgetType: 'lifetime', useExistingPost: false,
           windows: [{ start: '11:00', end: '21:00', budget: 300, label: 'Full Day' }],
           radius: 5, ageMin: 18, ageMax: 55,
           interests: ['biryani', 'nonveg', 'foodies'],
           languages: ['en', 'hi', 'kn', 'ur'],
-          primaryText: 'Biryani Buy 1 Get 1 \u{1F60B}\n\nBring a friend. Both eat. One pays.\n\nHamza Express \u{2014} 108 years of Dakhni biryani on HKP Road.\n\n\u{1F4CD} Walk in, Shivajinagar\nOpen 1 PM \u{2013} 5 AM',
+          primaryText: 'Biryani Buy 1 Get 1 \uD83D\uDE0B\n\nBring a friend. Both eat. One pays.\n\nHamza Express \u2014 108 years of Dakhni biryani on HKP Road.\n\n\uD83D\uDCCD Walk in, Shivajinagar\nOpen 1 PM \u2013 5 AM',
           headline: 'Biryani BOGO', description: 'Buy 1 Get 1 Free',
           cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
-        id: 'heritage', name: 'Heritage Brand — 108 Years', desc: '7-day brand awareness run. Tell the founding story. 5km extended reach.', tags: ['Awareness', 'Brand', 'Heritage'],
+        id: 'heritage', name: 'Heritage Brand \u2014 108 Years', desc: '7-day brand awareness run. Tell the founding story. 5km extended reach.', tags: ['Awareness', 'Brand', 'Heritage'],
         data: {
-          type: 'awareness', dateStart: '', dateEnd: '',
+          platform: 'meta', type: 'awareness', dateStart: '', dateEnd: '',
+          budgetType: 'lifetime', useExistingPost: false,
           windows: [{ start: '12:00', end: '21:00', budget: 250, label: 'Peak Hours' }],
           radius: 5, ageMin: 22, ageMax: 55,
           interests: ['biryani', 'foodies', 'restaurants'],
           languages: ['en', 'hi', 'kn', 'ur'],
-          primaryText: '1918. H.K.P. Road. One family. One kitchen.\n\nBefore Russell Market was built. Before Shivajinagar had a name. A small kitchen started serving Dakhni biryani.\n\n108 years later, the address hasn\u2019t changed. The recipes haven\u2019t changed.\n\nHamza Express \u{2014} the new face of Hamza Hotel.\n\n\u{2B50} 5.0 on Google \u{2022} 70+ reviews\n\u{1F4CD} 151-154 HKP Road, Shivajinagar',
-          headline: 'Since 1918', description: 'Bangalore\u2019s oldest biryani kitchen',
+          primaryText: '1918. H.K.P. Road. One family. One kitchen.\n\nBefore Russell Market was built. Before Shivajinagar had a name. A small kitchen started serving Dakhni biryani.\n\n108 years later, the address hasn\u2019t changed. The recipes haven\u2019t changed.\n\nHamza Express \u2014 the new face of Hamza Hotel.\n\n\u2B50 5.0 on Google \u2022 70+ reviews\n\uD83D\uDCCD 151-154 HKP Road, Shivajinagar',
+          headline: 'Since 1918', description: 'Bangalore\u2019s oldest kitchen',
           cta: 'LEARN_MORE', linkUrl: 'https://hamzaexpress.in'
         }
       },
     ];
 
-    const CTA_LABELS = {
-      GET_DIRECTIONS: 'Get Directions', LEARN_MORE: 'Learn More', SEND_MESSAGE: 'Send Message',
-      CALL_NOW: 'Call Now', ORDER_NOW: 'Order Now'
-    };
+    const GOOGLE_TEMPLATES = [
+      {
+        id: 'g_pmax_eid', name: 'PMax \u2014 Eid Day', desc: 'Performance Max for Eid. Drive foot traffic via Maps, YouTube, Display.', tags: ['PMax', 'Festival', 'Local'],
+        data: {
+          platform: 'google', googleType: 'pmax', gbpLinked: true,
+          dateStart: '2026-03-22', dateEnd: '2026-03-22',
+          googleDailyBudget: 1500, radius: 3, ageMin: 18, ageMax: 55,
+          googleSearchThemes: ['biryani near me', 'restaurants open eid', 'eid food bangalore', 'halal restaurant shivajinagar'],
+          languages: ['en', 'hi', 'kn', 'ur'],
+          googleHeadlines: ['Open on Eid - Walk In', 'Biryani, Kebabs & More', 'Since 1918, Shivajinagar', '1 PM to 1 AM Today', 'HKP Road, Russell Market'],
+          googleLongHeadlines: ['Hamza Express - Open on Eid when Shivajinagar is closed. Walk in from 1 PM to 1 AM.'],
+          googleDescriptions: ['Authentic Dakhni biryani, tandoor kebabs, ghee rice. 108 years, same kitchen. 5.0 on Google.', 'HKP Road, near Russell Market. Dine in or take away. Open late every day.'],
+          googleBusinessName: 'Hamza Express', googleCta: 'GET_DIRECTIONS',
+          googleFinalUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
+        }
+      },
+      {
+        id: 'g_pmax_weekend', name: 'PMax \u2014 Weekend', desc: 'Performance Max weekend push. Maps + local discovery across Google network.', tags: ['PMax', 'Weekend', 'Local'],
+        data: {
+          platform: 'google', googleType: 'pmax', gbpLinked: true,
+          dateStart: '', dateEnd: '',
+          googleDailyBudget: 1500, radius: 3, ageMin: 18, ageMax: 45,
+          googleSearchThemes: ['biryani near me', 'restaurants shivajinagar', 'non veg restaurant bangalore', 'late night food near me'],
+          languages: ['en', 'hi', 'kn', 'ur'],
+          googleHeadlines: ['Dakhni Biryani & Kebabs', 'Open 1 PM to 5 AM', 'Since 1918, HKP Road', 'Walk In, Shivajinagar', '5.0 on Google Reviews'],
+          googleLongHeadlines: ['Hamza Express - Shivajinagar\'s legendary Dakhni kitchen. Biryani, kebabs, ghee rice. Open late.'],
+          googleDescriptions: ['108 years of authentic Dakhni biryani on HKP Road. Walk in, dine in, take away. Open 1 PM to 5 AM.', 'Near Russell Market, Shivajinagar. Tandoor kebabs, brain fry, ghee rice. 5.0 on Google.'],
+          googleBusinessName: 'Hamza Express', googleCta: 'GET_DIRECTIONS',
+          googleFinalUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
+        }
+      },
+      {
+        id: 'g_search_local', name: 'Search \u2014 Local Keywords', desc: 'Google Search for high-intent "near me" and location queries.', tags: ['Search', 'Keywords', 'Intent'],
+        data: {
+          platform: 'google', googleType: 'search', gbpLinked: false,
+          dateStart: '', dateEnd: '',
+          googleDailyBudget: 300, radius: 5, ageMin: 18, ageMax: 55,
+          googleSearchThemes: ['biryani near me', 'best biryani shivajinagar', 'late night food bangalore', 'kebab near me', 'halal food near me'],
+          languages: ['en', 'hi', 'kn'],
+          googleHeadlines: ['Best Biryani in Shivajinagar', 'Open 1 PM to 5 AM', 'HKP Road, Russell Market', 'Dakhni Biryani Since 1918', 'Tandoor Kebabs & More'],
+          googleLongHeadlines: ['Hamza Express - Authentic Dakhni biryani & kebabs on HKP Road. Since 1918. Open late.'],
+          googleDescriptions: ['Walk into Shivajinagar\'s oldest biryani kitchen. 108 years of Dakhni flavor. 5.0 on Google, 70+ reviews.', 'Biryani, kebabs, ghee rice, brain fry. Near Russell Market. Dine in or take away. Open 1 PM to 5 AM.'],
+          googleBusinessName: 'Hamza Express', googleCta: 'GET_DIRECTIONS',
+          googleFinalUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
+        }
+      },
+    ];
 
-    const RADIUS_AUDIENCE = { 1: '~80K', 2: '~180K', 3: '~300K', 5: '~550K' };
+    const FESTIVALS = [
+      { name: 'Eid al-Fitr 2026', date: '2026-03-22', context: 'Most of Shivajinagar CLOSED. HE open 1 PM \u2013 1 AM. Massive foot traffic opportunity.', action: 'eid' },
+      { name: 'Ramadan ends', date: '2026-03-21', context: 'Last day of Ramadan. Iftar rush expected. Heavy evening orders.', action: null },
+    ];
 
     // ==================== STATE ====================
     let campaign = {
-      type: '', dateStart: '', dateEnd: '',
-      windows: [],
-      radius: 3, ageMin: 18, ageMax: 55,
+      platform: '',
+      type: '', budgetType: 'lifetime', useExistingPost: false,
+      googleType: '', gbpLinked: false,
+      googleHeadlines: ['', '', ''], googleLongHeadlines: [''],
+      googleDescriptions: [''], googleSearchThemes: [],
+      googleDailyBudget: 0, googleBusinessName: 'Hamza Express',
+      googleCta: 'GET_DIRECTIONS', googleFinalUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9',
+      dateStart: '', dateEnd: '',
+      windows: [], radius: 3, ageMin: 18, ageMax: 55,
       interests: ['biryani', 'nonveg', 'foodies', 'latenight', 'restaurants'],
       languages: ['en', 'hi', 'kn', 'ur'],
       primaryText: '', headline: '', description: '',
       cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9',
       selectedOffer: null, creativeDim: '1080x1080'
     };
-    let currentStep = 1;
+    let currentStep = 0;
 
     // ==================== INIT ====================
     function init() {
       loadDraft();
-      renderOfferTable();
+      renderWizardTabs();
+      renderOffers();
       renderTemplates();
       renderTracker();
       renderWindows();
+      renderGoogleHeadlines();
+      renderGoogleLongHeadlines();
+      renderGoogleDescs();
+      renderSearchThemes();
       updateBudget();
-      updatePreview();
       updateKPIs();
+      renderContextBanner();
       syncUIFromState();
+      goStep(currentStep);
     }
 
     function loadDraft() {
       try {
         const saved = localStorage.getItem('he_ads_draft');
-        if (saved) campaign = { ...campaign, ...JSON.parse(saved) };
-      } catch(e) {}
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          campaign = { ...campaign, ...parsed };
+          if (parsed.windows) campaign.windows = JSON.parse(JSON.stringify(parsed.windows));
+          if (parsed.googleHeadlines) campaign.googleHeadlines = [...parsed.googleHeadlines];
+          if (parsed.googleLongHeadlines) campaign.googleLongHeadlines = [...parsed.googleLongHeadlines];
+          if (parsed.googleDescriptions) campaign.googleDescriptions = [...parsed.googleDescriptions];
+          if (parsed.googleSearchThemes) campaign.googleSearchThemes = [...parsed.googleSearchThemes];
+        }
+      } catch (e) { console.error('Draft load failed', e); }
     }
 
     function saveDraft() {
-      localStorage.setItem('he_ads_draft', JSON.stringify(campaign));
-      toast('Draft saved');
+      try { localStorage.setItem('he_ads_draft', JSON.stringify(campaign)); } catch(e) {}
     }
 
-    function syncUIFromState() {
-      // Type
-      document.querySelectorAll('.type-card').forEach(c => {
-        c.classList.toggle('selected', c.dataset.type === campaign.type);
-      });
-      // Dates
-      document.getElementById('dateStart').value = campaign.dateStart;
-      document.getElementById('dateEnd').value = campaign.dateEnd;
-      // Audience
-      document.getElementById('audienceRadius').value = campaign.radius;
-      document.getElementById('ageMin').value = campaign.ageMin;
-      document.getElementById('ageMax').value = campaign.ageMax;
-      // Interests
-      document.querySelectorAll('#interestChips .chip').forEach(c => {
-        c.classList.toggle('active', campaign.interests.includes(c.dataset.val));
-      });
-      // Languages
-      document.querySelectorAll('#langChips .chip').forEach(c => {
-        c.classList.toggle('active', campaign.languages.includes(c.dataset.val));
-      });
-      // Ad copy
-      document.getElementById('adPrimaryText').value = campaign.primaryText;
-      document.getElementById('adHeadline').value = campaign.headline;
-      document.getElementById('adDescription').value = campaign.description;
-      document.getElementById('adCta').value = campaign.cta;
-      document.getElementById('adLinkUrl').value = campaign.linkUrl;
-      // Dims
-      document.querySelectorAll('.dim-option').forEach(d => {
-        d.classList.toggle('active', d.dataset.dim === campaign.creativeDim);
-      });
-      updateAudience();
-      updatePreview();
-      generateAdPrompt();
+    // ==================== WIZARD TABS ====================
+    const TAB_LABELS_META = ['Platform', 'Objective', 'Schedule', 'Audience', 'Creative', 'Ad Copy', 'Export'];
+    const TAB_LABELS_GOOGLE = ['Platform', 'Objective', 'Schedule', 'Search Themes', 'Assets', 'Ad Copy', 'Export'];
+
+    function renderWizardTabs() {
+      const labels = campaign.platform === 'google' ? TAB_LABELS_GOOGLE : TAB_LABELS_META;
+      const container = document.getElementById('wizardTabs');
+      container.innerHTML = labels.map((label, i) =>
+        `<div class="wizard-step-tab${i === currentStep ? ' active' : ''}${i < currentStep ? ' done' : ''}" data-step="${i}" onclick="goStep(${i})"><span class="step-num">${i}</span>${label}</div>`
+      ).join('');
     }
 
-    // ==================== WIZARD NAV ====================
     function goStep(n) {
       currentStep = n;
-      document.querySelectorAll('.wizard-panel').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
-      document.querySelectorAll('.wizard-step-tab').forEach(t => {
-        const s = parseInt(t.dataset.step);
-        t.classList.toggle('active', s === n);
-        t.classList.toggle('done', s < n);
-      });
-      if (n === 5) updatePreview();
-      if (n === 6) generateConfig();
+      document.querySelectorAll('.wizard-panel').forEach((p, i) => p.classList.toggle('active', i === n));
+      renderWizardTabs();
+
+      if (n === 2) updateBudget();
+      if (n === 3) updateAudience();
       if (n === 4) generateAdPrompt();
+      if (n === 5) { updateMetaPreview(); }
+      if (n === 6) { runIntelligenceCheck(); generateConfig(); }
+
+      updatePlatformVisibility();
       saveDraft();
     }
 
-    // ==================== STEP 1: TYPE ====================
-    function selectType(el) {
-      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
-      el.classList.add('selected');
-      campaign.type = el.dataset.type;
-      // Auto-set CTA based on type
-      const ctaMap = { awareness: 'GET_DIRECTIONS', traffic: 'GET_DIRECTIONS', engagement: 'LEARN_MORE', messages: 'SEND_MESSAGE' };
-      const linkMap = { awareness: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9', traffic: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9', engagement: 'https://hamzaexpress.in', messages: 'https://wa.me/918008002049' };
-      campaign.cta = ctaMap[campaign.type] || 'GET_DIRECTIONS';
-      campaign.linkUrl = linkMap[campaign.type] || '';
-      document.getElementById('adCta').value = campaign.cta;
-      document.getElementById('adLinkUrl').value = campaign.linkUrl;
+    // ==================== PLATFORM VISIBILITY ====================
+    function updatePlatformVisibility() {
+      const isMeta = campaign.platform === 'meta';
+      const isGoogle = campaign.platform === 'google';
+
+      // Step 2
+      const metaBudget = document.getElementById('metaBudgetSection');
+      const googleBudget = document.getElementById('googleBudgetSection');
+      if (metaBudget) metaBudget.style.display = isMeta ? 'block' : 'none';
+      if (googleBudget) googleBudget.style.display = isGoogle ? 'block' : 'none';
+
+      // Step 3
+      const metaAud = document.getElementById('metaAudienceSection');
+      const googleAud = document.getElementById('googleAudienceSection');
+      if (metaAud) metaAud.style.display = isMeta ? 'block' : 'none';
+      if (googleAud) googleAud.style.display = isGoogle ? 'block' : 'none';
+
+      // Step 4
+      const metaCreative = document.getElementById('metaCreativeSection');
+      const googleCreative = document.getElementById('googleCreativeSection');
+      if (metaCreative) metaCreative.style.display = isMeta ? 'block' : 'none';
+      if (googleCreative) googleCreative.style.display = isGoogle ? 'block' : 'none';
+
+      // Step 5
+      const metaCopy = document.getElementById('metaCopySection');
+      const googleCopy = document.getElementById('googleCopySection');
+      if (metaCopy) metaCopy.style.display = isMeta ? 'block' : 'none';
+      if (googleCopy) googleCopy.style.display = isGoogle ? 'block' : 'none';
+
+      // Existing post note
+      const epNote = document.getElementById('existingPostNote');
+      if (epNote) epNote.style.display = (isMeta && campaign.useExistingPost) ? 'block' : 'none';
+
+      // Step 3 label
+      document.querySelectorAll('.step3Label').forEach(el => {
+        el.textContent = isGoogle ? 'Search Themes' : 'Audience';
+      });
     }
 
-    // ==================== STEP 2: SCHEDULE ====================
+    // ==================== STEP 0: PLATFORM ====================
+    function selectPlatform(p) {
+      campaign.platform = p;
+      document.querySelectorAll('.platform-card').forEach(c => c.classList.toggle('selected', c.dataset.platform === p));
+      document.getElementById('step0Next').disabled = false;
+      document.getElementById('step0Next').textContent = 'Next: Objective \u2192';
+      renderWizardTabs();
+      renderObjectiveGrid();
+      updatePlatformVisibility();
+    }
+
+    // ==================== STEP 1: OBJECTIVE ====================
+    function renderObjectiveGrid() {
+      const grid = document.getElementById('objectiveGrid');
+      if (campaign.platform === 'meta') {
+        grid.innerHTML = `
+          <div class="type-card${campaign.type==='awareness'?' selected':''}" data-type="awareness" onclick="selectType(this)">
+            <div class="type-card-icon">\uD83D\uDCE2</div>
+            <div class="type-card-name">Awareness</div>
+            <div class="type-card-desc">Maximize reach. Best for "we're open" announcements, brand building, event pushes.</div>
+            <div class="type-card-meta">CPM ~\u20B980 \u2022 Best for Eid</div>
+          </div>
+          <div class="type-card${campaign.type==='traffic'?' selected':''}" data-type="traffic" onclick="selectType(this)">
+            <div class="type-card-icon">\uD83D\uDCCD</div>
+            <div class="type-card-name">Traffic</div>
+            <div class="type-card-desc">Drive foot traffic + "Get Directions" clicks. Optimizes for link clicks.</div>
+            <div class="type-card-meta">CPC ~\u20B93-8 \u2022 CPM ~\u20B9120</div>
+          </div>
+          <div class="type-card${campaign.type==='engagement'?' selected':''}" data-type="engagement" onclick="selectType(this)">
+            <div class="type-card-icon">\uD83D\uDCAC</div>
+            <div class="type-card-name">Engagement</div>
+            <div class="type-card-desc">Likes, comments, shares. Good for brand posts and retargeting pixel audiences.</div>
+            <div class="type-card-meta">CPE ~\u20B91-3 \u2022 CPM ~\u20B9100</div>
+          </div>
+          <div class="type-card${campaign.type==='messages'?' selected':''}" data-type="messages" onclick="selectType(this)">
+            <div class="type-card-icon">\uD83D\uDCF1</div>
+            <div class="type-card-name">Messages (CTWA)</div>
+            <div class="type-card-desc">Click-to-WhatsApp. Opens a WhatsApp conversation for ordering.</div>
+            <div class="type-card-meta">CPM ~\u20B9150 \u2022 CPA ~\u20B915-40</div>
+          </div>`;
+        document.getElementById('gbpCheckWrap').style.display = 'none';
+      } else if (campaign.platform === 'google') {
+        grid.innerHTML = `
+          <div class="type-card${campaign.googleType==='pmax'?' selected':''}" data-type="pmax" onclick="selectGoogleType(this)">
+            <div class="type-card-icon">\uD83D\uDCCD</div>
+            <div class="type-card-name">Performance Max Local</div>
+            <div class="type-card-desc">Google's AI-powered campaign across Maps, Search, YouTube, Display. Requires GBP linked.</div>
+            <div class="type-card-meta">Min \u20B91,500/day \u2022 Needs GBP</div>
+          </div>
+          <div class="type-card${campaign.googleType==='search'?' selected':''}" data-type="search" onclick="selectGoogleType(this)">
+            <div class="type-card-icon">\uD83D\uDD0D</div>
+            <div class="type-card-name">Search</div>
+            <div class="type-card-desc">Keyword-based text ads. "biryani near me", "restaurants open shivajinagar". High intent.</div>
+            <div class="type-card-meta">Min \u20B9100/day \u2022 Keyword-based</div>
+          </div>`;
+        document.getElementById('gbpCheckWrap').style.display = campaign.googleType === 'pmax' ? 'block' : 'none';
+      }
+    }
+
+    function selectType(el) {
+      document.querySelectorAll('#objectiveGrid .type-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      campaign.type = el.dataset.type;
+      const ctaMap = { awareness: 'GET_DIRECTIONS', traffic: 'GET_DIRECTIONS', engagement: 'LEARN_MORE', messages: 'SEND_MESSAGE' };
+      const linkMap = { awareness: PLATFORM_IDS.MAPS_URL, traffic: PLATFORM_IDS.MAPS_URL, engagement: 'https://hamzaexpress.in', messages: 'https://wa.me/918008002049' };
+      campaign.cta = ctaMap[campaign.type] || 'GET_DIRECTIONS';
+      campaign.linkUrl = linkMap[campaign.type] || '';
+    }
+
+    function selectGoogleType(el) {
+      document.querySelectorAll('#objectiveGrid .type-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      campaign.googleType = el.dataset.type;
+      document.getElementById('gbpCheckWrap').style.display = campaign.googleType === 'pmax' ? 'block' : 'none';
+      checkGbpGate();
+      if (campaign.googleType === 'search') campaign.gbpLinked = false;
+    }
+
+    function checkGbpGate() {
+      const btn = document.getElementById('step1Next');
+      if (campaign.platform === 'google' && campaign.googleType === 'pmax' && !campaign.gbpLinked) {
+        btn.disabled = true;
+        btn.textContent = 'Link GBP to proceed';
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Next: Schedule \u2192';
+      }
+    }
+
+    // ==================== STEP 2: SCHEDULE & BUDGET ====================
+    function setBudgetType(bt) {
+      campaign.budgetType = bt;
+      document.querySelectorAll('.budget-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.bt === bt));
+    }
+
     function addWindow(start = '12:00', end = '22:00', budget = 500, label = '') {
       campaign.windows.push({ start, end, budget, label });
       renderWindows();
@@ -830,75 +1195,78 @@
       }
       list.innerHTML = campaign.windows.map((w, i) => `
         <div class="window-row">
-          <div>
-            <div class="form-label">Start</div>
-            <input type="time" value="${w.start}" onchange="campaign.windows[${i}].start=this.value;updateBudget()">
-          </div>
-          <div>
-            <div class="form-label">End</div>
-            <input type="time" value="${w.end}" onchange="campaign.windows[${i}].end=this.value;updateBudget()">
-          </div>
-          <div>
-            <div class="form-label">Budget (₹)</div>
-            <input type="number" value="${w.budget}" min="100" step="50" onchange="campaign.windows[${i}].budget=parseInt(this.value)||0;updateBudget()">
-          </div>
+          <div><div class="form-label">Start</div><input type="time" value="${w.start}" onchange="campaign.windows[${i}].start=this.value;updateBudget()"></div>
+          <div><div class="form-label">End</div><input type="time" value="${w.end}" onchange="campaign.windows[${i}].end=this.value;updateBudget()"></div>
+          <div><div class="form-label">Budget (\u20B9)</div><input type="number" value="${w.budget}" min="100" step="50" onchange="campaign.windows[${i}].budget=parseInt(this.value)||0;updateBudget()"></div>
           <button class="window-remove" onclick="removeWindow(${i})">&times;</button>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
 
     function updateBudget() {
       campaign.dateStart = document.getElementById('dateStart').value;
       campaign.dateEnd = document.getElementById('dateEnd').value;
 
-      // Timeline bar
-      const bar = document.getElementById('timelineBar');
-      const colors = ['rgba(249,115,22,.7)', 'rgba(59,130,246,.7)', 'rgba(16,185,129,.7)', 'rgba(139,92,246,.7)'];
-      bar.innerHTML = campaign.windows.map((w, i) => {
-        const startMins = timeToMins(w.start);
-        const endMins = timeToMins(w.end);
-        const left = (startMins / 1440) * 100;
-        const width = ((endMins - startMins) / 1440) * 100;
-        return `<div class="timeline-segment" style="left:${left}%;width:${Math.max(width, 1)}%;background:${colors[i % colors.length]}">
-          <span>${w.label || ('₹' + w.budget)}</span>
-        </div>`;
-      }).join('');
+      if (campaign.platform === 'meta') {
+        // Timeline bar
+        const bar = document.getElementById('timelineBar');
+        const colors = ['rgba(249,115,22,.7)', 'rgba(59,130,246,.7)', 'rgba(16,185,129,.7)', 'rgba(139,92,246,.7)'];
+        bar.innerHTML = campaign.windows.map((w, i) => {
+          const startMins = timeToMins(w.start), endMins = timeToMins(w.end);
+          const left = (startMins / 1440) * 100, width = ((endMins - startMins) / 1440) * 100;
+          return `<div class="timeline-segment" style="left:${left}%;width:${Math.max(width, 1)}%;background:${colors[i % colors.length]}"><span>${w.label || ('\u20B9' + w.budget)}</span></div>`;
+        }).join('');
+      }
 
       // Summary
-      const total = campaign.windows.reduce((s, w) => s + w.budget, 0);
-      const cpm = campaign.type === 'traffic' ? 120 : campaign.type === 'messages' ? 150 : 80;
-      const estReach = Math.round(total / cpm * 1000);
+      const total = campaign.platform === 'google' ? campaign.googleDailyBudget * getDays() : campaign.windows.reduce((s, w) => s + w.budget, 0);
+      const cpm = getCPM();
+      const estReach = cpm > 0 ? Math.round(total / cpm * 1000) : 0;
+
       const summary = document.getElementById('budgetSummary');
       summary.innerHTML = `
-        <div class="budget-item">
-          <div class="budget-item-label">Total Budget</div>
-          <div class="budget-item-value">₹${total.toLocaleString()}</div>
-        </div>
-        <div class="budget-item">
-          <div class="budget-item-label">Est. Reach</div>
-          <div class="budget-item-value">${estReach.toLocaleString()}</div>
-        </div>
-        <div class="budget-item">
-          <div class="budget-item-label">Est. CPM</div>
-          <div class="budget-item-value mono">₹${cpm}</div>
-        </div>
-        <div class="budget-item">
-          <div class="budget-item-label">Windows</div>
-          <div class="budget-item-value">${campaign.windows.length}</div>
-        </div>
-      `;
+        <div class="budget-item"><div class="budget-item-label">Total Budget</div><div class="budget-item-value">\u20B9${total.toLocaleString()}</div></div>
+        <div class="budget-item"><div class="budget-item-label">Est. Reach</div><div class="budget-item-value">${estReach.toLocaleString()}</div></div>
+        <div class="budget-item"><div class="budget-item-label">Est. CPM</div><div class="budget-item-value mono">\u20B9${cpm}</div></div>
+        <div class="budget-item"><div class="budget-item-label">${campaign.platform === 'meta' ? 'Windows' : 'Days'}</div><div class="budget-item-value">${campaign.platform === 'meta' ? campaign.windows.length : getDays()}</div></div>`;
+    }
+
+    function updateGoogleBudget() {
+      campaign.googleDailyBudget = parseInt(document.getElementById('googleDailyBudget').value) || 0;
+      const ind = document.getElementById('googleBudgetIndicator');
+      const min = GOOGLE_BUDGET_MINS[campaign.googleType] || 100;
+      const recommended = min * 1.5;
+      if (campaign.googleDailyBudget < min) {
+        ind.className = 'budget-indicator red';
+        ind.textContent = `Below minimum (\u20B9${min}/day for ${campaign.googleType === 'pmax' ? 'PMax' : 'Search'}). Increase budget.`;
+      } else if (campaign.googleDailyBudget < recommended) {
+        ind.className = 'budget-indicator yellow';
+        ind.textContent = `Near minimum. Recommended: \u20B9${recommended}/day+ for better results.`;
+      } else {
+        ind.className = 'budget-indicator green';
+        ind.textContent = `Good budget. \u20B9${campaign.googleDailyBudget}/day for ${campaign.googleType === 'pmax' ? 'Performance Max' : 'Search'}.`;
+      }
+      updateBudget();
+    }
+
+    function getDays() {
+      if (!campaign.dateStart || !campaign.dateEnd) return 1;
+      const d1 = new Date(campaign.dateStart), d2 = new Date(campaign.dateEnd);
+      return Math.max(1, Math.ceil((d2 - d1) / 86400000) + 1);
+    }
+
+    function getCPM() {
+      if (campaign.platform === 'google') return campaign.googleType === 'pmax' ? 60 : 40;
+      return { awareness: 80, traffic: 120, engagement: 100, messages: 150 }[campaign.type] || 80;
     }
 
     function timeToMins(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
 
     // ==================== STEP 3: AUDIENCE ====================
-    function toggleChip(el) {
+    function toggleChip(el, field) {
       el.classList.toggle('active');
-      // Sync to state
       const parent = el.parentElement;
       const vals = [...parent.querySelectorAll('.chip.active')].map(c => c.dataset.val);
-      if (parent.id === 'interestChips') campaign.interests = vals;
-      else campaign.languages = vals;
+      campaign[field] = vals;
       updateAudience();
     }
 
@@ -909,14 +1277,36 @@
       document.getElementById('estSize').textContent = RADIUS_AUDIENCE[campaign.radius] || '~300K';
     }
 
-    // ==================== STEP 4: CREATIVE ====================
-    function switchCreative(tab, el) {
-      document.querySelectorAll('.creative-tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('creativeStatic').style.display = tab === 'static' ? 'block' : 'none';
-      document.getElementById('creativeVideo').style.display = tab === 'video' ? 'block' : 'none';
+    // Search Themes
+    function renderSearchThemes() {
+      const list = document.getElementById('themeList');
+      if (campaign.googleSearchThemes.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:4px">No search themes added. Click suggestions or "+ Add Theme".</div>';
+        return;
+      }
+      list.innerHTML = campaign.googleSearchThemes.map((t, i) => `
+        <div class="theme-row">
+          <input type="text" value="${escHtml(t)}" onchange="campaign.googleSearchThemes[${i}]=this.value" style="font-size:13px">
+          <button class="window-remove" style="width:28px;height:28px;font-size:14px" onclick="removeSearchTheme(${i})">&times;</button>
+        </div>`).join('');
     }
 
+    function addSearchTheme(text = '') {
+      if (text && campaign.googleSearchThemes.includes(text)) { toast('Theme already added'); return; }
+      campaign.googleSearchThemes.push(text);
+      renderSearchThemes();
+      if (!text) {
+        const inputs = document.querySelectorAll('#themeList input');
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      }
+    }
+
+    function removeSearchTheme(i) {
+      campaign.googleSearchThemes.splice(i, 1);
+      renderSearchThemes();
+    }
+
+    // ==================== STEP 4: CREATIVE ====================
     function selectDim(el) {
       document.querySelectorAll('.dim-option').forEach(d => d.classList.remove('active'));
       el.classList.add('active');
@@ -925,54 +1315,59 @@
     }
 
     function generateAdPrompt() {
+      if (campaign.platform === 'meta') generateMetaPrompt();
+      else if (campaign.platform === 'google') generateGooglePrompt();
+      const epNote = document.getElementById('existingPostNote');
+      if (epNote) epNote.style.display = (campaign.platform === 'meta' && campaign.useExistingPost) ? 'block' : 'none';
+    }
+
+    function generateMetaPrompt() {
       const dim = campaign.creativeDim;
       const [w, h] = dim.split('x');
       const isEid = campaign.dateStart === '2026-03-22';
       const typeLabel = { awareness: 'Awareness/Reach', traffic: 'Traffic/Directions', engagement: 'Engagement', messages: 'CTWA/WhatsApp' }[campaign.type] || 'Brand';
       const offer = campaign.selectedOffer ? OFFERS.find(o => o.code === campaign.selectedOffer) : null;
 
-      let prompt = `Create a Meta ad image (${w}x${h} pixels${dim === '1080x1080' ? ', square' : dim === '1080x1920' ? ', vertical 9:16' : ', landscape 1.91:1'}) for Hamza Express restaurant.
+      let prompt = `Create a Meta ad image (${w}x${h} pixels${dim === '1080x1080' ? ', square' : dim === '1080x1920' ? ', vertical 9:16' : ', landscape 1.91:1'}) for Hamza Express restaurant.\n\nDESIGN REFERENCES:\n- Image 1 (Logo on brown) and Image 2 (Menu Cover): Brand identity \u2014 Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C), aged parchment textures, ornamental borders, serif typography.\n- Image 3 (Social post reference): Existing social media style.\n\nTHIS IS A PAID AD \u2014 ${typeLabel} campaign.${isEid ? ' EID DAY SPECIAL.' : ''}\n\nLAYOUT:\n- TOP: Hamza Express logo, small\n`;
 
-DESIGN REFERENCES:
-- Image 1 (Logo on brown) and Image 2 (Menu Cover): Brand identity — Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C), aged parchment textures, ornamental borders, serif typography.
-- Image 3 (Social post reference): Existing social media style.
+      if (isEid) {
+        prompt += `- HERO TEXT (largest element): "OPEN ON EID" in bold serif\n- SUBTEXT: "1 PM \u2014 1 AM | Shivajinagar"\n- KEY MESSAGE: "Most of Shivajinagar is closed. We're open."\n- BOTTOM STRIP: "HKP Road, near Russell Market | 108 Years, Same Kitchen"`;
+      } else if (offer) {
+        prompt += `- HERO: "${offer.name}" \u2014 bold, prominent, with price "${offer.price}"\n- SUBTEXT: Hamza Express tagline\n- BOTTOM: "HKP Road, Shivajinagar | Since 1918"`;
+      } else {
+        prompt += `- HERO: Strong brand message or dish visual\n- SUBTEXT: "Dakhni Biryani | Shivajinagar | Since 1918"\n- BOTTOM: "HKP Road, near Russell Market"`;
+      }
 
-THIS IS A PAID AD — ${typeLabel} campaign.${isEid ? ' EID DAY SPECIAL.' : ''}
+      prompt += `\n\nAD-SPECIFIC RULES:\n- Text must cover LESS than 20% of image area (Meta ad policy)\n- CTA text should NOT be on the image (Meta adds the CTA button)\n- NO hashtags, NO prices unless it's an offer ad\n- Bold, high-contrast \u2014 must stop the scroll in a busy feed\n- Use food photography zone if dish-specific (leave 40% for hero dish photo)\n${dim === '1080x1920' ? '- Vertical format: keep key text in center 60% (safe zone for Stories)\n' : ''}\nSTYLE: ${isEid ? 'Warm, festive \u2014 gold/cream tones on dark brown. Subtle crescent moon motif.' : 'Heritage-premium \u2014 dark brown, tan, gold accents. Victorian ornamental borders.'}\nDO NOT: Add CTA buttons, hashtags, or cluttered text. Keep it clean and bold.`;
 
-LAYOUT:
-- TOP: Hamza Express logo, small
-${isEid ? `- HERO TEXT (largest element): "OPEN ON EID" in bold serif
-- SUBTEXT: "1 PM — 1 AM | Shivajinagar"
-- KEY MESSAGE: "Most of Shivajinagar is closed. We're open."
-- BOTTOM STRIP: "HKP Road, near Russell Market | 108 Years, Same Kitchen"` :
-offer ? `- HERO: "${offer.name}" — bold, prominent, with price "${offer.price}"
-- SUBTEXT: Hamza Express tagline
-- BOTTOM: "HKP Road, Shivajinagar | Since 1918"` :
-`- HERO: Strong brand message or dish visual
-- SUBTEXT: "Dakhni Biryani | Shivajinagar | Since 1918"
-- BOTTOM: "HKP Road, near Russell Market"`}
-
-AD-SPECIFIC RULES:
-- Text must cover LESS than 20% of image area (Meta ad policy)
-- CTA text should NOT be on the image (Meta adds the CTA button)
-- NO hashtags, NO prices unless it's an offer ad
-- Bold, high-contrast — must stop the scroll in a busy feed
-- Use food photography zone if dish-specific (leave 40% for hero dish photo)
-${dim === '1080x1920' ? '- Vertical format: keep key text in center 60% (safe zone for Stories)' : ''}
-
-STYLE: ${isEid ? 'Warm, festive — gold/cream tones on dark brown. Subtle crescent moon motif.' : 'Heritage-premium — dark brown, tan, gold accents. Victorian ornamental borders.'}
-DO NOT: Add CTA buttons, hashtags, or cluttered text. Keep it clean and bold.`;
-
-      document.getElementById('adPrompt').textContent = prompt;
+      document.getElementById('adPrompt').value = prompt;
     }
 
-    function copyPrompt() {
-      navigator.clipboard.writeText(document.getElementById('adPrompt').textContent);
-      toast('Prompt copied');
+    function generateGooglePrompt() {
+      const isEid = campaign.dateStart === '2026-03-22';
+      const typeLabel = campaign.googleType === 'pmax' ? 'Performance Max' : 'Search';
+
+      let prompt = `Create Google Ads images for Hamza Express restaurant (${typeLabel} campaign).${isEid ? ' EID DAY SPECIAL.' : ''}\n\nNEED 3 IMAGES:\n1. Logo (1:1 square, 1200x1200) \u2014 clean Hamza Express logo on brown (#713520) background\n2. Landscape (1200x628) \u2014 hero food photography with brand overlay\n3. Square (1200x1200) \u2014 alternate format\n\nDESIGN REFERENCES:\n- Brand identity: Victorian-heritage, warm rich browns (#713520), tan/cream (#D2B48C)\n- Serif typography, ornamental borders, aged parchment textures\n\nGOOGLE AD RULES:\n- Keep key elements in CENTER 80% of image (Google auto-crops edges)\n- NO text overlays preferred (Google adds headlines/descriptions separately)\n- High-quality food photography: biryani, kebabs, ghee rice\n- Clean, uncluttered \u2014 Google penalizes busy images\n${isEid ? '- Eid theme: warm festive tones, gold/cream on brown\n' : ''}\nSTYLE: Heritage-premium restaurant. Authentic Dakhni cuisine. 108-year legacy.\nDO NOT: Add text on images, use cluttered layouts, or place important elements near edges.`;
+
+      document.getElementById('googleAdPrompt').value = prompt;
     }
+
+    function copyPrompt() { navigator.clipboard.writeText(document.getElementById('adPrompt').value); toast('Prompt copied'); }
+    function copyGooglePrompt() { navigator.clipboard.writeText(document.getElementById('googleAdPrompt').value); toast('Prompt copied'); }
 
     // ==================== STEP 5: AD COPY ====================
-    function updatePreview() {
+    function enforceCharLimit(input, max, counterId) {
+      if (input.value.length > max) input.value = input.value.substring(0, max);
+      const len = input.value.length;
+      const pct = len / max;
+      const counter = document.getElementById(counterId);
+      if (counter) {
+        counter.textContent = `${len}/${max}`;
+        counter.className = 'char-counter ' + (pct >= 1 ? 'char-red' : pct >= 0.8 ? 'char-yellow' : 'char-green');
+      }
+    }
+
+    function updateMetaPreview() {
       campaign.primaryText = document.getElementById('adPrimaryText').value;
       campaign.headline = document.getElementById('adHeadline').value;
       campaign.description = document.getElementById('adDescription').value;
@@ -982,42 +1377,191 @@ DO NOT: Add CTA buttons, hashtags, or cluttered text. Keep it clean and bold.`;
       document.getElementById('previewText').textContent = campaign.primaryText || 'Your ad text will appear here...';
       document.getElementById('previewHeadline').textContent = campaign.headline || 'Headline';
       document.getElementById('previewDesc').textContent = campaign.description || 'Description';
-      document.getElementById('previewCta').textContent = CTA_LABELS[campaign.cta] || campaign.cta;
+      const ctaBtn = document.getElementById('previewCta');
+      if (campaign.cta === 'NO_BUTTON') { ctaBtn.style.display = 'none'; }
+      else { ctaBtn.style.display = 'block'; ctaBtn.textContent = CTA_LABELS[campaign.cta] || campaign.cta; }
+    }
+
+    // Google Headlines
+    function renderGoogleHeadlines() {
+      const list = document.getElementById('googleHeadlineList');
+      list.innerHTML = campaign.googleHeadlines.map((h, i) => `
+        <div class="headline-row">
+          <input type="text" value="${escHtml(h)}" maxlength="30" oninput="enforceCharLimit(this,30,'ghc${i}');campaign.googleHeadlines[${i}]=this.value" placeholder="Headline ${i+1}">
+          <span id="ghc${i}" class="char-counter ${charClass(h.length,30)}">${h.length}/30</span>
+          ${campaign.googleHeadlines.length > 3 ? `<button class="window-remove" style="width:28px;height:28px;font-size:14px" onclick="removeGoogleHeadline(${i})">&times;</button>` : ''}
+        </div>`).join('');
+    }
+
+    function addGoogleHeadline() {
+      if (campaign.googleHeadlines.length >= 15) { toast('Max 15 headlines'); return; }
+      campaign.googleHeadlines.push('');
+      renderGoogleHeadlines();
+    }
+
+    function removeGoogleHeadline(i) {
+      if (campaign.googleHeadlines.length <= 3) return;
+      campaign.googleHeadlines.splice(i, 1);
+      renderGoogleHeadlines();
+    }
+
+    // Google Long Headlines
+    function renderGoogleLongHeadlines() {
+      const list = document.getElementById('googleLongHeadlineList');
+      list.innerHTML = campaign.googleLongHeadlines.map((h, i) => `
+        <div class="headline-row">
+          <input type="text" value="${escHtml(h)}" maxlength="90" oninput="enforceCharLimit(this,90,'glhc${i}');campaign.googleLongHeadlines[${i}]=this.value" placeholder="Long headline ${i+1}">
+          <span id="glhc${i}" class="char-counter ${charClass(h.length,90)}">${h.length}/90</span>
+          ${campaign.googleLongHeadlines.length > 1 ? `<button class="window-remove" style="width:28px;height:28px;font-size:14px" onclick="removeGoogleLongHeadline(${i})">&times;</button>` : ''}
+        </div>`).join('');
+    }
+
+    function addGoogleLongHeadline() {
+      if (campaign.googleLongHeadlines.length >= 5) { toast('Max 5 long headlines'); return; }
+      campaign.googleLongHeadlines.push('');
+      renderGoogleLongHeadlines();
+    }
+
+    function removeGoogleLongHeadline(i) {
+      if (campaign.googleLongHeadlines.length <= 1) return;
+      campaign.googleLongHeadlines.splice(i, 1);
+      renderGoogleLongHeadlines();
+    }
+
+    // Google Descriptions
+    function renderGoogleDescs() {
+      const list = document.getElementById('googleDescList');
+      list.innerHTML = campaign.googleDescriptions.map((d, i) => `
+        <div class="headline-row">
+          <input type="text" value="${escHtml(d)}" maxlength="90" oninput="enforceCharLimit(this,90,'gdc${i}');campaign.googleDescriptions[${i}]=this.value" placeholder="Description ${i+1}">
+          <span id="gdc${i}" class="char-counter ${charClass(d.length,90)}">${d.length}/90</span>
+          ${campaign.googleDescriptions.length > 1 ? `<button class="window-remove" style="width:28px;height:28px;font-size:14px" onclick="removeGoogleDesc(${i})">&times;</button>` : ''}
+        </div>`).join('');
+    }
+
+    function addGoogleDesc() {
+      if (campaign.googleDescriptions.length >= 4) { toast('Max 4 descriptions'); return; }
+      campaign.googleDescriptions.push('');
+      renderGoogleDescs();
+    }
+
+    function removeGoogleDesc(i) {
+      if (campaign.googleDescriptions.length <= 1) return;
+      campaign.googleDescriptions.splice(i, 1);
+      renderGoogleDescs();
+    }
+
+    function charClass(len, max) {
+      const pct = len / max;
+      return pct >= 1 ? 'char-red' : pct >= 0.8 ? 'char-yellow' : 'char-green';
+    }
+
+    // ==================== STEP 6: INTELLIGENCE CHECK ====================
+    function runIntelligenceCheck() {
+      const grid = document.getElementById('intelGrid');
+      const cards = [];
+
+      if (campaign.platform === 'google') {
+        // Message Coherence
+        const headlines = campaign.googleHeadlines.filter(h => h.trim());
+        if (headlines.length >= 2) {
+          const combos = [];
+          for (let n = 0; n < Math.min(5, headlines.length); n++) {
+            const picked = [];
+            const count = 2 + Math.floor(Math.random());
+            const indices = new Set();
+            while (indices.size < Math.min(count, headlines.length)) indices.add(Math.floor(Math.random() * headlines.length));
+            indices.forEach(idx => picked.push(headlines[idx]));
+            combos.push(picked);
+          }
+          const eidKeywords = ['eid', 'open', 'shivajinagar', 'hkp', 'russell', 'walk in', 'directions'];
+          const flags = combos.map(c => {
+            const combined = c.join(' ').toLowerCase();
+            const hasContext = eidKeywords.some(k => combined.includes(k));
+            return { combo: c.join(' | '), ok: hasContext };
+          });
+          const allOk = flags.every(f => f.ok);
+          cards.push(`<div class="intel-card">
+            <div class="intel-card-title">${allOk ? '\u2705' : '\u26A0\uFE0F'} Message Coherence</div>
+            <div class="intel-card-body">
+              ${flags.map(f => `<div style="margin-bottom:4px;${f.ok ? '' : 'color:var(--yellow)'}">${f.ok ? '\u2705' : '\u26A0\uFE0F'} ${escHtml(f.combo)}</div>`).join('')}
+              ${allOk ? '<div class="intel-pass">All headline combos include location/context.</div>' : '<div class="intel-warn">Some combos lack location or occasion mention. Consider adding a location headline.</div>'}
+            </div>
+          </div>`);
+        }
+      }
+
+      // Character Limit Audit
+      const violations = [];
+      if (campaign.platform === 'meta') {
+        if (campaign.headline.length > CHAR_LIMITS.meta.headline) violations.push(`Meta Headline: ${campaign.headline.length}/${CHAR_LIMITS.meta.headline}`);
+        if (campaign.description.length > CHAR_LIMITS.meta.description) violations.push(`Meta Description: ${campaign.description.length}/${CHAR_LIMITS.meta.description}`);
+      }
+      if (campaign.platform === 'google') {
+        campaign.googleHeadlines.forEach((h, i) => { if (h.length > 30) violations.push(`Headline ${i+1}: ${h.length}/30`); });
+        campaign.googleLongHeadlines.forEach((h, i) => { if (h.length > 90) violations.push(`Long Headline ${i+1}: ${h.length}/90`); });
+        campaign.googleDescriptions.forEach((d, i) => { if (d.length > 90) violations.push(`Description ${i+1}: ${d.length}/90`); });
+        if (campaign.googleBusinessName.length > 25) violations.push(`Business Name: ${campaign.googleBusinessName.length}/25`);
+      }
+      cards.push(`<div class="intel-card">
+        <div class="intel-card-title">${violations.length === 0 ? '\u2705' : '\u274C'} Character Limit Audit</div>
+        <div class="intel-card-body">${violations.length === 0 ? '<span class="intel-pass">All fields within character limits.</span>' : violations.map(v => `<div class="intel-fail">\u274C ${v}</div>`).join('')}</div>
+      </div>`);
+
+      // Budget Health
+      let budgetOk = true, budgetMsg = '';
+      if (campaign.platform === 'google') {
+        const min = GOOGLE_BUDGET_MINS[campaign.googleType] || 100;
+        if (campaign.googleDailyBudget < min) { budgetOk = false; budgetMsg = `Below minimum \u20B9${min}/day for ${campaign.googleType === 'pmax' ? 'PMax' : 'Search'}.`; }
+        else if (campaign.googleDailyBudget < min * 1.5) { budgetMsg = `Near minimum. Consider \u20B9${Math.round(min * 1.5)}/day+.`; }
+        else { budgetMsg = `\u20B9${campaign.googleDailyBudget}/day \u2014 healthy budget.`; }
+      } else {
+        const total = campaign.windows.reduce((s, w) => s + w.budget, 0);
+        if (total === 0) { budgetOk = false; budgetMsg = 'No budget set. Add time windows.'; }
+        else if (total < 300) { budgetMsg = `\u20B9${total} total \u2014 low. Consider \u20B9500+.`; }
+        else { budgetMsg = `\u20B9${total} total \u2014 good.`; }
+      }
+      cards.push(`<div class="intel-card">
+        <div class="intel-card-title">${budgetOk && budgetMsg.includes('good') ? '\u2705' : budgetOk ? '\u26A0\uFE0F' : '\u274C'} Budget Health</div>
+        <div class="intel-card-body">${budgetMsg}</div>
+      </div>`);
+
+      grid.innerHTML = cards.join('');
     }
 
     // ==================== STEP 6: EXPORT ====================
     function generateConfig() {
+      if (campaign.platform === 'meta') generateMetaConfig();
+      else if (campaign.platform === 'google') generateGoogleConfig();
+      else document.getElementById('configBox').textContent = 'Select a platform (Step 0) to generate config.';
+    }
+
+    function generateMetaConfig() {
       const total = campaign.windows.reduce((s, w) => s + w.budget, 0);
       const typeLabel = { awareness: 'Awareness', traffic: 'Traffic', engagement: 'Engagement', messages: 'Messages (CTWA)' }[campaign.type] || campaign.type;
-      const interests = campaign.interests.map(i => ({
-        biryani: 'Biryani', mughlai: 'Mughlai Food', nonveg: 'Non-vegetarian food', foodies: 'Foodies',
-        restaurants: 'Restaurant dining', latenight: 'Late night food', delivery: 'Food delivery', swiggy: 'Swiggy/Zomato'
-      }[i] || i)).join(', ');
-      const langs = campaign.languages.map(l => ({ en: 'English', hi: 'Hindi', kn: 'Kannada', ur: 'Urdu' }[l] || l)).join(', ');
+      const interests = campaign.interests.map(i => ({ biryani:'Biryani', mughlai:'Mughlai Food', nonveg:'Non-vegetarian food', foodies:'Foodies', restaurants:'Restaurant dining', latenight:'Late night food', delivery:'Food delivery', swiggy:'Swiggy/Zomato' }[i] || i)).join(', ');
+      const langs = campaign.languages.map(l => ({ en:'English', hi:'Hindi', kn:'Kannada', ur:'Urdu' }[l] || l)).join(', ');
+      const windowsText = campaign.windows.map((w, i) => `  Window ${i+1}: ${w.start}\u2013${w.end} | \u20B9${w.budget}${w.label ? ' (' + w.label + ')' : ''}`).join('\n');
 
-      const windowsText = campaign.windows.map((w, i) =>
-        `  Window ${i+1}: ${w.start}–${w.end} | ₹${w.budget}${w.label ? ' (' + w.label + ')' : ''}`
-      ).join('\n');
-
-      const config = `HAMZA EXPRESS — CAMPAIGN CONFIG
-${'='.repeat(40)}
+      document.getElementById('configBox').textContent = `HAMZA EXPRESS \u2014 META ADS CAMPAIGN CONFIG
+${'='.repeat(44)}
+Platform: Meta (Facebook + Instagram)
 Objective: ${typeLabel}
 Dates: ${campaign.dateStart || '(not set)'} to ${campaign.dateEnd || '(not set)'}
-Total Budget: ₹${total.toLocaleString()} (Lifetime Budget)
-
+Budget: \u20B9${total.toLocaleString()} (${campaign.budgetType === 'lifetime' ? 'Lifetime' : 'Daily'} Budget)
+${campaign.useExistingPost ? 'Mode: Boost Existing Post\n' : ''}
 SCHEDULE (Dayparting):
 ${windowsText || '  No time windows set'}
 
 AUDIENCE:
   Location: ${campaign.radius}km radius around Shivajinagar (12.9868, 77.6044)
   Location Type: "Living in or recently in this location"
-  Age: ${campaign.ageMin}–${campaign.ageMax}
+  Age: ${campaign.ageMin}\u2013${campaign.ageMax}
   Interests: ${interests}
   Languages: ${langs}
 
 CREATIVE:
   Dimension: ${campaign.creativeDim}
-  Generate in AI Studio or use existing from Posts/Reels dashboard
 
 AD COPY:
   Primary Text:
@@ -1027,38 +1571,118 @@ ${campaign.primaryText ? campaign.primaryText.split('\n').map(l => '    ' + l).j
   CTA: ${CTA_LABELS[campaign.cta] || campaign.cta}
   Link: ${campaign.linkUrl}
 
-${'─'.repeat(40)}
-STEPS IN ADS MANAGER:
-${'─'.repeat(40)}
+${'─'.repeat(44)}
+STEPS IN META ADS MANAGER:
+${'─'.repeat(44)}
 1. Go to business.facebook.com/adsmanager
-2. Click "+ Create" → ${typeLabel}
-3. Campaign name: "HE — ${campaign.headline || typeLabel}"
+2. Click "+ Create" \u2192 ${typeLabel}
+3. Campaign name: "HE \u2014 ${campaign.headline || typeLabel}"
 4. Turn OFF "Advantage Campaign Budget"
 5. Ad Set:
-   • Budget type: LIFETIME BUDGET → ₹${total}
-   • Schedule: ${campaign.dateStart || '___'} to ${campaign.dateEnd || '___'}
-   • "Run ads on a schedule" → ON
-   • Set time windows:
-${campaign.windows.map((w, i) => `     - ${w.start} to ${w.end}`).join('\n') || '     (set your windows)'}
-   • Locations: Drop pin on Shivajinagar → ${campaign.radius}km radius
-   • Location type: "Living in or recently in"
-   • Age: ${campaign.ageMin}-${campaign.ageMax}
-   • Languages: ${langs}
-   • Detailed Targeting: ${interests}
+   \u2022 Budget type: ${campaign.budgetType === 'lifetime' ? 'LIFETIME' : 'DAILY'} BUDGET \u2192 \u20B9${total}
+   \u2022 Schedule: ${campaign.dateStart || '___'} to ${campaign.dateEnd || '___'}
+   ${campaign.budgetType === 'lifetime' ? '\u2022 "Run ads on a schedule" \u2192 ON\n   \u2022 Set time windows:\n' + campaign.windows.map(w => `     - ${w.start} to ${w.end}`).join('\n') : ''}
+   \u2022 Locations: Drop pin on Shivajinagar \u2192 ${campaign.radius}km radius
+   \u2022 Location type: "Living in or recently in"
+   \u2022 Age: ${campaign.ageMin}-${campaign.ageMax}
+   \u2022 Languages: ${langs}
+   \u2022 Detailed Targeting: ${interests}
 6. Ad:
-   • Upload creative (from AI Studio / Reels Engine)
-   • Primary text: (paste from above)
-   • Headline: ${campaign.headline || '___'}
-   • Description: ${campaign.description || '___'}
-   • CTA: ${CTA_LABELS[campaign.cta] || '___'}
-   • Destination: ${campaign.linkUrl}
-7. Review → Publish
+   ${campaign.useExistingPost ? '\u2022 Select "Use Existing Post" \u2192 choose your published post' : '\u2022 Upload creative (from AI Studio / Reels Engine)'}
+   \u2022 Primary text: (paste from above)
+   \u2022 Headline: ${campaign.headline || '___'}
+   \u2022 Description: ${campaign.description || '___'}
+   \u2022 CTA: ${CTA_LABELS[campaign.cta] || '___'}
+   \u2022 Destination: ${campaign.linkUrl}
+7. Review \u2192 Publish
 
 Note: Ad review takes 15-60 minutes. Submit early!
-Meta Pixel (881349531538961) auto-attaches from Ad Account settings.
-Ad Account: 634959029638544`;
+Meta Pixel: ${PLATFORM_IDS.META_PIXEL} (auto-attaches)
+Ad Account: ${PLATFORM_IDS.META_AD_ACCOUNT}
+FB Page: ${PLATFORM_IDS.FB_PAGE}`;
+    }
 
-      document.getElementById('configBox').textContent = config;
+    function generateGoogleConfig() {
+      const daily = campaign.googleDailyBudget;
+      const days = getDays();
+      const total = daily * days;
+      const typeLabel = campaign.googleType === 'pmax' ? 'Performance Max (Local)' : 'Search';
+      const langs = campaign.languages.map(l => ({ en:'English', hi:'Hindi', kn:'Kannada', ur:'Urdu' }[l] || l)).join(', ');
+      const themes = campaign.googleSearchThemes.filter(t => t.trim()).join(', ');
+      const headlines = campaign.googleHeadlines.filter(h => h.trim()).map((h, i) => `  ${i+1}. ${h}`).join('\n');
+      const longHeadlines = campaign.googleLongHeadlines.filter(h => h.trim()).map((h, i) => `  ${i+1}. ${h}`).join('\n');
+      const descs = campaign.googleDescriptions.filter(d => d.trim()).map((d, i) => `  ${i+1}. ${d}`).join('\n');
+
+      document.getElementById('configBox').textContent = `HAMZA EXPRESS \u2014 GOOGLE ADS CAMPAIGN CONFIG
+${'='.repeat(48)}
+Platform: Google Ads (Account: ${PLATFORM_IDS.GOOGLE_ADS})
+Campaign Type: ${typeLabel}
+${campaign.googleType === 'pmax' ? 'GBP Linked: ' + (campaign.gbpLinked ? 'Yes' : 'NO \u2014 REQUIRED') + '\n' : ''}Dates: ${campaign.dateStart || '(not set)'} to ${campaign.dateEnd || '(not set)'}
+Daily Budget: \u20B9${daily.toLocaleString()}/day
+Total Budget: \u20B9${total.toLocaleString()} (${days} days)
+
+${campaign.googleType === 'pmax' ? 'SEARCH THEMES / AUDIENCE SIGNALS' : 'KEYWORDS'}:
+  ${themes || '(none set)'}
+
+LOCATION:
+  ${campaign.radius}km radius around Shivajinagar (12.9868, 77.6044)
+  Age: ${campaign.ageMin}\u2013${campaign.ageMax}
+  Languages: ${langs}
+
+HEADLINES (30 chars each):
+${headlines || '  (none set)'}
+
+LONG HEADLINES (90 chars each):
+${longHeadlines || '  (none set)'}
+
+DESCRIPTIONS (90 chars each):
+${descs || '  (none set)'}
+
+Business Name: ${campaign.googleBusinessName}
+CTA: ${CTA_LABELS[campaign.googleCta] || campaign.googleCta}
+Final URL: ${campaign.googleFinalUrl}
+
+${'─'.repeat(48)}
+STEPS IN GOOGLE ADS:
+${'─'.repeat(48)}
+${campaign.googleType === 'pmax' ? `1. Go to ads.google.com (Account: ${PLATFORM_IDS.GOOGLE_ADS})
+2. Click "+ New campaign" \u2192 "Sales" or "Local store visits"
+3. Campaign type: Performance Max
+4. Select Google Business Profile (Hamza Express, Shivajinagar)
+5. Set daily budget: \u20B9${daily}
+6. Schedule: ${campaign.dateStart || '___'} to ${campaign.dateEnd || '___'}
+7. Asset Group:
+   \u2022 Final URL: ${campaign.googleFinalUrl}
+   \u2022 Upload images: Logo (1:1), Landscape (1200x628), Square (1200x1200)
+   \u2022 Add all headlines, long headlines, descriptions from above
+   \u2022 Business name: ${campaign.googleBusinessName}
+8. Audience Signals \u2192 Search Themes:
+   ${campaign.googleSearchThemes.filter(t=>t.trim()).map(t => '\u2022 ' + t).join('\n   ') || '(add themes)'}
+9. Location: ${campaign.radius}km around Shivajinagar
+10. Languages: ${langs}
+11. Review \u2192 Publish
+
+Note: PMax needs 2-4 weeks to learn. Don't change budget in first 14 days.` :
+`1. Go to ads.google.com (Account: ${PLATFORM_IDS.GOOGLE_ADS})
+2. Click "+ New campaign" \u2192 "Website traffic"
+3. Campaign type: Search
+4. Set daily budget: \u20B9${daily}
+5. Schedule: ${campaign.dateStart || '___'} to ${campaign.dateEnd || '___'}
+6. Ad Group:
+   \u2022 Keywords (broad match):
+   ${campaign.googleSearchThemes.filter(t=>t.trim()).map(t => '  ' + t).join('\n   ') || '  (add keywords)'}
+   \u2022 Negative keywords: recipe, how to make, ingredients
+7. Responsive Search Ad:
+   \u2022 Add all headlines and descriptions from above
+   \u2022 Final URL: ${campaign.googleFinalUrl}
+   \u2022 Display path: hamzaexpress.in / biryani
+8. Location: ${campaign.radius}km around Shivajinagar
+9. Languages: ${langs}
+10. Review \u2192 Publish
+
+Note: Start with broad match + smart bidding, then refine keywords after 1-2 weeks.`}
+
+GA4: ${PLATFORM_IDS.GA4} \u2014 set up conversion tracking for directions clicks.`;
     }
 
     function copyConfig() {
@@ -1066,63 +1690,128 @@ Ad Account: 634959029638544`;
       toast('Config copied to clipboard');
     }
 
-    // ==================== TEMPLATES ====================
-    function loadTemplate(id) {
-      const tpl = TEMPLATES.find(t => t.id === id);
-      if (!tpl) return;
-      const d = tpl.data;
-      campaign = { ...campaign, ...d };
-      campaign.windows = JSON.parse(JSON.stringify(d.windows));
-      syncUIFromState();
-      renderWindows();
-      updateBudget();
-      goStep(1);
-      // Re-select type card
-      document.querySelectorAll('.type-card').forEach(c => c.classList.toggle('selected', c.dataset.type === campaign.type));
-      toast(`Template "${tpl.name}" loaded`);
+    function openAdsManager() {
+      if (campaign.platform === 'google') window.open('https://ads.google.com', '_blank');
+      else window.open('https://business.facebook.com/latest/ad_center/create/expert', '_blank');
     }
 
-    function renderTemplates() {
-      document.getElementById('templateGrid').innerHTML = TEMPLATES.map(t => `
-        <div class="template-card" onclick="loadTemplate('${t.id}')">
-          <div class="template-card-name">${t.name}</div>
-          <div class="template-card-desc">${t.desc}</div>
-          <div class="template-card-meta">
-            ${t.tags.map(tag => `<span class="template-tag">${tag}</span>`).join('')}
-          </div>
-        </div>
-      `).join('');
+    // ==================== CONTEXT BANNER ====================
+    function renderContextBanner() {
+      const banner = document.getElementById('contextBanner');
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      const dayOfWeek = today.getDay();
+
+      let title = '', facts = '', actions = '', show = false;
+
+      // Check festivals (within 3 days)
+      for (const f of FESTIVALS) {
+        const fDate = new Date(f.date);
+        const diff = (fDate - today) / 86400000;
+        if (diff >= -1 && diff <= 3) {
+          show = true;
+          title = `${f.name} ${diff <= 0 ? '\u2014 TODAY' : diff <= 1 ? '\u2014 TOMORROW' : '\u2014 ' + f.date}`;
+          facts = `<strong>${f.context}</strong>`;
+          if (f.action) {
+            actions = `<button class="btn btn-orange" onclick="loadTemplate('${f.action}')">Load ${f.name.split(' ')[0]} Template</button>
+              <a class="btn" href="https://business.facebook.com/latest/ad_center/create/expert" target="_blank">Open Ads Manager \u2192</a>`;
+          }
+          break;
+        }
+      }
+
+      // Weekend detection
+      if (!show && (dayOfWeek === 4 || dayOfWeek === 5)) {
+        show = true;
+        title = dayOfWeek === 4 ? 'WEEKEND APPROACHING \u2014 Thursday' : 'WEEKEND \u2014 Friday';
+        facts = 'Weekends drive 2-3x foot traffic. Best time for awareness + traffic campaigns. Consider boosting a post or running a Weekend Push.';
+        actions = `<button class="btn btn-primary" onclick="loadTemplate('weekend')">Load Weekend Template</button>`;
+      }
+
+      if (show) {
+        banner.style.display = 'block';
+        banner.innerHTML = `<div class="context-title">${title}</div><div class="context-facts">${facts}</div>${actions ? '<div class="context-actions">' + actions + '</div>' : ''}`;
+      }
     }
 
     // ==================== OFFER LIBRARY ====================
-    function renderOfferTable() {
-      document.getElementById('offerTableBody').innerHTML = OFFERS.map(o => `
-        <tr>
-          <td><span class="offer-code">${o.code}</span></td>
-          <td>${o.name}</td>
-          <td class="mono">${o.price}</td>
-          <td>${o.type}</td>
-          <td style="color:var(--text2)">${o.job}</td>
-          <td><button class="btn btn-sm" onclick="useOffer('${o.code}')">Use</button></td>
-        </tr>
-      `).join('');
+    function renderOffers() {
+      document.getElementById('offerGrid').innerHTML = OFFERS.map(o => `
+        <div class="offer-card" onclick="useOffer('${o.code}')">
+          <div class="offer-code">${o.code}</div>
+          <div class="offer-name">${o.name}</div>
+          <div class="offer-price">${o.price}</div>
+          <div class="offer-job">${o.job}</div>
+          <div style="margin-top:8px"><span class="template-tag">${o.type}</span> <span class="template-tag">${o.bestCampaign}</span></div>
+        </div>`).join('');
     }
 
     function useOffer(code) {
       const offer = OFFERS.find(o => o.code === code);
       if (!offer) return;
       campaign.selectedOffer = code;
-
-      // Pre-fill ad copy with offer
-      const priceText = offer.price.startsWith('₹') ? ` for just ${offer.price}` : '';
-      campaign.primaryText = `${offer.name}${priceText} \u{1F60B}\n\nHamza Express \u{2014} The new face of Hamza Hotel (est. 1918)\nAuthentic Dakhni flavors, 108 years strong.\n\n\u{2B50} 5.0 on Google (70+ reviews)\n\u{1F4CD} HKP Road, Shivajinagar (near Russell Market)\nOpen 1 PM \u{2013} 5 AM`;
-      campaign.headline = offer.name;
-      campaign.description = offer.price.startsWith('₹') ? offer.price + ' | Walk in' : 'Walk in today';
-
+      const priceText = offer.price.startsWith('\u20B9') ? ` for just ${offer.price}` : '';
+      campaign.primaryText = `${offer.name}${priceText} \uD83D\uDE0B\n\nHamza Express \u2014 The new face of Hamza Hotel (est. 1918)\nAuthentic Dakhni flavors, 108 years strong.\n\n\u2B50 5.0 on Google (70+ reviews)\n\uD83D\uDCCD HKP Road, Shivajinagar (near Russell Market)\nOpen 1 PM \u2013 5 AM`;
+      campaign.headline = offer.name.substring(0, 40);
+      campaign.description = offer.price.startsWith('\u20B9') ? (offer.price + ' | Walk in').substring(0, 30) : 'Walk in today';
       syncUIFromState();
       generateAdPrompt();
       goStep(5);
       toast(`Offer ${code} loaded into ad copy`);
+    }
+
+    // ==================== TEMPLATES ====================
+    function renderTemplates() {
+      document.getElementById('metaTemplateGrid').innerHTML = META_TEMPLATES.map(t => `
+        <div class="template-card" onclick="loadTemplate('${t.id}')">
+          <div class="template-card-name">${t.name}</div>
+          <div class="template-card-desc">${t.desc}</div>
+          <div class="template-card-meta">
+            <span class="platform-badge badge-meta">Meta</span>
+            ${t.tags.map(tag => `<span class="template-tag">${tag}</span>`).join('')}
+          </div>
+        </div>`).join('');
+
+      document.getElementById('googleTemplateGrid').innerHTML = GOOGLE_TEMPLATES.map(t => `
+        <div class="template-card" onclick="loadTemplate('${t.id}')">
+          <div class="template-card-name">${t.name}</div>
+          <div class="template-card-desc">${t.desc}</div>
+          <div class="template-card-meta">
+            <span class="platform-badge badge-google">Google</span>
+            ${t.tags.map(tag => `<span class="template-tag">${tag}</span>`).join('')}
+          </div>
+        </div>`).join('');
+    }
+
+    function loadTemplate(id) {
+      const tpl = META_TEMPLATES.find(t => t.id === id) || GOOGLE_TEMPLATES.find(t => t.id === id);
+      if (!tpl) return;
+      const d = tpl.data;
+      campaign = { ...campaign, ...d };
+      if (d.windows) campaign.windows = JSON.parse(JSON.stringify(d.windows));
+      if (d.googleHeadlines) campaign.googleHeadlines = [...d.googleHeadlines];
+      if (d.googleLongHeadlines) campaign.googleLongHeadlines = [...d.googleLongHeadlines];
+      if (d.googleDescriptions) campaign.googleDescriptions = [...d.googleDescriptions];
+      if (d.googleSearchThemes) campaign.googleSearchThemes = [...d.googleSearchThemes];
+
+      renderWindows();
+      renderGoogleHeadlines();
+      renderGoogleLongHeadlines();
+      renderGoogleDescs();
+      renderSearchThemes();
+      renderObjectiveGrid();
+      syncUIFromState();
+      updateBudget();
+      goStep(0);
+
+      // Select platform card
+      document.querySelectorAll('.platform-card').forEach(c => c.classList.toggle('selected', c.dataset.platform === campaign.platform));
+      document.getElementById('step0Next').disabled = false;
+      document.getElementById('step0Next').textContent = 'Next: Objective \u2192';
+
+      toast(`Template "${tpl.name}" loaded`);
     }
 
     // ==================== CAMPAIGN TRACKER ====================
@@ -1142,35 +1831,77 @@ Ad Account: 634959029638544`;
         return;
       }
       tbody.innerHTML = data.map((c, i) => {
-        const ctr = c.reach > 0 && c.clicks > 0 ? ((c.clicks / c.reach) * 100).toFixed(2) + '%' : '—';
-        const cpr = c.results > 0 && c.budget > 0 ? '₹' + (c.budget / c.results).toFixed(0) : '—';
+        const ctr = c.reach > 0 && c.clicks > 0 ? ((c.clicks / c.reach) * 100).toFixed(2) + '%' : '\u2014';
+        const platformBadge = c.platform === 'google' ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-meta">Meta</span>';
         const statusClass = { draft: 'status-draft', active: 'status-active', completed: 'status-completed', paused: 'status-paused' }[c.status] || 'status-draft';
         return `<tr>
-          <td><strong>${c.name || '—'}</strong></td>
-          <td class="mono" style="font-size:11px">${c.date || '—'}</td>
-          <td>${c.objective || '—'}</td>
-          <td class="mono">₹${(c.budget || 0).toLocaleString()}</td>
-          <td class="mono">${c.reach ? c.reach.toLocaleString() : '—'}</td>
-          <td class="mono">${c.clicks || '—'}</td>
+          <td><span class="editable" onclick="editCell(${i},'name',this)">${escHtml(c.name || '\u2014')}</span></td>
+          <td>${platformBadge}</td>
+          <td class="mono" style="font-size:11px"><span class="editable" onclick="editCell(${i},'date',this)">${c.date || '\u2014'}</span></td>
+          <td><span class="editable" onclick="editCell(${i},'objective',this)">${c.objective || '\u2014'}</span></td>
+          <td class="mono"><span class="editable" onclick="editCell(${i},'budget',this)">\u20B9${(c.budget || 0).toLocaleString()}</span></td>
+          <td class="mono"><span class="editable" onclick="editCell(${i},'spend',this)">\u20B9${(c.spend || 0).toLocaleString()}</span></td>
+          <td class="mono"><span class="editable" onclick="editCell(${i},'reach',this)">${c.reach ? c.reach.toLocaleString() : '\u2014'}</span></td>
+          <td class="mono"><span class="editable" onclick="editCell(${i},'clicks',this)">${c.clicks || '\u2014'}</span></td>
           <td class="mono">${ctr}</td>
-          <td class="mono">${c.results || '—'}</td>
-          <td class="mono">${cpr}</td>
-          <td><span class="status-pill ${statusClass}">${c.status || 'draft'}</span></td>
-          <td><button class="btn btn-sm" onclick="editTracker(${i})">Edit</button></td>
+          <td><span class="editable" onclick="editStatusCell(${i},this)"><span class="status-pill ${statusClass}">${c.status || 'draft'}</span></span></td>
+          <td><button class="btn-red" onclick="deleteTrackerRow(${i})">Del</button></td>
         </tr>`;
       }).join('');
     }
 
+    function editCell(idx, field, el) {
+      const data = getTrackerData();
+      const current = data[idx][field] || '';
+      const isNumeric = ['budget', 'spend', 'reach', 'clicks', 'impressions'].includes(field);
+      const displayVal = isNumeric ? (parseInt(current) || 0) : current;
+
+      el.innerHTML = `<input class="edit-input" type="${isNumeric ? 'number' : 'text'}" value="${escHtml(String(displayVal))}" onblur="saveCell(${idx},'${field}',this)" onkeydown="if(event.key==='Enter')this.blur()">`;
+      el.querySelector('input').focus();
+    }
+
+    function saveCell(idx, field, input) {
+      const data = getTrackerData();
+      const isNumeric = ['budget', 'spend', 'reach', 'clicks', 'impressions'].includes(field);
+      data[idx][field] = isNumeric ? (parseInt(input.value) || 0) : input.value;
+      saveTrackerData(data);
+      renderTracker();
+      updateKPIs();
+    }
+
+    function editStatusCell(idx, el) {
+      const data = getTrackerData();
+      const current = data[idx].status || 'draft';
+      el.innerHTML = `<select class="edit-input" onchange="saveStatusCell(${idx},this)" onblur="saveStatusCell(${idx},this)">
+        <option value="draft" ${current==='draft'?'selected':''}>draft</option>
+        <option value="active" ${current==='active'?'selected':''}>active</option>
+        <option value="completed" ${current==='completed'?'selected':''}>completed</option>
+        <option value="paused" ${current==='paused'?'selected':''}>paused</option>
+      </select>`;
+      el.querySelector('select').focus();
+    }
+
+    function saveStatusCell(idx, select) {
+      const data = getTrackerData();
+      data[idx].status = select.value;
+      saveTrackerData(data);
+      renderTracker();
+      updateKPIs();
+    }
+
     function addToTracker() {
       const data = getTrackerData();
-      const total = campaign.windows.reduce((s, w) => s + w.budget, 0);
+      const total = campaign.platform === 'google' ? campaign.googleDailyBudget * getDays() : campaign.windows.reduce((s, w) => s + w.budget, 0);
+      const obj = campaign.platform === 'meta' ? campaign.type : campaign.googleType;
       data.push({
-        name: campaign.headline || 'Untitled Campaign',
-        date: campaign.dateStart,
-        objective: campaign.type,
-        budget: total,
-        reach: 0, clicks: 0, results: 0,
-        status: 'draft'
+        name: campaign.platform === 'meta' ? (campaign.headline || 'Untitled') : (campaign.googleHeadlines[0] || 'Untitled'),
+        platform: campaign.platform,
+        date: campaign.dateStart, dateEnd: campaign.dateEnd,
+        objective: obj, budget: total, spend: 0,
+        reach: 0, impressions: 0, clicks: 0,
+        results: 0, resultType: '', status: 'draft',
+        cpm: 0, notes: '',
+        platformCampaignId: '', lastSyncedAt: ''
       });
       saveTrackerData(data);
       renderTracker();
@@ -1180,45 +1911,112 @@ Ad Account: 634959029638544`;
 
     function addTrackerRow() {
       const data = getTrackerData();
-      data.push({ name: 'New Campaign', date: '', objective: '', budget: 0, reach: 0, clicks: 0, results: 0, status: 'draft' });
+      data.push({
+        name: 'New Campaign', platform: campaign.platform || 'meta',
+        date: '', dateEnd: '', objective: '', budget: 0, spend: 0,
+        reach: 0, impressions: 0, clicks: 0,
+        results: 0, resultType: '', status: 'draft',
+        cpm: 0, notes: '', platformCampaignId: '', lastSyncedAt: ''
+      });
       saveTrackerData(data);
       renderTracker();
     }
 
-    function editTracker(i) {
+    function deleteTrackerRow(i) {
       const data = getTrackerData();
-      const c = data[i];
-      const name = prompt('Campaign Name:', c.name);
-      if (name === null) return;
-      c.name = name;
-      c.budget = parseInt(prompt('Budget (₹):', c.budget)) || 0;
-      c.reach = parseInt(prompt('Reach:', c.reach)) || 0;
-      c.clicks = parseInt(prompt('Clicks:', c.clicks)) || 0;
-      c.results = parseInt(prompt('Results:', c.results)) || 0;
-      c.status = prompt('Status (draft/active/completed/paused):', c.status) || 'draft';
+      data.splice(i, 1);
       saveTrackerData(data);
       renderTracker();
       updateKPIs();
+      toast('Campaign removed');
     }
 
     // ==================== KPIs ====================
     function updateKPIs() {
       const data = getTrackerData();
-      const totalSpend = data.reduce((s, c) => s + (c.budget || 0), 0);
+      const totalSpend = data.reduce((s, c) => s + (c.spend || 0), 0);
       const totalReach = data.reduce((s, c) => s + (c.reach || 0), 0);
-      const totalClicks = data.reduce((s, c) => s + (c.clicks || 0), 0);
-      const totalResults = data.reduce((s, c) => s + (c.results || 0), 0);
-      const avgCpc = totalClicks > 0 ? (totalSpend / totalClicks).toFixed(1) : '—';
+      const activeCampaigns = data.filter(c => c.status === 'active').length;
+      const totalImpressions = data.reduce((s, c) => s + (c.impressions || c.reach || 0), 0);
+      const avgCpm = totalImpressions > 0 ? ((totalSpend / totalImpressions) * 1000).toFixed(0) : '\u2014';
 
-      document.getElementById('kpiSpend').textContent = totalSpend > 0 ? '₹' + totalSpend.toLocaleString() : '₹0';
-      document.getElementById('kpiReach').textContent = totalReach > 0 ? totalReach.toLocaleString() : '—';
-      document.getElementById('kpiCPC').textContent = avgCpc !== '—' ? '₹' + avgCpc : '—';
-      document.getElementById('kpiConv').textContent = totalResults > 0 ? totalResults.toLocaleString() : '—';
+      document.getElementById('kpiSpend').textContent = totalSpend > 0 ? '\u20B9' + totalSpend.toLocaleString() : '\u20B90';
+      document.getElementById('kpiReach').textContent = totalReach > 0 ? totalReach.toLocaleString() : '\u2014';
+      document.getElementById('kpiActive').textContent = activeCampaigns > 0 ? activeCampaigns : '0';
+      document.getElementById('kpiCPM').textContent = avgCpm !== '\u2014' ? '\u20B9' + avgCpm : '\u2014';
+    }
+
+    // ==================== SYNC UI FROM STATE ====================
+    function syncUIFromState() {
+      // Platform
+      document.querySelectorAll('.platform-card').forEach(c => c.classList.toggle('selected', c.dataset.platform === campaign.platform));
+      if (campaign.platform) {
+        document.getElementById('step0Next').disabled = false;
+        document.getElementById('step0Next').textContent = 'Next: Objective \u2192';
+        renderObjectiveGrid();
+      }
+
+      // Dates
+      document.getElementById('dateStart').value = campaign.dateStart;
+      document.getElementById('dateEnd').value = campaign.dateEnd;
+
+      // Budget type
+      document.querySelectorAll('.budget-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.bt === campaign.budgetType));
+
+      // Use existing post
+      document.getElementById('useExistingPost').checked = campaign.useExistingPost;
+
+      // Google budget
+      document.getElementById('googleDailyBudget').value = campaign.googleDailyBudget;
+      if (campaign.platform === 'google') updateGoogleBudget();
+
+      // GBP
+      document.getElementById('gbpLinked').checked = campaign.gbpLinked;
+      checkGbpGate();
+
+      // Audience
+      document.getElementById('audienceRadius').value = campaign.radius;
+      document.getElementById('ageMin').value = campaign.ageMin;
+      document.getElementById('ageMax').value = campaign.ageMax;
+
+      // Interests
+      document.querySelectorAll('#interestChips .chip').forEach(c => c.classList.toggle('active', campaign.interests.includes(c.dataset.val)));
+
+      // Languages
+      document.querySelectorAll('#langChips .chip').forEach(c => c.classList.toggle('active', campaign.languages.includes(c.dataset.val)));
+
+      // Meta ad copy
+      document.getElementById('adPrimaryText').value = campaign.primaryText;
+      document.getElementById('adHeadline').value = campaign.headline;
+      enforceCharLimit(document.getElementById('adHeadline'), 40, 'metaHeadlineCounter');
+      document.getElementById('adDescription').value = campaign.description;
+      enforceCharLimit(document.getElementById('adDescription'), 30, 'metaDescCounter');
+      document.getElementById('adCta').value = campaign.cta;
+      document.getElementById('adLinkUrl').value = campaign.linkUrl;
+
+      // Creative dims
+      document.querySelectorAll('.dim-option').forEach(d => d.classList.toggle('active', d.dataset.dim === campaign.creativeDim));
+
+      // Google copy
+      document.getElementById('googleBizName').value = campaign.googleBusinessName;
+      enforceCharLimit(document.getElementById('googleBizName'), 25, 'gBizCounter');
+      document.getElementById('googleCtaSelect').value = campaign.googleCta;
+      document.getElementById('googleFinalUrl').value = campaign.googleFinalUrl;
+
+      renderGoogleHeadlines();
+      renderGoogleLongHeadlines();
+      renderGoogleDescs();
+      renderSearchThemes();
+      updatePlatformVisibility();
+      updateAudience();
+      updateMetaPreview();
     }
 
     // ==================== UTILS ====================
-    function toggleCollapsible(header) {
-      header.parentElement.classList.toggle('open');
+    function toggleCollapsible(header) { header.parentElement.classList.toggle('open'); }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     function toast(msg) {
