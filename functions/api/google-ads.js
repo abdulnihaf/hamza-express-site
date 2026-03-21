@@ -70,7 +70,7 @@ async function getAccessToken(env) {
 // Google Ads API query helper
 async function queryGoogleAds(accessToken, env, query) {
   const resp = await fetch(
-    `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/googleAds:searchStream`,
+    `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/googleAds:search`,
     {
       method: 'POST',
       headers: {
@@ -89,14 +89,7 @@ async function queryGoogleAds(accessToken, env, query) {
   }
 
   const data = await resp.json();
-  // searchStream returns array of result batches
-  const results = [];
-  if (Array.isArray(data)) {
-    for (const batch of data) {
-      if (batch.results) results.push(...batch.results);
-    }
-  }
-  return results;
+  return data.results || [];
 }
 
 // Action: Get all campaigns with status
