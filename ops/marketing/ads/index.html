@@ -456,7 +456,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Link URL</label>
-                  <input type="text" id="adLinkUrl" value="https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore">
+                  <input type="text" id="adLinkUrl" value="https://maps.app.goo.gl/YrXgY245eBT2HUzF9">
                 </div>
               </div>
             </div>
@@ -643,7 +643,7 @@
           languages: ['en', 'hi', 'kn', 'ur'],
           primaryText: 'Eid Mubarak \u{1F319}\n\nShivajinagar is closed today. We\'re open.\n\nHamza Express \u{2014} 1 PM to 1 AM\nBiryani \u{2022} Kebabs \u{2022} Ghee Rice \u{2022} Full Dakhni spread\n\nThe new face of Hamza Hotel \u{2014} 108 years, same kitchen.\n\u{2B50} 5.0 on Google (70+ reviews)\n\n\u{1F4CD} HKP Road, near Russell Market\nWalk in. Dine in. Take away.',
           headline: 'Open on Eid \u{2014} Walk In', description: 'Biryani & more, 1 PM - 1 AM',
-          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore'
+          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
@@ -656,7 +656,7 @@
           languages: ['en', 'hi', 'kn', 'ur'],
           primaryText: 'Weekend plans? Sorted.\n\nHamza Express \u{2014} Shivajinagar\u2019s newest Dakhni kitchen.\n\nBiryani \u{2022} Kebabs \u{2022} Ghee Rice \u{2022} Brain Fry\n\n108 years of taste. Brand new place.\n\u{1F4CD} HKP Road, near Russell Market\nOpen 1 PM \u{2013} 5 AM',
           headline: 'Dakhni Weekend', description: 'HKP Road, Shivajinagar',
-          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore'
+          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
@@ -669,7 +669,7 @@
           languages: ['en', 'hi', 'kn'],
           primaryText: 'Try Shivajinagar\u2019s legendary taste for just \u{20B9}59.\n\nKebab Plate \u{2014} succulent tandoor kebabs, fresh from the clay oven.\n\nHamza Express \u{2022} The new face of Hamza Hotel (est. 1918)\n\u{2B50} 5.0 on Google\n\n\u{1F4CD} HKP Road, near Russell Market',
           headline: 'Kebab Plate \u{20B9}59', description: 'Tandoor fresh, walk in',
-          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore'
+          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
@@ -682,7 +682,7 @@
           languages: ['en', 'hi', 'kn', 'ur'],
           primaryText: 'Biryani Buy 1 Get 1 \u{1F60B}\n\nBring a friend. Both eat. One pays.\n\nHamza Express \u{2014} 108 years of Dakhni biryani on HKP Road.\n\n\u{1F4CD} Walk in, Shivajinagar\nOpen 1 PM \u{2013} 5 AM',
           headline: 'Biryani BOGO', description: 'Buy 1 Get 1 Free',
-          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore'
+          cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9'
         }
       },
       {
@@ -715,7 +715,7 @@
       interests: ['biryani', 'nonveg', 'foodies', 'latenight', 'restaurants'],
       languages: ['en', 'hi', 'kn', 'ur'],
       primaryText: '', headline: '', description: '',
-      cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore',
+      cta: 'GET_DIRECTIONS', linkUrl: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9',
       selectedOffer: null, creativeDim: '1080x1080'
     };
     let currentStep = 1;
@@ -802,7 +802,7 @@
       campaign.type = el.dataset.type;
       // Auto-set CTA based on type
       const ctaMap = { awareness: 'GET_DIRECTIONS', traffic: 'GET_DIRECTIONS', engagement: 'LEARN_MORE', messages: 'SEND_MESSAGE' };
-      const linkMap = { awareness: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore', traffic: 'https://maps.google.com/?q=Hamza+Express+Shivajinagar+Bangalore', engagement: 'https://hamzaexpress.in', messages: 'https://wa.me/918008002049' };
+      const linkMap = { awareness: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9', traffic: 'https://maps.app.goo.gl/YrXgY245eBT2HUzF9', engagement: 'https://hamzaexpress.in', messages: 'https://wa.me/918008002049' };
       campaign.cta = ctaMap[campaign.type] || 'GET_DIRECTIONS';
       campaign.linkUrl = linkMap[campaign.type] || '';
       document.getElementById('adCta').value = campaign.cta;
