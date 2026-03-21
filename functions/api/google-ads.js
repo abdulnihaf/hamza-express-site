@@ -2,7 +2,7 @@
 // Cloudflare Worker endpoint: /api/google-ads?action=campaigns|metrics
 // Requires secrets: GOOGLE_ADS_DEV_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
 
-const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v18';
+const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v19';
 const CUSTOMER_ID = '3681710084'; // 368-171-0084 without dashes
 const MCC_ID = '5104561813'; // 510-456-1813 without dashes
 
