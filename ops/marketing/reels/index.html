@@ -124,6 +124,30 @@
     .clip-card:hover .clip-add-btn { opacity: 1; }
     .clip-card.selected .clip-add-btn { opacity: 1; background: var(--green); color: var(--bg); }
 
+    /* Clip Intelligence Row */
+    .clip-intel { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .clip-intel-item { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 6px; border-radius: 3px; background: var(--bg2); display: flex; align-items: center; gap: 3px; }
+    .crop-arrow { font-weight: 700; font-size: 12px; }
+    .crop-left { color: var(--orange); }
+    .crop-center { color: var(--text2); }
+    .crop-right { color: var(--cyan); }
+    .brightness-bar { width: 40px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .brightness-fill { height: 100%; border-radius: 3px; transition: width .2s; }
+    .audio-icon { font-size: 11px; }
+    .audio-good { color: var(--green); }
+    .audio-noise { color: var(--muted); }
+    .quality-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; letter-spacing: .3px; }
+    .quality-dark { background: rgba(239,68,68,.2); color: var(--red); }
+    .quality-shaky { background: rgba(245,158,11,.2); color: var(--yellow); }
+    .quality-ok { display: none; }
+    .seq-warn { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: rgba(245,158,11,.15); color: var(--yellow); margin-left: 2px; }
+    .analyze-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+    .analyze-bar .analyze-progress { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .builder-selectors { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+    .builder-selectors label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .builder-selectors select { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 12px; font-family: inherit; cursor: pointer; }
+    .builder-selectors select:focus { outline: none; border-color: var(--tan); }
+
     /* Reel Builder */
     .builder-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
     .builder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
@@ -220,7 +244,11 @@
   <div class="container">
     <div class="header">
       <h1>Reels Engine</h1>
-      <a href="/ops/marketing/" class="back-link">Marketing Hub</a>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn" onclick="copyAnalyzeCommand()" style="font-size:11px;padding:5px 10px">Analyze Clips</button>
+        <span id="analyzeProgress" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)"></span>
+        <a href="/ops/marketing/" class="back-link">Marketing Hub</a>
+      </div>
     </div>
 
     <!-- Stats Row -->
@@ -257,6 +285,21 @@
       </div>
       <div class="builder-seq" id="builderSeq">
         <div class="builder-empty" id="builderEmpty">Click clips below to add them to the sequence</div>
+      </div>
+      <div class="builder-selectors">
+        <label>Audio</label>
+        <select id="audioProfileSelect" onchange="onProfileChange()">
+          <option value="default">Default (70/25)</option>
+          <option value="high_energy">High Energy (80/15)</option>
+          <option value="asmr">ASMR (20/75)</option>
+          <option value="testimonial">Testimonial (10/85)</option>
+        </select>
+        <label style="margin-left:8px">Color</label>
+        <select id="colorPresetSelect" onchange="onProfileChange()">
+          <option value="warm_restaurant">Warm Restaurant</option>
+          <option value="cinematic">Cinematic</option>
+          <option value="raw">Raw (no grade)</option>
+        </select>
       </div>
       <div class="builder-actions">
         <button class="btn btn-primary" onclick="saveReel()">Save Draft</button>
@@ -311,8 +354,9 @@
           <div class="wf-step-body">
             After Claude Code finishes, the reel is saved to the Saved Reels table automatically (step 5 in the command). Then:
             <ul class="wf-checklist">
-              <li>Watch the exported reel in ~/Downloads/</li>
-              <li>Check audio mix (ambient 85%, music 15%)</li>
+              <li>Watch the exported reel in ~/Documents/HE-Raw-Clips/Exports/</li>
+              <li>Check per-clip crops (subjects centered, not walls)</li>
+              <li>Check audio mix (profile-matched levels)</li>
               <li>Upload to Instagram as Reel</li>
               <li>Cross-post to Facebook</li>
             </ul>
@@ -373,6 +417,19 @@ let sequence = [];
 let activeTagFilter = '';
 let savedReels = [];
 
+// ── Intelligence Constants ──
+const AUDIO_PROFILES = {
+  high_energy: { music: 0.80, ambient: 0.15, label: 'High Energy', when: 'FIRE/COOK dominant' },
+  asmr:        { music: 0.20, ambient: 0.75, label: 'ASMR', when: 'TANDOOR dominant — sizzle IS the content' },
+  testimonial: { music: 0.10, ambient: 0.85, label: 'Testimonial', when: 'PEOPLE dominant — voice is primary' },
+  default:     { music: 0.70, ambient: 0.25, label: 'Default', when: 'Music-forward with atmosphere' },
+};
+const COLOR_PRESETS = {
+  warm_restaurant: { filter: 'eq=contrast=1.15:brightness=0.02:saturation=1.3,colorbalance=rs=0.05:gs=0.02:bs=-0.03', label: 'Warm Restaurant' },
+  cinematic:       { filter: 'eq=contrast=1.25:brightness=-0.02:saturation=1.1,colorbalance=rs=0.03:gs=-0.01:bs=0.02', label: 'Cinematic' },
+  raw:             { filter: '', label: 'Raw' },
+};
+
 // ── Init ──
 async function init() {
   if (!API_KEY) {
@@ -429,14 +486,15 @@ async function loadTags() {
 
 async function loadStats() {
   const data = await api('stats');
-  const sources = data.sources || [];
-  const hanin = sources.find(s => s.source === 'hanin');
-  const hamza = sources.find(s => s.source === 'hamza');
+  const analyzed = allClips.filter(c => c.analyzed_at).length;
+  const total = allClips.length;
   document.getElementById('kpiContentMetrics').innerHTML = `
     <div class="kpi-metric"><span class="kpi-label">Clips</span><span class="kpi-value">${data.total_clips || 0}</span></div>
     <div class="kpi-metric"><span class="kpi-label">Reels</span><span class="kpi-value">${data.total_reels || 0}</span></div>
-    <div class="kpi-metric"><span class="kpi-label">Tags</span><span class="kpi-value">${allTags.length || '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Analyzed</span><span class="kpi-value">${analyzed}/${total}</span></div>
   `;
+  const prog = document.getElementById('analyzeProgress');
+  if (prog) prog.textContent = analyzed < total ? `${analyzed}/${total} analyzed` : '';
 }
 
 async function loadReels() {
@@ -490,8 +548,28 @@ function renderClips() {
     const inSeq = sequence.includes(c.id);
     const scoreClass = c.viral_score >= 9 ? 'score-high' : c.viral_score >= 7 ? 'score-mid' : 'score-low';
     const tags = c.tags.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
+    const isAnalyzed = !!c.analyzed_at;
+
+    // Intelligence metadata
+    const cropArrow = c.crop_gravity === 'left' ? '<span class="crop-arrow crop-left">&larr;</span>' :
+                      c.crop_gravity === 'right' ? '<span class="crop-arrow crop-right">&rarr;</span>' :
+                      '<span class="crop-arrow crop-center">&harr;</span>';
+    const bri = c.brightness ?? 50;
+    const briColor = bri < 20 ? 'var(--red)' : bri < 40 ? 'var(--yellow)' : 'var(--green)';
+    const audioIcon = c.has_good_audio ? '<span class="audio-icon audio-good" title="' + (c.audio_type || 'good') + '">&#9835;</span>' :
+                                          '<span class="audio-icon audio-noise" title="noise">&#9836;</span>';
+    const qualBadge = c.quality_flag === 'dark' ? '<span class="quality-badge quality-dark">DARK</span>' :
+                      c.quality_flag === 'shaky' ? '<span class="quality-badge quality-shaky">SHAKY</span>' : '';
+
+    const intelRow = isAnalyzed ? `<div class="clip-intel">
+      <span class="clip-intel-item">${cropArrow} ${(c.crop_gravity || 'center').toUpperCase()}</span>
+      <span class="clip-intel-item"><span class="brightness-bar"><span class="brightness-fill" style="width:${bri}%;background:${briColor}"></span></span> ${bri}</span>
+      <span class="clip-intel-item">${audioIcon} ${(c.audio_type || 'noise').toUpperCase()}</span>
+      ${qualBadge}
+    </div>` : '';
+
     return `<div class="clip-card ${inSeq ? 'selected' : ''}" onclick="toggleClip('${c.id}')">
-      <button class="clip-add-btn">${inSeq ? '✓' : '+'}</button>
+      <button class="clip-add-btn">${inSeq ? '&#10003;' : '+'}</button>
       <div class="clip-header">
         <div>
           <div class="clip-id">${c.id}</div>
@@ -503,6 +581,7 @@ function renderClips() {
         </div>
       </div>
       <div class="clip-desc">${c.description || 'No description'}</div>
+      ${intelRow}
       <div class="clip-meta">
         <span>${c.duration_s ? c.duration_s + 's' : '?s'}</span>
         <span>${c.resolution || '?'}</span>
@@ -551,10 +630,14 @@ function renderSequence() {
     const clip = allClips.find(c => c.id === id);
     const dur = clip?.duration_s || 0;
     totalDur += dur;
+    const warn = clip?.quality_flag === 'dark' ? '<span class="seq-warn">DARK</span>' :
+                 clip?.quality_flag === 'shaky' ? '<span class="seq-warn">SHAKY</span>' : '';
+    const cropIcon = clip?.crop_gravity === 'left' ? '&larr;' : clip?.crop_gravity === 'right' ? '&rarr;' : '';
     return `<div class="seq-chip" draggable="true" ondragstart="dragStart(event, ${i})" ondragover="event.preventDefault()" ondrop="drop(event, ${i})">
       <span class="seq-num">${i + 1}</span>
       <span class="seq-id">${id}</span>
-      <span class="seq-dur">${dur}s</span>
+      <span class="seq-dur">${dur}s ${cropIcon}</span>
+      ${warn}
       <span class="seq-remove" onclick="event.stopPropagation(); removeFromSequence(${i})">x</span>
     </div>`;
   }).join('');
@@ -594,6 +677,8 @@ async function saveReel() {
     name,
     clip_sequence: sequence,
     duration_s: Math.round(totalDur * 10) / 10,
+    audio_profile: document.getElementById('audioProfileSelect').value,
+    color_preset: document.getElementById('colorPresetSelect').value,
   });
 
   toast('Reel saved!', 'success');
@@ -616,7 +701,7 @@ function copyFFmpeg() {
 
   const concatList = lines.join('\n');
   const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
-  const cmd = `# Write concat list\ncat > /tmp/${name}_concat.txt << 'EOF'\n${concatList}\nEOF\n\n# Concatenate and export\nffmpeg -y -f concat -safe 0 -i /tmp/${name}_concat.txt \\\n  -vf "crop=ih*9/16:ih:iw/2-ih*9/32:0,scale=1080:1920" \\\n  -c:v libx264 -preset fast -crf 18 \\\n  -c:a aac -b:a 128k -ar 44100 \\\n  -movflags +faststart \\\n  ~/Downloads/HE_${name}.mp4`;
+  const cmd = `# Write concat list\ncat > /tmp/${name}_concat.txt << 'EOF'\n${concatList}\nEOF\n\n# Concatenate and export\nffmpeg -y -f concat -safe 0 -i /tmp/${name}_concat.txt \\\n  -vf "crop=ih*9/16:ih:iw/2-ih*9/32:0,scale=1080:1920" \\\n  -c:v libx264 -preset fast -crf 18 \\\n  -c:a aac -b:a 128k -ar 44100 \\\n  -movflags +faststart \\\n  ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4`;
 
   navigator.clipboard.writeText(cmd).then(() => toast('FFmpeg command copied!', 'success'));
 }
@@ -727,37 +812,74 @@ function inferMusicFromClips() {
   return { mood: 'Cinematic', bpm: '85-100', genre: 'World/Fusion', search: 'cinematic indian fusion', style: 'Mixed content — versatile cinematic backing works best.' };
 }
 
+function inferAudioProfile() {
+  const tags = getClipTags();
+  const dominant = tags.slice(0, 3);
+  if (dominant.includes('PEOPLE') || dominant.includes('TESTIMONIAL')) return 'testimonial';
+  if (dominant.includes('TANDOOR')) return 'asmr';
+  if (dominant.includes('FIRE') || dominant.includes('COOK')) return 'high_energy';
+  return 'default';
+}
+
+function onProfileChange() {
+  const matchedTemplate = TEMPLATES.find(t => t.clips.length === sequence.length && t.clips.every((c, i) => c === sequence[i]));
+  updateMusicBrief(matchedTemplate || null);
+}
+
 function updateMusicBrief(template) {
   const music = template?.music || inferMusicFromClips();
   document.getElementById('wfMood').textContent = music.mood;
   document.getElementById('wfBpm').textContent = music.bpm;
   document.getElementById('wfGenre').textContent = music.genre;
 
+  // Auto-select audio profile from template or tags
+  const autoProfile = template ? inferAudioProfile() : inferAudioProfile();
+  const profileEl = document.getElementById('audioProfileSelect');
+  if (profileEl && !profileEl._userChanged) profileEl.value = autoProfile;
+
   // Update clip summary in step 1
   if (sequence.length > 0) {
     let totalDur = 0;
     sequence.forEach(id => { const c = allClips.find(cl => cl.id === id); totalDur += c?.duration_s || 0; });
-    document.getElementById('wfClipSummary').textContent = sequence.length + ' clips · ' + totalDur.toFixed(1) + 's · Tags: ' + getClipTags().slice(0, 4).join(', ');
+    const analyzed = sequence.filter(id => { const c = allClips.find(cl => cl.id === id); return c?.analyzed_at; }).length;
+    document.getElementById('wfClipSummary').textContent = sequence.length + ' clips · ' + totalDur.toFixed(1) + 's · ' + analyzed + '/' + sequence.length + ' analyzed · Tags: ' + getClipTags().slice(0, 4).join(', ');
     document.getElementById('wfStep1').classList.add('done');
   } else {
     document.getElementById('wfClipSummary').textContent = 'No clips selected';
     document.getElementById('wfStep1').classList.remove('done');
   }
 
-  // Generate Claude command
+  // Generate intelligent Claude command with per-clip spec sheet
   const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
   const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
   const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
-  const clipList = sequence.map(id => {
-    const clip = allClips.find(c => c.id === id);
-    if (!clip) return '';
-    return clip.source === 'hanin' ? HANIN + '/' + clip.filename : HAMZA + '/' + clip.filename;
-  }).filter(Boolean);
+
+  const audioProfile = document.getElementById('audioProfileSelect').value;
+  const colorPreset = document.getElementById('colorPresetSelect').value;
+  const profile = AUDIO_PROFILES[audioProfile];
+  const colorGrade = COLOR_PRESETS[colorPreset];
 
   const totalDur = sequence.reduce((s, id) => { const c = allClips.find(cl => cl.id === id); return s + (c?.duration_s || 0); }, 0).toFixed(1);
   const reelNameClean = document.getElementById('reelName').value.trim() || 'Untitled Reel';
   const concept = music.mood + ' — ' + music.genre;
   const apiDomain = location.origin;
+
+  // Build per-clip spec lines
+  const clipSpecs = sequence.map((id, i) => {
+    const c = allClips.find(cl => cl.id === id);
+    if (!c) return '';
+    const path = (c.source === 'hanin' ? HANIN : HAMZA) + '/' + c.filename;
+    const sx = c.subject_x ?? 0.5;
+    const gravity = (c.crop_gravity || 'center').toUpperCase();
+    const bri = c.brightness ?? 50;
+    const audioAction = c.has_good_audio ? 'KEEP (' + (c.audio_type || 'good') + ')' : 'MUTE';
+    const warn = c.quality_flag === 'dark' ? ' !! DARK — consider brightness boost !!' : '';
+    return `${i + 1}. ${id} — ${path} | subject_x=${sx} | crop=${gravity} | brightness=${bri} | audio=${audioAction}${warn}`;
+  }).filter(Boolean).join('\n');
+
+  const musicPct = Math.round(profile.music * 100);
+  const ambientPct = Math.round(profile.ambient * 100);
+  const colorFilterLine = colorGrade.filter ? `COLOR GRADE: ${colorGrade.filter}` : 'COLOR GRADE: none (raw)';
 
   const brief = `Search Epidemic Sound for a track matching:
 - Mood: ${music.mood}
@@ -766,23 +888,34 @@ function updateMusicBrief(template) {
 - Search keywords: "${music.search}"
 - Style notes: ${music.style}
 
-Then build the reel:
-- Reel name: ${name}
-- Clips (in order): ${sequence.join(', ')}
-- Files: ${clipList.join(', ')}
-- Total duration: ~${totalDur}s
-- Output: ~/Downloads/HE_${name}.mp4
+Then build the reel using the per-clip intelligence below.
+
+CLIPS:
+${clipSpecs}
+
+AUDIO PROFILE: ${audioProfile} (music ${musicPct}%, ambient ${ambientPct}%)
+${colorFilterLine}
+
+Per-clip crop formula: crop=ih*9/16:ih:max(0,min(iw-ih*9/16,iw*SUBJECT_X-ih*9/32)):0
+  (Replace SUBJECT_X with the clip's subject_x value for each input)
+Per-clip audio: MUTE clips → volume=0.03, KEEP clips → volume=${profile.ambient.toFixed(2)}
+
+Reel name: ${name}
+Total duration: ~${totalDur}s
+Output: ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4
 
 Steps:
 1. Use Epidemic Sound MCP to search for "${music.search}" and download the best match
-2. Concatenate clips with FFmpeg: crop to 1080x1920 (9:16 vertical)
-3. Mix audio: ambient at 85%, music at 14%, 1s fade-in, 1.5s fade-out
-4. Export to ~/Downloads/HE_${name}.mp4
-5. Save reel to dashboard — run this curl after export:
-   curl -X POST "${apiDomain}/api/clips?action=reel-save&key=${API_KEY}" -H "Content-Type: application/json" -d '{"name":"${reelNameClean}","concept":"${concept}","clip_sequence":${JSON.stringify(sequence)},"duration_s":${totalDur}}'
-6. Mark as exported:
-   curl -X POST "${apiDomain}/api/clips?action=reel-update-status&id=REEL_ID&key=${API_KEY}" -H "Content-Type: application/json" -d '{"status":"exported","export_path":"~/Downloads/HE_${name}.mp4"}'
-   (Replace REEL_ID with the id returned from step 5)`;
+2. For EACH clip, apply its specific crop using the subject_x value (not center-crop!)
+3. Apply color grade to all clips: ${colorGrade.filter || '(none)'}
+4. Mix audio: music at ${musicPct}% volume, KEEP clips ambient at ${ambientPct}%, MUTE clips ambient at 3%
+5. Add 1s fade-in, 1.5s fade-out on music track
+6. Export to ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4
+7. Save reel to dashboard:
+   curl -X POST "${apiDomain}/api/clips?action=reel-save&key=${API_KEY}" -H "Content-Type: application/json" -d '{"name":"${reelNameClean}","concept":"${concept}","clip_sequence":${JSON.stringify(sequence)},"duration_s":${totalDur},"audio_profile":"${audioProfile}","color_preset":"${colorPreset}"}'
+8. Mark as exported:
+   curl -X POST "${apiDomain}/api/clips?action=reel-update-status&id=REEL_ID&key=${API_KEY}" -H "Content-Type: application/json" -d '{"status":"exported","export_path":"~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4"}'
+   (Replace REEL_ID with the id returned from step 7)`;
 
   document.getElementById('wfMusicBrief').textContent = brief;
 }
@@ -999,6 +1132,13 @@ function generateRecommendation() {
     const avgViral = clipObjs.length > 0 ? clipObjs.reduce((s, c) => s + (c.viral_score || 5), 0) / clipObjs.length : 5;
     score += avgViral * 2;
 
+    // Quality gate penalty — dark clips reduce template score
+    const darkClips = clipObjs.filter(c => c.quality_flag === 'dark');
+    if (darkClips.length > 0) {
+      score -= darkClips.length * 20;
+      reasons.push(darkClips.length + ' dark clip(s) (' + darkClips.map(c => c.id).join(', ') + ') — may need brightness boost or replacement');
+    }
+
     return { template: t, idx, score, reasons, avgViral, clipCount: clipObjs.length };
   });
 
@@ -1049,6 +1189,43 @@ function generateRecommendation() {
 function loadRecommendation(idx) {
   loadTemplate(idx);
   document.querySelector('.builder-wrap').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Analyze Clips Command ──
+function copyAnalyzeCommand() {
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+  const apiDomain = location.origin;
+  const unanalyzed = allClips.filter(c => !c.analyzed_at);
+  const target = unanalyzed.length > 0 ? unanalyzed : allClips;
+  const label = unanalyzed.length > 0 ? `${unanalyzed.length} unanalyzed clips` : `all ${allClips.length} clips (re-analyze)`;
+
+  const clipLines = target.map(c => {
+    const path = (c.source === 'hanin' ? HANIN : HAMZA) + '/' + c.filename;
+    return `  ${c.id}: ${path}`;
+  }).join('\n');
+
+  const cmd = `Analyze ${label} for the Hamza Express reel pipeline. For each clip:
+
+CLIPS:
+${clipLines}
+
+For EACH clip, run these steps:
+
+1. ffprobe to get width_px, height_px, duration_s
+2. ffmpeg signalstats (first 3 seconds) to get average brightness (lavfi.signalstats.YAVG), normalize to 0-100 scale
+3. Extract one keyframe and visually inspect it — determine subject_x (0.0=left edge, 1.0=right edge, where is the main subject/food/fire/action?)
+4. Set crop_gravity: if subject_x < 0.35 → "left", if > 0.65 → "right", else "center"
+5. Classify audio_type from tags: FIRE/TANDOOR→"fire", COOK→"sizzle", PEOPLE/TESTIMONIAL→"voice", VENUE/BRAND→"ambient", else→"noise"
+6. Set has_good_audio=1 if audio_type is fire/sizzle/voice, else 0
+7. Set quality_flag="dark" if brightness < 20, else "ok"
+
+After analyzing ALL clips, bulk-update results:
+curl -X POST "${apiDomain}/api/clips?action=bulk-update&key=${API_KEY}" -H "Content-Type: application/json" -d '{"clips":[ARRAY_OF_CLIP_OBJECTS]}'
+
+Each clip object: {"id":"H01","subject_x":0.35,"subject_y":0.5,"crop_gravity":"left","brightness":42,"has_good_audio":1,"audio_type":"fire","width_px":1920,"height_px":1080,"quality_flag":"ok","analyzed_at":"2026-03-23T12:00:00"}`;
+
+  navigator.clipboard.writeText(cmd).then(() => toast('Analyze command copied! Paste in Claude Code.', 'success'));
 }
 
 // ── Toast ──

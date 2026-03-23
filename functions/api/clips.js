@@ -44,6 +44,9 @@ export async function onRequest(context) {
     if (action === 'update') {
       return handleUpdate(db, url, context, json);
     }
+    if (action === 'bulk-update') {
+      return handleBulkUpdate(db, context, json);
+    }
     if (action === 'delete') {
       return handleDelete(db, url, json);
     }
@@ -71,7 +74,7 @@ export async function onRequest(context) {
 
     return json({
       error: 'Unknown action',
-      available: ['list', 'get', 'add', 'update', 'delete', 'tags', 'stats', 'reels', 'reel-save', 'reel-delete', 'reel-update-status']
+      available: ['list', 'get', 'add', 'update', 'bulk-update', 'delete', 'tags', 'stats', 'reels', 'reel-save', 'reel-delete', 'reel-update-status']
     }, 400);
 
   } catch (error) {
@@ -149,7 +152,9 @@ async function handleUpdate(db, url, context, json) {
   const fields = [];
   const params = [];
 
-  for (const key of ['tags', 'description', 'viral_score', 'duration_s', 'resolution', 'thumbnail_url']) {
+  for (const key of ['tags', 'description', 'viral_score', 'duration_s', 'resolution', 'thumbnail_url',
+    'subject_x', 'subject_y', 'crop_gravity', 'brightness', 'has_good_audio', 'audio_type',
+    'width_px', 'height_px', 'quality_flag', 'analyzed_at']) {
     if (body[key] !== undefined) {
       fields.push(`${key} = ?`);
       params.push(body[key]);
@@ -161,6 +166,42 @@ async function handleUpdate(db, url, context, json) {
   params.push(id);
   await db.prepare(`UPDATE clips SET ${fields.join(', ')} WHERE id = ?`).bind(...params).run();
   return json({ ok: true, id });
+}
+
+// ── Bulk update clips ──
+async function handleBulkUpdate(db, context, json) {
+  const body = await context.request.json();
+  const { clips } = body;
+
+  if (!Array.isArray(clips) || clips.length === 0) {
+    return json({ error: 'clips array required' }, 400);
+  }
+
+  const allowedFields = ['tags', 'description', 'viral_score', 'duration_s', 'resolution', 'thumbnail_url',
+    'subject_x', 'subject_y', 'crop_gravity', 'brightness', 'has_good_audio', 'audio_type',
+    'width_px', 'height_px', 'quality_flag', 'analyzed_at'];
+
+  const results = [];
+  for (const clip of clips) {
+    if (!clip.id) { results.push({ id: null, error: 'id required' }); continue; }
+
+    const fields = [];
+    const params = [];
+    for (const key of allowedFields) {
+      if (clip[key] !== undefined) {
+        fields.push(`${key} = ?`);
+        params.push(clip[key]);
+      }
+    }
+
+    if (fields.length === 0) { results.push({ id: clip.id, error: 'no fields' }); continue; }
+
+    params.push(clip.id);
+    await db.prepare(`UPDATE clips SET ${fields.join(', ')} WHERE id = ?`).bind(...params).run();
+    results.push({ id: clip.id, ok: true });
+  }
+
+  return json({ ok: true, updated: results.filter(r => r.ok).length, results });
 }
 
 // ── Delete clip ──
@@ -221,7 +262,7 @@ async function handleReels(db, url, json) {
 // ── Save reel draft ──
 async function handleReelSave(db, context, json) {
   const body = await context.request.json();
-  const { id, name, concept, clip_sequence, duration_s } = body;
+  const { id, name, concept, clip_sequence, duration_s, audio_profile, color_preset } = body;
 
   if (!name || !clip_sequence) {
     return json({ error: 'name, clip_sequence required' }, 400);
@@ -232,14 +273,14 @@ async function handleReelSave(db, context, json) {
   if (id) {
     // Update existing
     await db.prepare(
-      'UPDATE reels SET name = ?, concept = ?, clip_sequence = ?, duration_s = ? WHERE id = ?'
-    ).bind(name, concept || null, seqStr, duration_s || null, id).run();
+      'UPDATE reels SET name = ?, concept = ?, clip_sequence = ?, duration_s = ?, audio_profile = ?, color_preset = ? WHERE id = ?'
+    ).bind(name, concept || null, seqStr, duration_s || null, audio_profile || 'default', color_preset || 'warm_restaurant', id).run();
     return json({ ok: true, id });
   } else {
     // Insert new
     const result = await db.prepare(
-      'INSERT INTO reels (name, concept, clip_sequence, duration_s) VALUES (?, ?, ?, ?)'
-    ).bind(name, concept || null, seqStr, duration_s || null).run();
+      'INSERT INTO reels (name, concept, clip_sequence, duration_s, audio_profile, color_preset) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(name, concept || null, seqStr, duration_s || null, audio_profile || 'default', color_preset || 'warm_restaurant').run();
     return json({ ok: true, id: result.meta.last_row_id });
   }
 }
