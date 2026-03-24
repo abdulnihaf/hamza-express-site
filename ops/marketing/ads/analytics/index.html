@@ -646,6 +646,16 @@
       setTimeout(() => t.classList.remove('show'), 2500);
     }
 
+    // Data version — bump to reset stale localStorage
+    const DATA_VERSION = 2;
+    function migrateData() {
+      const ver = parseInt(localStorage.getItem('he_ads_version') || '0');
+      if (ver < DATA_VERSION) {
+        localStorage.removeItem('he_ads_campaigns');
+        localStorage.setItem('he_ads_version', DATA_VERSION);
+      }
+    }
+
     // Seed with Eid campaigns if empty
     function seedIfEmpty() {
       const data = loadCampaigns();
@@ -695,6 +705,7 @@
     }
 
     // Init
+    migrateData();
     seedIfEmpty();
     render();
     // Auto-sync Google Ads on load + every 5 minutes
