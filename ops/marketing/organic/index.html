@@ -915,7 +915,7 @@ let reviewData = { rating: '--', total: '--', newToday: '--', thisWeek: '--' };
 
 async function refreshReviews() {
   try {
-    const resp = await fetch('/api/marketing?action=get-reviews');
+    const resp = await fetch('/api/organic?action=get-reviews&brand=he');
     if (!resp.ok) throw new Error('API unavailable');
     const data = await resp.json();
     if (data.success) {
