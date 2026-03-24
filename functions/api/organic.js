@@ -18,7 +18,7 @@ function json(data, status = 200) {
 
 // HE Google Place ID — from Google Maps URL
 // Source: index.html maps link → 0x3bae1771b42304f9:0xb86ab64920519df9
-const HE_PLACE_ID = 'ChIJ-QQjtHEXrjsR-Z1RIEmmuLg'; // TODO: verify — derived from CID
+const HE_PLACE_ID = 'ChIJ-QQjtHEXrjsR-Z1RIEm2arg'; // Verified — 4.9★, 110 reviews
 
 export async function onRequest(context) {
   const { request, env } = context;
