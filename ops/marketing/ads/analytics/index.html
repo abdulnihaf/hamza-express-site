@@ -274,8 +274,10 @@
         googleLiveData = metricsData;
         // Merge into localStorage campaigns
         const local = loadCampaigns();
+        // Normalize name for comparison (em dash ↔ hyphen, trim whitespace)
+        const normName = s => (s || '').replace(/[\u2014\u2013]/g, '-').replace(/\s+/g, ' ').trim().toLowerCase();
         for (const gCamp of metricsData.campaigns) {
-          const existing = local.find(c => c.platform === 'google' && (c.platformCampaignId === gCamp.id || c.name === gCamp.name));
+          const existing = local.find(c => c.platform === 'google' && (c.platformCampaignId === gCamp.id || normName(c.name) === normName(gCamp.name)));
           if (existing) {
             existing.impressions = gCamp.impressions;
             existing.clicks = gCamp.clicks;
@@ -289,7 +291,7 @@
             local.push({
               name: gCamp.name,
               platform: 'google',
-              date: from,
+              date: new Date().toISOString().split('T')[0],
               dateEnd: to,
               objective: gCamp.type === 'PERFORMANCE_MAX' ? 'pmax' : 'search',
               budget: 0,
