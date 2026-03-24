@@ -98,8 +98,6 @@ async function getCampaigns(accessToken, env) {
       campaign.name,
       campaign.status,
       campaign.advertising_channel_type,
-      campaign.start_date,
-      campaign.end_date,
       campaign_budget.amount_micros,
       campaign_budget.type
     FROM campaign
@@ -114,8 +112,6 @@ async function getCampaigns(accessToken, env) {
     name: r.campaign.name,
     status: r.campaign.status,
     type: r.campaign.advertisingChannelType,
-    startDate: r.campaign.startDate,
-    endDate: r.campaign.endDate,
     budgetMicros: r.campaignBudget?.amountMicros,
     budgetType: r.campaignBudget?.type,
     budgetINR: r.campaignBudget?.amountMicros ? (parseInt(r.campaignBudget.amountMicros) / 1000000).toFixed(2) : null,
