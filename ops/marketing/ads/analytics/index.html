@@ -124,6 +124,16 @@
     .btn-danger { color: var(--red); border-color: rgba(239,68,68,.3); }
     .btn-danger:hover { background: rgba(239,68,68,.1); }
 
+    /* Sync Status */
+    .sync-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: var(--muted); }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .sync-dot.live { background: var(--green); animation: pulse 2s infinite; }
+    .sync-dot.offline { background: var(--red); }
+    .sync-dot.loading { background: var(--yellow); animation: pulse .5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    .sync-btn { padding: 3px 10px; border-radius: 5px; border: 1px solid var(--border); background: var(--card); color: var(--text2); font-size: 11px; cursor: pointer; font-family: inherit; }
+    .sync-btn:hover { border-color: var(--tan); color: var(--text); }
+
     /* Toast */
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
     .toast.show { opacity: 1; }
@@ -149,6 +159,12 @@
       <button class="range-btn active" onclick="setRange('week')">This Week</button>
       <button class="range-btn" onclick="setRange('month')">This Month</button>
       <button class="range-btn" onclick="setRange('all')">All Time</button>
+    </div>
+
+    <div class="sync-bar" id="syncBar">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">Connecting...</span>
+      <button class="sync-btn" onclick="syncGoogleAds()">Sync Now</button>
     </div>
 
     <div class="kpi-row" id="kpiRow"></div>
@@ -197,9 +213,148 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    const API_BASE = '/api/google-ads';
+    const API_KEY = localStorage.getItem('he_dash_key') || '';
+    const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
     let currentRange = 'week';
     let sortCol = 'date';
     let sortDir = -1;
+    let lastSyncTime = null;
+    let syncTimer = null;
+    let googleLiveData = null; // cached API response
+
+    // API Key check on load
+    function ensureApiKey() {
+      if (!localStorage.getItem('he_dash_key')) {
+        const key = prompt('Enter dashboard API key:');
+        if (key) localStorage.setItem('he_dash_key', key);
+        return key || '';
+      }
+      return localStorage.getItem('he_dash_key');
+    }
+
+    // Google Ads API — fetch live metrics
+    async function fetchGoogleAdsMetrics(from, to) {
+      const key = ensureApiKey();
+      if (!key) return null;
+      try {
+        const resp = await fetch(`${API_BASE}?action=metrics&from=${from}&to=${to}&key=${encodeURIComponent(key)}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (err) {
+        console.error('Google Ads API error:', err);
+        return null;
+      }
+    }
+
+    async function fetchGoogleAdsCampaigns() {
+      const key = ensureApiKey();
+      if (!key) return null;
+      try {
+        const resp = await fetch(`${API_BASE}?action=campaigns&key=${encodeURIComponent(key)}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (err) {
+        console.error('Google Ads campaigns error:', err);
+        return null;
+      }
+    }
+
+    // Sync: pull Google Ads data and merge with localStorage
+    async function syncGoogleAds() {
+      setSyncStatus('loading', 'Syncing Google Ads...');
+      const { from, to } = getDateRange();
+      const [metricsData, campaignsData] = await Promise.all([
+        fetchGoogleAdsMetrics(from, to),
+        fetchGoogleAdsCampaigns()
+      ]);
+
+      if (metricsData && metricsData.campaigns) {
+        googleLiveData = metricsData;
+        // Merge into localStorage campaigns
+        const local = loadCampaigns();
+        for (const gCamp of metricsData.campaigns) {
+          const existing = local.find(c => c.platform === 'google' && (c.platformCampaignId === gCamp.id || c.name === gCamp.name));
+          if (existing) {
+            existing.impressions = gCamp.impressions;
+            existing.clicks = gCamp.clicks;
+            existing.spend = parseFloat(gCamp.costINR);
+            existing.reach = gCamp.impressions;
+            existing.cpm = parseFloat(gCamp.avgCPM);
+            existing.status = gCamp.status === 'ENABLED' ? 'active' : gCamp.status === 'PAUSED' ? 'paused' : 'completed';
+            existing.platformCampaignId = gCamp.id;
+            existing.lastSyncedAt = new Date().toISOString();
+          } else if (gCamp.impressions > 0 || gCamp.clicks > 0) {
+            local.push({
+              name: gCamp.name,
+              platform: 'google',
+              date: from,
+              dateEnd: to,
+              objective: gCamp.type === 'PERFORMANCE_MAX' ? 'pmax' : 'search',
+              budget: 0,
+              spend: parseFloat(gCamp.costINR),
+              reach: gCamp.impressions,
+              impressions: gCamp.impressions,
+              clicks: gCamp.clicks,
+              results: gCamp.conversions,
+              resultType: 'conversions',
+              status: gCamp.status === 'ENABLED' ? 'active' : 'completed',
+              cpm: parseFloat(gCamp.avgCPM),
+              notes: '',
+              platformCampaignId: gCamp.id,
+              lastSyncedAt: new Date().toISOString()
+            });
+          }
+        }
+
+        // Update budget from campaigns list if available
+        if (campaignsData && campaignsData.campaigns) {
+          for (const gCamp of campaignsData.campaigns) {
+            const existing = local.find(c => c.platformCampaignId === gCamp.id);
+            if (existing && gCamp.budgetINR) {
+              existing.budget = parseFloat(gCamp.budgetINR);
+            }
+          }
+        }
+
+        saveCampaigns(local);
+        lastSyncTime = new Date();
+        setSyncStatus('live', `Live — synced ${lastSyncTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`);
+        toast('Google Ads synced');
+      } else {
+        setSyncStatus('offline', 'Google Ads offline — using cached data');
+      }
+      render();
+    }
+
+    function setSyncStatus(status, text) {
+      const dot = document.getElementById('syncDot');
+      const label = document.getElementById('syncText');
+      dot.className = `sync-dot ${status}`;
+      label.textContent = text;
+    }
+
+    function getDateRange() {
+      const now = new Date();
+      const to = now.toISOString().split('T')[0];
+      let from;
+      if (currentRange === 'week') {
+        const d = new Date(now); d.setDate(d.getDate() - 7);
+        from = d.toISOString().split('T')[0];
+      } else if (currentRange === 'month') {
+        const d = new Date(now); d.setDate(d.getDate() - 30);
+        from = d.toISOString().split('T')[0];
+      } else {
+        from = '2026-01-01';
+      }
+      return { from, to };
+    }
+
+    function startAutoSync() {
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(syncGoogleAds, SYNC_INTERVAL);
+    }
 
     function loadCampaigns() {
       return JSON.parse(localStorage.getItem('he_ads_campaigns') || '[]');
@@ -213,6 +368,7 @@
       currentRange = r;
       document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase().includes(r === 'week' ? 'week' : r === 'month' ? 'month' : 'all')));
       render();
+      syncGoogleAds(); // re-sync with new date range
     }
 
     function filterByRange(campaigns) {
@@ -539,6 +695,9 @@
     // Init
     seedIfEmpty();
     render();
+    // Auto-sync Google Ads on load + every 5 minutes
+    syncGoogleAds();
+    startAutoSync();
   </script>
 </body>
 </html>
