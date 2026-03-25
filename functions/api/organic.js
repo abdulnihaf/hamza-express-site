@@ -77,52 +77,57 @@ async function getReviews(url, env) {
     'SELECT * FROM review_snapshots WHERE brand = ? AND snapshot_date <= ? ORDER BY snapshot_date ASC LIMIT 1'
   ).bind(brand, weekStart).first();
 
-  if (existing) {
-    const newToday = yesterdaySnap ? existing.total_reviews - yesterdaySnap.total_reviews : 0;
-    const thisWeek = weekSnap ? existing.total_reviews - weekSnap.total_reviews : 0;
-    return json({
-      success: true,
-      rating: existing.average_rating,
-      totalReviews: existing.total_reviews,
-      newToday,
-      thisWeek,
-      stars: { 5: existing.stars_5, 4: existing.stars_4, 3: existing.stars_3, 2: existing.stars_2, 1: existing.stars_1 },
-    });
-  }
-
-  // No snapshot today — fetch from Google Places API
   if (!env.GOOGLE_PLACES_API_KEY) {
-    return json({ success: true, rating: '--', totalReviews: '--', newToday: '--', thisWeek: '--', note: 'GOOGLE_PLACES_API_KEY not configured. Add it as a Cloudflare secret.' });
+    // No API key — fall back to cached snapshot
+    if (existing) {
+      const newToday = yesterdaySnap ? existing.total_reviews - yesterdaySnap.total_reviews : 0;
+      const thisWeek = weekSnap ? existing.total_reviews - weekSnap.total_reviews : 0;
+      return json({ success: true, rating: existing.average_rating, totalReviews: existing.total_reviews, newToday, thisWeek, lastUpdated: existing.created_at });
+    }
+    return json({ success: true, rating: '--', totalReviews: '--', newToday: '--', thisWeek: '--', note: 'GOOGLE_PLACES_API_KEY not configured' });
   }
 
+  // Always fetch live from Google Places API
+  let liveRating = null, liveCount = null, lastUpdated = null;
   try {
     const placeId = HE_PLACE_ID;
     const resp = await fetch(
       `https://places.googleapis.com/v1/places/${placeId}?fields=rating,userRatingCount&key=${env.GOOGLE_PLACES_API_KEY}`
     );
     const data = await resp.json();
-
     if (data.rating) {
+      liveRating = data.rating;
+      liveCount = data.userRatingCount || 0;
+      lastUpdated = new Date().toISOString();
+
       await env.DB.prepare(
         `INSERT OR REPLACE INTO review_snapshots (brand, snapshot_date, total_reviews, average_rating) VALUES (?, ?, ?, ?)`
-      ).bind(brand, today, data.userRatingCount || 0, data.rating).run();
-
-      const newToday = yesterdaySnap ? (data.userRatingCount || 0) - yesterdaySnap.total_reviews : 0;
-      const thisWeek = weekSnap ? (data.userRatingCount || 0) - weekSnap.total_reviews : 0;
-
-      return json({
-        success: true,
-        rating: data.rating,
-        totalReviews: data.userRatingCount || 0,
-        newToday,
-        thisWeek,
-      });
+      ).bind(brand, today, liveCount, liveRating).run();
     }
-
-    return json({ success: true, rating: '--', totalReviews: '--', newToday: '--', thisWeek: '--', note: 'Place ID may be incorrect or Places API not enabled' });
   } catch (e) {
-    return json({ success: true, rating: '--', totalReviews: '--', newToday: '--', thisWeek: '--', note: e.message });
+    // Live fetch failed — fall back to cached
+    if (existing) {
+      liveRating = existing.average_rating;
+      liveCount = existing.total_reviews;
+      lastUpdated = existing.created_at;
+    }
   }
+
+  if (liveRating === null) {
+    return json({ success: true, rating: '--', totalReviews: '--', newToday: '--', thisWeek: '--', note: 'Could not fetch reviews' });
+  }
+
+  const newToday = yesterdaySnap ? liveCount - yesterdaySnap.total_reviews : 0;
+  const thisWeek = weekSnap ? liveCount - weekSnap.total_reviews : 0;
+
+  return json({
+    success: true,
+    rating: liveRating,
+    totalReviews: liveCount,
+    newToday,
+    thisWeek,
+    lastUpdated,
+  });
 }
 
 async function getReviewLog(url, env) {
