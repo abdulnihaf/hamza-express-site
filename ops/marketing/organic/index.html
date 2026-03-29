@@ -227,7 +227,7 @@
           <li><code>Social post reference</code> &mdash; Existing post style</li>
           <li><code>Product photo</code> &mdash; Food photo from <code>assets/menu/</code></li>
         </ul>
-        <p style="margin:10px 0"><strong>About Hamza Express:</strong> Legendary Dakhni biryani restaurant since 1918 (4 generations). 107+ dishes including biryani, tandoori, Chinese, shawarma, kebabs. Open <strong>1 PM &ndash; 5 AM</strong> daily. H.K.P. Road, Shivajinagar.</p>
+        <p style="margin:10px 0"><strong>About Hamza Express:</strong> Legendary Dakhni cuisine since 1918 (4 generations). Famous for ghee rice, charcoal kebab, and bheja fry. 107+ dishes including tandoori, Chinese, shawarma. Open <strong>1 PM &ndash; 1 AM</strong> daily. H.K.P. Road, Shivajinagar.</p>
       </div>
     </details>
 
@@ -340,7 +340,7 @@ const BRAND = {
   address: 'H.K.P. Road, Near Russell Market, Shivajinagar, Bangalore 560051',
   hours: '1 PM - 5 AM',
   website: 'https://hamzaexpress.in',
-  hashtags: '#HamzaExpress #Since1918 #DakhniBiryani #BangaloreFood #Shivajinagar',
+  hashtags: '#HamzaExpress #Since1918 #GheeRice #ChickenKebab #BhejaFry #BangaloreFood #Shivajinagar',
 };
 
 // Meta Graph API — HN Hotels Private Limited portfolio (ID: 2590924097967277)
@@ -392,7 +392,7 @@ function storageKey() {
 // Product photos: assets/menu/HE-XXXX.jpg
 // =====================================================
 
-const PROMPT_BASE = `You are a professional social media designer for Hamza Express \u2014 a legendary Dakhni biryani restaurant in Shivajinagar, Bangalore (est. 1918, 4 generations).
+const PROMPT_BASE = `You are a professional social media designer for Hamza Express \u2014 a legendary Dakhni restaurant in Shivajinagar, Bangalore (est. 1918, 4 generations). Famous for ghee rice, charcoal kebab, and bheja fry.
 
 BRAND IDENTITY:
 - Colors: Burnt Sienna #713520 (primary), Tan #D2B48C (warm), Gold #D4A44C (accent), Dark Brown #4A2C17 (text), Cream #FFF8F0 (bg)
@@ -419,62 +419,62 @@ DESIGN RULES:
 // Post content definitions — slot 0=morning, 1=afternoon, 2=evening
 const WEEK_1_POSTS = [
   // --- DAY 1 (Mon) ---
-  { title: 'Not Just Biryani', objective: 'AWARENESS',
-    photo: 'HE-1164.jpg', headline: 'Not Just Biryani', subtext: 'Hamza Express \u2014 Shivajinagar',
-    concept: 'Menu breadth \u2014 Chinese, Shawarma, Tandoor, Kebabs. Hero: Chilly Chicken. Show that HE has 107+ dishes beyond biryani.',
-    ig_caption: `Yes, the biryani is legendary. But have you met the Chilly Chicken?\n\nCrispy, spiced, tossed in fire \u2014 the kind that makes you forget you came here for biryani. And then you order biryani anyway.\n\nAlso on the menu: Shawarma, Tandoori, Chinese, 100+ dishes.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\u23f0 1 PM \u2013 5 AM\n\n#HamzaExpress #ChillyChicken #NotJustBiryani #BangaloreFood #Shivajinagar`,
-    fb_caption: `Everyone knows us for the biryani. But the menu at Hamza Express has 107 dishes \u2014 and some of them might surprise you.\n\nChilly Chicken. Tandoori Tikka. Shawarma Rolls. Mutton Pepper Roast. Chicken 65. Noodles. Fried Rice.\n\nThe biryani built the reputation. Everything else keeps you coming back.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 5 AM | \ud83d\udcde 8197844553`,
-    google_caption: `Hamza Express serves more than biryani \u2014 Chilly Chicken, Shawarma, Tandoori, Chinese, and 100+ dishes. Shivajinagar, Bangalore. Open 1 PM \u2013 5 AM.` },
+  { title: 'Ghee Rice. Kebab. Bheja Fry.', objective: 'AWARENESS',
+    photo: 'HE-1164.jpg', headline: 'Ghee Rice. Kebab. Bheja Fry.', subtext: 'Hamza Express \u2014 Since 1918',
+    concept: 'Identity post. Lead with the 3 hero items. 9,626 reviews on Ghee Rice, 9,393 on Kebab, 2,477 on Bheja Fry. This is what Hamza IS.',
+    ig_caption: `9,000+ people have rated our Ghee Rice on Swiggy.\n\nThe dish Bangalore lines up for. Pair it with our charcoal kebab and bheja fry and you\u2019ll understand why this isn\u2019t just another restaurant.\n\nGhee Rice. Kebab. Bheja Fry. Since 1918.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\u23f0 1 PM \u2013 1 AM\n\n#HamzaExpress #GheeRice #ChickenKebab #BhejaFry #BangaloreFood #Shivajinagar`,
+    fb_caption: `Three dishes. One identity.\n\nGhee Rice \u2014 cooked in pure ghee, the most ordered item on our menu since 1918.\nChicken Kebab \u2014 charcoal-grilled, the one people drive across Bangalore for.\nBheja Fry \u2014 goat brain, pan-fried with Dakhni spices. No other restaurant in the city does this.\n\nThis is Hamza Express. This is what we\u2019re known for.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 1 AM | \ud83d\udcde 8008002049`,
+    google_caption: `Hamza Express \u2014 Bangalore\u2019s legendary ghee rice, chicken kebab, and bheja fry since 1918. Shivajinagar. Open 1 PM \u2013 1 AM.` },
 
-  { title: 'Chicken Biryani \u2014 The One', objective: 'DESIRE',
-    photo: 'HE-1201.jpg', headline: 'Chicken Biryani', subtext: 'Dum-cooked. Slow. Patient.',
-    concept: 'Hero product spotlight. Chicken Biryani \u2014 the signature dish. Dum-cooked Dakhni style, 4 generations of perfection.',
-    ig_caption: `Some dishes don\u2019t need an introduction. They need a warning.\n\nChicken Biryani. Dum-cooked. Slow. Patient. The kind that fills the room before it fills the plate.\n\nIf you know, you know.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#ChickenBiryani #HamzaExpress #DakhniBiryani #BangaloreBiryani #Shivajinagar`,
-    fb_caption: `There\u2019s biryani. And then there\u2019s Hamza Express biryani.\n\nDum-cooked the Dakhni way \u2014 slow, patient, layered with rice that remembers every spice it touched. This isn\u2019t a recipe. It\u2019s a ritual that\u2019s been perfected over four generations.\n\nThe biryani your grandparents loved. The same one your kids will.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 5 AM | \ud83d\udcde wa.me/918197844553`,
-    google_caption: `Chicken Biryani at Hamza Express \u2014 dum-cooked Dakhni-style, 4 generations of perfection. Shivajinagar, Bangalore. Open 1 PM \u2013 5 AM.` },
+  { title: 'Ghee Rice + Chicken Kebab', objective: 'DESIRE',
+    photo: 'HE-1201.jpg', headline: 'The Hamza Plate', subtext: 'Ghee Rice. Chicken Kebab. Kerala Paratha.',
+    concept: 'Hero product spotlight. The #1 + #2 most ordered items at Hamza. Ghee Rice (9,626 reviews) + Chicken Kebab (9,393 reviews). This IS the Hamza meal.',
+    ig_caption: `The Hamza Plate.\n\nGhee Rice. Chicken Kebab. Kerala Paratha.\n\nThe meal 9,000+ people have rated on Swiggy. The meal Bangalore knows by heart. The meal that\u2019s been the same since 1918.\n\nOrder once. Return always.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#GheeRice #ChickenKebab #HamzaExpress #HamzaPlate #BangaloreFood #Shivajinagar`,
+    fb_caption: `There\u2019s a reason Ghee Rice and Chicken Kebab are our two most ordered items.\n\nGhee Rice \u2014 basmati rice cooked in pure ghee with whole spices. The dish that defines us.\nChicken Kebab \u2014 charcoal-grilled, served with lime and salad. Simple. No fancy marinades. Just 107 years of knowing exactly how.\n\nTogether, they\u2019re The Hamza Plate. Add Kerala Paratha and you\u2019re set.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 1 AM | \ud83d\udcde 8008002049`,
+    google_caption: `Ghee Rice + Chicken Kebab at Hamza Express \u2014 the two most ordered items since 1918. The Hamza Plate. Shivajinagar, Bangalore. Open 1 PM \u2013 1 AM.` },
 
   { title: 'The Night Kitchen', objective: 'DESIRE',
     photo: 'HE-1135.jpg', headline: 'The Night Kitchen', subtext: '1 PM to 5 AM. Every single day.',
     concept: 'BTS kitchen fire. Tandoori Chicken as hero. Late-night positioning \u2014 Hamza Express doesn\u2019t close when Bangalore sleeps.',
-    ig_caption: `1 AM. The tandoor is still hot. The kitchen is still firing. The biryani is still coming.\n\nHamza Express doesn\u2019t close when Bangalore sleeps. We close when Bangalore\u2019s done eating.\n\n1 PM to 5 AM. Every single day.\n\n\ud83d\udccd Shivajinagar\n\n#LateNightFood #HamzaExpress #NightKitchen #BangaloreNightLife #OpenLate`,
-    fb_caption: `While most of Bangalore shuts down by midnight, our kitchen is just getting warmed up.\n\nThe tandoor glows. The biryani dum pot steams. Orders keep coming \u2014 from night-shift workers, late-night cravings, post-party hunger.\n\nHamza Express. 1 PM to 5 AM. Because hunger doesn\u2019t follow a schedule.\n\n\ud83d\udccd H.K.P. Road | \ud83d\udcde 8197844553`,
-    google_caption: `Hamza Express \u2014 open 1 PM to 5 AM daily. Late-night biryani, tandoori, and 100+ dishes in Shivajinagar, Bangalore.` },
+    ig_caption: `1 AM. The tandoor is still hot. The kitchen is still firing. The ghee rice is still glistening.\n\nHamza Express doesn\u2019t close when Bangalore sleeps. We close when Bangalore\u2019s done eating.\n\n1 PM to 1 AM. Every single day.\n\n\ud83d\udccd Shivajinagar\n\n#LateNightFood #HamzaExpress #NightKitchen #GheeRice #BangaloreNightLife #OpenLate`,
+    fb_caption: `While most of Bangalore shuts down by midnight, our kitchen is just getting warmed up.\n\nThe tandoor glows. The charcoal kebabs sizzle. The ghee rice is fresh. Orders keep coming \u2014 from night-shift workers, late-night cravings, post-party hunger.\n\nHamza Express. 1 PM to 1 AM. Because hunger doesn\u2019t follow a schedule.\n\n\ud83d\udccd H.K.P. Road | \ud83d\udcde 8008002049`,
+    google_caption: `Hamza Express \u2014 open 1 PM to 1 AM daily. Late-night ghee rice, kebabs, tandoori, and 100+ dishes in Shivajinagar, Bangalore.` },
 
   // --- DAY 2 (Tue) ---
   { title: 'Heart of Shivajinagar', objective: 'TRUST',
     photo: 'HE-1201.jpg', headline: 'Heart of Shivajinagar', subtext: 'Since 1918. Near Russell Market.',
     concept: 'Community trust. Brand warmth. Shivajinagar neighborhood connection \u2014 Russell Market vendors, auto drivers, families.',
     ig_caption: `Russell Market vendors. Auto drivers on H.K.P. Road. Families after Friday prayers. Night-shift workers at 3 AM.\n\nShivajinagar doesn\u2019t have one type of customer. And Hamza Express doesn\u2019t have one type of meal.\n\nWe\u2019ve been feeding this neighborhood since 1918. We know its rhythm.\n\n\ud83d\udccd H.K.P. Road, near Russell Market\n\n#Shivajinagar #RussellMarket #HamzaExpress #Since1918 #BangaloreLocal`,
-    fb_caption: `Before the flyover. Before the metro. Before the malls.\n\nShivajinagar was already Shivajinagar \u2014 and Hamza Express was already here. Near Russell Market. On H.K.P. Road. Feeding the neighborhood the same way for over a hundred years.\n\nThe city changed around us. The biryani didn\u2019t.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde wa.me/918197844553`,
+    fb_caption: `Before the flyover. Before the metro. Before the malls.\n\nShivajinagar was already Shivajinagar \u2014 and Hamza Express was already here. Near Russell Market. On H.K.P. Road. Feeding the neighborhood the same way for over a hundred years.\n\nThe city changed around us. The ghee rice didn\u2019t. The kebab didn\u2019t. The bheja fry didn\u2019t.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8008002049`,
     google_caption: `Hamza Express \u2014 in the heart of Shivajinagar near Russell Market since 1918. Authentic Dakhni cuisine. H.K.P. Road, Bangalore.` },
 
-  { title: 'Mutton Biryani \u2014 The Original', objective: 'DESIRE',
-    photo: 'HE-1200.jpg', headline: 'Mutton Biryani', subtext: 'The dish that built a 107-year reputation.',
-    concept: 'Product spotlight. Mutton Biryani \u2014 slow-cooked, the original HE signature dish.',
-    ig_caption: `The mutton is slow-cooked. The rice knows its place. The dum does the rest.\n\nMutton Biryani at Hamza Express \u2014 the dish that built a reputation that\u2019s lasted 107 years.\n\nOrder once. Return always.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#MuttonBiryani #HamzaExpress #DakhniBiryani #BangaloreFood #Since1918`,
-    fb_caption: `If there\u2019s one dish that carries the weight of 107 years, it\u2019s this one.\n\nMutton Biryani. Slow-cooked mutton. Fragrant rice. Dum that seals in four generations of knowing exactly when it\u2019s ready.\n\nThe dish that made Hamza Express. The dish that keeps it going.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 5 AM | \ud83d\udcde 8197844553`,
-    google_caption: `Mutton Biryani at Hamza Express \u2014 slow-cooked Dakhni dum biryani, a 107-year-old recipe. Shivajinagar, Bangalore. 1 PM \u2013 5 AM.` },
+  { title: 'Mutton Bheja Fry \u2014 Only at Hamza', objective: 'DESIRE',
+    photo: 'HE-1200.jpg', headline: 'Bheja Fry', subtext: 'The dish no other restaurant in Bangalore can match.',
+    concept: 'Product spotlight. Bheja Fry \u2014 goat brain, pan-fried with Dakhni spices. 2,477 Swiggy reviews. ZERO competitors at this scale. THE differentiator.',
+    ig_caption: `Goat brain. Pan-fried with pepper, curry leaves, and our masala.\n\nBheja Fry at Hamza Express \u2014 the dish people drive across Bangalore for. 2,400+ ratings on Swiggy. No other restaurant in the city does this at our scale.\n\nIf you haven\u2019t tried it, you don\u2019t know Hamza yet.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#BhejaFry #BrainFry #HamzaExpress #OnlyAtHamza #BangaloreFood #Since1918`,
+    fb_caption: `There are dishes every restaurant makes. And then there\u2019s Bheja Fry.\n\nGoat brain, shallow-fried with cracked pepper, curry leaves, and a masala that\u2019s been in our family for four generations. Rich, creamy, unlike anything else on any menu in Bangalore.\n\n2,400+ people have rated this on Swiggy. No other restaurant comes close.\n\nThis is what makes Hamza, Hamza.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 1 AM | \ud83d\udcde 8008002049`,
+    google_caption: `Bheja Fry at Hamza Express \u2014 goat brain, pan-fried with Dakhni spices. The dish no other Bangalore restaurant can match. Since 1918. Shivajinagar.` },
 
   { title: 'The Hamza Spread', objective: 'DESIRE',
-    photo: 'HE-1149.jpg', headline: 'The Hamza Spread', subtext: 'Biryani. Butter Chicken. Tandoori. Naan.',
-    concept: 'Full spread. Butter Chicken as hero. Family dining \u2014 bring four, order for six.',
-    ig_caption: `Biryani. Butter Chicken. Tandoori. Naan. Raitha.\n\nThe Hamza spread isn\u2019t a meal. It\u2019s an event. Bring four people. Order for six. Leave with stories.\n\n\ud83d\udccd Shivajinagar\n\u23f0 1 PM \u2013 5 AM\n\n#HamzaSpread #HamzaExpress #FamilyDinner #BangaloreFood #DakhniFeast`,
-    fb_caption: `Here\u2019s the thing about eating at Hamza Express \u2014 you never order just one thing.\n\nIt starts with biryani. Then someone orders butter chicken. Then the tandoori arrives. Then the naan. Then the raitha. And suddenly the table is full and everyone\u2019s sharing everything.\n\nThat\u2019s not a restaurant experience. That\u2019s a Hamza experience.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde wa.me/918197844553`,
-    google_caption: `The full Hamza Express spread \u2014 biryani, butter chicken, tandoori, and more. Family dining in Shivajinagar, Bangalore. Open 1 PM \u2013 5 AM.` },
+    photo: 'HE-1149.jpg', headline: 'The Hamza Spread', subtext: 'Ghee Rice. Kebab. Butter Chicken. Tandoori. Naan.',
+    concept: 'Full spread. Ghee Rice + Kebab as anchor. Family dining \u2014 bring four, order for six.',
+    ig_caption: `Ghee Rice. Kebab. Butter Chicken. Tandoori. Naan. Raitha.\n\nThe Hamza spread isn\u2019t a meal. It\u2019s an event. Bring four people. Order for six. Leave with stories.\n\n\ud83d\udccd Shivajinagar\n\u23f0 1 PM \u2013 1 AM\n\n#HamzaSpread #HamzaExpress #GheeRice #FamilyDinner #BangaloreFood #DakhniFeast`,
+    fb_caption: `Here\u2019s the thing about eating at Hamza Express \u2014 you never order just one thing.\n\nIt starts with ghee rice. Then someone orders the kebab. Then the butter chicken arrives. Then the tandoori. Then the naan. And suddenly the table is full and everyone\u2019s sharing everything.\n\nThat\u2019s not a restaurant experience. That\u2019s a Hamza experience.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8008002049`,
+    google_caption: `The full Hamza Express spread \u2014 ghee rice, kebab, butter chicken, tandoori, and more. Family dining in Shivajinagar, Bangalore. Open 1 PM \u2013 1 AM.` },
 
   // --- DAY 3 (Wed) ---
   { title: 'Open Till 5 AM', objective: 'AWARENESS',
-    photo: 'HE-1137.jpg', headline: 'Open Till 5 AM', subtext: 'Biryani. Kebabs. Tandoori. Shawarma. Fresh. Hot.',
+    photo: 'HE-1137.jpg', headline: 'Open Till 1 AM', subtext: 'Ghee Rice. Kebabs. Tandoori. Shawarma. Fresh. Hot.',
     concept: 'Late night positioning. Chicken Tikka as hero. 3 AM hunger \u2014 everything except Hamza Express is closed.',
-    ig_caption: `3 AM. You\u2019re hungry. Everything is closed.\n\nEverything except Hamza Express.\n\nBiryani. Kebabs. Tandoori. Shawarma. Fresh. Hot. Waiting.\n\n1 PM to 5 AM. Shivajinagar.\n\n\ud83d\udccd H.K.P. Road\n\ud83d\udcde 8197844553\n\n#OpenTill5AM #LateNightBiryani #HamzaExpress #Shivajinagar #BangaloreNights`,
-    fb_caption: `The question isn\u2019t \u2018Where do I eat at 3 AM in Bangalore?\u2019\n\nThe question is \u2018Why haven\u2019t you been to Hamza Express yet?\u2019\n\nOpen from 1 PM to 5 AM. Fresh biryani, hot kebabs, full menu. Every single night.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8197844553 | wa.me/918197844553`,
-    google_caption: `Hamza Express \u2014 open till 5 AM daily. Late-night biryani, kebabs, and full menu. H.K.P. Road, Shivajinagar, Bangalore. Call 8197844553.` },
+    ig_caption: `Late night. You\u2019re hungry. Everything is closed.\n\nEverything except Hamza Express.\n\nGhee Rice. Kebabs. Tandoori. Shawarma. Fresh. Hot. Waiting.\n\n1 PM to 1 AM. Shivajinagar.\n\n\ud83d\udccd H.K.P. Road\n\ud83d\udcde 8008002049\n\n#OpenLate #LateNightFood #HamzaExpress #GheeRice #Shivajinagar #BangaloreNights`,
+    fb_caption: `The question isn\u2019t \u2018Where do I eat late in Bangalore?\u2019\n\nThe question is \u2018Why haven\u2019t you been to Hamza Express yet?\u2019\n\nOpen from 1 PM to 1 AM. Fresh ghee rice, hot kebabs, full menu. Every single night.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8008002049`,
+    google_caption: `Hamza Express \u2014 open till 1 AM daily. Ghee rice, kebabs, bheja fry, and full menu. H.K.P. Road, Shivajinagar, Bangalore.` },
 
   { title: 'Theethar Pepper Roast', objective: 'DESIRE',
     photo: 'HE-1159.jpg', headline: 'Theethar Pepper Roast', subtext: 'Country chicken. Cracked pepper. Slow-roasted.',
-    concept: 'Signature non-biryani dish. The dish the locals don\u2019t tell tourists about. Hidden gem.',
-    ig_caption: `Not everything at Hamza Express is about biryani.\n\nTheethar Pepper Roast \u2014 country chicken, cracked black pepper, slow-roasted until every bite fights back. This is the dish the locals don\u2019t tell tourists about.\n\nIf you know, you know.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#TheetharPepperRoast #HamzaExpress #CountryChicken #Shivajinagar #HiddenGem`,
-    fb_caption: `The biryani gets the fame. The Theethar Pepper Roast gets the respect.\n\nCountry chicken. Cracked black pepper. Slow-roasted in a masala that doesn\u2019t apologize. This is the dish regulars order when they want to remind themselves why they keep coming back.\n\nAsk for it by name.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 5 AM`,
+    concept: 'Signature Dakhni dish. The dish the locals don\u2019t tell tourists about. Hidden gem.',
+    ig_caption: `The dish the locals don\u2019t tell tourists about.\n\nTheethar Pepper Roast \u2014 country chicken, cracked black pepper, slow-roasted until every bite fights back. This is the dish the locals don\u2019t tell tourists about.\n\nIf you know, you know.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#TheetharPepperRoast #HamzaExpress #CountryChicken #Shivajinagar #HiddenGem`,
+    fb_caption: `The ghee rice gets the fame. The Theethar Pepper Roast gets the respect.\n\nCountry chicken. Cracked black pepper. Slow-roasted in a masala that doesn\u2019t apologize. This is the dish regulars order when they want to remind themselves why they keep coming back.\n\nAsk for it by name.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\u23f0 1 PM \u2013 5 AM`,
     google_caption: `Theethar Pepper Roast at Hamza Express \u2014 slow-roasted country chicken with cracked pepper. A Shivajinagar legend. H.K.P. Road, Bangalore.` },
 
   { title: 'Tandoori Chicken', objective: 'DESIRE',
@@ -485,12 +485,12 @@ const WEEK_1_POSTS = [
     google_caption: `Tandoori Chicken at Hamza Express \u2014 charcoal clay oven, overnight marinade. Authentic tandoor in Shivajinagar, Bangalore.` },
 
   // --- DAY 4 (Thu) ---
-  { title: 'The Biryani Dum', objective: 'TRUST',
-    photo: 'HE-1201.jpg', headline: 'The Biryani Dum', subtext: 'Layer. Seal. Wait. Trust the pot.',
-    concept: 'Process/BTS. How dum biryani is made \u2014 4 generations of tradition. No shortcuts, no pressure cookers.',
-    ig_caption: `The secret isn\u2019t in the spices. It\u2019s in the wait.\n\nDum biryani doesn\u2019t have a recipe \u2014 it has a rhythm. Layer. Seal. Wait. Trust the pot to do what four generations taught it.\n\nThat\u2019s how every biryani at Hamza Express is made.\n\n\ud83d\udccd Shivajinagar\n\n#DumBiryani #HamzaExpress #BehindTheScenes #BiryaniProcess #Since1918`,
-    fb_caption: `You can\u2019t rush dum biryani.\n\nThe rice goes in. The meat goes in. The pot gets sealed. And then \u2014 nothing. You wait. The steam builds. The flavours merge. The rice absorbs what the meat releases.\n\nNo shortcuts. No pressure cookers. No timers. Just trust in a process that\u2019s been the same since 1918.\n\nThat\u2019s the Hamza Express way.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar | \ud83d\udcde 8197844553`,
-    google_caption: `Dum biryani at Hamza Express \u2014 sealed pot, slow steam, no shortcuts. The 107-year-old process. Shivajinagar, Bangalore.` },
+  { title: 'The Charcoal Kebab', objective: 'TRUST',
+    photo: 'HE-1201.jpg', headline: 'The Charcoal Kebab', subtext: 'Fire. Smoke. Patience. Since 1918.',
+    concept: 'Process/BTS. How the charcoal kebab is made \u2014 9,393 Swiggy reviews. The #2 most ordered item. No gas grills, no shortcuts.',
+    ig_caption: `The secret isn\u2019t in the marinade. It\u2019s in the charcoal.\n\nOur kebab doesn\u2019t touch a gas grill. It sits over charcoal \u2014 real coal, real smoke, real patience. The kind of patience that comes from doing this for 107 years.\n\n9,000+ people have rated this on Swiggy. They keep coming back.\n\n\ud83d\udccd Hamza Express, Shivajinagar\n\n#ChickenKebab #CharcoalKebab #HamzaExpress #BehindTheScenes #Since1918`,
+    fb_caption: `You can\u2019t rush a charcoal kebab.\n\nThe chicken sits over real coal. The smoke does its work. The edges char. The inside stays juicy. There\u2019s no timer \u2014 just a cook who\u2019s been doing this for decades and knows exactly when to pull it.\n\n9,393 people have rated our Chicken Kebab on Swiggy. It\u2019s the second most ordered item on our entire menu.\n\nThat\u2019s the Hamza Express way.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar | \ud83d\udcde 8008002049`,
+    google_caption: `Charcoal Chicken Kebab at Hamza Express \u2014 real coal, no gas grills, 107 years of the same process. 9,000+ Swiggy ratings. Shivajinagar, Bangalore.` },
 
   { title: 'Butter Chicken', objective: 'DESIRE',
     photo: 'HE-1149.jpg', headline: 'Butter Chicken', subtext: 'Rich. Creamy. Unapologetic.',
@@ -511,8 +511,8 @@ const WEEK_1_POSTS = [
     photo: 'HE-1138.jpg', headline: 'Friday Night at Hamza', subtext: 'Smoke. Spice. Weekend energy.',
     concept: 'Weekend energy. Kalmi Kabab as hero. Friday night \u2014 the crowd is bigger, the orders louder.',
     ig_caption: `Friday night has a taste. And it tastes like Kalmi Kabab.\n\nSmoke. Spice. The sound of a kitchen that knows the weekend is here.\n\nHamza Express. Friday nights. Made for this.\n\n\ud83d\udccd Shivajinagar\n\u23f0 1 PM \u2013 5 AM\n\n#FridayNight #HamzaExpress #KalmiKabab #WeekendVibes #BangaloreNightLife`,
-    fb_caption: `There\u2019s a reason Friday nights at Hamza Express hit different.\n\nThe crowd is bigger. The orders are louder. The tandoor is working overtime. Kalmi Kabab, Biryani, Butter Chicken \u2014 the full spread.\n\nThis is where Shivajinagar comes on Friday nights. Where do you go?\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 5 AM | \ud83d\udcde 8197844553`,
-    google_caption: `Friday nights at Hamza Express \u2014 Kalmi Kabab, biryani, full menu till 5 AM. Weekend dining in Shivajinagar, Bangalore.` },
+    fb_caption: `There\u2019s a reason Friday nights at Hamza Express hit different.\n\nThe crowd is bigger. The orders are louder. The tandoor is working overtime. Kalmi Kabab, Ghee Rice, Butter Chicken \u2014 the full spread.\n\nThis is where Shivajinagar comes on Friday nights. Where do you go?\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 5 AM | \ud83d\udcde 8197844553`,
+    google_caption: `Friday nights at Hamza Express \u2014 Kalmi Kabab, ghee rice, kebabs, full menu till 1 AM. Weekend dining in Shivajinagar, Bangalore.` },
 
   { title: 'Mutton Rogan Josh', objective: 'DESIRE',
     photo: 'HE-1177.jpg', headline: 'Mutton Rogan Josh', subtext: 'Red. Rich. Slow-cooked.',
@@ -522,19 +522,19 @@ const WEEK_1_POSTS = [
     google_caption: `Mutton Rogan Josh at Hamza Express \u2014 slow-cooked, rich gravy, authentic Dakhni recipe. Shivajinagar, Bangalore.` },
 
   { title: 'Chicken 65', objective: 'DESIRE',
-    photo: 'HE-1166.jpg', headline: 'Chicken 65', subtext: 'Crispy. Spiced. Gone before the biryani arrives.',
+    photo: 'HE-1166.jpg', headline: 'Chicken 65', subtext: 'Crispy. Spiced. Gone before the main course arrives.',
     concept: 'Starter spotlight. Chicken 65 \u2014 the starter that never leaves the table.',
-    ig_caption: `The starter that never leaves the table.\n\nChicken 65 at Hamza Express \u2014 crispy, spiced, gone before the biryani arrives.\n\nOrder two. Trust us.\n\n\ud83d\udccd Shivajinagar\n\n#Chicken65 #HamzaExpress #Starters #BangaloreFood #Crispy`,
-    fb_caption: `You order Chicken 65 as a starter. Then the biryani comes. Then you look at the empty plate and wonder \u2014 should I order another round of 65?\n\nYes. Yes you should.\n\nCrispy. Spiced. The kind of starter that becomes the main course when nobody\u2019s looking.\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 5 AM`,
+    ig_caption: `The starter that never leaves the table.\n\nChicken 65 at Hamza Express \u2014 crispy, spiced, gone before the ghee rice arrives.\n\nOrder two. Trust us.\n\n\ud83d\udccd Shivajinagar\n\n#Chicken65 #HamzaExpress #Starters #BangaloreFood #Crispy`,
+    fb_caption: `You order Chicken 65 as a starter. Then the ghee rice comes. Then you look at the empty plate and wonder \u2014 should I order another round of 65?\n\nYes. Yes you should.\n\nCrispy. Spiced. The kind of starter that becomes the main course when nobody\u2019s looking.\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 5 AM`,
     google_caption: `Chicken 65 at Hamza Express \u2014 crispy, spiced, the perfect starter. Shivajinagar, Bangalore. Open 1 PM \u2013 5 AM.` },
 
   // --- DAY 6 (Sat) ---
   { title: 'Saturday Family Dinner', objective: 'AWARENESS',
     photo: 'HE-1200.jpg', headline: 'Saturday Family Dinner', subtext: 'The whole family. One table. Too many dishes.',
-    concept: 'Family gathering. Mutton Biryani as hero. Saturday evening destination.',
+    concept: 'Family gathering. Ghee Rice + Kebab spread as hero. Saturday evening destination.',
     ig_caption: `Saturday evenings were made for this.\n\nThe whole family. One table. Too many dishes. Not enough naan. Perfect.\n\nHamza Express. Your Saturday dinner destination.\n\n\ud83d\udccd Shivajinagar\n\u23f0 1 PM \u2013 5 AM\n\n#FamilyDinner #SaturdayNight #HamzaExpress #BangaloreDining #Shivajinagar`,
-    fb_caption: `There\u2019s a table at Hamza Express with your family\u2019s name on it.\n\nThe one where Dad orders biryani, Mom tries the Rogan Josh, the kids fight over Chicken 65, and everyone shares everything.\n\nSaturday nights. Shivajinagar. Full family. Full table. Full stomachs.\n\n\ud83d\udccd H.K.P. Road | \ud83d\udcde 8197844553`,
-    google_caption: `Saturday family dinner at Hamza Express \u2014 biryani, kebabs, and full Dakhni spread for the whole family. Shivajinagar, Bangalore.` },
+    fb_caption: `There\u2019s a table at Hamza Express with your family\u2019s name on it.\n\nThe one where Dad orders ghee rice and kebab, Mom tries the Rogan Josh, the kids fight over Chicken 65, and everyone shares everything.\n\nSaturday nights. Shivajinagar. Full family. Full table. Full stomachs.\n\n\ud83d\udccd H.K.P. Road | \ud83d\udcde 8197844553`,
+    google_caption: `Saturday family dinner at Hamza Express \u2014 ghee rice, kebabs, bheja fry, and full Dakhni spread for the whole family. Shivajinagar, Bangalore.` },
 
   { title: 'Chicken Tikka', objective: 'DESIRE',
     photo: 'HE-1137.jpg', headline: 'Chicken Tikka', subtext: 'Marinated. Charred. Perfect.',
@@ -545,18 +545,18 @@ const WEEK_1_POSTS = [
 
   { title: 'Chicken Fried Rice', objective: 'DESIRE',
     photo: 'HE-1235.jpg', headline: 'Chicken Fried Rice', subtext: 'Wok-tossed. Loaded. Satisfying.',
-    concept: 'Chinese category. Sometimes you want fried rice instead of biryani \u2014 and that\u2019s fine.',
-    ig_caption: `Sometimes you want biryani. Sometimes you want fried rice.\n\nWe don\u2019t judge. We just cook both really well.\n\nChicken Fried Rice at Hamza Express \u2014 wok-tossed, loaded, satisfying.\n\n\ud83d\udccd Shivajinagar\n\n#FriedRice #ChickenFriedRice #HamzaExpress #ChineseFood #BangaloreFood`,
-    fb_caption: `Not in the mood for biryani? That\u2019s fine. We have 107 other options.\n\nChicken Fried Rice \u2014 wok-tossed with egg, vegetables, and the kind of heat that makes you reach for a Lime Soda. Available from 1 PM to 5 AM.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar | \ud83d\udcde 8197844553`,
-    google_caption: `Chicken Fried Rice at Hamza Express \u2014 wok-tossed Chinese-style. Plus 100+ dishes beyond biryani. Shivajinagar, Bangalore.` },
+    concept: 'Chinese category. 107+ dishes \u2014 ghee rice, kebabs, AND wok-tossed fried rice.',
+    ig_caption: `Ghee rice is our identity. But our Chinese game is just as strong.\n\nChicken Fried Rice at Hamza Express \u2014 wok-tossed, loaded, satisfying.\n\n107+ dishes. One kitchen. Since 1918.\n\n\ud83d\udccd Shivajinagar\n\n#FriedRice #ChickenFriedRice #HamzaExpress #ChineseFood #BangaloreFood`,
+    fb_caption: `107 dishes on the menu. Ghee rice and kebab get the spotlight. But the Chicken Fried Rice quietly wins over everyone who tries it.\n\nWok-tossed with egg, vegetables, and the kind of heat that makes you reach for a Lime Soda. Available from 1 PM to 1 AM.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar | \ud83d\udcde 8008002049`,
+    google_caption: `Chicken Fried Rice at Hamza Express \u2014 wok-tossed Chinese-style. Plus ghee rice, kebabs, bheja fry and 100+ more dishes. Shivajinagar, Bangalore.` },
 
   // --- DAY 7 (Sun) ---
-  { title: 'Sunday Biryani', objective: 'AWARENESS',
-    photo: 'HE-1201.jpg', headline: 'Sunday Biryani', subtext: 'No debate. No alternatives. No exceptions.',
-    concept: 'Weekend tradition. Sunday = biryani in Shivajinagar. 107-year tradition.',
-    ig_caption: `Sunday has one rule: biryani.\n\nNo debate. No alternatives. No exceptions.\n\nHamza Express. The Sunday biryani tradition that Shivajinagar has followed for 107 years.\n\n\ud83d\udccd H.K.P. Road\n\u23f0 From 1 PM\n\n#SundayBiryani #HamzaExpress #WeekendFood #BangaloreBiryani #Tradition`,
-    fb_caption: `In Shivajinagar, Sunday means biryani. It\u2019s been that way since before any of us were born.\n\nFamilies come in groups. Friends bring friends. The biryani arrives in portions that are always slightly more than you ordered, because at Hamza Express, we\u2019d rather you have too much than too little.\n\nSunday. Biryani. Hamza Express. Some traditions don\u2019t need updating.\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 5 AM | \ud83d\udcde wa.me/918197844553`,
-    google_caption: `Sunday Biryani at Hamza Express \u2014 a 107-year Shivajinagar tradition. Dakhni dum biryani every Sunday. H.K.P. Road, Bangalore.` },
+  { title: 'Sunday Ghee Rice', objective: 'AWARENESS',
+    photo: 'HE-1201.jpg', headline: 'Sunday Ghee Rice', subtext: 'The ritual. The original. The one.',
+    concept: 'Weekend tradition. Sunday = Ghee Rice + Kebab at Hamza. 9,626 reviews. The dish that defines Shivajinagar Sundays.',
+    ig_caption: `Sunday has one ritual: Ghee Rice + Kebab at Hamza.\n\nThe ghee glistens. The kebab is fresh off charcoal. The paratha is hot. The table is full.\n\n9,000+ people have rated our Ghee Rice on Swiggy. On Sundays, you\u2019ll see why.\n\n\ud83d\udccd H.K.P. Road\n\u23f0 From 1 PM\n\n#SundayGheeRice #HamzaExpress #GheeRice #WeekendFood #Shivajinagar #Tradition`,
+    fb_caption: `In Shivajinagar, Sunday means Ghee Rice at Hamza. It\u2019s been that way since before any of us were born.\n\nFamilies come in groups. Friends bring friends. The ghee rice arrives glistening, the kebab arrives smoky, and the parathas arrive hot.\n\nSunday. Ghee Rice. Hamza Express. Some traditions don\u2019t need updating.\n\n\ud83d\udccd H.K.P. Road | \u23f0 1 PM \u2013 1 AM | \ud83d\udcde 8008002049`,
+    google_caption: `Sunday Ghee Rice at Hamza Express \u2014 a 107-year Shivajinagar tradition. Ghee rice, charcoal kebab, and bheja fry every Sunday. H.K.P. Road, Bangalore.` },
 
   { title: 'Hyderabadi Chicken', objective: 'DESIRE',
     photo: 'HE-1148.jpg', headline: 'Hyderabadi Chicken', subtext: 'Hyderabadi by origin. Shivajinagar by address.',
@@ -567,10 +567,10 @@ const WEEK_1_POSTS = [
 
   { title: '107 Years. Same Kitchen.', objective: 'ACTION',
     photo: 'HE-1201.jpg', headline: '107 Years.\nSame Kitchen.', subtext: 'Hamza Express \u2014 Shivajinagar, Bangalore',
-    concept: 'Legacy wrap + invitation. 1918 to now. The fire is still on. The biryani is still the same. Come see what 107 years looks like.',
-    ig_caption: `1918. One family. One kitchen. One promise: feed Shivajinagar well.\n\n107 years later, the kitchen is still here. The fire is still on. The biryani is still the same.\n\nHamza Express. Come see what 107 years of cooking looks like.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8197844553\n\ud83c\udf10 hamzaexpress.in\n\n#HamzaExpress #Since1918 #DakhniBiryani #Shivajinagar #BangaloreFood`,
-    fb_caption: `107 years.\n\nThat\u2019s how long the fire has been burning at Hamza Express. Through wars. Through independence. Through a pandemic. Through every food trend that came and went.\n\nThe biryani stayed. The kitchen stayed. The family stayed.\n\nFrom H.K.P. Road, Shivajinagar \u2014 we\u2019re still here. We\u2019re still cooking. And the counter always has room for one more.\n\n\ud83d\udccd H.K.P. Road, Near Russell Market, Shivajinagar, Bangalore 560051\n\ud83d\udcde 8197844553 | \ud83c\udf10 hamzaexpress.in\n\ud83d\udcac wa.me/918197844553`,
-    google_caption: `107 years. Same kitchen. Same family. Hamza Express \u2014 Shivajinagar\u2019s legendary biryani restaurant since 1918. H.K.P. Road, Bangalore. 1 PM \u2013 5 AM daily.` },
+    concept: 'Legacy wrap + invitation. 1918 to now. The fire is still on. The ghee rice, kebab, and bheja fry are still the same. Come see what 107 years looks like.',
+    ig_caption: `1918. One family. One kitchen. One promise: feed Shivajinagar well.\n\n107 years later, the kitchen is still here. The fire is still on. The ghee rice still glistens. The kebab still smokes. The bheja fry still draws people from across the city.\n\nHamza Express. Come see what 107 years of cooking looks like.\n\n\ud83d\udccd H.K.P. Road, Shivajinagar\n\ud83d\udcde 8008002049\n\ud83c\udf10 hamzaexpress.in\n\n#HamzaExpress #Since1918 #GheeRice #ChickenKebab #BhejaFry #Shivajinagar #BangaloreFood`,
+    fb_caption: `107 years.\n\nThat\u2019s how long the fire has been burning at Hamza Express. Through wars. Through independence. Through a pandemic. Through every food trend that came and went.\n\nThe ghee rice stayed. The charcoal kebab stayed. The bheja fry stayed. The kitchen stayed. The family stayed.\n\nFrom H.K.P. Road, Shivajinagar \u2014 we\u2019re still here. We\u2019re still cooking. And the counter always has room for one more.\n\n\ud83d\udccd H.K.P. Road, Near Russell Market, Shivajinagar, Bangalore 560051\n\ud83d\udcde 8008002049 | \ud83c\udf10 hamzaexpress.in\n\ud83d\udcac wa.me/918008002049`,
+    google_caption: `107 years. Same kitchen. Same family. Hamza Express \u2014 Shivajinagar\u2019s legendary ghee rice, kebab, and bheja fry since 1918. H.K.P. Road, Bangalore. 1 PM \u2013 1 AM daily.` },
 ];
 
 function buildPrompt(post, platform) {
