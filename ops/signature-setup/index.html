@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Email Signature — HN Hotels Group</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0a0f1a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    background: #1a2234;
+    border: 1px solid #2d3a52;
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    padding: 40px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .header img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #D2B48C;
+  }
+  .header-text h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #FAF3E3;
+  }
+  .header-text p {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 14px;
+  }
+
+  /* ── Signature Preview ── */
+  .preview-box {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+  .sig-table { border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; }
+  .sig-divider { border-bottom: 2px solid #713520; padding-bottom: 14px; }
+  .sig-logo img {
+    display: block;
+    border-radius: 50%;
+    border: 2px solid #D2B48C;
+  }
+  .sig-rule { width: 2px; background: #D2B48C; padding: 0 0 0 18px; }
+  .sig-body { padding: 14px 0 14px 18px; vertical-align: middle; }
+  .sig-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #713520;
+    letter-spacing: 0.4px;
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+  .sig-group {
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .sig-badges { margin-bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge-he {
+    background: #713520;
+    color: #FAF3E3;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .badge-nc {
+    background: #C17817;
+    color: #FFFBF0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .sig-details {
+    font-size: 11px;
+    color: #666;
+    line-height: 1.7;
+  }
+  .sig-details a { color: #713520; text-decoration: none; font-weight: 600; }
+  .sig-sep { color: #D2B48C; margin: 0 10px; }
+
+  /* ── Button ── */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #713520;
+    color: #FAF3E3;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #8a3f26; }
+  .btn:disabled { background: #3a4a6b; color: #64748b; cursor: not-allowed; }
+
+  .note {
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── States ── */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  .success-icon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .success-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #22c55e;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .success-sub {
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .error-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 8px;
+  }
+  .error-msg {
+    font-size: 12px;
+    color: #94a3b8;
+    font-family: monospace;
+    background: #0a0f1a;
+    padding: 10px;
+    border-radius: 6px;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <img src="https://hamzaexpress.in/assets/brand/he-emblem.png" alt="HN Hotels">
+    <div class="header-text">
+      <h1>Email Signature Setup</h1>
+      <p>HN Hotels Group · One-click setup</p>
+    </div>
+  </div>
+
+  <!-- State: main -->
+  <div id="state-main" class="state active">
+
+    <div class="section-label">Your signature preview</div>
+
+    <!-- Signature Preview -->
+    <div class="preview-box">
+      <table class="sig-table" cellpadding="0" cellspacing="0" border="0" style="max-width:460px">
+        <tr><td colspan="3" class="sig-divider">&nbsp;</td></tr>
+        <tr>
+          <td class="sig-logo" style="padding: 14px 18px 14px 0; vertical-align:middle; width:68px">
+            <img src="https://hamzaexpress.in/assets/brand/he-emblem.png" width="64" height="64" alt="HN Hotels">
+          </td>
+          <td class="sig-rule">&nbsp;</td>
+          <td class="sig-body">
+            <div class="sig-name" id="preview-name">Your Name</div>
+            <div class="sig-group">HN Hotels Group</div>
+            <div class="sig-badges">
+              <span class="badge-he">Hamza Express</span>
+              <span class="badge-nc">Nawabi Chai House</span>
+            </div>
+            <div class="sig-details">
+              <a href="https://hamzaexpress.in">hamzaexpress.in</a>
+              <span class="sig-sep">|</span>
+              <span>Bangalore, India</span>
+              <span class="sig-sep">|</span>
+              <span>Est. 1918</span>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <a href="#" id="auth-btn" class="btn" onclick="startAuth(event)">
+      Authorise &amp; Set My Signature
+    </a>
+    <p class="note">
+      You'll be asked to sign in with your @hnhotels.in account and allow<br>
+      Gmail signature access. Takes about 30 seconds.
+    </p>
+
+  </div>
+
+  <!-- State: loading -->
+  <div id="state-loading" class="state">
+    <div class="success-icon">⏳</div>
+    <div class="success-title" style="color:#f97316">Setting your signature…</div>
+    <div class="success-sub">Please wait, this will only take a moment.</div>
+  </div>
+
+  <!-- State: success -->
+  <div id="state-success" class="state">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Signature Set!</div>
+    <div class="success-sub">
+      Your professional email signature is now active.<br>
+      It will appear on all emails you send from Gmail.
+    </div>
+  </div>
+
+  <!-- State: error -->
+  <div id="state-error" class="state">
+    <div class="error-title">Something went wrong</div>
+    <div class="error-msg" id="error-msg"></div>
+    <br>
+    <a href="/ops/signature-setup/" class="btn" style="text-decoration:none">Try Again</a>
+  </div>
+
+</div>
+
+<script>
+const CLIENT_ID = '506841509627-fq9crkj1rm0ddfa19uhg233sbubsooit.apps.googleusercontent.com';
+const SCOPE     = 'https://www.googleapis.com/auth/gmail.settings.basic';
+const REDIRECT  = window.location.origin + '/api/signature-callback';
+
+function setState(id) {
+  document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+  document.getElementById('id-' + id)?.classList.add('active');
+  document.getElementById('state-' + id)?.classList.add('active');
+}
+
+function startAuth(e) {
+  e.preventDefault();
+  const params = new URLSearchParams({
+    client_id:     CLIENT_ID,
+    redirect_uri:  REDIRECT,
+    response_type: 'code',
+    scope:         SCOPE,
+    access_type:   'offline',
+    prompt:        'consent',
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+}
+
+// Handle OAuth callback result (redirected back here with ?status=ok or ?error=...)
+const params = new URLSearchParams(window.location.search);
+if (params.get('status') === 'ok') {
+  const name = params.get('name') || '';
+  setState('success');
+  if (name) document.querySelector('.success-sub').innerHTML =
+    `Signature set for <strong>${name}</strong>.<br>It will appear on all emails you send from Gmail.`;
+} else if (params.get('error')) {
+  setState('error');
+  document.getElementById('error-msg').textContent = params.get('error');
+} else if (params.get('preview_name')) {
+  document.getElementById('preview-name').textContent = params.get('preview_name');
+}
+</script>
+</body>
+</html>
