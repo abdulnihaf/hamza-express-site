@@ -46,31 +46,37 @@ const SIGNATURE_HTML = (fullName) => `<table width="500" border="0" cellpadding=
   </td></tr>
 </table>`.trim();
 
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data, null, 2), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url    = new URL(request.url);
   const code   = url.searchParams.get('code');
   const error  = url.searchParams.get('error');
+  const debug  = url.searchParams.get('state') === 'debug';
   const origin = url.origin;
   const redirect = `${origin}/api/signature-callback`;
   const setupUrl = `${origin}/ops/signature-setup/`;
 
-  if (error) {
-    return Response.redirect(`${setupUrl}?error=${encodeURIComponent(error)}`, 302);
-  }
-  if (!code) {
-    return Response.redirect(`${setupUrl}?error=missing_code`, 302);
-  }
+  const fail = (msg) => debug
+    ? json({ step: 'early', error: msg }, 400)
+    : Response.redirect(`${setupUrl}?error=${encodeURIComponent(msg)}`, 302);
+
+  if (error) return fail(error);
+  if (!code) return fail('missing_code');
 
   const CLIENT_ID     = env.GOOGLE_CLIENT_ID;
   const CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
+  if (!CLIENT_ID || !CLIENT_SECRET) return fail('server_not_configured');
 
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    return Response.redirect(`${setupUrl}?error=server_not_configured`, 302);
-  }
+  const diag = {}; // collects debug info at every step
 
   try {
-    // 1. Exchange code for tokens
+    // Step 1 — Exchange code for tokens
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -83,57 +89,64 @@ export async function onRequest(context) {
       }),
     });
     const tokenData = await tokenResp.json();
+    diag.step1_token = { status: tokenResp.status, has_access_token: !!tokenData.access_token, error: tokenData.error, error_description: tokenData.error_description };
     if (!tokenData.access_token) throw new Error(tokenData.error_description || 'Token exchange failed');
 
     const accessToken = tokenData.access_token;
 
-    // 2. Get user profile (name + email)
+    // Step 2 — User profile
     const profileResp = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const profile = await profileResp.json();
+    diag.step2_profile = { status: profileResp.status, email: profile.email, name: profile.name, error: profile.error };
     const fullName = profile.name || profile.email?.split('@')[0] || 'Team Member';
     const email    = profile.email;
 
-    // 3. Resolve the exact sendAs email from Gmail (must match exactly what the API returns)
+    // Step 3 — sendAs list
     const sendAsListResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs`,
+      'https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs',
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
     const sendAsData = await sendAsListResp.json();
     const sendAsList = sendAsData.sendAs || [];
-    // Pick primary, or the one matching profile email, or the first available
+    diag.step3_sendas = { status: sendAsListResp.status, count: sendAsList.length, addresses: sendAsList.map(s => ({ email: s.sendAsEmail, isPrimary: s.isPrimary })), raw_error: sendAsData.error };
+
     const sendAsAddr = (
       sendAsList.find(s => s.isPrimary) ||
       sendAsList.find(s => s.sendAsEmail?.toLowerCase() === email?.toLowerCase()) ||
       sendAsList[0]
     )?.sendAsEmail;
-    if (!sendAsAddr) throw new Error(`sendAs not found (list: ${JSON.stringify(sendAsList)})`);
 
-    // 4. Set signature
+    if (!sendAsAddr) {
+      if (debug) return json({ diag, error: 'No sendAs address resolved' }, 400);
+      throw new Error('No sendAs address resolved');
+    }
+    diag.step3_resolved = sendAsAddr;
+
+    // Step 4 — Set signature
     const sigResp = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs/${encodeURIComponent(sendAsAddr)}`,
       {
         method: 'PATCH',
-        headers: {
-          Authorization:  `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ signature: SIGNATURE_HTML(fullName) }),
       }
     );
-    if (!sigResp.ok) {
-      const err = await sigResp.json();
-      throw new Error(err.error?.message || `Gmail API error ${sigResp.status}`);
-    }
+    const sigBody = await sigResp.json();
+    diag.step4_patch = { status: sigResp.status, ok: sigResp.ok, error: sigBody.error };
 
-    // 5. Redirect to success
+    if (!sigResp.ok) throw new Error(sigBody.error?.message || `Gmail PATCH error ${sigResp.status}`);
+
+    if (debug) return json({ success: true, fullName, sendAsAddr, diag });
+
     return Response.redirect(
       `${setupUrl}?status=ok&name=${encodeURIComponent(fullName)}`,
       302
     );
 
   } catch (err) {
+    if (debug) return json({ error: err.message, diag }, 500);
     return Response.redirect(
       `${setupUrl}?error=${encodeURIComponent(err.message)}`,
       302
