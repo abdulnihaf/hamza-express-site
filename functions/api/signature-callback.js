@@ -95,9 +95,24 @@ export async function onRequest(context) {
     const fullName = profile.name || profile.email?.split('@')[0] || 'Team Member';
     const email    = profile.email;
 
-    // 3. Set signature (use the user's own email as the primary send-as address)
+    // 3. Resolve the exact sendAs email from Gmail (must match exactly what the API returns)
+    const sendAsListResp = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const sendAsData = await sendAsListResp.json();
+    const sendAsList = sendAsData.sendAs || [];
+    // Pick primary, or the one matching profile email, or the first available
+    const sendAsAddr = (
+      sendAsList.find(s => s.isPrimary) ||
+      sendAsList.find(s => s.sendAsEmail?.toLowerCase() === email?.toLowerCase()) ||
+      sendAsList[0]
+    )?.sendAsEmail;
+    if (!sendAsAddr) throw new Error(`sendAs not found (list: ${JSON.stringify(sendAsList)})`);
+
+    // 4. Set signature
     const sigResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs/${encodeURIComponent(email)}`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs/${encodeURIComponent(sendAsAddr)}`,
       {
         method: 'PATCH',
         headers: {
