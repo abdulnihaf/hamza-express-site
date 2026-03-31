@@ -291,7 +291,7 @@
 
 <script>
 const CLIENT_ID = '506841509627-dhjtehucr74n6iqll76fb5bijt1m1onp.apps.googleusercontent.com';
-const SCOPE     = 'https://www.googleapis.com/auth/gmail.settings.basic';
+const SCOPE     = 'https://www.googleapis.com/auth/gmail.settings.basic https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
 const REDIRECT  = window.location.origin + '/api/signature-callback';
 
 function setState(id) {
@@ -309,7 +309,6 @@ function startAuth(e) {
     scope:         SCOPE,
     access_type:   'offline',
     prompt:        'consent',
-    state:         'debug',
   });
   window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
 }
