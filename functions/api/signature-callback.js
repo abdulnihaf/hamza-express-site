@@ -95,18 +95,9 @@ export async function onRequest(context) {
     const fullName = profile.name || profile.email?.split('@')[0] || 'Team Member';
     const email    = profile.email;
 
-    // 3. Get primary sendAs address
-    const sendAsResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(email)}/settings/sendAs`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    const sendAsData = await sendAsResp.json();
-    const primary = (sendAsData.sendAs || []).find(s => s.isPrimary);
-    if (!primary) throw new Error('No primary send-as address found');
-
-    // 4. Set signature
+    // 3. Set signature (use the user's own email as the primary send-as address)
     const sigResp = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/${encodeURIComponent(email)}/settings/sendAs/${encodeURIComponent(primary.sendAsEmail)}`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs/${encodeURIComponent(email)}`,
       {
         method: 'PATCH',
         headers: {
