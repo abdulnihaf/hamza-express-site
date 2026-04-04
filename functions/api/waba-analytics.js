@@ -14,6 +14,29 @@ export async function onRequest(context) {
 
   const db = context.env.DB;
   const url = new URL(context.request.url);
+  const action = url.searchParams.get('action');
+
+  // Conversation view for a specific customer
+  if (action === 'conversation') {
+    const waId = url.searchParams.get('wa_id');
+    if (!waId) return new Response(JSON.stringify({ error: 'wa_id required' }), { status: 400, headers: CORS });
+    try {
+      const [user, messages, orders] = await Promise.all([
+        db.prepare('SELECT * FROM wa_users WHERE wa_id = ?').bind(waId).first(),
+        db.prepare('SELECT * FROM wa_messages WHERE wa_id = ? ORDER BY created_at DESC LIMIT 100').bind(waId).all(),
+        db.prepare('SELECT id, order_code, items, total, payment_status, status, created_at FROM wa_orders WHERE wa_id = ? ORDER BY id DESC LIMIT 10').bind(waId).all(),
+      ]);
+      return new Response(JSON.stringify({
+        success: true,
+        user: user || {},
+        messages: (messages.results || []).reverse(),
+        orders: orders.results || [],
+      }), { headers: CORS });
+    } catch (err) {
+      return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: CORS });
+    }
+  }
+
   const period = url.searchParams.get('period') || '30d';
 
   // Calculate date filter
@@ -184,6 +207,7 @@ export async function onRequest(context) {
       },
       recent: (recent.results || []).map(r => ({
         name: r.name || 'Unknown',
+        waId: r.wa_id,
         phone: r.wa_id ? '...' + r.wa_id.slice(-4) : '?',
         source: r.first_source || 'unknown',
         tier: r.tier,

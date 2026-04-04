@@ -732,6 +732,7 @@ async function processWebhook(context, body) {
   const phoneId = context.env.WA_PHONE_ID;
   const token = context.env.WA_ACCESS_TOKEN;
   const db = context.env.DB;
+  _logDb = db; // Set module-level DB for message logging in sendWhatsApp
 
   // Route only messages for HE phone number
   const incomingPhoneId = value.metadata?.phone_number_id;
@@ -830,6 +831,12 @@ async function processWebhook(context, body) {
   }
 
   const msgType = getMessageType(message);
+
+  // Log incoming message (fire and forget)
+  const inContent = msgType.text || msgType.id || (msgType.type === 'order' ? 'cart_sent' : msgType.type);
+  db.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind(waId, 'in', msgType.type, inContent, new Date().toISOString()).run().catch(() => {});
+
   await routeState(context, session, user, msgType, waId, phoneId, token, db);
 }
 
@@ -5337,6 +5344,9 @@ function buildReplyButtons(to, body, buttons) {
 // WHATSAPP SEND HELPER
 // ═══════════════════════════════════════════════════════════════════
 
+// Module-level DB reference for message logging (set per-request in processWebhook)
+let _logDb = null;
+
 async function sendWhatsApp(phoneId, token, payload) {
   const url = `https://graph.facebook.com/${WA_API_VERSION}/${phoneId}/messages`;
   try {
@@ -5348,8 +5358,14 @@ async function sendWhatsApp(phoneId, token, payload) {
     if (!response.ok) {
       const err = await response.text();
       console.error('WA API error:', response.status, err);
-      // Store error for callers to read (body stream is consumed)
       response._errorText = `${response.status}: ${err}`;
+    }
+    // Log outgoing message (fire and forget)
+    if (_logDb && payload.to) {
+      const msgType = payload.interactive?.type || payload.type || 'unknown';
+      const content = payload.text?.body || payload.interactive?.body?.text || payload.interactive?.type || msgType;
+      _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
+        .bind(payload.to, 'out', msgType, (content || '').substring(0, 500), new Date().toISOString()).run().catch(() => {});
     }
     return response;
   } catch (e) {
