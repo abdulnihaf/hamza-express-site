@@ -194,6 +194,19 @@ const PRODUCTS = {
   'HE-C009': { name: 'Biriyani Rice + Chicken Kabab',            price: 170, odooId: 1462, catId: 22 },
   'HE-C010': { name: 'Premium Family Combo (Serves 2)',          price: 475, odooId: 1463, catId: 22 },
 
+  // ── Portion Variants (catalog grouped via item_group_id) ──
+  'HE-1163-Q': { name: 'Chicken Kabab — Quarter',         price: 95,  odooId: 1464, catId: 25 },
+  'HE-1163-F': { name: 'Chicken Kabab — Full',            price: 343, odooId: 1465, catId: 25 },
+  'HE-1135-F': { name: 'Tandoori Chicken — Full',         price: 381, odooId: 1466, catId: 25 },
+  'HE-1192-H': { name: 'Mutton Brain Dry — Half',         price: 305, odooId: 1467, catId: 22 },
+  'HE-1192-F': { name: 'Mutton Brain Dry — Full',         price: 610, odooId: 1468, catId: 22 },
+  'HE-1149-F': { name: 'Butter Chicken — Full',           price: 429, odooId: 1469, catId: 22 },
+  'HE-1160-H': { name: 'Chicken Hamza Special — Half',    price: 457, odooId: 1470, catId: 22 },
+  'HE-1160-F': { name: 'Chicken Hamza Special — Full',    price: 686, odooId: 1471, catId: 22 },
+  'HE-1148-F': { name: 'Hyderabadi Chicken — Full',       price: 419, odooId: 1472, catId: 22 },
+  'HE-1191-H': { name: 'Mutton Pepper Dry — Half',        price: 400, odooId: 1473, catId: 22 },
+  'HE-1191-F': { name: 'Mutton Pepper Dry — Full',        price: 800, odooId: 1474, catId: 22 },
+
   // ── Bain Marie (cat 28) — counter service items ──
   'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
   'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
