@@ -1078,42 +1078,13 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
 
   const resp = await sendWhatsApp(phoneId, token, mpm);
   if (!resp || !resp.ok) {
-    console.log('Bestsellers MPM failed, falling back to list menu');
+    // Log the error for debugging
+    const errText = resp ? await resp.text().catch(() => 'no body') : 'no response';
+    console.log('Bestsellers MPM failed:', errText);
     return handleShowMenuList(context, user, waId, phoneId, token, db);
   }
 
-  // Follow up with "browse more" for the full menu
-  const moreRows = [
-    { id: 'intent_meals', title: 'All Curries & Biryani', description: 'Full chicken, mutton, veg + breads' },
-    { id: 'intent_starters', title: 'All Starters', description: '24 tandoori, chicken & mutton starters' },
-    { id: 'intent_chinese', title: 'All Chinese', description: 'Fried rice, noodles, shezwan, rolls' },
-    { id: 'intent_krispy', title: 'Fried Chicken', description: 'Combos, burgers, wings, popcorn' },
-    { id: 'cat_full_menu', title: 'Browse by Category', description: 'All 9 categories separately' },
-  ];
-
-  let moreText;
-  if (tier === 'new') {
-    moreText = 'Want more? Your cart stays intact — browse any category below.';
-  } else {
-    moreText = 'More items:';
-  }
-
-  const listMsg = {
-    messaging_product: 'whatsapp',
-    to: waId,
-    type: 'interactive',
-    interactive: {
-      type: 'list',
-      body: { text: moreText },
-      action: {
-        button: 'See Full Menu',
-        sections: [{ title: 'Categories', rows: moreRows }],
-      },
-    },
-  };
-
-  await sendWhatsApp(phoneId, token, listMsg);
-  // Clear counter_source — full menu orders must NOT skip confirmation
+  // ONE MPM only — no follow-up list. Customer browses the 30 items, adds to cart, sends.
   await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
