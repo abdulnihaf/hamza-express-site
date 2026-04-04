@@ -319,6 +319,37 @@ const PAYMENT_CONFIGURATION = 'Hamza_Express_Payments'; // Razorpay config in Wh
 
 const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
+// ── Intent Detection Constants ──
+// Ordering intent: customer explicitly wants to order
+const ORDERING_PATTERNS = [
+  /i'?d?\s*like\s*to\s*order/i,
+  /i\s*want\s*to\s*order/i,
+  /can\s*i\s*order/i,
+  /place\s*(an?\s*)?order/i,
+  /collect\s*at\s*the\s*outlet/i,
+  /order\s*and\s*collect/i,
+  /order\s*for\s*pickup/i,
+  /order\s*food/i,
+  /want\s*to\s*eat/i,
+  /looking\s*to\s*order/i,
+];
+
+// Question detection: customer asking a question, not ordering
+const QUESTION_PATTERNS = {
+  hours: /\b(open|close[ds]?|closing|timing[s]?|time|hours|when\b.*open|when\b.*close|what\s*time|till\s*when|how\s*late)/i,
+  location: /\b(where|location|address|direction[s]?|how\s*to\s*reach|find\s*you|map|which\s*road|hkp|shivajinagar|russell)/i,
+  delivery: /\b(deliver[y]?|home\s*deliver|online\s*deliver|ship|door\s*step|come\s*to\s*my)/i,
+  dinein: /\b(dine\s*in|dine-in|sit\b|table|seat|reserv|book\s*table|eat\s*here|eat\s*there)/i,
+};
+
+// FAQ responses for detected questions
+const FAQ_RESPONSES = {
+  hours: 'Open 12 PM \u2013 1 AM, every day.',
+  location: '151-154, HKP Road, Shivajinagar\nNear Russell Market, Bangalore',
+  delivery: "We're takeaway only \u2014 order here, pay UPI, collect in 15 min.",
+  dinein: 'Walk in anytime! Or order ahead on WhatsApp for quick pickup.',
+};
+
 // ── Customer-facing menu categories (for WhatsApp category picker) ──
 // Each category ≤ 30 products (WhatsApp MPM hard limit is 30 total per message)
 // Grouped by how customers browse food online (Swiggy/Zomato style), NOT by KDS station
@@ -904,7 +935,7 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       return handleCategorySelection(context, user, keywordTarget, waId, phoneId, token, db);
     }
 
-    if (['menu', '/menu', 'order', '/order', 'hi', 'hello', 'start'].includes(text)) {
+    if (['menu', '/menu', 'order', '/order'].includes(text)) {
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
     if (['track', '/track', 'status'].includes(text)) {
@@ -928,9 +959,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     return handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, true);
   }
 
-  // Ice breaker button taps
+  // Button taps — ice breakers + intent flow buttons
   if (msg.type === 'button_reply') {
-    if (msg.id === 'order_food' || msg.id === 'view_menu') {
+    if (msg.id === 'order_food' || msg.id === 'view_menu' || msg.id === 'order_now' || msg.id === 'order_more') {
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
     if (msg.id === 'track_order') {
@@ -938,6 +969,38 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     }
     if (msg.id === 'talk_to_staff') {
       return handleHelp(waId, phoneId, token);
+    }
+    if (msg.id === 'something_else') {
+      return handleSomethingElse(context, user, waId, phoneId, token, db);
+    }
+    if (msg.id === 'hours_location') {
+      const body = FAQ_RESPONSES.hours + '\n\n' + FAQ_RESPONSES.location;
+      const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
+      return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    }
+    if (msg.id === 'pay_pending') {
+      // Find pending order and redirect to payment
+      const pendingOrder = await db.prepare(
+        'SELECT * FROM wa_orders WHERE wa_id = ? AND payment_status = ? AND status = ? ORDER BY id DESC LIMIT 1'
+      ).bind(waId, 'pending', 'payment_pending').first();
+      if (pendingOrder && pendingOrder.razorpay_link_url) {
+        await sendWhatsApp(phoneId, token, buildText(waId, `Pay here: ${pendingOrder.razorpay_link_url}`));
+      } else {
+        return handleShowMenu(context, user, waId, phoneId, token, db);
+      }
+      return;
+    }
+    if (msg.id === 'cancel_pending') {
+      const pendingOrder = await db.prepare(
+        'SELECT * FROM wa_orders WHERE wa_id = ? AND payment_status = ? AND status = ? ORDER BY id DESC LIMIT 1'
+      ).bind(waId, 'pending', 'payment_pending').first();
+      if (pendingOrder) {
+        await db.prepare('UPDATE wa_orders SET status = ?, payment_status = ?, updated_at = ? WHERE id = ?')
+          .bind('cancelled', 'cancelled', new Date().toISOString().slice(0, 19), pendingOrder.id).run();
+        await sendWhatsApp(phoneId, token, buildText(waId, 'Order cancelled. Say *menu* to start a new order.'));
+      }
+      await updateSession(db, waId, 'idle', '[]', 0, null);
+      return;
     }
   }
 
@@ -985,8 +1048,147 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 // ═══════════════════════════════════════════════════════════════════
 
 async function handleIdle(context, session, user, msg, waId, phoneId, token, db) {
-  // Always go straight to menu — never ask for name
-  return handleShowMenu(context, user, waId, phoneId, token, db);
+  const text = msg.type === 'text' ? msg.text : '';
+
+  // 1. Check for active order FIRST
+  try {
+    const activeOrder = await db.prepare(
+      'SELECT * FROM wa_orders WHERE wa_id = ? AND status NOT IN (?, ?) ORDER BY id DESC LIMIT 1'
+    ).bind(waId, 'delivered', 'cancelled').first();
+
+    if (activeOrder) {
+      if (activeOrder.payment_status === 'pending' && activeOrder.status === 'payment_pending') {
+        return handlePendingPayment(context, user, waId, phoneId, token, db, activeOrder);
+      }
+      if (['confirmed', 'preparing', 'ready'].includes(activeOrder.status)) {
+        return handleActiveOrder(context, user, waId, phoneId, token, db, activeOrder);
+      }
+    }
+  } catch (e) {
+    console.log('Active order check failed:', e.message);
+    // Continue to normal flow if check fails
+  }
+
+  // 2. Detect ordering intent — go straight to menu
+  if (detectOrderingIntent(text, msg)) {
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+
+  // 3. Detect question — answer it
+  const questionType = detectQuestion(text);
+  if (questionType) {
+    return handleQuestion(context, user, waId, phoneId, token, db, questionType);
+  }
+
+  // 4. Vague or unclear — show intent buttons
+  return handleVague(context, user, waId, phoneId, token, db);
+}
+
+// ── Intent Detection Helpers ──
+
+function detectOrderingIntent(text, msg) {
+  // CTWA ad referral = ordering intent
+  if (msg.referral) return true;
+  // Explicit ordering phrases
+  for (const pattern of ORDERING_PATTERNS) {
+    if (pattern.test(text)) return true;
+  }
+  // Food keywords that map to categories
+  if (STATION_KEYWORDS[text]) return true;
+  return false;
+}
+
+function detectQuestion(text) {
+  if (!text || text.length < 3) return null;
+  for (const [type, pattern] of Object.entries(QUESTION_PATTERNS)) {
+    if (pattern.test(text)) return type;
+  }
+  return null;
+}
+
+// ── New Handler Functions ──
+
+async function handleQuestion(context, user, waId, phoneId, token, db, questionType) {
+  const answer = FAQ_RESPONSES[questionType] || 'How can we help?';
+  const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, answer, buttons));
+  // Stay in idle — don't change state
+}
+
+async function handleVague(context, user, waId, phoneId, token, db) {
+  const tier = getCustomerTier(user.total_orders || 0);
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+
+  let bodyText;
+  let buttons;
+
+  if (tier === 'regular') {
+    bodyText = displayName ? `${displayName}! What's it today?` : "What's it today?";
+    buttons = [
+      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
+      { type: 'reply', reply: { id: 'track_order', title: 'Track Order' } },
+      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
+    ];
+  } else if (tier === 'new') {
+    bodyText = 'Hey! Want to order for pickup?';
+    buttons = [
+      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
+      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
+    ];
+  } else {
+    bodyText = displayName ? `Hey ${displayName}! Ordering again?` : 'Hey! Ordering again?';
+    buttons = [
+      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
+      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
+    ];
+  }
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, bodyText, buttons));
+  // Stay in idle
+}
+
+async function handleActiveOrder(context, user, waId, phoneId, token, db, order) {
+  const statusLabels = { confirmed: 'confirmed', preparing: 'being prepared', ready: 'ready for pickup' };
+  const statusText = statusLabels[order.status] || order.status;
+  const elapsed = Math.round((Date.now() - new Date(order.created_at).getTime()) / 60000);
+  const token_num = order.tracking_number || order.order_code;
+  const counter = order.collection_point || 'the counter';
+
+  let items;
+  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch { items = 'your items'; }
+
+  const body = `Your order ${order.order_code} is ${statusText}.\n${items}\nToken: ${token_num} | ${counter}\n${elapsed} min ago \u2014 we'll message you when ready.`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'order_more', title: 'Order More' } },
+    { type: 'reply', reply: { id: 'track_order', title: 'Track Order' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+async function handlePendingPayment(context, user, waId, phoneId, token, db, order) {
+  let items;
+  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch { items = 'your items'; }
+
+  const total = (order.total || 0).toFixed(0);
+  const body = `You have an unpaid order (${order.order_code}).\n${items} \u2014 \u20B9${total}\n\nTap Pay Now to complete.`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'pay_pending', title: 'Pay Now' } },
+    { type: 'reply', reply: { id: 'cancel_pending', title: 'Cancel Order' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+async function handleSomethingElse(context, user, waId, phoneId, token, db) {
+  const body = 'How can we help?';
+  const buttons = [
+    { type: 'reply', reply: { id: 'hours_location', title: 'Hours & Location' } },
+    { type: 'reply', reply: { id: 'talk_to_staff', title: 'Call Us' } },
+  ];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
 }
 
 async function handleNameEntry(context, session, user, msg, waId, phoneId, token, db) {
