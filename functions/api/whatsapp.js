@@ -1050,11 +1050,12 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 async function handleIdle(context, session, user, msg, waId, phoneId, token, db) {
   const text = msg.type === 'text' ? msg.text : '';
 
-  // 1. Check for active order FIRST
+  // 1. Check for active order FIRST (only recent — within last 2 hours)
   try {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().slice(0, 19);
     const activeOrder = await db.prepare(
-      'SELECT * FROM wa_orders WHERE wa_id = ? AND status NOT IN (?, ?) ORDER BY id DESC LIMIT 1'
-    ).bind(waId, 'delivered', 'cancelled').first();
+      'SELECT * FROM wa_orders WHERE wa_id = ? AND status NOT IN (?, ?) AND created_at > ? ORDER BY id DESC LIMIT 1'
+    ).bind(waId, 'delivered', 'cancelled', twoHoursAgo).first();
 
     if (activeOrder) {
       if (activeOrder.payment_status === 'pending' && activeOrder.status === 'payment_pending') {
