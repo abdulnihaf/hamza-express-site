@@ -1048,6 +1048,15 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 // ═══════════════════════════════════════════════════════════════════
 
 async function handleIdle(context, session, user, msg, waId, phoneId, token, db) {
+  try {
+    return await _handleIdleInner(context, session, user, msg, waId, phoneId, token, db);
+  } catch (e) {
+    console.error('handleIdle crashed, falling back to menu:', e.message);
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+}
+
+async function _handleIdleInner(context, session, user, msg, waId, phoneId, token, db) {
   const text = msg.type === 'text' ? msg.text : '';
 
   // 1. Check for active order FIRST (only recent — within last 2 hours)
@@ -1156,7 +1165,7 @@ async function handleActiveOrder(context, user, waId, phoneId, token, db, order)
   const counter = order.collection_point || 'the counter';
 
   let items;
-  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch { items = 'your items'; }
+  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch (e) { items = 'your items'; }
 
   const body = `Your order ${order.order_code} is ${statusText}.\n${items}\nToken: ${token_num} | ${counter}\n${elapsed} min ago \u2014 we'll message you when ready.`;
 
@@ -1170,7 +1179,7 @@ async function handleActiveOrder(context, user, waId, phoneId, token, db, order)
 
 async function handlePendingPayment(context, user, waId, phoneId, token, db, order) {
   let items;
-  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch { items = 'your items'; }
+  try { items = JSON.parse(order.items).map(i => i.name).join(', '); } catch (e) { items = 'your items'; }
 
   const total = (order.total || 0).toFixed(0);
   const body = `You have an unpaid order (${order.order_code}).\n${items} \u2014 \u20B9${total}\n\nTap Pay Now to complete.`;
