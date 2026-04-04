@@ -1093,10 +1093,11 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
   if (!resp || !resp.ok) {
     const errText = resp?._errorText || (resp ? 'ok=false but no error captured' : 'no response object');
     console.log('Bestsellers MPM failed:', errText);
-    // Temporary debug — send actual error to user
+    // Temporary debug — send actual error + token prefix to user
+    const tokenPrefix = token ? token.substring(0, 30) + '...' : 'NO TOKEN';
     await sendWhatsApp(phoneId, token, {
       messaging_product: 'whatsapp', to: waId, type: 'text',
-      text: { body: `DEBUG MPM ERROR:\n${errText.substring(0, 500)}` }
+      text: { body: `DEBUG MPM:\nError: ${errText.substring(0, 400)}\nToken: ${tokenPrefix}\nPhone: ${phoneId}` }
     });
     return handleShowMenuList(context, user, waId, phoneId, token, db);
   }
