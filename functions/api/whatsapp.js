@@ -1084,7 +1084,7 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
       type: 'product_list',
       header: { type: 'text', text: 'Hamza Express Menu' },
       body: { text: bodyText },
-      footer: { text: 'Prices include GST | Order & collect at HKP Road, Shivajinagar' },
+      footer: { text: 'Prices include GST' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };
