@@ -182,6 +182,18 @@ const PRODUCTS = {
   'HE-1367': { name: 'Shawarma Roll',              price: 76,  odooId: 1385, catId: 26 },
   'HE-1373': { name: 'Soft Drink',                 price: 38,  odooId: 1391, catId: 26 },
 
+  // ── Hamza Meals — Combos (cat 22 → Indian, for KDS routing) ──
+  'HE-C001': { name: 'Ghee Rice + Butter Chicken + Kabab',       price: 237, odooId: 1454, catId: 22 },
+  'HE-C002': { name: 'Chicken Biriyani + Chicken Kabab',         price: 256, odooId: 1455, catId: 22 },
+  'HE-C003': { name: 'Ghee Rice + Butter Chicken',               price: 170, odooId: 1456, catId: 22 },
+  'HE-C004': { name: 'Ghee Rice + Dal Fry + Chicken Kabab',      price: 237, odooId: 1457, catId: 22 },
+  'HE-C005': { name: 'Mutton Biriyani + Chicken Lollipop',       price: 380, odooId: 1458, catId: 22 },
+  'HE-C006': { name: 'Ghee Rice + Dal Fry',                      price: 170, odooId: 1459, catId: 22 },
+  'HE-C007': { name: 'Butter Naan + Butter Chicken + Kabab',     price: 209, odooId: 1460, catId: 22 },
+  'HE-C008': { name: 'Butter Naan + Butter Chicken',             price: 170, odooId: 1461, catId: 22 },
+  'HE-C009': { name: 'Biriyani Rice + Chicken Kabab',            price: 170, odooId: 1462, catId: 22 },
+  'HE-C010': { name: 'Premium Family Combo (Serves 2)',          price: 475, odooId: 1463, catId: 22 },
+
   // ── Bain Marie (cat 28) — counter service items ──
   'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
   'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
@@ -979,51 +991,49 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
 // Ordered by popularity (matching physical menu order). This is the PRIMARY menu experience.
 const BESTSELLERS_MPM = {
   sections: [
+    { title: 'Hamza Meals', items: [
+      'HE-C003', // Ghee Rice + Butter Chicken — ₹179
+      'HE-C006', // Ghee Rice + Dal Fry — ₹179
+      'HE-C008', // Butter Naan + Butter Chicken — ₹179
+      'HE-C009', // Biriyani Rice + Chicken Kabab — ₹179
+      'HE-C001', // Ghee Rice + Butter Chicken + Kabab — ₹249
+      'HE-C007', // Butter Naan + Butter Chicken + Kabab — ₹219
+      'HE-C002', // Chicken Biriyani + Chicken Kabab — ₹269
+      'HE-C004', // Ghee Rice + Dal Fry + Chicken Kabab — ₹249
+      'HE-C005', // Mutton Biriyani + Chicken Lollipop — ₹399
+      'HE-C010', // Premium Family Combo (Serves 2) — ₹499
+    ]},
     { title: 'Biryani & Rice', items: [
-      'HE-1201', // Chicken Biryani
-      'HE-1200', // Mutton Biryani
-      'HE-1389', // Chicken Boneless Biryani
-      'HE-1204', // Egg Biryani
-      'HE-1203', // Biryani Rice
-      'HE-1205', // Ghee Rice
+      'HE-1201', // Chicken Biryani — ₹275
+      'HE-1200', // Mutton Biryani — ₹350
+      'HE-1205', // Ghee Rice — ₹100
     ]},
-    { title: 'Starters', items: [
-      'HE-1393', // Irani Chicken ★
-      'HE-1163', // Chicken Kabab
-      'HE-1135', // Tandoori Chicken
-      'HE-1166', // Chicken 65
-      'HE-1142', // Malai Tikka
+    { title: 'Kebabs & Starters', items: [
+      'HE-1163', // Chicken Kabab — ₹210
+      'HE-1135', // Tandoori Chicken — ₹230
+      'HE-1192', // Mutton Brain Dry — ₹170
+      'HE-1169', // Boneless Chicken Pepper Dry — ₹235
+      'HE-1138', // Kalmi Kabab — ₹155
     ]},
-    { title: 'Chicken Gravy', items: [
-      'HE-1149', // Butter Chicken
-      'HE-1155', // Kadai Chicken
-      'HE-1148', // Hyderabadi Chicken
-      'HE-1160', // Hamza Special
+    { title: 'Curries', items: [
+      'HE-1149', // Butter Chicken — ₹225
+      'HE-1160', // Chicken Hamza Special — ₹240
+      'HE-1148', // Hyderabadi Chicken — ₹210
+      'HE-1191', // Mutton Pepper Dry — ₹230
+      'HE-1167', // Boneless Singapore Chicken — ₹255
     ]},
-    { title: 'Mutton Gravy', items: [
-      'HE-1190', // Mutton Hamza Special
-      'HE-1177', // Mutton Rogan Josh
-      'HE-1188', // Mutton Kassa
+    { title: 'Breads', items: [
+      'HE-1212', // Kerala Paratha — ₹30
+      'HE-1220', // Butter Naan — ₹45
+    ]},
+    { title: 'Chinese & Rolls', items: [
+      'HE-1235', // Chicken Fried Rice — ₹190
+      'HE-1236', // Chicken Noodles — ₹190
+      'HE-1208', // Chicken Roll — ₹90
     ]},
     { title: 'Vegetarian', items: [
-      'HE-1226', // Paneer Butter Masala
-      'HE-1225', // Dal Fry
-      'HE-1227', // Kadai Paneer
-    ]},
-    { title: 'Indian Breads', items: [
-      'HE-1212', // Kerala Paratha
-      'HE-1220', // Butter Naan
-      'HE-1222', // Garlic Naan
-      'HE-1218', // Roomali Roti
-    ]},
-    { title: 'Chinese', items: [
-      'HE-1235', // Chicken Fried Rice
-      'HE-1236', // Chicken Noodles
-      'HE-1164', // Chilly Chicken
-    ]},
-    { title: 'Drinks', items: [
-      'HE-J001', // Fresh Orange Juice
-      'HE-J005', // Buttermilk
+      'HE-1225', // Dal Fry — ₹110
+      'HE-1226', // Paneer Butter Masala — ₹180
     ]},
   ],
 };
@@ -1037,17 +1047,15 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
 
   let bodyText;
   if (tier === 'new') {
-    bodyText = displayName
-      ? `Hi ${displayName}, pick items below, tap Send, pay UPI — collect at the counter.`
-      : 'Pick items below, tap Send, pay UPI — collect at the counter.';
+    bodyText = 'Browse the menu → add items → tap Send → pay UPI\n\nWe\'ll message you when it starts preparing and when it\'s ready to collect.\n\nUsually ready in 15 min.';
   } else if (tier === 'regular') {
     bodyText = displayName
       ? `${displayName}, the usual?`
       : 'The usual?';
   } else {
     bodyText = displayName
-      ? `Hi ${displayName}, here are our popular picks.`
-      : 'Here are our popular picks — add to cart and Send.';
+      ? `Hey ${displayName}! Browse and add to cart.`
+      : 'Browse and add to cart — pay UPI, collect at outlet.';
   }
 
   const sections = BESTSELLERS_MPM.sections.map(s => ({
@@ -1063,7 +1071,7 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
       type: 'product_list',
       header: { type: 'text', text: 'Hamza Express Menu' },
       body: { text: bodyText },
-      footer: { text: 'Prices include GST | 150+ items in See Full Menu' },
+      footer: { text: 'Prices include GST | Order & collect at HKP Road, Shivajinagar' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };

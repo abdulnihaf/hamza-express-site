@@ -21,8 +21,8 @@ export async function onRequest(context) {
       return Response.redirect(`https://wa.me/${PHONE}`, 302);
     }
 
-    // Increment click counter (fire and forget)
-    db.prepare('UPDATE source_links SET clicks = clicks + 1 WHERE slug = ?').bind(slug).run();
+    // Increment click counter before redirecting
+    await db.prepare('UPDATE source_links SET clicks = clicks + 1 WHERE slug = ?').bind(slug).run();
 
     const prefill = encodeURIComponent(row.prefill_text);
     return Response.redirect(`https://wa.me/${PHONE}?text=${prefill}`, 302);
