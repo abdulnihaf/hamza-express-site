@@ -734,7 +734,9 @@ async function processWebhook(context, body) {
   const db = context.env.DB;
 
   // Route only messages for HE phone number
-  if (value.metadata?.phone_number_id && value.metadata.phone_number_id !== phoneId) {
+  const incomingPhoneId = value.metadata?.phone_number_id;
+  if (incomingPhoneId && incomingPhoneId !== phoneId) {
+    console.log(`Skipping: incoming phone ${incomingPhoneId} !== env ${phoneId}`);
     return; // Not for us — skip (shared webhook with NCH)
   }
 
