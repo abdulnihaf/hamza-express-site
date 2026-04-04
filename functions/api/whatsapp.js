@@ -197,7 +197,7 @@ const PRODUCTS = {
   // ── Bain Marie (cat 28) — counter service items ──
   'HE-1201': { name: 'Chicken Biryani',            price: 238, odooId: 1219, catId: 28 },
   'HE-1200': { name: 'Mutton Biryani',             price: 324, odooId: 1218, catId: 28 },
-  'HE-1205': { name: 'Ghee Rice',                  price: 1,   odooId: 1223, catId: 28 }, // TEST ₹1 (was 95)
+  'HE-1205': { name: 'Ghee Rice',                  price: 95,  odooId: 1223, catId: 28 },
   'HE-1164': { name: 'Chilli Chicken',             price: 190, odooId: 1182, catId: 28 },
   'HE-1397': { name: 'Butter Chicken (BM)',        price: 200, odooId: 1415, catId: 28 },
   'HE-1398': { name: 'Mutton Chatpata (BM)',       price: 219, odooId: 1444, catId: 28 },
