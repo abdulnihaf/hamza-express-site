@@ -1091,10 +1091,9 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
 
   const resp = await sendWhatsApp(phoneId, token, mpm);
   if (!resp || !resp.ok) {
-    // DEBUG: send error back to user so we can see it
-    const errText = resp ? await resp.text().catch(() => 'no body') : 'no response';
+    const errText = resp?._errorText || (resp ? 'ok=false but no error captured' : 'no response object');
     console.log('Bestsellers MPM failed:', errText);
-    // Temporary debug message — remove after fixing
+    // Temporary debug — send actual error to user
     await sendWhatsApp(phoneId, token, {
       messaging_product: 'whatsapp', to: waId, type: 'text',
       text: { body: `DEBUG MPM ERROR:\n${errText.substring(0, 500)}` }
@@ -5140,6 +5139,8 @@ async function sendWhatsApp(phoneId, token, payload) {
     if (!response.ok) {
       const err = await response.text();
       console.error('WA API error:', response.status, err);
+      // Store error for callers to read (body stream is consumed)
+      response._errorText = `${response.status}: ${err}`;
     }
     return response;
   } catch (e) {
