@@ -144,6 +144,26 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
   </div>
 
+  <!-- 72-Hour Nurture Engine -->
+  <div class="section">
+    <div class="section-title">72-Hour Nurture Engine</div>
+    <div class="grid-3" style="margin-bottom:10px">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Pending Nurture</div>
+        <div id="nurtureQueueCount" class="mono" style="font-size:20px;font-weight:700;color:var(--purple)">-</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Last Run</div>
+        <div id="nurtureLastRun" style="font-size:11px;color:var(--text2);margin-top:4px">—</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+        <button onclick="runNurture()" style="padding:8px 16px;background:var(--purple);color:#fff;border:none;border-radius:6px;font-weight:600;font-size:11px;cursor:pointer">Run Nurture Now</button>
+        <div id="nurtureResult" style="font-size:10px;color:var(--text2);margin-top:4px"></div>
+      </div>
+    </div>
+    <div id="nurtureTemplates" style="font-size:11px"></div>
+  </div>
+
   <!-- CTWA Conversations -->
   <div class="section">
     <div class="section-title">CTWA Conversations</div>
@@ -279,8 +299,68 @@ async function openConv(waId) {
 function closeConv(){document.getElementById('convPanel').style.display='none';document.getElementById('convOverlay').style.display='none';}
 function timeAgo(iso){if(!iso)return'';const d=Date.now()-new Date(iso).getTime();const m=Math.floor(d/60000);if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d';}
 
+async function loadNurture() {
+  try {
+    const [tRes, qRes] = await Promise.all([
+      fetch('/api/nurture?action=templates'),
+      fetch('/api/nurture?action=queue'),
+    ]);
+    const tData = await tRes.json();
+    const qData = await qRes.json();
+
+    document.getElementById('nurtureQueueCount').textContent = (qData.queue || []).length;
+
+    document.getElementById('nurtureTemplates').innerHTML = (tData.templates || []).map(t => `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <strong>Stage ${t.stage} — Hour ${t.trigger_hours}</strong>
+          <span style="font-size:9px;padding:2px 6px;border-radius:8px;background:${t.active?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)'};color:${t.active?'var(--green)':'var(--red)'}">${t.active?'Active':'Paused'}</span>
+        </div>
+        <textarea id="tmpl_${t.id}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px;color:var(--text);font-size:11px;resize:vertical;min-height:40px">${t.message_text}</textarea>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          ${t.button_1_text?`<span style="font-size:9px;padding:2px 6px;background:var(--card);border:1px solid var(--border);border-radius:4px">[${t.button_1_text}]</span>`:''}
+          ${t.button_2_text?`<span style="font-size:9px;padding:2px 6px;background:var(--card);border:1px solid var(--border);border-radius:4px">[${t.button_2_text}]</span>`:''}
+          <button onclick="saveTemplate(${t.id})" style="margin-left:auto;padding:3px 10px;background:var(--blue);color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer">Save</button>
+          <button onclick="toggleTemplate(${t.id},${t.active?0:1})" style="padding:3px 10px;background:${t.active?'var(--red)':'var(--green)'};color:#fff;border:none;border-radius:4px;font-size:10px;cursor:pointer">${t.active?'Pause':'Activate'}</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { console.log('Nurture load error:', e); }
+}
+
+async function saveTemplate(id) {
+  const text = document.getElementById('tmpl_'+id)?.value;
+  if (!text) return;
+  await fetch('/api/nurture?action=update', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, message_text: text })
+  });
+  loadNurture();
+}
+
+async function toggleTemplate(id, active) {
+  await fetch('/api/nurture?action=update', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id, active })
+  });
+  loadNurture();
+}
+
+async function runNurture() {
+  document.getElementById('nurtureResult').textContent = 'Running...';
+  try {
+    const res = await fetch('/api/nurture?action=run');
+    const d = await res.json();
+    document.getElementById('nurtureResult').textContent = `Sent: ${d.sent} | Skipped: ${d.skipped}`;
+    document.getElementById('nurtureLastRun').textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    loadNurture();
+  } catch(e) { document.getElementById('nurtureResult').textContent = 'Error: '+e.message; }
+}
+
 load();
-setInterval(load,60000);
+loadNurture();
+setInterval(load, 60000);
+setInterval(loadNurture, 120000);
 </script>
 </body>
 </html>
