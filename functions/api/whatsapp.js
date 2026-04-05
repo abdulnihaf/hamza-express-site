@@ -1454,6 +1454,14 @@ async function handleBookingStart(context, user, waId, phoneId, token, db) {
   };
 
   await sendWhatsApp(phoneId, token, flowMsg);
+
+  // Track booking attempt for drop-off analysis
+  try {
+    await db.prepare(
+      'INSERT INTO booking_attempts (wa_id, trigger_source, started_at, completed) VALUES (?, ?, ?, 0)'
+    ).bind(waId, 'flow', new Date().toISOString()).run();
+  } catch (e) { console.log('Booking attempt track error:', e.message); }
+
   // No state change needed — the flow response comes as nfm_reply
 }
 
@@ -1565,12 +1573,30 @@ async function handleBookingTime(context, session, user, msg, waId, phoneId, tok
 
   // Save booking to D1
   const now = new Date().toISOString();
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const legacyGuestName = displayName || 'Guest';
   await db.prepare(
-    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(waId, bookingDate, timeSlot, partySize, 'confirmed', now).run();
+    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, guest_name, status, mumtaz_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(waId, bookingDate, timeSlot, partySize, legacyGuestName, 'confirmed', 'pending', now).run();
+
+  // Notify Mumtaz (WhatsApp + SMS)
+  const MUMTAZ_WA_LEGACY = '919114115059';
+  const custPhone = waId.replace(/^91/, '');
+  const legacyAlert = `NEW BOOKING\n\n${legacyGuestName} — ${partySize} guests\n${displayDate} | ${timeSlot}\n\nCall: +91${custPhone}\nDashboard: hamzaexpress.in/ops/bookings/`;
+  try {
+    await sendWhatsApp(phoneId, token, { messaging_product: 'whatsapp', to: MUMTAZ_WA_LEGACY, type: 'text', text: { body: legacyAlert } });
+  } catch (e) { console.log('Mumtaz WA alert error (legacy):', e.message); }
+  try {
+    if (context.env.FAST2SMS_API_KEY) {
+      await fetch('https://www.fast2sms.com/dev/bulkV2', {
+        method: 'POST',
+        headers: { 'authorization': context.env.FAST2SMS_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ route: 'q', message: `HE Booking: ${legacyGuestName}, ${partySize} guests, ${displayDate} ${timeSlot}. Call +91${custPhone}`, language: 'english', flash: 0, numbers: '9114115059' }),
+      });
+    }
+  } catch (e) { console.log('Mumtaz SMS alert error (legacy):', e.message); }
 
   // Send confirmation
-  const displayName = user.name ? user.name.split(' ')[0] : '';
   const confirmText = `Table booked! \u2705\n\n${partySize} guests | ${displayDate} | ${timeSlot}\nHamza Express, 151-154 HKP Road\n\nWe'll remind you 1 hour before.\nTo cancel, say "cancel booking".`;
 
   const buttons = [
@@ -1601,13 +1627,45 @@ async function handleBookingFlowResponse(context, user, waId, phoneId, token, db
   const dateObj = new Date(bookingDate + 'T12:00:00');
   const displayDate = dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Save to D1
+  // Save to D1 (with guest_name + special_request)
   const now = new Date().toISOString();
   await db.prepare(
-    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(waId, bookingDate, timeDisplay, guestCount, 'confirmed', now).run();
+    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, guest_name, special_request, status, mumtaz_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(waId, bookingDate, timeDisplay, guestCount, guestName, specialRequest || null, 'confirmed', 'pending', now).run();
 
-  // Send confirmation
+  // Mark booking attempt as completed
+  try {
+    await db.prepare(
+      'UPDATE booking_attempts SET completed = 1 WHERE wa_id = ? AND completed = 0 ORDER BY id DESC LIMIT 1'
+    ).bind(waId).run();
+  } catch (e) { console.log('Booking attempt complete error:', e.message); }
+
+  // ── Notify Mumtaz (WhatsApp + SMS) ──
+  const MUMTAZ_WA = '919114115059';
+  const customerPhone = waId.replace(/^91/, '');
+  const alertText = `NEW BOOKING\n\n${guestName} — ${guestCount} guests\n${displayDate} | ${timeDisplay}${specialRequest ? '\nNote: ' + specialRequest : ''}\n\nCall: +91${customerPhone}\nDashboard: hamzaexpress.in/ops/bookings/`;
+
+  // WhatsApp notification to Mumtaz
+  try {
+    await sendWhatsApp(phoneId, token, {
+      messaging_product: 'whatsapp', to: MUMTAZ_WA, type: 'text',
+      text: { body: alertText },
+    });
+  } catch (e) { console.log('Mumtaz WA alert error:', e.message); }
+
+  // SMS fallback to Mumtaz via Fast2SMS
+  try {
+    if (context.env.FAST2SMS_API_KEY) {
+      const smsText = `HE Booking: ${guestName}, ${guestCount} guests, ${displayDate} ${timeDisplay}. Call +91${customerPhone}`;
+      await fetch('https://www.fast2sms.com/dev/bulkV2', {
+        method: 'POST',
+        headers: { 'authorization': context.env.FAST2SMS_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ route: 'q', message: smsText, language: 'english', flash: 0, numbers: '9114115059' }),
+      });
+    }
+  } catch (e) { console.log('Mumtaz SMS alert error:', e.message); }
+
+  // Send confirmation to customer
   let confirmText = `Table booked! \u2705\n\n${guestCount} guest(s) | ${displayDate} | ${timeDisplay}\nName: ${guestName}\nHamza Express, 151-154 HKP Road`;
   if (specialRequest) confirmText += `\nNote: ${specialRequest}`;
   confirmText += '\n\nWe\'ll remind you 1 hour before.\nTo cancel, say "cancel booking".';
