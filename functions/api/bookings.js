@@ -19,13 +19,22 @@ export async function onRequest(context) {
   const db = context.env.DB;
   const url = new URL(context.request.url);
   const action = url.searchParams.get('action') || 'list';
-  const dateParam = url.searchParams.get('date') || new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  const dateParam = url.searchParams.get('date') || today;
+  const view = url.searchParams.get('view') || 'date'; // 'date' or 'upcoming'
 
   try {
-    // ── LIST: Today's bookings with guest info ──
+    // ── LIST: Bookings with guest info ──
     if (action === 'list' && context.request.method === 'GET') {
-      const [bookings, dropoffs, metrics] = await Promise.all([
-        // Confirmed bookings for the date
+      // Date filter: single date or upcoming (today + future)
+      const dateWhere = view === 'upcoming' ? 'b.booking_date >= ?' : 'b.booking_date = ?';
+      const dateVal = view === 'upcoming' ? today : dateParam;
+      const dropoffDateWhere = view === 'upcoming' ? 'date(a.started_at) >= ?' : 'date(a.started_at) = ?';
+      const metricsDateWhere = view === 'upcoming' ? 'booking_date >= ?' : 'booking_date = ?';
+      const attemptsDateWhere = view === 'upcoming' ? 'date(started_at) >= ?' : 'date(started_at) = ?';
+
+      const [bookings, dropoffs, metrics, recentBookings] = await Promise.all([
+        // Bookings for selected view
         db.prepare(`
           SELECT b.*, u.name as user_name, u.wa_id, u.total_orders, u.total_spent,
             CASE
@@ -36,7 +45,7 @@ export async function onRequest(context) {
             END as tier
           FROM wa_bookings b
           LEFT JOIN wa_users u ON b.wa_id = u.wa_id
-          WHERE b.booking_date = ?
+          WHERE ${dateWhere}
           ORDER BY
             CASE b.mumtaz_status
               WHEN 'pending' THEN 1
@@ -47,10 +56,11 @@ export async function onRequest(context) {
               WHEN 'cancelled' THEN 6
               ELSE 7
             END,
+            b.booking_date ASC,
             b.booking_time ASC
-        `).bind(dateParam).all(),
+        `).bind(dateVal).all(),
 
-        // Drop-offs: started booking flow but didn't complete (today)
+        // Drop-offs: started booking flow but didn't complete
         db.prepare(`
           SELECT a.*, u.name as user_name, u.wa_id, u.total_orders,
             CASE
@@ -62,28 +72,44 @@ export async function onRequest(context) {
           FROM booking_attempts a
           LEFT JOIN wa_users u ON a.wa_id = u.wa_id
           WHERE a.completed = 0
-            AND date(a.started_at) = ?
+            AND ${dropoffDateWhere}
           ORDER BY a.started_at DESC
-        `).bind(dateParam).all(),
+        `).bind(dateVal).all(),
 
-        // Metrics for the date
+        // Metrics
         db.prepare(`
           SELECT
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ?) as total_bookings,
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ? AND status != 'cancelled') as active_bookings,
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ? AND mumtaz_status = 'confirmed') as confirmed_by_mumtaz,
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ? AND arrived = 1) as arrived,
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ? AND mumtaz_status = 'no_show') as no_shows,
-            (SELECT COUNT(*) FROM wa_bookings WHERE booking_date = ? AND status = 'cancelled') as cancelled,
-            (SELECT COUNT(*) FROM booking_attempts WHERE date(started_at) = ? AND completed = 0) as dropoffs,
-            (SELECT COUNT(*) FROM booking_attempts WHERE date(started_at) = ?) as total_attempts,
-            (SELECT SUM(CAST(party_size AS INTEGER)) FROM wa_bookings WHERE booking_date = ? AND status != 'cancelled') as total_guests
-          `).bind(dateParam, dateParam, dateParam, dateParam, dateParam, dateParam, dateParam, dateParam, dateParam).first(),
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere}) as total_bookings,
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere} AND status != 'cancelled') as active_bookings,
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere} AND mumtaz_status = 'confirmed') as confirmed_by_mumtaz,
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere} AND arrived = 1) as arrived,
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere} AND mumtaz_status = 'no_show') as no_shows,
+            (SELECT COUNT(*) FROM wa_bookings WHERE ${metricsDateWhere} AND status = 'cancelled') as cancelled,
+            (SELECT COUNT(*) FROM booking_attempts WHERE ${attemptsDateWhere} AND completed = 0) as dropoffs,
+            (SELECT COUNT(*) FROM booking_attempts WHERE ${attemptsDateWhere}) as total_attempts,
+            (SELECT SUM(CAST(party_size AS INTEGER)) FROM wa_bookings WHERE ${metricsDateWhere} AND status != 'cancelled') as total_guests
+          `).bind(dateVal, dateVal, dateVal, dateVal, dateVal, dateVal, dateVal, dateVal, dateVal).first(),
+
+        // Recent bookings (last 30 min) — for live alerts
+        db.prepare(`
+          SELECT b.*, u.name as user_name
+          FROM wa_bookings b
+          LEFT JOIN wa_users u ON b.wa_id = u.wa_id
+          WHERE b.created_at > datetime('now', '-30 minutes')
+          ORDER BY b.created_at DESC
+          LIMIT 5
+        `).all(),
       ]);
 
       return new Response(JSON.stringify({
         success: true,
         date: dateParam,
+        view,
+        recentBookings: (recentBookings.results || []).map(r => ({
+          id: r.id, guestName: r.guest_name || r.user_name || 'Guest',
+          partySize: r.party_size, bookingDate: r.booking_date, bookingTime: r.booking_time,
+          createdAt: r.created_at,
+        })),
         bookings: (bookings.results || []).map(b => ({
           id: b.id,
           waId: b.wa_id,
