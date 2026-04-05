@@ -1586,12 +1586,7 @@ async function handleBookingTime(context, session, user, msg, waId, phoneId, tok
   try {
     await sendWhatsApp(phoneId, token, { messaging_product: 'whatsapp', to: MUMTAZ_WA_LEGACY, type: 'text', text: { body: legacyAlert } });
   } catch (e) { console.log('Mumtaz WA alert error (legacy):', e.message); }
-  // SMS to Mumtaz (always fires alongside WhatsApp — dual channel, Quick SMS GET route)
-  try {
-    const legacySmsText = encodeURIComponent(`HE Booking: ${legacyGuestName}, ${partySize} guests, ${displayDate} ${timeSlot}. Call +91${custPhone}`);
-    const legacySmsKey = context.env.FAST2SMS_API_KEY || '';
-    await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${legacySmsKey}&route=q&message=${legacySmsText}&flash=0&numbers=9114115059`);
-  } catch (e) { console.log('Mumtaz SMS alert error (legacy):', e.message); }
+  // SMS disabled — ₹5/msg not worth it. WhatsApp + dashboard is enough.
 
   // Send confirmation
   const confirmText = `Table booked! \u2705\n\n${partySize} guests | ${displayDate} | ${timeSlot}\nHamza Express, 151-154 HKP Road\n\nWe'll remind you 1 hour before.\nTo cancel, say "cancel booking".`;
@@ -1650,12 +1645,7 @@ async function handleBookingFlowResponse(context, user, waId, phoneId, token, db
     });
   } catch (e) { console.log('Mumtaz WA alert error:', e.message); }
 
-  // SMS to Mumtaz (always fires alongside WhatsApp — dual channel, Quick SMS GET route)
-  try {
-    const smsText = encodeURIComponent(`HE Booking: ${guestName}, ${guestCount} guests, ${displayDate} ${timeDisplay}. Call +91${customerPhone}`);
-    const smsKey = context.env.FAST2SMS_API_KEY || '';
-    await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${smsKey}&route=q&message=${smsText}&flash=0&numbers=9114115059`);
-  } catch (e) { console.log('Mumtaz SMS alert error:', e.message); }
+  // SMS disabled — ₹5/msg not worth it. WhatsApp + dashboard is enough.
 
   // Send confirmation to customer
   let confirmText = `Table booked! \u2705\n\n${guestCount} guest(s) | ${displayDate} | ${timeDisplay}\nName: ${guestName}\nHamza Express, 151-154 HKP Road`;
