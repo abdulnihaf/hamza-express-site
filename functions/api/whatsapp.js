@@ -1040,6 +1040,16 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     if (msg.id === 'book_table') {
       return handleBookingStart(context, user, waId, phoneId, token, db);
     }
+    if (msg.id === 'see_dine_menu') {
+      return sendWhatsApp(phoneId, token, {
+        messaging_product: 'whatsapp', to: waId, type: 'interactive',
+        interactive: {
+          type: 'cta_url',
+          body: { text: 'Browse our full menu before you arrive.' },
+          action: { name: 'cta_url', parameters: { display_text: 'View Full Menu', url: 'https://hamzaexpress.in/menu/' } },
+        },
+      });
+    }
     if (msg.id === 'get_directions') {
       return sendWhatsApp(phoneId, token, {
         messaging_product: 'whatsapp', to: waId, type: 'interactive',
@@ -1497,7 +1507,7 @@ async function handleBookingFlowResponse(context, user, waId, phoneId, token, db
 
   const buttons = [
     { type: 'reply', reply: { id: 'get_directions', title: 'Get Directions' } },
-    { type: 'reply', reply: { id: 'order_now', title: 'See Menu' } },
+    { type: 'reply', reply: { id: 'see_dine_menu', title: 'See Menu' } },
   ];
 
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, confirmText, buttons));
