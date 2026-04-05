@@ -244,6 +244,23 @@ const PRODUCTS = {
   'HE-K002': { name: 'Mutton Sheek Kabab (4 pcs)',  price: 210, odooId: 1441, catId: 30 },
   'HE-K003': { name: 'Sheek Kabab Roll',            price: 1,   odooId: 1442, catId: 30 }, // TEST ₹1 (was 114)
   'HE-K004': { name: 'Sheek Kabab Platter',         price: 333, odooId: 1443, catId: 30 },
+
+  // ── New Combos v2 (5 combos × 3 sizes, GST-exclusive base prices) ──
+  'HE-CM01-1': { name: 'CM1 For You — Rice+Roti+Kabab+BC',       price: 285, odooId: 1475, catId: 22 },
+  'HE-CM01-2': { name: 'CM1 For Two — Rice+Roti+Kabab+BC',       price: 599, odooId: 1476, catId: 22 },
+  'HE-CM01-3': { name: 'CM1 For Three — Rice+Roti+Kabab+BC',     price: 790, odooId: 1477, catId: 22 },
+  'HE-CM02-1': { name: 'CM2 For You — Rice+Dal+Brain+Kulcha',    price: 332, odooId: 1478, catId: 22 },
+  'HE-CM02-2': { name: 'CM2 For Two — Rice+Dal+Brain+Kulcha',    price: 637, odooId: 1479, catId: 22 },
+  'HE-CM02-3': { name: 'CM2 For Three — Rice+Dal+Brain+Kulcha',  price: 942, odooId: 1480, catId: 22 },
+  'HE-CM03-1': { name: 'CM3 For You — Rice+Dal',                 price: 132, odooId: 1481, catId: 22 },
+  'HE-CM03-2': { name: 'CM3 For Two — Rice+Dal',                 price: 247, odooId: 1482, catId: 22 },
+  'HE-CM03-3': { name: 'CM3 For Three — Rice+Dal',               price: 342, odooId: 1483, catId: 22 },
+  'HE-CM04-1': { name: 'CM4 For You — Brain+Naan',               price: 190, odooId: 1484, catId: 22 },
+  'HE-CM04-2': { name: 'CM4 For Two — Brain+Naan',               price: 361, odooId: 1485, catId: 22 },
+  'HE-CM04-3': { name: 'CM4 For Three — Brain+Naan',             price: 532, odooId: 1486, catId: 22 },
+  'HE-CM05-1': { name: 'CM5 For You — Rice+BC+Naan',             price: 180, odooId: 1487, catId: 22 },
+  'HE-CM05-2': { name: 'CM5 For Two — Rice+BC+Naan',             price: 342, odooId: 1488, catId: 22 },
+  'HE-CM05-3': { name: 'CM5 For Three — Rice+BC+Naan',           price: 504, odooId: 1489, catId: 22 },
 };
 
 // ── Category → collection point mapping ──
@@ -370,6 +387,17 @@ const COMBO_CONFIG = [
   { id: 4, name: 'Brain Dry Fry + Butter Naan', items: 'Quarter Brain Dry Fry + 2 Butter Naan\nFREE: Dal + Gravy + Onion Salad', price1: 199, price2: 379, price3: 559 },
   { id: 5, name: 'Ghee Rice + Butter Chicken + Butter Naan', items: 'Ghee Rice + 300g Butter Chicken + 1 Butter Naan\nFREE: Dal + Gravy + Onion Salad', price1: 189, price2: 359, price3: 529 },
 ];
+
+// ── Combo MPM (native catalog product list — separate from BESTSELLERS_MPM) ──
+const COMBO_MPM = {
+  sections: [
+    { title: 'Rice + Kabab + Butter Chicken', items: ['HE-CM01-1', 'HE-CM01-2', 'HE-CM01-3'] },
+    { title: 'Rice + Dal + Brain + Kulcha', items: ['HE-CM02-1', 'HE-CM02-2', 'HE-CM02-3'] },
+    { title: 'Ghee Rice + Dal Fry', items: ['HE-CM03-1', 'HE-CM03-2', 'HE-CM03-3'] },
+    { title: 'Brain Dry Fry + Butter Naan', items: ['HE-CM04-1', 'HE-CM04-2', 'HE-CM04-3'] },
+    { title: 'Rice + Butter Chicken + Naan', items: ['HE-CM05-1', 'HE-CM05-2', 'HE-CM05-3'] },
+  ],
+};
 
 // ── Conversions API (CAPI) for Meta ad attribution ──
 const CAPI_DATASET_ID = '1695071661458494';
@@ -1373,34 +1401,47 @@ async function handleCTWALanding(context, user, waId, phoneId, token, db, sessio
 }
 
 async function handleComboList(context, user, waId, phoneId, token, db) {
-  const activeRows = COMBO_CONFIG.filter(c => c.price1 > 0);
+  // Send native catalog MPM with 5 combo groups (each has 3 serving sizes)
+  try {
+    const sections = COMBO_MPM.sections.map(s => ({
+      title: s.title,
+      product_items: s.items.map(rid => ({ product_retailer_id: rid })),
+    }));
 
-  if (activeRows.length === 0) {
-    // No combos configured yet — fall back to menu
-    return handleShowMenu(context, user, waId, phoneId, token, db);
+    const mpm = {
+      messaging_product: 'whatsapp', to: waId, type: 'interactive',
+      interactive: {
+        type: 'product_list',
+        header: { type: 'text', text: '5 Combo Plates' },
+        body: { text: 'Free Dal + Gravy + Salad with every combo.\nPick a combo, choose your size \u2014 For You, For Two, or For Three.' },
+        footer: { text: 'Prices include GST' },
+        action: { catalog_id: CATALOG_ID, sections },
+      },
+    };
+
+    await sendWhatsApp(phoneId, token, mpm);
+  } catch (e) {
+    // Fallback to interactive list if MPM fails
+    console.log('Combo MPM failed, falling back to list:', e.message);
+    const rows = COMBO_CONFIG.filter(c => c.price1 > 0).map(c => ({
+      id: `combo_${c.id}`,
+      title: c.name,
+      description: `For You \u20B9${c.price1} | For Two \u20B9${c.price2} | For Three \u20B9${c.price3}`,
+    }));
+    await sendWhatsApp(phoneId, token, {
+      messaging_product: 'whatsapp', to: waId, type: 'interactive',
+      interactive: {
+        type: 'list',
+        body: { text: '5 Combo Plates \u2014 Free Dal + Gravy + Salad with every plate.\nTap any combo to see details.' },
+        action: { button: 'See Combos', sections: [{ title: 'Hamza Meals', rows }] },
+      },
+    });
   }
 
-  const rows = activeRows.map(c => ({
-    id: `combo_${c.id}`,
-    title: c.name,
-    description: `For You \u20B9${c.price1} | For Two \u20B9${c.price2} | For Three \u20B9${c.price3}`,
-  }));
-
-  const listMsg = {
-    messaging_product: 'whatsapp', to: waId, type: 'interactive',
-    interactive: {
-      type: 'list',
-      body: { text: '5 Combo Plates \u2014 Free Dal + Gravy + Salad with every plate.\nTap any combo to see details.' },
-      action: { button: 'See Combos', sections: [{ title: 'Hamza Meals', rows }] },
-    },
-  };
-
-  await sendWhatsApp(phoneId, token, listMsg);
-
-  // Log combo list view in messages
+  // Log combo list view
   if (_logDb) {
     _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
-      .bind(waId, 'out', 'combo_list', 'Showed 5 combos', new Date().toISOString()).run().catch(() => {});
+      .bind(waId, 'out', 'combo_list', 'Showed 5 combos MPM', new Date().toISOString()).run().catch(() => {});
   }
 }
 
