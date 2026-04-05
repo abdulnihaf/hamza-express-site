@@ -985,6 +985,11 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     if (['menu', '/menu', 'order', '/order'].includes(text)) {
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
+    // "hi"/"hello"/"start" — always reset to idle and show the main intent list
+    if (['hi', 'hello', 'hey', 'start'].includes(text)) {
+      await updateSession(db, waId, 'idle', '[]', 0, null);
+      return handleVague(context, user, waId, phoneId, token, db);
+    }
     if (['track', '/track', 'status'].includes(text)) {
       return handleTrackOrder(context, user, waId, phoneId, token, db);
     }
@@ -1468,7 +1473,7 @@ async function handleBookingTime(context, session, user, msg, waId, phoneId, tok
 
   const buttons = [
     { type: 'reply', reply: { id: 'get_directions', title: 'Get Directions' } },
-    { type: 'reply', reply: { id: 'order_now', title: 'See Menu' } },
+    { type: 'reply', reply: { id: 'see_dine_menu', title: 'See Menu' } },
   ];
 
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, confirmText, buttons));
