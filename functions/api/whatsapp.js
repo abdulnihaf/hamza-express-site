@@ -1586,14 +1586,13 @@ async function handleBookingTime(context, session, user, msg, waId, phoneId, tok
   try {
     await sendWhatsApp(phoneId, token, { messaging_product: 'whatsapp', to: MUMTAZ_WA_LEGACY, type: 'text', text: { body: legacyAlert } });
   } catch (e) { console.log('Mumtaz WA alert error (legacy):', e.message); }
+  // SMS to Mumtaz (always fires alongside WhatsApp — dual channel)
   try {
-    if (context.env.FAST2SMS_API_KEY) {
-      await fetch('https://www.fast2sms.com/dev/bulkV2', {
-        method: 'POST',
-        headers: { 'authorization': context.env.FAST2SMS_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ route: 'q', message: `HE Booking: ${legacyGuestName}, ${partySize} guests, ${displayDate} ${timeSlot}. Call +91${custPhone}`, language: 'english', flash: 0, numbers: '9114115059' }),
-      });
-    }
+    await fetch('https://www.fast2sms.com/dev/bulkV2', {
+      method: 'POST',
+      headers: { 'authorization': context.env.FAST2SMS_API_KEY || '', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ route: 'q', message: `HE Booking: ${legacyGuestName}, ${partySize} guests, ${displayDate} ${timeSlot}. Call +91${custPhone}`, language: 'english', flash: 0, numbers: '9114115059' }),
+    });
   } catch (e) { console.log('Mumtaz SMS alert error (legacy):', e.message); }
 
   // Send confirmation
@@ -1653,16 +1652,14 @@ async function handleBookingFlowResponse(context, user, waId, phoneId, token, db
     });
   } catch (e) { console.log('Mumtaz WA alert error:', e.message); }
 
-  // SMS fallback to Mumtaz via Fast2SMS
+  // SMS to Mumtaz (always fires alongside WhatsApp — dual channel)
   try {
-    if (context.env.FAST2SMS_API_KEY) {
-      const smsText = `HE Booking: ${guestName}, ${guestCount} guests, ${displayDate} ${timeDisplay}. Call +91${customerPhone}`;
-      await fetch('https://www.fast2sms.com/dev/bulkV2', {
-        method: 'POST',
-        headers: { 'authorization': context.env.FAST2SMS_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ route: 'q', message: smsText, language: 'english', flash: 0, numbers: '9114115059' }),
-      });
-    }
+    const smsText = `HE Booking: ${guestName}, ${guestCount} guests, ${displayDate} ${timeDisplay}. Call +91${customerPhone}`;
+    await fetch('https://www.fast2sms.com/dev/bulkV2', {
+      method: 'POST',
+      headers: { 'authorization': context.env.FAST2SMS_API_KEY || '', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ route: 'q', message: smsText, language: 'english', flash: 0, numbers: '9114115059' }),
+    });
   } catch (e) { console.log('Mumtaz SMS alert error:', e.message); }
 
   // Send confirmation to customer
