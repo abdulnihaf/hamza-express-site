@@ -350,6 +350,17 @@ const FAQ_RESPONSES = {
   dinein: 'Walk in anytime! Or order ahead on WhatsApp for quick pickup.',
 };
 
+// Booking intent detection
+const BOOKING_PATTERNS = [
+  /book\s*(a\s*)?table/i,
+  /reserv/i,
+  /table\s*for\s*\d/i,
+  /dine\s*in/i,
+  /dine-in/i,
+  /book\s*a?\s*seat/i,
+  /book\s*at\s*the\s*restaurant/i,
+];
+
 // ── Customer-facing menu categories (for WhatsApp category picker) ──
 // Each category ≤ 30 products (WhatsApp MPM hard limit is 30 total per message)
 // Grouped by how customers browse food online (Swiggy/Zomato style), NOT by KDS station
@@ -888,6 +899,21 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 
   // List picker selections (works in any state)
   if (msg.type === 'list_reply' && msg.id) {
+    // Booking time slot selection
+    if (msg.id.startsWith('bslot_') && session.state === 'awaiting_booking_time') {
+      return handleBookingTime(context, session, user, msg, waId, phoneId, token, db);
+    }
+    // Vague list options (from handleVague list message)
+    if (msg.id === 'order_now' || msg.id === 'order_more') return handleShowMenu(context, user, waId, phoneId, token, db);
+    if (msg.id === 'book_table') return handleBookingStart(context, user, waId, phoneId, token, db);
+    if (msg.id === 'track_order') return handleTrackOrder(context, user, waId, phoneId, token, db);
+    if (msg.id === 'hours_location') {
+      const body = FAQ_RESPONSES.hours + '\n\n' + FAQ_RESPONSES.location;
+      const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
+      return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    }
+    if (msg.id === 'talk_to_staff') return handleHelp(waId, phoneId, token);
+
     // Meal-intent selection → send multi-MPMs
     if (msg.id.startsWith('intent_')) {
       const intentKey = msg.id.replace('intent_', '');
@@ -956,6 +982,18 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     if (text === 'cancel' && session.state === 'awaiting_upi_payment') {
       return handleCancelOrder(context, session, user, waId, phoneId, token, db);
     }
+    if (text === 'cancel booking' || text === 'cancel reservation') {
+      const booking = await db.prepare('SELECT * FROM wa_bookings WHERE wa_id = ? AND status = ? ORDER BY id DESC LIMIT 1')
+        .bind(waId, 'confirmed').first();
+      if (booking) {
+        await db.prepare('UPDATE wa_bookings SET status = ? WHERE id = ?').bind('cancelled', booking.id).run();
+        await sendWhatsApp(phoneId, token, buildText(waId, 'Booking cancelled. Say *menu* to order or *book table* to rebook.'));
+      } else {
+        await sendWhatsApp(phoneId, token, buildText(waId, 'No active booking found.'));
+      }
+      await updateSession(db, waId, 'idle', '[]', 0, null);
+      return;
+    }
   }
 
   // Re-order / new-order button taps (station QR quick re-order flow)
@@ -986,6 +1024,17 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       const body = FAQ_RESPONSES.hours + '\n\n' + FAQ_RESPONSES.location;
       const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
       return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    }
+    if (msg.id === 'book_table') {
+      return handleBookingStart(context, user, waId, phoneId, token, db);
+    }
+    if (msg.id === 'get_directions') {
+      return sendWhatsApp(phoneId, token, buildText(waId, 'Hamza Express\n151-154, HKP Road, Shivajinagar\n\nhttps://hamzaexpress.in/go/google-maps-location'));
+    }
+    if (msg.id && msg.id.startsWith('booking_')) {
+      // Booking flow buttons — route based on session state
+      if (session.state === 'awaiting_booking_date') return handleBookingDate(context, session, user, msg, waId, phoneId, token, db);
+      if (session.state === 'awaiting_booking_size') return handleBookingSize(context, session, user, msg, waId, phoneId, token, db);
     }
     if (msg.id === 'pay_pending') {
       // Find pending order and redirect to payment
@@ -1047,6 +1096,15 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     case 'awaiting_reorder':
       return handleAwaitingReorder(context, session, user, msg, waId, phoneId, token, db);
 
+    case 'awaiting_booking_date':
+      return handleBookingDate(context, session, user, msg, waId, phoneId, token, db);
+
+    case 'awaiting_booking_size':
+      return handleBookingSize(context, session, user, msg, waId, phoneId, token, db);
+
+    case 'awaiting_booking_time':
+      return handleBookingTime(context, session, user, msg, waId, phoneId, token, db);
+
     default:
       return handleShowMenu(context, user, waId, phoneId, token, db);
   }
@@ -1093,13 +1151,18 @@ async function _handleIdleInner(context, session, user, msg, waId, phoneId, toke
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
 
-  // 3. Detect question — answer it
+  // 3. Detect booking intent — start table reservation
+  if (detectBookingIntent(text)) {
+    return handleBookingStart(context, user, waId, phoneId, token, db);
+  }
+
+  // 4. Detect question — answer it
   const questionType = detectQuestion(text);
   if (questionType) {
     return handleQuestion(context, user, waId, phoneId, token, db, questionType);
   }
 
-  // 4. Vague or unclear — show intent buttons
+  // 5. Vague or unclear — show intent list
   return handleVague(context, user, waId, phoneId, token, db);
 }
 
@@ -1117,8 +1180,18 @@ function detectOrderingIntent(text, msg) {
   return false;
 }
 
+function detectBookingIntent(text) {
+  if (!text) return false;
+  for (const pattern of BOOKING_PATTERNS) {
+    if (pattern.test(text)) return true;
+  }
+  return false;
+}
+
 function detectQuestion(text) {
   if (!text || text.length < 3) return null;
+  // Skip dinein detection if it's a booking intent (those route to booking flow)
+  if (detectBookingIntent(text)) return null;
   for (const [type, pattern] of Object.entries(QUESTION_PATTERNS)) {
     if (pattern.test(text)) return type;
   }
@@ -1139,30 +1212,33 @@ async function handleVague(context, user, waId, phoneId, token, db) {
   const displayName = user.name ? user.name.split(' ')[0] : '';
 
   let bodyText;
-  let buttons;
-
   if (tier === 'regular') {
     bodyText = displayName ? `${displayName}! What's it today?` : "What's it today?";
-    buttons = [
-      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
-      { type: 'reply', reply: { id: 'track_order', title: 'Track Order' } },
-      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
-    ];
   } else if (tier === 'new') {
-    bodyText = 'Hey! Want to order for pickup?';
-    buttons = [
-      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
-      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
-    ];
+    bodyText = 'Hey! Welcome to Hamza Express.';
   } else {
-    bodyText = displayName ? `Hey ${displayName}! Ordering again?` : 'Hey! Ordering again?';
-    buttons = [
-      { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
-      { type: 'reply', reply: { id: 'something_else', title: 'Something Else' } },
-    ];
+    bodyText = displayName ? `Hey ${displayName}!` : 'Hey!';
   }
 
-  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, bodyText, buttons));
+  // Use list message to fit all options (buttons max out at 3)
+  const rows = [
+    { id: 'order_now', title: 'Order & Pickup', description: 'Browse menu, pay UPI, collect at outlet' },
+    { id: 'book_table', title: 'Book a Table', description: 'Reserve for dine-in' },
+    { id: 'track_order', title: 'Track Order', description: 'Check your order status' },
+    { id: 'hours_location', title: 'Hours & Location', description: 'Open 12 PM \u2013 1 AM \u00B7 HKP Road' },
+    { id: 'talk_to_staff', title: 'Call Us', description: 'Talk to staff: 80080 02045' },
+  ];
+
+  const listMsg = {
+    messaging_product: 'whatsapp', to: waId, type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: bodyText },
+      action: { button: 'See Options', sections: [{ title: 'How can we help?', rows }] },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, listMsg);
   // Stay in idle
 }
 
@@ -1208,6 +1284,186 @@ async function handleSomethingElse(context, user, waId, phoneId, token, db) {
     { type: 'reply', reply: { id: 'talk_to_staff', title: 'Call Us' } },
   ];
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+// ── Table Booking Flow (3 taps, zero typing) ──
+
+async function handleBookingStart(context, user, waId, phoneId, token, db) {
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const greeting = displayName ? `${displayName}, when` : 'When';
+  const body = `${greeting} are you coming?`;
+  const buttons = [
+    { type: 'reply', reply: { id: 'booking_today', title: 'Today' } },
+    { type: 'reply', reply: { id: 'booking_tomorrow', title: 'Tomorrow' } },
+    { type: 'reply', reply: { id: 'booking_pick_date', title: 'Pick a Date' } },
+  ];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+  await updateSession(db, waId, 'awaiting_booking_date', '[]', 0, null);
+}
+
+async function handleBookingDate(context, session, user, msg, waId, phoneId, token, db) {
+  let bookingDate;
+  const today = new Date();
+
+  if (msg.type === 'button_reply') {
+    if (msg.id === 'booking_today') {
+      bookingDate = today.toISOString().slice(0, 10);
+    } else if (msg.id === 'booking_tomorrow') {
+      const tmr = new Date(today); tmr.setDate(tmr.getDate() + 1);
+      bookingDate = tmr.toISOString().slice(0, 10);
+    } else if (msg.id === 'booking_pick_date') {
+      await sendWhatsApp(phoneId, token, buildText(waId, 'Type the date (e.g., April 10, 15 April, 10/04):'));
+      return; // Stay in awaiting_booking_date for free text
+    }
+  } else if (msg.type === 'text') {
+    // Try to parse free-text date
+    const text = msg.text;
+    const parsed = parseDateText(text);
+    if (!parsed) {
+      await sendWhatsApp(phoneId, token, buildText(waId, "Couldn't understand that date. Try: April 10, or 10/04, or tomorrow"));
+      return; // Stay in awaiting_booking_date
+    }
+    bookingDate = parsed;
+  }
+
+  if (!bookingDate) return handleBookingStart(context, user, waId, phoneId, token, db);
+
+  // Store date in cart field temporarily (reusing existing session field)
+  const bookingData = JSON.stringify({ date: bookingDate });
+  await updateSession(db, waId, 'awaiting_booking_size', bookingData, 0, null);
+
+  const body = 'How many guests?';
+  const buttons = [
+    { type: 'reply', reply: { id: 'booking_1_2', title: '1-2 guests' } },
+    { type: 'reply', reply: { id: 'booking_3_4', title: '3-4 guests' } },
+    { type: 'reply', reply: { id: 'booking_5_plus', title: '5+ guests' } },
+  ];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+async function handleBookingSize(context, session, user, msg, waId, phoneId, token, db) {
+  let partySize = '2';
+  if (msg.type === 'button_reply') {
+    if (msg.id === 'booking_1_2') partySize = '1-2';
+    else if (msg.id === 'booking_3_4') partySize = '3-4';
+    else if (msg.id === 'booking_5_plus') partySize = '5+';
+  }
+
+  // Read stored date from cart field
+  let bookingData = {};
+  try { bookingData = JSON.parse(session.cart || '{}'); } catch (e) { bookingData = {}; }
+  bookingData.size = partySize;
+
+  await updateSession(db, waId, 'awaiting_booking_time', JSON.stringify(bookingData), 0, null);
+
+  // Show time slots as a list message
+  const rows = [
+    { id: 'bslot_12_00', title: '12:00 PM' },
+    { id: 'bslot_12_30', title: '12:30 PM' },
+    { id: 'bslot_13_00', title: '1:00 PM' },
+    { id: 'bslot_13_30', title: '1:30 PM' },
+    { id: 'bslot_14_00', title: '2:00 PM' },
+    { id: 'bslot_19_00', title: '7:00 PM' },
+    { id: 'bslot_19_30', title: '7:30 PM' },
+    { id: 'bslot_20_00', title: '8:00 PM' },
+    { id: 'bslot_20_30', title: '8:30 PM' },
+    { id: 'bslot_21_00', title: '9:00 PM' },
+  ];
+
+  const listMsg = {
+    messaging_product: 'whatsapp', to: waId, type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: `${partySize} guests \u2014 what time?` },
+      action: {
+        button: 'Pick a Time',
+        sections: [
+          { title: 'Lunch', rows: rows.slice(0, 5) },
+          { title: 'Dinner', rows: rows.slice(5) },
+        ],
+      },
+    },
+  };
+  await sendWhatsApp(phoneId, token, listMsg);
+}
+
+async function handleBookingTime(context, session, user, msg, waId, phoneId, token, db) {
+  let timeSlot = '8:00 PM';
+  if (msg.type === 'list_reply' && msg.id && msg.id.startsWith('bslot_')) {
+    const parts = msg.id.replace('bslot_', '').split('_');
+    const hr = parseInt(parts[0]); const mn = parts[1] || '00';
+    const ampm = hr >= 12 && hr < 13 ? 'PM' : hr >= 13 ? 'PM' : 'AM';
+    const displayHr = hr > 12 ? hr - 12 : hr;
+    timeSlot = `${displayHr}:${mn} ${ampm}`;
+  }
+
+  // Read stored booking data
+  let bookingData = {};
+  try { bookingData = JSON.parse(session.cart || '{}'); } catch (e) { bookingData = {}; }
+  const bookingDate = bookingData.date || new Date().toISOString().slice(0, 10);
+  const partySize = bookingData.size || '2';
+
+  // Format display date
+  const dateObj = new Date(bookingDate + 'T12:00:00');
+  const displayDate = dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  // Save booking to D1
+  const now = new Date().toISOString();
+  await db.prepare(
+    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(waId, bookingDate, timeSlot, partySize, 'confirmed', now).run();
+
+  // Send confirmation
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const confirmText = `Table booked! \u2705\n\n${partySize} guests | ${displayDate} | ${timeSlot}\nHamza Express, 151-154 HKP Road\n\nWe'll remind you 1 hour before.\nTo cancel, say "cancel booking".`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'get_directions', title: 'Get Directions' } },
+    { type: 'reply', reply: { id: 'order_now', title: 'See Menu' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, confirmText, buttons));
+  await updateSession(db, waId, 'idle', '[]', 0, null);
+}
+
+// Simple date parser for free-text input
+function parseDateText(text) {
+  if (!text) return null;
+  const t = text.toLowerCase().trim();
+  const today = new Date();
+
+  if (t === 'today') return today.toISOString().slice(0, 10);
+  if (t === 'tomorrow') {
+    const tmr = new Date(today); tmr.setDate(tmr.getDate() + 1);
+    return tmr.toISOString().slice(0, 10);
+  }
+
+  // Try DD/MM format
+  const slashMatch = t.match(/(\d{1,2})[\/\-](\d{1,2})/);
+  if (slashMatch) {
+    const day = parseInt(slashMatch[1]); const month = parseInt(slashMatch[2]) - 1;
+    const yr = today.getFullYear();
+    const d = new Date(yr, month, day);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+
+  // Try "April 10" or "10 April" format
+  const months = { jan: 0, feb: 1, mar: 2, apr: 3, april: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  const monthMatch = t.match(/(\d{1,2})\s*(jan|feb|mar|apr|april|may|jun|jul|aug|sep|oct|nov|dec)/i)
+    || t.match(/(jan|feb|mar|apr|april|may|jun|jul|aug|sep|oct|nov|dec)\w*\s*(\d{1,2})/i);
+  if (monthMatch) {
+    let day, monthStr;
+    if (/^\d/.test(monthMatch[1])) { day = parseInt(monthMatch[1]); monthStr = monthMatch[2].toLowerCase(); }
+    else { monthStr = monthMatch[1].toLowerCase(); day = parseInt(monthMatch[2]); }
+    const month = months[monthStr.slice(0, 3)];
+    if (month !== undefined && day >= 1 && day <= 31) {
+      const yr = today.getFullYear();
+      const d = new Date(yr, month, day);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    }
+  }
+
+  return null;
 }
 
 async function handleNameEntry(context, session, user, msg, waId, phoneId, token, db) {
