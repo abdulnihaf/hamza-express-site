@@ -364,11 +364,11 @@ const BOOKING_PATTERNS = [
 // ── Combo Plates (CTWA ad campaign) ──
 // Each combo has 1@/2@/3@ pricing. Update when user provides final prices.
 const COMBO_CONFIG = [
-  { id: 1, name: 'Ghee Rice + Kabab', items: 'Ghee Rice + Kabab + Free Dal & Sherwa', price1: 179, price2: 310, price3: 430 },
-  { id: 2, name: 'Combo 2', items: 'TBD', price1: 0, price2: 0, price3: 0 },
-  { id: 3, name: 'Combo 3', items: 'TBD', price1: 0, price2: 0, price3: 0 },
-  { id: 4, name: 'Combo 4', items: 'TBD', price1: 0, price2: 0, price3: 0 },
-  { id: 5, name: 'Combo 5', items: 'TBD', price1: 0, price2: 0, price3: 0 },
+  { id: 1, name: 'Ghee Rice + Tandoor Roti + Kabab + Butter Chicken', items: 'Ghee Rice + 1 Tandoor Roti + 3pc Kabab + 250g Butter Chicken\nFREE: Dal + Gravy + Onion Salad', price1: 299, price2: 629, price3: 829 },
+  { id: 2, name: 'Ghee Rice + Dal Fry + Brain Dry Fry + Kulcha', items: 'Ghee Rice + 300g Dal Fry + Quarter Brain Dry Fry + 2 Kulcha\nFREE: Dal + Gravy + Onion Salad', price1: 349, price2: 669, price3: 989 },
+  { id: 3, name: 'Ghee Rice + Dal Fry', items: 'Ghee Rice + 300g Dal Fry\nFREE: Dal + Gravy + Onion Salad', price1: 139, price2: 259, price3: 359 },
+  { id: 4, name: 'Brain Dry Fry + Butter Naan', items: 'Quarter Brain Dry Fry + 2 Butter Naan\nFREE: Dal + Gravy + Onion Salad', price1: 199, price2: 379, price3: 559 },
+  { id: 5, name: 'Ghee Rice + Butter Chicken + Butter Naan', items: 'Ghee Rice + 300g Butter Chicken + 1 Butter Naan\nFREE: Dal + Gravy + Onion Salad', price1: 189, price2: 359, price3: 529 },
 ];
 
 // ── Conversions API (CAPI) for Meta ad attribution ──
@@ -1361,7 +1361,7 @@ async function handleCTWALanding(context, user, waId, phoneId, token, db, sessio
   const displayName = user.name ? user.name.split(' ')[0] : '';
   const greeting = displayName ? `Hey ${displayName}!` : 'Hey!';
 
-  const body = `${greeting} Welcome to Hamza Express.\n\n5 Combo Plates \u2014 Free Dal & Sherwa with every plate.\nStarting \u20B9${COMBO_CONFIG[0].price1}.`;
+  const body = `${greeting} Welcome to Hamza Express.\n\n5 Combo Plates \u2014 Free Dal + Gravy + Salad with every plate.\nStarting \u20B9${COMBO_CONFIG[2].price1}.`;
 
   const buttons = [
     { type: 'reply', reply: { id: 'see_combos', title: 'See All 5 Combos' } },
@@ -1383,14 +1383,14 @@ async function handleComboList(context, user, waId, phoneId, token, db) {
   const rows = activeRows.map(c => ({
     id: `combo_${c.id}`,
     title: c.name,
-    description: `1@ \u20B9${c.price1} | 2@ \u20B9${c.price2} | 3@ \u20B9${c.price3}`,
+    description: `For You \u20B9${c.price1} | For Two \u20B9${c.price2} | For Three \u20B9${c.price3}`,
   }));
 
   const listMsg = {
     messaging_product: 'whatsapp', to: waId, type: 'interactive',
     interactive: {
       type: 'list',
-      body: { text: '5 Combo Plates \u2014 Free Dal & Sherwa with every plate.\nTap any combo to see details.' },
+      body: { text: '5 Combo Plates \u2014 Free Dal + Gravy + Salad with every plate.\nTap any combo to see details.' },
       action: { button: 'See Combos', sections: [{ title: 'Hamza Meals', rows }] },
     },
   };
@@ -1412,7 +1412,7 @@ async function handleComboDetail(context, user, waId, phoneId, token, db, comboL
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
 
-  const body = `${combo.name}\n${combo.items}\n\n1 plate \u2014 \u20B9${combo.price1}\n2 plates \u2014 \u20B9${combo.price2}\n3 plates \u2014 \u20B9${combo.price3}`;
+  const body = `${combo.name}\n${combo.items}\n\nFor You \u2014 \u20B9${combo.price1}\nFor Two \u2014 \u20B9${combo.price2}\nFor Three \u2014 \u20B9${combo.price3}`;
 
   const buttons = [
     { type: 'reply', reply: { id: 'order_now', title: 'Order for Pickup' } },
