@@ -361,6 +361,20 @@ const BOOKING_PATTERNS = [
   /book\s*at\s*the\s*restaurant/i,
 ];
 
+// ── Combo Plates (CTWA ad campaign) ──
+// Each combo has 1@/2@/3@ pricing. Update when user provides final prices.
+const COMBO_CONFIG = [
+  { id: 1, name: 'Ghee Rice + Kabab', items: 'Ghee Rice + Kabab + Free Dal & Sherwa', price1: 179, price2: 310, price3: 430 },
+  { id: 2, name: 'Combo 2', items: 'TBD', price1: 0, price2: 0, price3: 0 },
+  { id: 3, name: 'Combo 3', items: 'TBD', price1: 0, price2: 0, price3: 0 },
+  { id: 4, name: 'Combo 4', items: 'TBD', price1: 0, price2: 0, price3: 0 },
+  { id: 5, name: 'Combo 5', items: 'TBD', price1: 0, price2: 0, price3: 0 },
+];
+
+// ── Conversions API (CAPI) for Meta ad attribution ──
+const CAPI_DATASET_ID = '1695071661458494';
+const FB_PAGE_ID = '886791574518359';
+
 // ── Customer-facing menu categories (for WhatsApp category picker) ──
 // Each category ≤ 30 products (WhatsApp MPM hard limit is 30 total per message)
 // Grouped by how customers browse food online (Swiggy/Zomato style), NOT by KDS station
@@ -771,6 +785,8 @@ async function processWebhook(context, body) {
   const referral = message.referral || null;
   const ctwaClid = referral?.ctwa_clid || null;
   const ctwaSource = referral ? 'meta_ctwa' : null;
+  const adSourceId = referral?.source_id || null;
+  const adHeadline = referral?.headline || null;
 
   // Skip ordering bot for hiring campaign numbers (candidates sourced or outreach sent).
   // conversations table is excluded — it's a chat log where non-hiring numbers can land accidentally.
@@ -800,14 +816,16 @@ async function processWebhook(context, body) {
   let session = await db.prepare('SELECT * FROM wa_sessions WHERE wa_id = ?').bind(waId).first();
   if (!session) {
     const now = new Date().toISOString();
-    await db.prepare('INSERT INTO wa_sessions (wa_id, state, cart, cart_total, ctwa_clid, ad_source, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .bind(waId, 'idle', '[]', 0, ctwaClid, ctwaSource, now).run();
-    session = { wa_id: waId, state: 'idle', cart: '[]', cart_total: 0, ctwa_clid: ctwaClid, ad_source: ctwaSource, updated_at: now };
+    await db.prepare('INSERT INTO wa_sessions (wa_id, state, cart, cart_total, ctwa_clid, ad_source, ad_source_id, ad_headline, ctwa_first_contact, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(waId, 'idle', '[]', 0, ctwaClid, ctwaSource, adSourceId, adHeadline, ctwaClid ? now : null, now).run();
+    session = { wa_id: waId, state: 'idle', cart: '[]', cart_total: 0, ctwa_clid: ctwaClid, ad_source: ctwaSource, ad_source_id: adSourceId, ad_headline: adHeadline, ctwa_first_contact: ctwaClid ? now : null, updated_at: now };
   } else if (ctwaClid && !session.ctwa_clid) {
     // Update existing session with CTWA attribution if this is a new ad click
-    await db.prepare('UPDATE wa_sessions SET ctwa_clid = ?, ad_source = ? WHERE wa_id = ?')
-      .bind(ctwaClid, 'meta_ctwa', waId).run();
+    await db.prepare('UPDATE wa_sessions SET ctwa_clid = ?, ad_source = ?, ad_source_id = ?, ad_headline = ?, ctwa_first_contact = ? WHERE wa_id = ?')
+      .bind(ctwaClid, 'meta_ctwa', adSourceId, adHeadline, new Date().toISOString(), waId).run();
     session.ctwa_clid = ctwaClid;
+    session.ad_source_id = adSourceId;
+    session.ad_headline = adHeadline;
     session.ad_source = 'meta_ctwa';
   }
 
@@ -915,6 +933,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     if (msg.id.startsWith('bslot_') && session.state === 'awaiting_booking_time') {
       return handleBookingTime(context, session, user, msg, waId, phoneId, token, db);
     }
+    // Combo selection from combo list
+    if (msg.id && msg.id.startsWith('combo_')) return handleComboDetail(context, user, waId, phoneId, token, db, msg.id);
+    if (msg.id === 'see_combos') return handleComboList(context, user, waId, phoneId, token, db);
     // Vague list options (from handleVague list message)
     if (msg.id === 'order_now' || msg.id === 'order_more') return handleShowMenu(context, user, waId, phoneId, token, db);
     if (msg.id === 'book_table') return handleBookingStart(context, user, waId, phoneId, token, db);
@@ -986,6 +1007,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
     // "hi"/"hello"/"start" — always reset to idle and show the main intent list
+    if (text === 'see all 5 combos' || text === 'see all combos' || text === 'combos' || text === 'combo') {
+      return handleComboList(context, user, waId, phoneId, token, db);
+    }
     if (['hi', 'hello', 'hey', 'start'].includes(text)) {
       await updateSession(db, waId, 'idle', '[]', 0, null);
       return handleVague(context, user, waId, phoneId, token, db);
@@ -1044,6 +1068,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     }
     if (msg.id === 'book_table') {
       return handleBookingStart(context, user, waId, phoneId, token, db);
+    }
+    if (msg.id === 'see_combos') {
+      return handleComboList(context, user, waId, phoneId, token, db);
     }
     if (msg.id === 'see_dine_menu') {
       return sendWhatsApp(phoneId, token, {
@@ -1180,7 +1207,15 @@ async function _handleIdleInner(context, session, user, msg, waId, phoneId, toke
     // Continue to normal flow if check fails
   }
 
-  // 2. Detect ordering intent — go straight to menu
+  // 2. CTWA ad click — personalized combo landing
+  if (session.ad_source === 'meta_ctwa' && session.ctwa_first_contact) {
+    const hoursSinceCtwa = (Date.now() - new Date(session.ctwa_first_contact).getTime()) / 3600000;
+    if (hoursSinceCtwa < 1) { // Only on first contact (within 1 hour of ad click)
+      return handleCTWALanding(context, user, waId, phoneId, token, db, session);
+    }
+  }
+
+  // 3. Detect ordering intent — go straight to menu
   if (detectOrderingIntent(text, msg)) {
     return handleShowMenu(context, user, waId, phoneId, token, db);
   }
@@ -1317,6 +1352,73 @@ async function handleSomethingElse(context, user, waId, phoneId, token, db) {
     { type: 'reply', reply: { id: 'hours_location', title: 'Hours & Location' } },
     { type: 'reply', reply: { id: 'talk_to_staff', title: 'Call Us' } },
   ];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+// ── CTWA Combo Flow (Meta ad → WhatsApp → combo list → order/book) ──
+
+async function handleCTWALanding(context, user, waId, phoneId, token, db, session) {
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const greeting = displayName ? `Hey ${displayName}!` : 'Hey!';
+
+  const body = `${greeting} Welcome to Hamza Express.\n\n5 Combo Plates \u2014 Free Dal & Sherwa with every plate.\nStarting \u20B9${COMBO_CONFIG[0].price1}.`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'see_combos', title: 'See All 5 Combos' } },
+    { type: 'reply', reply: { id: 'order_now', title: 'Order Now' } },
+    { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+async function handleComboList(context, user, waId, phoneId, token, db) {
+  const activeRows = COMBO_CONFIG.filter(c => c.price1 > 0);
+
+  if (activeRows.length === 0) {
+    // No combos configured yet — fall back to menu
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+
+  const rows = activeRows.map(c => ({
+    id: `combo_${c.id}`,
+    title: c.name,
+    description: `1@ \u20B9${c.price1} | 2@ \u20B9${c.price2} | 3@ \u20B9${c.price3}`,
+  }));
+
+  const listMsg = {
+    messaging_product: 'whatsapp', to: waId, type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: '5 Combo Plates \u2014 Free Dal & Sherwa with every plate.\nTap any combo to see details.' },
+      action: { button: 'See Combos', sections: [{ title: 'Hamza Meals', rows }] },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, listMsg);
+
+  // Log combo list view in messages
+  if (_logDb) {
+    _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
+      .bind(waId, 'out', 'combo_list', 'Showed 5 combos', new Date().toISOString()).run().catch(() => {});
+  }
+}
+
+async function handleComboDetail(context, user, waId, phoneId, token, db, comboListId) {
+  const comboId = parseInt(comboListId.replace('combo_', ''));
+  const combo = COMBO_CONFIG.find(c => c.id === comboId);
+
+  if (!combo || combo.price1 === 0) {
+    return handleShowMenu(context, user, waId, phoneId, token, db);
+  }
+
+  const body = `${combo.name}\n${combo.items}\n\n1 plate \u2014 \u20B9${combo.price1}\n2 plates \u2014 \u20B9${combo.price2}\n3 plates \u2014 \u20B9${combo.price3}`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'order_now', title: 'Order for Pickup' } },
+    { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+  ];
+
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
 }
 
@@ -5143,6 +5245,28 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   await db.prepare(
     'UPDATE wa_users SET last_order_id = ?, total_orders = total_orders + 1, total_spent = total_spent + ? WHERE wa_id = ?'
   ).bind(order.id, order.total, order.wa_id).run();
+
+  // Fire CAPI Purchase event to Meta (if customer came from CTWA ad)
+  try {
+    const sess = await db.prepare('SELECT ctwa_clid FROM wa_sessions WHERE wa_id = ?').bind(order.wa_id).first();
+    if (sess?.ctwa_clid && CAPI_DATASET_ID) {
+      const metaToken = context.env.WA_ACCESS_TOKEN;
+      fetch(`https://graph.facebook.com/v21.0/${CAPI_DATASET_ID}/events?access_token=${metaToken}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: [{
+            event_name: 'Purchase',
+            event_time: Math.floor(Date.now() / 1000),
+            action_source: 'business_messaging',
+            messaging_channel: 'whatsapp',
+            user_data: { page_id: FB_PAGE_ID, ctwa_clid: sess.ctwa_clid },
+            custom_data: { currency: 'INR', value: order.total },
+          }],
+        }),
+      }).catch((e) => console.log('CAPI fire error:', e.message));
+    }
+  } catch (e) { console.log('CAPI lookup error:', e.message); }
 
   // Create Odoo POS order → triggers KDS routing
   const cart = JSON.parse(order.items);
