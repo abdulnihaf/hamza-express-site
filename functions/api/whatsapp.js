@@ -1041,7 +1041,14 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       return handleBookingStart(context, user, waId, phoneId, token, db);
     }
     if (msg.id === 'get_directions') {
-      return sendWhatsApp(phoneId, token, buildText(waId, 'Hamza Express\n151-154, HKP Road, Shivajinagar\n\nhttps://hamzaexpress.in/go/google-maps-location'));
+      return sendWhatsApp(phoneId, token, {
+        messaging_product: 'whatsapp', to: waId, type: 'interactive',
+        interactive: {
+          type: 'cta_url',
+          body: { text: 'Hamza Express\n151-154, HKP Road, Shivajinagar\nNear Russell Market' },
+          action: { name: 'cta_url', parameters: { display_text: 'Open in Google Maps', url: 'https://hamzaexpress.in/go/google-maps-location' } },
+        },
+      });
     }
     if (msg.id && msg.id.startsWith('booking_')) {
       // Booking flow buttons — route based on session state
