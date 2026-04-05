@@ -897,6 +897,18 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
     return handleOrderMessage(context, session, user, msg, waId, phoneId, token, db);
   }
 
+  // WhatsApp Flow responses (booking form submission)
+  if (msg.type === 'nfm_reply' && msg.data?.name === 'flow') {
+    try {
+      const flowData = JSON.parse(msg.data.response_json || '{}');
+      if (flowData.flow_token && flowData.flow_token.startsWith('booking_')) {
+        return handleBookingFlowResponse(context, user, waId, phoneId, token, db, flowData);
+      }
+    } catch (e) {
+      console.log('Flow response parse error:', e.message);
+    }
+  }
+
   // List picker selections (works in any state)
   if (msg.type === 'list_reply' && msg.id) {
     // Booking time slot selection
@@ -1288,17 +1300,37 @@ async function handleSomethingElse(context, user, waId, phoneId, token, db) {
 
 // ── Table Booking Flow (3 taps, zero typing) ──
 
+const BOOKING_FLOW_ID = '907290502310816';
+
 async function handleBookingStart(context, user, waId, phoneId, token, db) {
   const displayName = user.name ? user.name.split(' ')[0] : '';
-  const greeting = displayName ? `${displayName}, when` : 'When';
-  const body = `${greeting} are you coming?`;
-  const buttons = [
-    { type: 'reply', reply: { id: 'booking_today', title: 'Today' } },
-    { type: 'reply', reply: { id: 'booking_tomorrow', title: 'Tomorrow' } },
-    { type: 'reply', reply: { id: 'booking_pick_date', title: 'Pick a Date' } },
-  ];
-  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
-  await updateSession(db, waId, 'awaiting_booking_date', '[]', 0, null);
+  const greeting = displayName ? `${displayName}, reserve` : 'Reserve';
+
+  const flowMsg = {
+    messaging_product: 'whatsapp',
+    to: waId,
+    type: 'interactive',
+    interactive: {
+      type: 'flow',
+      header: { type: 'text', text: 'Book a Table' },
+      body: { text: `${greeting} your table at Hamza Express. Pick your date, time, and party size.` },
+      footer: { text: 'Est. 1918 | HKP Road, Shivajinagar' },
+      action: {
+        name: 'flow',
+        parameters: {
+          flow_message_version: '3',
+          flow_token: `booking_${Date.now()}_${waId}`,
+          flow_id: BOOKING_FLOW_ID,
+          flow_cta: 'Book Table',
+          flow_action: 'navigate',
+          flow_action_payload: { screen: 'BOOKING_FORM' },
+        },
+      },
+    },
+  };
+
+  await sendWhatsApp(phoneId, token, flowMsg);
+  // No state change needed — the flow response comes as nfm_reply
 }
 
 async function handleBookingDate(context, session, user, msg, waId, phoneId, token, db) {
@@ -1416,6 +1448,45 @@ async function handleBookingTime(context, session, user, msg, waId, phoneId, tok
   // Send confirmation
   const displayName = user.name ? user.name.split(' ')[0] : '';
   const confirmText = `Table booked! \u2705\n\n${partySize} guests | ${displayDate} | ${timeSlot}\nHamza Express, 151-154 HKP Road\n\nWe'll remind you 1 hour before.\nTo cancel, say "cancel booking".`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'get_directions', title: 'Get Directions' } },
+    { type: 'reply', reply: { id: 'order_now', title: 'See Menu' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, confirmText, buttons));
+  await updateSession(db, waId, 'idle', '[]', 0, null);
+}
+
+// Handle WhatsApp Flow booking form submission
+async function handleBookingFlowResponse(context, user, waId, phoneId, token, db, flowData) {
+  const bookingDate = flowData.booking_date || new Date().toISOString().slice(0, 10);
+  const timeSlotId = flowData.time_slot || '20_00';
+  const guestCount = flowData.guest_count || '2';
+  const guestName = flowData.guest_name || user.name || 'Guest';
+  const specialRequest = flowData.special_request || '';
+
+  // Format time display
+  const timeParts = timeSlotId.split('_');
+  const hr = parseInt(timeParts[0]); const mn = timeParts[1] || '00';
+  const ampm = hr >= 12 ? 'PM' : 'AM';
+  const displayHr = hr > 12 ? hr - 12 : hr;
+  const timeDisplay = `${displayHr}:${mn} ${ampm}`;
+
+  // Format date display
+  const dateObj = new Date(bookingDate + 'T12:00:00');
+  const displayDate = dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+
+  // Save to D1
+  const now = new Date().toISOString();
+  await db.prepare(
+    'INSERT INTO wa_bookings (wa_id, booking_date, booking_time, party_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(waId, bookingDate, timeDisplay, guestCount, 'confirmed', now).run();
+
+  // Send confirmation
+  let confirmText = `Table booked! \u2705\n\n${guestCount} guest(s) | ${displayDate} | ${timeDisplay}\nName: ${guestName}\nHamza Express, 151-154 HKP Road`;
+  if (specialRequest) confirmText += `\nNote: ${specialRequest}`;
+  confirmText += '\n\nWe\'ll remind you 1 hour before.\nTo cancel, say "cancel booking".';
 
   const buttons = [
     { type: 'reply', reply: { id: 'get_directions', title: 'Get Directions' } },
