@@ -245,22 +245,23 @@ const PRODUCTS = {
   'HE-K003': { name: 'Sheek Kabab Roll',            price: 1,   odooId: 1442, catId: 30 }, // TEST ₹1 (was 114)
   'HE-K004': { name: 'Sheek Kabab Platter',         price: 333, odooId: 1443, catId: 30 },
 
-  // ── New Combos v2 (5 combos × 3 sizes, GST-exclusive base prices) ──
-  'HE-CM01-1': { name: 'CM1 For You — Rice+Roti+Kabab+BC',       price: 285, odooId: 1475, catId: 22 },
-  'HE-CM01-2': { name: 'CM1 For Two — Rice+Roti+Kabab+BC',       price: 599, odooId: 1476, catId: 22 },
-  'HE-CM01-3': { name: 'CM1 For Three — Rice+Roti+Kabab+BC',     price: 790, odooId: 1477, catId: 22 },
-  'HE-CM02-1': { name: 'CM2 For You — Rice+Dal+Brain+Kulcha',    price: 332, odooId: 1478, catId: 22 },
-  'HE-CM02-2': { name: 'CM2 For Two — Rice+Dal+Brain+Kulcha',    price: 637, odooId: 1479, catId: 22 },
-  'HE-CM02-3': { name: 'CM2 For Three — Rice+Dal+Brain+Kulcha',  price: 942, odooId: 1480, catId: 22 },
-  'HE-CM03-1': { name: 'CM3 For You — Rice+Dal',                 price: 132, odooId: 1481, catId: 22 },
-  'HE-CM03-2': { name: 'CM3 For Two — Rice+Dal',                 price: 247, odooId: 1482, catId: 22 },
-  'HE-CM03-3': { name: 'CM3 For Three — Rice+Dal',               price: 342, odooId: 1483, catId: 22 },
-  'HE-CM04-1': { name: 'CM4 For You — Brain+Naan',               price: 190, odooId: 1484, catId: 22 },
-  'HE-CM04-2': { name: 'CM4 For Two — Brain+Naan',               price: 361, odooId: 1485, catId: 22 },
-  'HE-CM04-3': { name: 'CM4 For Three — Brain+Naan',             price: 532, odooId: 1486, catId: 22 },
-  'HE-CM05-1': { name: 'CM5 For You — Rice+BC+Naan',             price: 180, odooId: 1487, catId: 22 },
-  'HE-CM05-2': { name: 'CM5 For Two — Rice+BC+Naan',             price: 342, odooId: 1488, catId: 22 },
-  'HE-CM05-3': { name: 'CM5 For Three — Rice+BC+Naan',           price: 504, odooId: 1489, catId: 22 },
+  // ── New Combos v2 (5 combos × 3 sizes, GST-exclusive base prices)
+'HE-CM01-1': { name: 'CM1 For You — Rice+Roti+Kabab+BC', price: 285, odooId: 1423, catId: 22 },
+'HE-CM01-2': { name: 'CM1 For Two — Rice+Roti+Kabab+BC', price: 599, odooId: 1424, catId: 22 },
+'HE-CM01-3': { name: 'CM1 For Three — Rice+Roti+Kabab+BC', price: 790, odooId: 1425, catId: 22 },
+'HE-CM02-1': { name: 'CM2 For You — Rice+Dal+Brain+Kulcha', price: 332, odooId: 1426, catId: 22 },
+'HE-CM02-2': { name: 'CM2 For Two — Rice+Dal+Brain+Kulcha', price: 637, odooId: 1427, catId: 22 },
+'HE-CM02-3': { name: 'CM2 For Three — Rice+Dal+Brain+Kulcha', price: 942, odooId: 1428, catId: 22 },
+'HE-CM03-1': { name: 'CM3 For You — Rice+Dal', price: 132, odooId: 1429, catId: 22 },
+'HE-CM03-2': { name: 'CM3 For Two — Rice+Dal', price: 247, odooId: 1430, catId: 22 },
+'HE-CM03-3': { name: 'CM3 For Three — Rice+Dal', price: 342, odooId: 1431, catId: 22 },
+'HE-CM04-1': { name: 'CM4 For You — Brain+Naan', price: 190, odooId: 1432, catId: 22 },
+'HE-CM04-2': { name: 'CM4 For Two — Brain+Naan', price: 361, odooId: 1433, catId: 22 },
+'HE-CM04-3': { name: 'CM4 For Three — Brain+Naan', price: 532, odooId: 1434, catId: 22 },
+'HE-CM05-1': { name: 'CM5 For You — Rice+BC+Naan', price: 180, odooId: 1435, catId: 22 },
+'HE-CM05-2': { name: 'CM5 For Two — Rice+BC+Naan', price: 342, odooId: 1436, catId: 22 },
+'HE-CM05-3': { name: 'CM5 For Three — Rice+BC+Naan', price: 504, odooId: 1437, catId: 22 },
+
 };
 
 // ── Category → collection point mapping ──
@@ -320,7 +321,7 @@ function getCustomerTier(totalOrders) {
 }
 
 // ── Odoo configuration ──
-const ODOO_URL = 'https://ops.hamzahotel.com/jsonrpc';
+const ODOO_URL = 'https://test.hamzahotel.com/jsonrpc';
 const ODOO_DB = 'main';
 const ODOO_UID = 2;
 const TEST_ODOO_URL = 'https://test.hamzahotel.com/jsonrpc';
