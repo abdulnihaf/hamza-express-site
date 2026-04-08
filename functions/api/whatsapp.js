@@ -1225,6 +1225,11 @@ async function handleIdle(context, session, user, msg, waId, phoneId, token, db)
 async function _handleIdleInner(context, session, user, msg, waId, phoneId, token, db) {
   const text = msg.type === 'text' ? msg.text : '';
 
+  // ── TEST: Meta Ad flow — must be BEFORE any intent detection ──
+  if (text === 'meta ad test') {
+    return handleMetaAdFlow(context, user, waId, phoneId, token, db);
+  }
+
   // 1. Check for active order FIRST (only recent — within last 2 hours)
   try {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().slice(0, 19);
