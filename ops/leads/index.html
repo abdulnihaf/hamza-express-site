@@ -126,6 +126,23 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <!-- Lead List -->
 <div id="leadList"></div>
 
+<!-- Journey Panel (slides up from bottom) -->
+<div class="modal-overlay" id="journeyOverlay" onclick="closeJourney()" style="display:none"></div>
+<div id="journeyPanel" style="display:none;position:fixed;bottom:0;left:0;right:0;top:15%;background:var(--bg);border-radius:12px 12px 0 0;border:1px solid var(--border);z-index:201;overflow-y:auto;padding:0">
+  <div style="position:sticky;top:0;background:var(--card);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:1">
+    <div>
+      <h3 id="journeyName" style="font-size:14px;margin:0">Customer Journey</h3>
+      <div id="journeyMeta" style="font-size:10px;color:var(--muted);margin-top:2px"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a id="journeyCall" href="#" class="btn-call" style="font-size:11px;padding:5px 10px;text-decoration:none">Call</a>
+      <a id="journeyWA" href="#" target="_blank" class="btn-wa" style="font-size:11px;padding:5px 10px;text-decoration:none">WhatsApp</a>
+      <button onclick="closeJourney()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">&times;</button>
+    </div>
+  </div>
+  <div id="journeyContent" style="padding:12px 16px"></div>
+</div>
+
 <!-- Notes Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
 <div class="modal" id="notesModal" style="display:none">
@@ -248,6 +265,7 @@ function renderLeads() {
           <option value="follow_up" ${l.leadStatus === 'follow_up' ? 'selected' : ''}>Follow Up Later</option>
         </select>
         <button class="btn-notes" onclick="openNotes('${l.waId}','${esc(l.name)}')">\u{1F4DD}</button>
+        <button class="btn-notes" onclick="openJourney('${l.waId}','${esc(l.name)}')" style="color:var(--cyan)">\u{1F50D} Journey</button>
       </div>
     </div>`;
   }).join('');
@@ -281,6 +299,113 @@ async function saveNotes() {
   closeModal();
   loadData();
 }
+
+// ── Journey Viewer ──
+async function openJourney(waId, name) {
+  document.getElementById('journeyOverlay').style.display = '';
+  document.getElementById('journeyPanel').style.display = '';
+  document.getElementById('journeyName').textContent = name + ' — Journey';
+  document.getElementById('journeyContent').innerHTML = '<div class="empty">Loading...</div>';
+
+  const phone = waId.replace(/^91/, '');
+  document.getElementById('journeyCall').href = 'tel:+91' + phone;
+  document.getElementById('journeyWA').href = 'https://wa.me/91' + phone;
+
+  try {
+    const res = await fetch(API + '?action=history&wa_id=' + waId);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+
+    const u = json.user || {};
+    const s = json.session || {};
+    const msgs = json.messages || [];
+    const orders = json.orders || [];
+    const bookings = json.bookings || [];
+
+    document.getElementById('journeyMeta').innerHTML =
+      (u.first_source ? 'Source: ' + u.first_source : 'Direct') +
+      ' &middot; ' + (u.total_orders || 0) + ' orders' +
+      (u.total_spent ? ' (&rupee;' + Math.round(u.total_spent) + ')' : '') +
+      ' &middot; Joined ' + timeAgo(u.created_at) +
+      (s.ctwa_clid ? ' &middot; <span style="color:var(--orange)">CTWA</span>' : '') +
+      (s.state ? ' &middot; State: ' + s.state : '');
+
+    let html = '';
+
+    // Orders section
+    if (orders.length > 0) {
+      html += '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px;text-transform:uppercase">Orders</div>';
+      orders.forEach(o => {
+        html += '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:8px;margin-bottom:4px;font-size:11px">';
+        html += '<div style="display:flex;justify-content:space-between"><span style="font-weight:600">' + (o.order_code || '') + '</span><span style="color:var(--muted)">' + timeAgo(o.created_at) + '</span></div>';
+        html += '<div style="color:var(--text2);margin-top:2px">&rupee;' + Math.round(o.total || 0) + ' &middot; ' + (o.payment_status || '') + ' &middot; ' + (o.status || '') + '</div>';
+        try { const items = JSON.parse(o.items || '[]'); items.forEach(it => { html += '<div style="color:var(--muted);font-size:10px">&bull; ' + (it.name || it.code || '') + ' x' + (it.qty || 1) + '</div>'; }); } catch(e) {}
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Bookings section
+    if (bookings.length > 0) {
+      html += '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:6px;text-transform:uppercase">Bookings</div>';
+      bookings.forEach(b => {
+        html += '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:6px;padding:8px;margin-bottom:4px;font-size:11px">';
+        html += '<div style="font-weight:600">' + (b.booking_date || '') + ' ' + (b.booking_time || '') + ' &middot; ' + (b.party_size || '') + ' guests</div>';
+        html += '<div style="color:var(--text2)">' + (b.guest_name || '') + ' &middot; ' + (b.status || '') + (b.mumtaz_status ? ' &middot; Mumtaz: ' + b.mumtaz_status : '') + '</div>';
+        if (b.special_request) html += '<div style="color:var(--yellow);font-size:10px">' + b.special_request + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Conversation timeline
+    html += '<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:6px;text-transform:uppercase">Conversation (' + msgs.length + ' messages)</div>';
+    if (msgs.length === 0) {
+      html += '<div class="empty">No messages logged yet</div>';
+    } else {
+      msgs.forEach(m => {
+        if (m.msg_type === 'lead_status' || m.msg_type === 'lead_notes') return; // skip system entries
+        const isIn = m.direction === 'in';
+        const bgColor = isIn ? 'rgba(16,185,129,.08)' : 'rgba(59,130,246,.08)';
+        const borderColor = isIn ? 'var(--green)' : 'var(--blue)';
+        const label = isIn ? 'Customer' : 'Bot';
+        html += '<div style="background:' + bgColor + ';border-left:2px solid ' + borderColor + ';border-radius:4px;padding:6px 8px;margin-bottom:3px;font-size:10px">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-weight:600;color:' + borderColor + '">' + label + '</span><span style="color:var(--muted)">' + formatTime(m.created_at) + '</span></div>';
+        html += '<div style="color:var(--text2);word-break:break-word">' + escHtml(m.content || m.msg_type || '') + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+
+    // Session state
+    if (s.state) {
+      html += '<div style="font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px">';
+      html += 'Current state: <strong>' + s.state + '</strong>';
+      if (s.cart_total > 0) html += ' &middot; Cart: &rupee;' + Math.round(s.cart_total);
+      if (s.ad_headline) html += ' &middot; Ad: ' + s.ad_headline;
+      if (s.counter_source) html += ' &middot; Station: ' + s.counter_source;
+      html += ' &middot; Last: ' + timeAgo(s.updated_at);
+      html += '</div>';
+    }
+
+    document.getElementById('journeyContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('journeyContent').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+  }
+}
+
+function closeJourney() {
+  document.getElementById('journeyPanel').style.display = 'none';
+  document.getElementById('journeyOverlay').style.display = 'none';
+}
+
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { month:'short', day:'numeric' }) + ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 loadData();
 setInterval(loadData, 15000);

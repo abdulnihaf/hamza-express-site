@@ -1083,9 +1083,9 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 
   // Button taps — ice breakers + intent flow buttons
   if (msg.type === 'button_reply') {
-    // Meta Ad test flow — "See Menu" button sends combo MPM then full menu
-    if (msg.id === 'meta_ad_see_menu') {
-      return handleMetaAdMenu(context, user, waId, phoneId, token, db);
+    // Meta Ad test flow — "See 5 Combos" sends combo MPM only
+    if (msg.id === 'meta_ad_combos') {
+      return handleMetaAdCombos(context, user, waId, phoneId, token, db);
     }
     if (msg.id === 'order_food' || msg.id === 'view_menu' || msg.id === 'order_now' || msg.id === 'order_more') {
       return handleShowMenu(context, user, waId, phoneId, token, db);
@@ -1425,17 +1425,18 @@ async function handleMetaAdFlow(context, user, waId, phoneId, token, db) {
   const displayName = user.name ? user.name.split(' ')[0] : '';
   const greeting = displayName ? `Hey ${displayName}!` : 'Hey!';
 
-  const body = `${greeting} You saw our combo offer \u2014 here it is.\n\nGhee Rice + 2pc Kabab + Butter Chicken + Roti\nFREE Dal, Sherwa & Salad\n\u20B9299 for 1 | \u20B9579 for 2 | \u20B9829 for 3\n\nTap below to see the full menu \u2014 5 combos + 25 bestsellers.\nAdd whatever you want to cart, then hit Send.`;
+  const body = `${greeting} You saw our combo offer \u2014 here it is.\n\nGhee Rice + 2pc Kabab + Butter Chicken + Roti\nFREE Dal, Sherwa & Salad\n\u20B9299 for 1 | \u20B9579 for 2 | \u20B9829 for 3\n\nTap below to order for pickup or book a dine-in table.`;
 
   const buttons = [
-    { type: 'reply', reply: { id: 'meta_ad_see_menu', title: 'See Menu' } },
+    { type: 'reply', reply: { id: 'meta_ad_combos', title: 'See 5 Combos' } },
+    { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
   ];
 
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
 }
 
-async function handleMetaAdMenu(context, user, waId, phoneId, token, db) {
-  // Send COMBO MPM first (5 combos with variant picker)
+async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
+  // Send ONLY the combo MPM (one MPM per tap — no back-to-back)
   try {
     const comboSections = COMBO_MPM.sections.map(s => ({
       title: s.title,
@@ -1447,8 +1448,8 @@ async function handleMetaAdMenu(context, user, waId, phoneId, token, db) {
       interactive: {
         type: 'product_list',
         header: { type: 'text', text: '5 Combo Offers' },
-        body: { text: 'FREE Dal + Sherwa + Salad with every combo.\nPick your combo, choose size \u2014 For You, For Two, or For Three.\n\nWant to dine in instead? Just say "book a table".' },
-        footer: { text: 'Prices include GST' },
+        body: { text: 'FREE Dal + Sherwa + Salad with every combo.\nPick your combo, choose size \u2014 For You, For Two, or For Three.\n\nAdd to cart and tap Send to order.' },
+        footer: { text: 'Prices include GST \u2022 Ready in 15 min' },
         action: { catalog_id: CATALOG_ID, sections: comboSections },
       },
     });
@@ -1456,26 +1457,11 @@ async function handleMetaAdMenu(context, user, waId, phoneId, token, db) {
     console.log('Meta ad combo MPM error:', e.message);
   }
 
-  // Then send BESTSELLERS MPM (full menu — existing 30 items)
-  try {
-    const menuSections = BESTSELLERS_MPM.sections.map(s => ({
-      title: s.title,
-      product_items: s.items.map(rid => ({ product_retailer_id: rid })),
-    }));
-
-    await sendWhatsApp(phoneId, token, {
-      messaging_product: 'whatsapp', to: waId, type: 'interactive',
-      interactive: {
-        type: 'product_list',
-        header: { type: 'text', text: 'Full Menu' },
-        body: { text: 'Or browse individual items \u2014 biryani, kebabs, curries, breads & more.\nAdd to the same cart as your combo.' },
-        footer: { text: 'Prices include GST' },
-        action: { catalog_id: CATALOG_ID, sections: menuSections },
-      },
-    });
-  } catch (e) {
-    console.log('Meta ad full menu MPM error:', e.message);
-  }
+  // Follow up with a text nudge for full menu + booking
+  await sendWhatsApp(phoneId, token, {
+    messaging_product: 'whatsapp', to: waId, type: 'text',
+    text: { body: 'Want to add more items? Say "menu" for the full menu.\nWant to dine in? Say "book a table".' },
+  });
 
   await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }

@@ -161,6 +161,56 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ success: true }), { headers: CORS });
     }
 
+    // Get conversation history for a specific lead
+    if (action === 'history') {
+      const waId = url.searchParams.get('wa_id');
+      if (!waId) return new Response(JSON.stringify({ error: 'wa_id required' }), { status: 400, headers: CORS });
+
+      const messages = await db.prepare(`
+        SELECT wa_id, direction, msg_type, content, created_at
+        FROM wa_messages
+        WHERE wa_id = ?
+        ORDER BY created_at ASC
+        LIMIT 100
+      `).bind(waId).all();
+
+      const orders = await db.prepare(`
+        SELECT order_code, items, total, payment_status, status, created_at
+        FROM wa_orders
+        WHERE wa_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+      `).bind(waId).all();
+
+      const bookings = await db.prepare(`
+        SELECT booking_date, booking_time, party_size, guest_name, special_request, status, mumtaz_status, created_at
+        FROM wa_bookings
+        WHERE wa_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+      `).bind(waId).all();
+
+      const user = await db.prepare(`
+        SELECT name, total_orders, total_spent, first_source, created_at
+        FROM wa_users WHERE wa_id = ?
+      `).bind(waId).first();
+
+      const session = await db.prepare(`
+        SELECT state, cart, cart_total, counter_source, ctwa_clid, ad_source, ad_headline, updated_at
+        FROM wa_sessions WHERE wa_id = ?
+      `).bind(waId).first();
+
+      return new Response(JSON.stringify({
+        success: true,
+        waId,
+        user: user || {},
+        session: session || {},
+        messages: (messages.results || []),
+        orders: (orders.results || []),
+        bookings: (bookings.results || []),
+      }), { headers: CORS });
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: CORS });
