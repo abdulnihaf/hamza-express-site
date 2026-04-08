@@ -1754,22 +1754,39 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
   return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
-// Bestsellers MPM — 30 items across 8 sections covering a full meal in ONE view.
-// Ordered by popularity (matching physical menu order). This is the PRIMARY menu experience.
+// Bestsellers MPM — 30 items across 10 sections covering combos + full meal in ONE view.
+// First 5 sections = 5 new combos (each with 3 sizes = 15 items)
+// Next 5 sections = 15 bestseller items from other categories
+// Total: 30 items, 10 sections (WhatsApp MPM maximum)
 const BESTSELLERS_MPM = {
   sections: [
-    { title: 'Hamza Meals', items: [
-      'HE-C003', // Ghee Rice + Butter Chicken — ₹179
-      'HE-C006', // Ghee Rice + Dal Fry — ₹179
-      'HE-C008', // Butter Naan + Butter Chicken — ₹179
-      'HE-C009', // Biriyani Rice + Chicken Kabab — ₹179
-      'HE-C001', // Ghee Rice + Butter Chicken + Kabab — ₹249
-      'HE-C007', // Butter Naan + Butter Chicken + Kabab — ₹219
-      'HE-C002', // Chicken Biriyani + Chicken Kabab — ₹269
-      'HE-C004', // Ghee Rice + Dal Fry + Chicken Kabab — ₹249
-      'HE-C005', // Mutton Biriyani + Chicken Lollipop — ₹399
-      'HE-C010', // Premium Family Combo (Serves 2) — ₹499
+    // ── 5 Combo Sections (15 items) — each combo has For You / For Two / For Three ──
+    { title: 'Rice + Kabab + Butter Chicken', items: [
+      'HE-CM01-1', // Combo 1 For You — ₹299
+      'HE-CM01-2', // Combo 1 For Two — ₹579
+      'HE-CM01-3', // Combo 1 For Three — ₹829
     ]},
+    { title: 'Rice + Dal + Brain + Kulcha', items: [
+      'HE-CM02-1', // Combo 2 For You — ₹349
+      'HE-CM02-2', // Combo 2 For Two — ₹669
+      'HE-CM02-3', // Combo 2 For Three — ₹989
+    ]},
+    { title: 'Ghee Rice + Dal Fry', items: [
+      'HE-CM03-1', // Combo 3 For You — ₹139
+      'HE-CM03-2', // Combo 3 For Two — ₹259
+      'HE-CM03-3', // Combo 3 For Three — ₹359
+    ]},
+    { title: 'Brain Dry Fry + Butter Naan', items: [
+      'HE-CM04-1', // Combo 4 For You — ₹199
+      'HE-CM04-2', // Combo 4 For Two — ₹379
+      'HE-CM04-3', // Combo 4 For Three — ₹559
+    ]},
+    { title: 'Rice + Butter Chicken + Naan', items: [
+      'HE-CM05-1', // Combo 5 For You — ₹189
+      'HE-CM05-2', // Combo 5 For Two — ₹359
+      'HE-CM05-3', // Combo 5 For Three — ₹529
+    ]},
+    // ── 5 Category Sections (15 bestseller items) ──
     { title: 'Biryani & Rice', items: [
       'HE-1201', // Chicken Biryani — ₹275
       'HE-1200', // Mutton Biryani — ₹350
@@ -1779,28 +1796,21 @@ const BESTSELLERS_MPM = {
       'HE-1163', // Chicken Kabab — ₹210
       'HE-1135', // Tandoori Chicken — ₹230
       'HE-1192', // Mutton Brain Dry — ₹170
-      'HE-1169', // Boneless Chicken Pepper Dry — ₹235
-      'HE-1138', // Kalmi Kabab — ₹155
     ]},
     { title: 'Curries', items: [
       'HE-1149', // Butter Chicken — ₹225
       'HE-1160', // Chicken Hamza Special — ₹240
       'HE-1148', // Hyderabadi Chicken — ₹210
-      'HE-1191', // Mutton Pepper Dry — ₹230
-      'HE-1167', // Boneless Singapore Chicken — ₹255
     ]},
-    { title: 'Breads', items: [
+    { title: 'Breads & Chinese', items: [
       'HE-1212', // Kerala Paratha — ₹30
       'HE-1220', // Butter Naan — ₹45
-    ]},
-    { title: 'Chinese & Rolls', items: [
       'HE-1235', // Chicken Fried Rice — ₹190
-      'HE-1236', // Chicken Noodles — ₹190
-      'HE-1208', // Chicken Roll — ₹90
     ]},
-    { title: 'Vegetarian', items: [
-      'HE-1225', // Dal Fry — ₹110
-      'HE-1226', // Paneer Butter Masala — ₹180
+    { title: 'More Starters', items: [
+      'HE-1169', // Boneless Chicken Pepper Dry — ₹235
+      'HE-1138', // Kalmi Kabab — ₹155
+      'HE-1191', // Mutton Pepper Dry — ₹230
     ]},
   ],
 };
