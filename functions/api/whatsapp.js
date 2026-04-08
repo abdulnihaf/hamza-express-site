@@ -247,7 +247,7 @@ const PRODUCTS = {
 
   // ── New Combos v2 (5 combos × 3 sizes, GST-exclusive base prices)
 'HE-CM01-1': { name: 'CM1 For You — Rice+Roti+Kabab+BC', price: 285, odooId: 1423, catId: 22 },
-'HE-CM01-2': { name: 'CM1 For Two — Rice+Roti+Kabab+BC', price: 599, odooId: 1424, catId: 22 },
+'HE-CM01-2': { name: 'CM1 For Two — Rice+Roti+Kabab+BC', price: 551, odooId: 1424, catId: 22 },
 'HE-CM01-3': { name: 'CM1 For Three — Rice+Roti+Kabab+BC', price: 790, odooId: 1425, catId: 22 },
 'HE-CM02-1': { name: 'CM2 For You — Rice+Dal+Brain+Kulcha', price: 332, odooId: 1426, catId: 22 },
 'HE-CM02-2': { name: 'CM2 For Two — Rice+Dal+Brain+Kulcha', price: 637, odooId: 1427, catId: 22 },
@@ -382,7 +382,7 @@ const BOOKING_PATTERNS = [
 // ── Combo Plates (CTWA ad campaign) ──
 // Each combo has 1@/2@/3@ pricing. Update when user provides final prices.
 const COMBO_CONFIG = [
-  { id: 1, name: 'Ghee Rice + Tandoor Roti + Kabab + Butter Chicken', items: 'Ghee Rice + 1 Tandoor Roti + 3pc Kabab + 250g Butter Chicken\nFREE: Dal + Gravy + Onion Salad', price1: 299, price2: 629, price3: 829 },
+  { id: 1, name: 'Ghee Rice + Tandoor Roti + Kabab + Butter Chicken', items: 'Ghee Rice + 1 Tandoor Roti + 2pc Kabab + 250g Butter Chicken\nFREE: Dal + Sherwa + Onion Salad', price1: 299, price2: 579, price3: 829 },
   { id: 2, name: 'Ghee Rice + Dal Fry + Brain Dry Fry + Kulcha', items: 'Ghee Rice + 300g Dal Fry + Quarter Brain Dry Fry + 2 Kulcha\nFREE: Dal + Gravy + Onion Salad', price1: 349, price2: 669, price3: 989 },
   { id: 3, name: 'Ghee Rice + Dal Fry', items: 'Ghee Rice + 300g Dal Fry\nFREE: Dal + Gravy + Onion Salad', price1: 139, price2: 259, price3: 359 },
   { id: 4, name: 'Brain Dry Fry + Butter Naan', items: 'Quarter Brain Dry Fry + 2 Butter Naan\nFREE: Dal + Gravy + Onion Salad', price1: 199, price2: 379, price3: 559 },
