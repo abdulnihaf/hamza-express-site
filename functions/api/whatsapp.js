@@ -1032,6 +1032,11 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       return handleCategorySelection(context, user, keywordTarget, waId, phoneId, token, db);
     }
 
+    // ── TEST: Meta Ad flow simulation — send "META AD TEST" to trigger ──
+    if (text === 'meta ad test') {
+      return handleMetaAdFlow(context, user, waId, phoneId, token, db);
+    }
+
     if (['menu', '/menu', 'order', '/order'].includes(text)) {
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
@@ -1078,6 +1083,10 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
 
   // Button taps — ice breakers + intent flow buttons
   if (msg.type === 'button_reply') {
+    // Meta Ad test flow — "See Menu" button sends combo MPM then full menu
+    if (msg.id === 'meta_ad_see_menu') {
+      return handleMetaAdMenu(context, user, waId, phoneId, token, db);
+    }
     if (msg.id === 'order_food' || msg.id === 'view_menu' || msg.id === 'order_now' || msg.id === 'order_more') {
       return handleShowMenu(context, user, waId, phoneId, token, db);
     }
@@ -1399,6 +1408,71 @@ async function handleCTWALanding(context, user, waId, phoneId, token, db, sessio
   ];
 
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+// ── META AD TEST FLOW — triggered by "META AD TEST" text only ──
+// Simulates the proposed CTWA ad experience:
+// Step 1: Confirm the combo offer + single "See Menu" button
+// Step 2: Send COMBO_MPM (5 combos) + BESTSELLERS_MPM (full menu) back to back
+// This does NOT touch handleCTWALanding, handleShowMenu, or any existing flow.
+
+async function handleMetaAdFlow(context, user, waId, phoneId, token, db) {
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const greeting = displayName ? `Hey ${displayName}!` : 'Hey!';
+
+  const body = `${greeting} You saw our combo offer \u2014 here it is.\n\nGhee Rice + 2pc Kabab + Butter Chicken + Roti\nFREE Dal, Sherwa & Salad\n\u20B9299 for 1 | \u20B9579 for 2 | \u20B9829 for 3\n\nTap below to see the full menu \u2014 5 combos + 25 bestsellers.\nAdd whatever you want to cart, then hit Send.`;
+
+  const buttons = [
+    { type: 'reply', reply: { id: 'meta_ad_see_menu', title: 'See Menu' } },
+  ];
+
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+}
+
+async function handleMetaAdMenu(context, user, waId, phoneId, token, db) {
+  // Send COMBO MPM first (5 combos with variant picker)
+  try {
+    const comboSections = COMBO_MPM.sections.map(s => ({
+      title: s.title,
+      product_items: s.items.map(rid => ({ product_retailer_id: rid })),
+    }));
+
+    await sendWhatsApp(phoneId, token, {
+      messaging_product: 'whatsapp', to: waId, type: 'interactive',
+      interactive: {
+        type: 'product_list',
+        header: { type: 'text', text: '5 Combo Offers' },
+        body: { text: 'FREE Dal + Sherwa + Salad with every combo.\nPick your combo, choose size \u2014 For You, For Two, or For Three.\n\nWant to dine in instead? Just say "book a table".' },
+        footer: { text: 'Prices include GST' },
+        action: { catalog_id: CATALOG_ID, sections: comboSections },
+      },
+    });
+  } catch (e) {
+    console.log('Meta ad combo MPM error:', e.message);
+  }
+
+  // Then send BESTSELLERS MPM (full menu — existing 30 items)
+  try {
+    const menuSections = BESTSELLERS_MPM.sections.map(s => ({
+      title: s.title,
+      product_items: s.items.map(rid => ({ product_retailer_id: rid })),
+    }));
+
+    await sendWhatsApp(phoneId, token, {
+      messaging_product: 'whatsapp', to: waId, type: 'interactive',
+      interactive: {
+        type: 'product_list',
+        header: { type: 'text', text: 'Full Menu' },
+        body: { text: 'Or browse individual items \u2014 biryani, kebabs, curries, breads & more.\nAdd to the same cart as your combo.' },
+        footer: { text: 'Prices include GST' },
+        action: { catalog_id: CATALOG_ID, sections: menuSections },
+      },
+    });
+  } catch (e) {
+    console.log('Meta ad full menu MPM error:', e.message);
+  }
+
+  await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
 
 async function handleComboList(context, user, waId, phoneId, token, db) {
