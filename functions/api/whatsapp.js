@@ -1437,27 +1437,38 @@ async function handleMetaAdFlow(context, user, waId, phoneId, token, db) {
 
 async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
   // Send ONLY the combo MPM (one MPM per tap — no back-to-back)
-  try {
-    const comboSections = COMBO_MPM.sections.map(s => ({
-      title: s.title,
-      product_items: s.items.map(rid => ({ product_retailer_id: rid })),
-    }));
+  const comboSections = COMBO_MPM.sections.map(s => ({
+    title: s.title,
+    product_items: s.items.map(rid => ({ product_retailer_id: rid })),
+  }));
 
+  const comboPayload = {
+    messaging_product: 'whatsapp', to: waId, type: 'interactive',
+    interactive: {
+      type: 'product_list',
+      header: { type: 'text', text: '5 Combo Offers' },
+      body: { text: 'FREE Dal + Sherwa + Salad with every combo.\nPick a combo, choose your size, add to cart and tap Send.' },
+      footer: { text: 'Prices include GST' },
+      action: { catalog_id: CATALOG_ID, sections: comboSections },
+    },
+  };
+
+  console.log('COMBO MPM PAYLOAD:', JSON.stringify(comboPayload));
+  const comboResp = await sendWhatsApp(phoneId, token, comboPayload);
+  console.log('COMBO MPM RESPONSE:', JSON.stringify(comboResp));
+
+  if (!comboResp || !comboResp.ok) {
+    // Combo MPM failed — fall back to text listing
+    const fallbackText = COMBO_CONFIG.map(c =>
+      `${c.name}\n\u20B9${c.price1} for 1 | \u20B9${c.price2} for 2 | \u20B9${c.price3} for 3\nFREE: Dal + Sherwa + Salad`
+    ).join('\n\n');
     await sendWhatsApp(phoneId, token, {
-      messaging_product: 'whatsapp', to: waId, type: 'interactive',
-      interactive: {
-        type: 'product_list',
-        header: { type: 'text', text: '5 Combo Offers' },
-        body: { text: 'FREE Dal + Sherwa + Salad with every combo.\nPick your combo, choose size \u2014 For You, For Two, or For Three.\n\nAdd to cart and tap Send to order.' },
-        footer: { text: 'Prices include GST \u2022 Ready in 15 min' },
-        action: { catalog_id: CATALOG_ID, sections: comboSections },
-      },
+      messaging_product: 'whatsapp', to: waId, type: 'text',
+      text: { body: '5 Combo Offers:\n\n' + fallbackText + '\n\nSay "menu" to browse and add to cart.' },
     });
-  } catch (e) {
-    console.log('Meta ad combo MPM error:', e.message);
   }
 
-  // Follow up with a text nudge for full menu + booking
+  // Follow up with nudge
   await sendWhatsApp(phoneId, token, {
     messaging_product: 'whatsapp', to: waId, type: 'text',
     text: { body: 'Want to add more items? Say "menu" for the full menu.\nWant to dine in? Say "book a table".' },
