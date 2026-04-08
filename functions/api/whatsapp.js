@@ -1754,53 +1754,38 @@ async function handleNameEntry(context, session, user, msg, waId, phoneId, token
   return handleShowMenu(context, user, waId, phoneId, token, db);
 }
 
-// Bestsellers MPM — 30 items across 8 sections covering a full meal in ONE view.
-// Ordered by popularity (matching physical menu order). This is the PRIMARY menu experience.
+// Bestsellers MPM — 30 items across 8 sections.
+// 5 combo sections (15 SKUs) + 3 bestseller sections (15 items) = 30 total, 8 sections.
+// Combos first (what we're promoting), then top sellers by Swiggy review data.
 const BESTSELLERS_MPM = {
   sections: [
-    { title: 'Hamza Meals', items: [
-      'HE-C003', // Ghee Rice + Butter Chicken — ₹179
-      'HE-C006', // Ghee Rice + Dal Fry — ₹179
-      'HE-C008', // Butter Naan + Butter Chicken — ₹179
-      'HE-C009', // Biriyani Rice + Chicken Kabab — ₹179
-      'HE-C001', // Ghee Rice + Butter Chicken + Kabab — ₹249
-      'HE-C007', // Butter Naan + Butter Chicken + Kabab — ₹219
-      'HE-C002', // Chicken Biriyani + Chicken Kabab — ₹269
-      'HE-C004', // Ghee Rice + Dal Fry + Chicken Kabab — ₹249
-      'HE-C005', // Mutton Biriyani + Chicken Lollipop — ₹399
-      'HE-C010', // Premium Family Combo (Serves 2) — ₹499
+    // ── 5 Combo Sections (15 items) ──
+    { title: 'Rice + Kabab + Butter Chicken', items: ['HE-CM01-1','HE-CM01-2','HE-CM01-3'] },
+    { title: 'Rice + Dal + Brain + Kulcha', items: ['HE-CM02-1','HE-CM02-2','HE-CM02-3'] },
+    { title: 'Ghee Rice + Dal Fry', items: ['HE-CM03-1','HE-CM03-2','HE-CM03-3'] },
+    { title: 'Brain Dry Fry + Butter Naan', items: ['HE-CM04-1','HE-CM04-2','HE-CM04-3'] },
+    { title: 'Rice + Butter Chicken + Naan', items: ['HE-CM05-1','HE-CM05-2','HE-CM05-3'] },
+    // ── 3 Bestseller Sections (15 items) — ranked by Swiggy reviews ──
+    { title: 'Biryani & Starters', items: [
+      'HE-1201', // Chicken Biryani — 2240 reviews
+      'HE-1200', // Mutton Biryani — 3604 reviews
+      'HE-1203', // Biryani Rice — 6137 reviews (NEW)
+      'HE-1163', // Chicken Kabab — 9393 reviews
+      'HE-1135', // Tandoori Chicken — 2614 reviews
     ]},
-    { title: 'Biryani & Rice', items: [
-      'HE-1201', // Chicken Biryani — ₹275
-      'HE-1200', // Mutton Biryani — ₹350
-      'HE-1205', // Ghee Rice — ₹100
+    { title: 'Curries & Kebabs', items: [
+      'HE-1169', // Boneless Chicken Pepper Dry — 2386 reviews
+      'HE-1192', // Mutton Brain Dry — 2477 reviews
+      'HE-1149', // Butter Chicken — 1449 reviews
+      'HE-1160', // Chicken Hamza Special — 240+ reviews
+      'HE-1150', // Punjabi Chicken — 1229 reviews (NEW)
     ]},
-    { title: 'Kebabs & Starters', items: [
-      'HE-1163', // Chicken Kabab — ₹210
-      'HE-1135', // Tandoori Chicken — ₹230
-      'HE-1192', // Mutton Brain Dry — ₹170
-      'HE-1169', // Boneless Chicken Pepper Dry — ₹235
-      'HE-1138', // Kalmi Kabab — ₹155
-    ]},
-    { title: 'Curries', items: [
-      'HE-1149', // Butter Chicken — ₹225
-      'HE-1160', // Chicken Hamza Special — ₹240
-      'HE-1148', // Hyderabadi Chicken — ₹210
-      'HE-1191', // Mutton Pepper Dry — ₹230
-      'HE-1167', // Boneless Singapore Chicken — ₹255
-    ]},
-    { title: 'Breads', items: [
-      'HE-1212', // Kerala Paratha — ₹30
-      'HE-1220', // Butter Naan — ₹45
-    ]},
-    { title: 'Chinese & Rolls', items: [
-      'HE-1235', // Chicken Fried Rice — ₹190
-      'HE-1236', // Chicken Noodles — ₹190
-      'HE-1208', // Chicken Roll — ₹90
-    ]},
-    { title: 'Vegetarian', items: [
-      'HE-1225', // Dal Fry — ₹110
-      'HE-1226', // Paneer Butter Masala — ₹180
+    { title: 'Grill & Breads', items: [
+      'HE-G001', // Grilled Chicken — 1195 reviews (NEW)
+      'HE-1195', // Mutton Sheekh Kabab — 1212 reviews (NEW)
+      'HE-1172', // Chicken Lollipop — 190+ reviews (NEW)
+      'HE-1212', // Kerala Paratha — 3160 reviews
+      'HE-1220', // Butter Naan — essential bread
     ]},
   ],
 };
