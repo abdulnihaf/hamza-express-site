@@ -1231,6 +1231,11 @@ async function _handleIdleInner(context, session, user, msg, waId, phoneId, toke
     return handleMetaAdFlow(context, user, waId, phoneId, token, db);
   }
 
+  // ── CTWA ice breaker: "Order & Collect" button → straight to combo MPM ──
+  if (text === 'i want to order and collect at the outlet') {
+    return handleMetaAdCombos(context, user, waId, phoneId, token, db);
+  }
+
   // 1. Check for active order FIRST (only recent — within last 2 hours)
   try {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString().slice(0, 19);
@@ -1251,11 +1256,11 @@ async function _handleIdleInner(context, session, user, msg, waId, phoneId, toke
     // Continue to normal flow if check fails
   }
 
-  // 2. CTWA ad click — personalized combo landing
+  // 2. CTWA ad click — personalized combo landing (routes to new 2-button flow)
   if (session.ad_source === 'meta_ctwa' && session.ctwa_first_contact) {
     const hoursSinceCtwa = (Date.now() - new Date(session.ctwa_first_contact).getTime()) / 3600000;
     if (hoursSinceCtwa < 1) { // Only on first contact (within 1 hour of ad click)
-      return handleCTWALanding(context, user, waId, phoneId, token, db, session);
+      return handleMetaAdFlow(context, user, waId, phoneId, token, db);
     }
   }
 
@@ -1455,26 +1460,6 @@ async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
   };
 
   const comboResp = await sendWhatsApp(phoneId, token, comboPayload);
-  const comboErrText = comboResp?._errorText || (comboResp?.ok ? 'OK' : 'FAILED_NO_ERROR');
-  // Write error to D1 so we can read it without Cloudflare logs
-  if (_logDb) {
-    _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
-      .bind(waId, 'system', 'combo_mpm_debug', 'RESULT:' + comboErrText + '|TOKEN_START:' + (token || '').substring(0, 20) + '|PHONE:' + phoneId, new Date().toISOString()).run().catch(() => {});
-  }
-
-  // If MPM fails, try single product message to diagnose if items work individually
-  if (!comboResp || !comboResp.ok) {
-    console.log('Trying SPM with HE-CM01-1...');
-    const spmResp = await sendWhatsApp(phoneId, token, {
-      messaging_product: 'whatsapp', to: waId, type: 'interactive',
-      interactive: {
-        type: 'product',
-        body: { text: 'Test: Combo 1 For You' },
-        action: { catalog_id: CATALOG_ID, product_retailer_id: 'HE-CM01-1' },
-      },
-    });
-    console.log('SPM RESULT:', spmResp?._errorText || (spmResp?.ok ? 'OK' : 'FAILED'));
-  }
 
   if (!comboResp || !comboResp.ok) {
     // Combo MPM failed — fall back to text listing
@@ -1487,11 +1472,12 @@ async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
     });
   }
 
-  // Follow up with nudge
-  await sendWhatsApp(phoneId, token, {
-    messaging_product: 'whatsapp', to: waId, type: 'text',
-    text: { body: 'Want to add more items? Say "menu" for the full menu.\nWant to dine in? Say "book a table".' },
-  });
+  // Follow up with button nudge (easier than typing for first-time users)
+  const nudgeButtons = [
+    { type: 'reply', reply: { id: 'order_now', title: 'See Full Menu' } },
+    { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+  ];
+  await sendWhatsApp(phoneId, token, buildReplyButtons(waId, 'Want to add more items or book a dine-in table?', nudgeButtons));
 
   await updateSession(db, waId, 'awaiting_menu', '[]', 0, null);
 }
