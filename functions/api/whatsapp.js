@@ -390,13 +390,14 @@ const COMBO_CONFIG = [
 ];
 
 // ── Combo MPM (native catalog product list — separate from BESTSELLERS_MPM) ──
+// Section titles MUST be ≤ 24 chars (WhatsApp product_list limit)
 const COMBO_MPM = {
   sections: [
-    { title: 'Rice + Kabab + Butter Chicken', items: ['HE-CM01-1', 'HE-CM01-2', 'HE-CM01-3'] },
-    { title: 'Rice + Dal + Brain + Kulcha', items: ['HE-CM02-1', 'HE-CM02-2', 'HE-CM02-3'] },
+    { title: 'Rice+Kabab+BC Combo', items: ['HE-CM01-1', 'HE-CM01-2', 'HE-CM01-3'] },
+    { title: 'Rice+Dal+Brain+Kulcha', items: ['HE-CM02-1', 'HE-CM02-2', 'HE-CM02-3'] },
     { title: 'Ghee Rice + Dal Fry', items: ['HE-CM03-1', 'HE-CM03-2', 'HE-CM03-3'] },
-    { title: 'Brain Dry Fry + Butter Naan', items: ['HE-CM04-1', 'HE-CM04-2', 'HE-CM04-3'] },
-    { title: 'Rice + Butter Chicken + Naan', items: ['HE-CM05-1', 'HE-CM05-2', 'HE-CM05-3'] },
+    { title: 'Brain Fry + Butter Naan', items: ['HE-CM04-1', 'HE-CM04-2', 'HE-CM04-3'] },
+    { title: 'Rice+BC+Naan Combo', items: ['HE-CM05-1', 'HE-CM05-2', 'HE-CM05-3'] },
   ],
 };
 
