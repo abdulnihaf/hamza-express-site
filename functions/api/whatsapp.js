@@ -1453,9 +1453,27 @@ async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
     },
   };
 
-  console.log('COMBO MPM PAYLOAD:', JSON.stringify(comboPayload));
   const comboResp = await sendWhatsApp(phoneId, token, comboPayload);
-  console.log('COMBO MPM RESPONSE:', JSON.stringify(comboResp));
+  const comboErrText = comboResp?._errorText || (comboResp?.ok ? 'OK' : 'FAILED_NO_ERROR');
+  // Write error to D1 so we can read it without Cloudflare logs
+  if (_logDb) {
+    _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
+      .bind(waId, 'system', 'combo_mpm_debug', 'RESULT:' + comboErrText + '|TOKEN_START:' + (token || '').substring(0, 20) + '|PHONE:' + phoneId, new Date().toISOString()).run().catch(() => {});
+  }
+
+  // If MPM fails, try single product message to diagnose if items work individually
+  if (!comboResp || !comboResp.ok) {
+    console.log('Trying SPM with HE-CM01-1...');
+    const spmResp = await sendWhatsApp(phoneId, token, {
+      messaging_product: 'whatsapp', to: waId, type: 'interactive',
+      interactive: {
+        type: 'product',
+        body: { text: 'Test: Combo 1 For You' },
+        action: { catalog_id: CATALOG_ID, product_retailer_id: 'HE-CM01-1' },
+      },
+    });
+    console.log('SPM RESULT:', spmResp?._errorText || (spmResp?.ok ? 'OK' : 'FAILED'));
+  }
 
   if (!comboResp || !comboResp.ok) {
     // Combo MPM failed — fall back to text listing
