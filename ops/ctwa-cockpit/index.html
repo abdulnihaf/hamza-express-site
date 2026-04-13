@@ -95,8 +95,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 
   <div class="filters">
-    <button class="fbtn active" data-period="7d">7 Days</button>
-    <button class="fbtn" data-period="1d">Today</button>
+    <button class="fbtn" data-period="7d">7 Days</button>
+    <button class="fbtn active" data-period="1d">Today</button>
     <button class="fbtn" data-period="30d">30 Days</button>
     <button class="fbtn" data-period="all">All</button>
   </div>
@@ -194,7 +194,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 <div id="convOverlay" onclick="closeConv()"></div>
 
 <script>
-let currentPeriod = '7d';
+let currentPeriod = '1d';
 document.querySelectorAll('.fbtn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));

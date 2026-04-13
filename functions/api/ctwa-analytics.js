@@ -19,11 +19,20 @@ async function fetchMetaAdsData(token, period) {
   if (!token) return null;
 
   // Map period to Meta date_preset
+  // Build date param — use time_range to always include today
+  const today = new Date().toISOString().slice(0, 10);
   let dateParam;
-  if (period === '1d') dateParam = 'date_preset=today';
-  else if (period === '7d') dateParam = 'date_preset=last_7d';
-  else if (period === '30d') dateParam = 'date_preset=last_30d';
-  else dateParam = 'time_range={"since":"2026-04-01","until":"2026-12-31"}';
+  if (period === '1d') {
+    dateParam = 'date_preset=today';
+  } else if (period === '7d') {
+    const d7 = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    dateParam = `time_range={"since":"${d7}","until":"${today}"}`;
+  } else if (period === '30d') {
+    const d30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    dateParam = `time_range={"since":"${d30}","until":"${today}"}`;
+  } else {
+    dateParam = `time_range={"since":"2026-04-01","until":"${today}"}`;
+  }
 
   try {
     const [campaignRes, perAdRes, audienceRes] = await Promise.all([
