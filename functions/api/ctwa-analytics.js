@@ -1,6 +1,7 @@
 // Meta CTWA Command Center API
 // GET /api/ctwa-analytics?period=7d|30d|all
 // Tracks: Ad clicks → Conversations → Combos viewed → Orders/Bookings → Revenue
+// Now includes: Meta Ads API data (impressions, reach, spend, clicks, per-combo, audience)
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,84 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
+
+// Meta Ads campaign IDs
+const META_CAMPAIGN_ID = '120243729366800505';
+const META_ADSET_ID = '120243729917650505';
+
+// Fetch Meta Ads Insights API data
+async function fetchMetaAdsData(token, period) {
+  if (!token) return null;
+
+  // Map period to Meta date_preset
+  let dateParam;
+  if (period === '1d') dateParam = 'date_preset=today';
+  else if (period === '7d') dateParam = 'date_preset=last_7d';
+  else if (period === '30d') dateParam = 'date_preset=last_30d';
+  else dateParam = 'time_range={"since":"2026-04-01","until":"2026-12-31"}';
+
+  try {
+    const [campaignRes, perAdRes, audienceRes] = await Promise.all([
+      // 1. Campaign overview
+      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach,spend,actions,cost_per_action_type,cpc,cpm,ctr&access_token=${token}`),
+      // 2. Per-ad breakdown
+      fetch(`https://graph.facebook.com/v25.0/${META_ADSET_ID}/insights?${dateParam}&level=ad&fields=ad_name,impressions,reach,spend,actions,cost_per_action_type&access_token=${token}`),
+      // 3. Audience breakdown
+      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach&breakdowns=age,gender&access_token=${token}`),
+    ]);
+
+    const [campaign, perAd, audience] = await Promise.all([
+      campaignRes.json(), perAdRes.json(), audienceRes.json(),
+    ]);
+
+    // Parse campaign overview
+    const c = (campaign.data || [])[0] || {};
+    const actions = (c.actions || []).reduce((m, a) => { m[a.action_type] = parseInt(a.value); return m; }, {});
+    const costs = (c.cost_per_action_type || []).reduce((m, a) => { m[a.action_type] = parseFloat(a.value); return m; }, {});
+
+    // Parse per-ad breakdown
+    const ads = (perAd.data || []).map(a => {
+      const aActions = (a.actions || []).reduce((m, x) => { m[x.action_type] = parseInt(x.value); return m; }, {});
+      const aCosts = (a.cost_per_action_type || []).reduce((m, x) => { m[x.action_type] = parseFloat(x.value); return m; }, {});
+      return {
+        name: a.ad_name || 'Unknown',
+        impressions: parseInt(a.impressions || 0),
+        reach: parseInt(a.reach || 0),
+        spend: parseFloat(a.spend || 0),
+        clicks: aActions.link_click || 0,
+        conversations: aActions['onsite_conversion.messaging_conversation_started_7d'] || 0,
+        costPerConversation: aCosts['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      };
+    });
+
+    // Parse audience
+    const aud = (audience.data || []).map(a => ({
+      age: a.age, gender: a.gender,
+      impressions: parseInt(a.impressions || 0),
+      reach: parseInt(a.reach || 0),
+    }));
+
+    return {
+      available: true,
+      impressions: parseInt(c.impressions || 0),
+      reach: parseInt(c.reach || 0),
+      spend: parseFloat(c.spend || 0),
+      linkClicks: actions.link_click || 0,
+      ctr: c.ctr || '0',
+      cpc: parseFloat(c.cpc || 0),
+      cpm: parseFloat(c.cpm || 0),
+      conversations: actions['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      costPerConversation: costs['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      reactions: actions.post_reaction || 0,
+      shares: actions.post || 0,
+      perAd: ads,
+      audience: aud,
+    };
+  } catch (e) {
+    console.log('Meta Ads API error:', e.message);
+    return { available: false, error: e.message };
+  }
+}
 
 export async function onRequest(context) {
   if (context.request.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -45,6 +124,10 @@ export async function onRequest(context) {
   }
 
   try {
+    // Fetch Meta Ads data in parallel with D1 queries
+    const metaAdsToken = context.env.WA_ACCESS_TOKEN;
+    const metaAdsPromise = fetchMetaAdsData(metaAdsToken, period);
+
     const [
       ctwaOverview, ctwaByCombo, ctwaFunnel, ctwaConversations,
       ctwaDaily, ctwaOrders, ctwaBookings, organicComparison
@@ -144,11 +227,16 @@ export async function onRequest(context) {
     const bookRate = ctwaOverview.totalConversations > 0
       ? ((ctwaOverview.totalBookings / ctwaOverview.totalConversations) * 100).toFixed(1) : '0.0';
 
-    // Estimate cost (user can input actual spend)
-    const estCostPerConv = ctwaOverview.totalConversations > 0 ? Math.round(1500 / Math.max(ctwaOverview.totalConversations / 7, 1)) : 0;
+    // Wait for Meta Ads data
+    const adMetrics = await metaAdsPromise;
+
+    // Use real spend from Meta if available, otherwise estimate
+    const realSpend = adMetrics?.available ? adMetrics.spend : 0;
+    const realCostPerConv = adMetrics?.available ? adMetrics.costPerConversation : 0;
 
     return new Response(JSON.stringify({
       success: true, period,
+      adMetrics: adMetrics || { available: false },
       overview: {
         conversations: ctwaOverview.totalConversations || 0,
         orders: ctwaOverview.totalOrders || 0,
@@ -157,7 +245,8 @@ export async function onRequest(context) {
         aov: Math.round(ctwaOverview.avgOrderValue || 0),
         orderConvRate: parseFloat(convRate),
         bookingConvRate: parseFloat(bookRate),
-        estCostPerConversation: estCostPerConv,
+        costPerConversation: realCostPerConv,
+        totalSpend: realSpend,
       },
       comboPerformance: (ctwaByCombo.results || []).map(c => ({
         adHeadline: c.adHeadline, adId: c.adId,

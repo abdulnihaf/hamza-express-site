@@ -101,7 +101,10 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <button class="fbtn" data-period="all">All</button>
   </div>
 
-  <!-- KPIs -->
+  <!-- Ad Metrics KPIs (from Meta Ads API) -->
+  <div class="kpis" id="adKpis"></div>
+
+  <!-- Conversion KPIs (from D1) -->
   <div class="kpis" id="kpis"></div>
 
   <div class="grid-2">
@@ -117,13 +120,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     </div>
   </div>
 
-  <!-- Combo Performance -->
+  <!-- Combo Performance (Meta + D1 merged) -->
   <div class="section">
-    <div class="section-title">Combo Ad Performance (which creative wins)</div>
+    <div class="section-title">Per-Combo Performance</div>
+    <div style="overflow-x:auto">
     <table class="combo-table">
-      <thead><tr><th>Ad Creative</th><th>Conversations</th><th>Orders</th><th>Revenue</th><th>Conv %</th></tr></thead>
+      <thead><tr><th>Combo</th><th>Impressions</th><th>Clicks</th><th>Spend</th><th>WA Msgs</th><th>Orders</th><th>Revenue</th></tr></thead>
       <tbody id="comboTable"></tbody>
     </table>
+    </div>
+  </div>
+
+  <!-- Audience (from Meta Ads API) -->
+  <div class="section" id="audienceSection" style="display:none">
+    <div class="section-title">Audience Breakdown</div>
+    <div id="audienceChart" style="display:flex;gap:4px;align-items:flex-end;height:120px"></div>
   </div>
 
   <div class="grid-2">
@@ -205,13 +216,30 @@ async function load() {
 
 function render(d) {
   const o = d.overview;
+  const ad = d.adMetrics || {};
+
+  // Ad Metrics KPIs (from Meta Ads API)
+  if (ad.available) {
+    document.getElementById('adKpis').innerHTML = `
+      <div class="kpi"><div class="kpi-label">Impressions</div><div class="kpi-value blue">${(ad.impressions||0).toLocaleString()}</div><div class="kpi-sub">${(ad.reach||0).toLocaleString()} reach</div></div>
+      <div class="kpi"><div class="kpi-label">Ad Spend</div><div class="kpi-value orange">\u20B9${Math.round(ad.spend||0)}</div><div class="kpi-sub">CPM \u20B9${Math.round(ad.cpm||0)}</div></div>
+      <div class="kpi"><div class="kpi-label">Link Clicks</div><div class="kpi-value cyan">${ad.linkClicks||0}</div><div class="kpi-sub">CTR ${parseFloat(ad.ctr||0).toFixed(2)}%</div></div>
+      <div class="kpi"><div class="kpi-label">WA Conversations</div><div class="kpi-value green">${ad.conversations||0}</div><div class="kpi-sub">\u20B9${Math.round(ad.costPerConversation||0)}/each</div></div>
+      <div class="kpi"><div class="kpi-label">Cost/Click</div><div class="kpi-value yellow">\u20B9${Math.round(ad.cpc||0)}</div></div>
+      <div class="kpi"><div class="kpi-label">Reactions</div><div class="kpi-value purple">${ad.reactions||0}</div></div>
+    `;
+  } else {
+    document.getElementById('adKpis').innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px">Meta Ads data unavailable</div>';
+  }
+
+  // Conversion KPIs (from D1)
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">CTWA Conversations</div><div class="kpi-value blue">${o.conversations}</div><div class="kpi-sub">from Meta ads</div></div>
-    <div class="kpi"><div class="kpi-label">Orders (Takeaway)</div><div class="kpi-value green">${o.orders}</div><div class="kpi-sub">${o.orderConvRate}% conversion</div></div>
-    <div class="kpi"><div class="kpi-label">Bookings (Dine-in)</div><div class="kpi-value cyan">${o.bookings}</div><div class="kpi-sub">${o.bookingConvRate}% conversion</div></div>
-    <div class="kpi"><div class="kpi-label">Revenue from Ads</div><div class="kpi-value green">\u20B9${o.revenue.toLocaleString()}</div></div>
-    <div class="kpi"><div class="kpi-label">Avg Order Value</div><div class="kpi-value orange">\u20B9${o.aov}</div></div>
-    <div class="kpi"><div class="kpi-label">Total Conversions</div><div class="kpi-value purple">${o.orders + o.bookings}</div><div class="kpi-sub">orders + bookings</div></div>
+    <div class="kpi"><div class="kpi-label">CTWA Leads</div><div class="kpi-value blue">${o.conversations}</div><div class="kpi-sub">in WhatsApp</div></div>
+    <div class="kpi"><div class="kpi-label">Orders</div><div class="kpi-value green">${o.orders}</div><div class="kpi-sub">${o.orderConvRate}% conv</div></div>
+    <div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-value cyan">${o.bookings}</div><div class="kpi-sub">${o.bookingConvRate}% conv</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value green">\u20B9${o.revenue.toLocaleString()}</div><div class="kpi-sub">ROAS ${ad.available && ad.spend > 0 ? (o.revenue / ad.spend).toFixed(1) + 'x' : '—'}</div></div>
+    <div class="kpi"><div class="kpi-label">AOV</div><div class="kpi-value orange">\u20B9${o.aov}</div></div>
+    <div class="kpi"><div class="kpi-label">Total Conv</div><div class="kpi-value purple">${o.orders + o.bookings}</div></div>
   `;
 
   // Funnel
@@ -237,12 +265,49 @@ function render(d) {
     <div class="compare-card"><div class="compare-label">Organic Revenue</div><div class="compare-value" style="color:var(--green)">\u20B9${org.revenue.toLocaleString()}</div></div>
   `;
 
-  // Combo performance
-  const maxConv=Math.max(...(d.comboPerformance||[]).map(c=>c.conversations),0);
-  document.getElementById('comboTable').innerHTML=(d.comboPerformance||[]).map((c,i)=>{
-    const isWinner=i===0&&c.conversations>0;
-    return `<tr class="${isWinner?'winner':''}"><td><strong>${c.adHeadline}</strong><br><span style="font-size:9px;color:var(--muted)">${c.adId||''}</span></td><td class="mono">${c.conversations}</td><td class="mono">${c.orders}</td><td class="mono">\u20B9${c.revenue.toLocaleString()}</td><td class="mono">${c.convRate}%</td></tr>`;
-  }).join('')||'<tr><td colspan="5" style="color:var(--muted);padding:20px;text-align:center">No CTWA data yet. Launch your campaign to see results.</td></tr>';
+  // Combo performance — merge Meta Ads data with D1 data
+  const perAd = ad.available ? (ad.perAd || []) : [];
+  if (perAd.length > 0) {
+    document.getElementById('comboTable').innerHTML = perAd.map(a => {
+      // Find matching D1 combo data by ad name
+      const d1 = (d.comboPerformance || []).find(c => a.name && c.adHeadline && a.name.includes(c.adHeadline.split(' ')[0]));
+      const orders = d1 ? d1.orders : 0;
+      const revenue = d1 ? d1.revenue : 0;
+      return `<tr>
+        <td><strong>${a.name}</strong></td>
+        <td class="mono">${a.impressions.toLocaleString()}</td>
+        <td class="mono">${a.clicks}</td>
+        <td class="mono">\u20B9${Math.round(a.spend)}</td>
+        <td class="mono" style="color:var(--blue)">${a.conversations}</td>
+        <td class="mono" style="color:var(--green)">${orders}</td>
+        <td class="mono" style="color:var(--green)">\u20B9${revenue.toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    // Fallback to D1 only
+    document.getElementById('comboTable').innerHTML = (d.comboPerformance || []).map(c =>
+      `<tr><td><strong>${c.adHeadline}</strong></td><td>—</td><td>—</td><td>—</td><td class="mono">${c.conversations}</td><td class="mono">${c.orders}</td><td class="mono">\u20B9${c.revenue.toLocaleString()}</td></tr>`
+    ).join('') || '<tr><td colspan="7" style="color:var(--muted);padding:20px;text-align:center">No data yet</td></tr>';
+  }
+
+  // Audience breakdown
+  const aud = ad.available ? (ad.audience || []) : [];
+  if (aud.length > 0) {
+    document.getElementById('audienceSection').style.display = '';
+    const maxImp = Math.max(...aud.map(a => a.impressions), 1);
+    const totalImp = aud.reduce((s, a) => s + a.impressions, 0);
+    document.getElementById('audienceChart').innerHTML = aud.map(a => {
+      const pct = ((a.impressions / totalImp) * 100).toFixed(1);
+      const h = Math.max((a.impressions / maxImp) * 100, 5);
+      return `<div style="flex:1;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">
+        <div style="font-size:10px;color:var(--text);margin-bottom:2px">${pct}%</div>
+        <div style="width:80%;height:${h}%;background:var(--blue);border-radius:3px;min-height:4px"></div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px">${a.gender === 'male' ? 'M' : a.gender === 'female' ? 'F' : '?'} ${a.age}</div>
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('audienceSection').style.display = 'none';
+  }
 
   // Daily chart
   const dMax=Math.max(...(d.daily||[]).map(d=>d.conversations),1);
