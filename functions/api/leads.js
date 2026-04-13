@@ -18,10 +18,16 @@ export async function onRequest(context) {
 
   try {
     if (action === 'list' && context.request.method === 'GET') {
-      const dateFrom = url.searchParams.get('from') || new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+      const dateFrom = url.searchParams.get('from') || new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
       const dateTo = url.searchParams.get('to') || new Date().toISOString().slice(0, 10);
+      const showAll = url.searchParams.get('show') === 'all';
 
       // Get ALL WhatsApp users with their journey stage
+      // Filter by EITHER created_at OR last activity (session updated_at) — catches old users who returned
+      const dateFilter = showAll
+        ? '1=1'  // no date filter
+        : `(u.created_at >= '${dateFrom}' OR s.updated_at >= '${dateFrom}')`;
+
       const leads = await db.prepare(`
         SELECT
           u.wa_id,
@@ -37,13 +43,13 @@ export async function onRequest(context) {
           s.counter_source,
           s.cart_total,
           s.updated_at as last_activity,
-          -- Funnel stage
+          -- Funnel stage (no date restriction — shows current state)
           CASE
-            WHEN EXISTS (SELECT 1 FROM wa_orders WHERE wa_id = u.wa_id AND payment_status = 'paid' AND created_at >= ?) THEN 'ordered'
-            WHEN EXISTS (SELECT 1 FROM wa_bookings WHERE wa_id = u.wa_id AND status != 'cancelled' AND created_at >= ?) THEN 'booked'
+            WHEN EXISTS (SELECT 1 FROM wa_orders WHERE wa_id = u.wa_id AND payment_status = 'paid') THEN 'ordered'
+            WHEN EXISTS (SELECT 1 FROM wa_bookings WHERE wa_id = u.wa_id AND status != 'cancelled') THEN 'booked'
             WHEN s.state = 'awaiting_upi_payment' OR s.state = 'awaiting_payment' THEN 'payment_pending'
             WHEN s.state = 'awaiting_menu' OR s.cart_total > 0 THEN 'browsing_menu'
-            WHEN EXISTS (SELECT 1 FROM booking_attempts WHERE wa_id = u.wa_id AND completed = 0 AND started_at >= ?) THEN 'booking_dropped'
+            WHEN EXISTS (SELECT 1 FROM booking_attempts WHERE wa_id = u.wa_id AND completed = 0) THEN 'booking_dropped'
             WHEN s.state = 'idle' AND u.total_orders = 0 THEN 'messaged_only'
             ELSE 'messaged_only'
           END as funnel_stage,
@@ -56,6 +62,9 @@ export async function onRequest(context) {
             (SELECT content FROM wa_messages WHERE wa_id = u.wa_id AND msg_type = 'lead_notes' ORDER BY created_at DESC LIMIT 1),
             ''
           ) as lead_notes,
+          -- Last message preview
+          (SELECT content FROM wa_messages WHERE wa_id = u.wa_id AND msg_type NOT IN ('lead_status','lead_notes','combo_mpm_debug') ORDER BY created_at DESC LIMIT 1) as last_message,
+          (SELECT direction FROM wa_messages WHERE wa_id = u.wa_id AND msg_type NOT IN ('lead_status','lead_notes','combo_mpm_debug') ORDER BY created_at DESC LIMIT 1) as last_message_dir,
           -- Last order info
           (SELECT order_code FROM wa_orders WHERE wa_id = u.wa_id ORDER BY created_at DESC LIMIT 1) as last_order_code,
           (SELECT total FROM wa_orders WHERE wa_id = u.wa_id AND payment_status = 'paid' ORDER BY created_at DESC LIMIT 1) as last_order_total,
@@ -64,36 +73,27 @@ export async function onRequest(context) {
           (SELECT mumtaz_status FROM wa_bookings WHERE wa_id = u.wa_id ORDER BY created_at DESC LIMIT 1) as booking_status
         FROM wa_users u
         LEFT JOIN wa_sessions s ON u.wa_id = s.wa_id
-        WHERE u.created_at >= ? AND u.created_at <= ?
+        WHERE ${dateFilter}
         ORDER BY
           CASE
             WHEN s.ctwa_clid IS NOT NULL THEN 0
             ELSE 1
           END,
-          u.created_at DESC
-      `).bind(dateFrom, dateFrom, dateFrom, dateFrom, dateTo + 'T23:59:59').all();
+          COALESCE(s.updated_at, u.created_at) DESC
+      `).all();
 
-      // Funnel metrics
+      // Funnel metrics — global counts (not date-filtered, since leads query handles filtering)
       const metrics = await db.prepare(`
         SELECT
-          (SELECT COUNT(*) FROM wa_users WHERE created_at >= ? AND created_at <= ?) as total_leads,
-          (SELECT COUNT(*) FROM wa_sessions WHERE ctwa_clid IS NOT NULL AND updated_at >= ?) as ctwa_leads,
-          (SELECT COUNT(*) FROM wa_orders WHERE payment_status = 'paid' AND created_at >= ? AND created_at <= ?) as orders,
-          (SELECT SUM(total) FROM wa_orders WHERE payment_status = 'paid' AND created_at >= ? AND created_at <= ?) as revenue,
-          (SELECT COUNT(*) FROM wa_bookings WHERE status != 'cancelled' AND created_at >= ? AND created_at <= ?) as bookings,
-          (SELECT COUNT(*) FROM wa_bookings WHERE arrived = 1 AND created_at >= ? AND created_at <= ?) as arrived,
-          (SELECT COUNT(*) FROM booking_attempts WHERE completed = 0 AND started_at >= ? AND started_at <= ?) as booking_drops,
-          (SELECT COUNT(*) FROM wa_sessions WHERE state IN ('awaiting_menu','awaiting_upi_payment','awaiting_payment') AND updated_at >= ?) as active_carts
-      `).bind(
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom,
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom, dateTo + 'T23:59:59',
-        dateFrom
-      ).first();
+          (SELECT COUNT(*) FROM wa_users) as total_leads,
+          (SELECT COUNT(*) FROM wa_sessions WHERE ctwa_clid IS NOT NULL) as ctwa_leads,
+          (SELECT COUNT(*) FROM wa_orders WHERE payment_status = 'paid') as orders,
+          (SELECT COALESCE(SUM(total), 0) FROM wa_orders WHERE payment_status = 'paid') as revenue,
+          (SELECT COUNT(*) FROM wa_bookings WHERE status != 'cancelled') as bookings,
+          (SELECT COUNT(*) FROM wa_bookings WHERE arrived = 1) as arrived,
+          (SELECT COUNT(*) FROM booking_attempts WHERE completed = 0) as booking_drops,
+          (SELECT COUNT(*) FROM wa_sessions WHERE state IN ('awaiting_menu','awaiting_upi_payment','awaiting_payment')) as active_carts
+      `).first();
 
       // Source breakdown
       const sources = await db.prepare(`
@@ -101,10 +101,9 @@ export async function onRequest(context) {
           COALESCE(first_source, 'direct') as source,
           COUNT(*) as count
         FROM wa_users
-        WHERE created_at >= ? AND created_at <= ?
         GROUP BY first_source
         ORDER BY count DESC
-      `).bind(dateFrom, dateTo + 'T23:59:59').all();
+      `).all();
 
       return new Response(JSON.stringify({
         success: true,
@@ -128,6 +127,8 @@ export async function onRequest(context) {
           lastOrderTotal: l.last_order_total,
           bookingInfo: l.booking_info,
           bookingStatus: l.booking_status,
+          lastMessage: l.last_message || '',
+          lastMessageDir: l.last_message_dir || '',
         })),
         metrics: {
           totalLeads: metrics.total_leads || 0,

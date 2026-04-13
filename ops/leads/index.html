@@ -108,6 +108,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   </div>
 </div>
 
+<!-- Date Range -->
+<div class="filters" style="margin-bottom:6px">
+  <button class="filter-btn" data-range="1" onclick="setRange('1')">Today</button>
+  <button class="filter-btn" data-range="7" onclick="setRange('7')">7 Days</button>
+  <button class="filter-btn active" data-range="30" onclick="setRange('30')">30 Days</button>
+  <button class="filter-btn" data-range="all" onclick="setRange('all')">All Time</button>
+</div>
+
 <!-- Funnel -->
 <div class="funnel" id="funnel"></div>
 
@@ -158,13 +166,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 const API = '/api/leads';
 let data = { leads: [], metrics: {}, sources: [] };
 let currentFilter = 'all';
+let currentRange = '30';
 let currentLeadId = null;
 
 async function loadData() {
   const bar = document.getElementById('refreshBar');
   bar.style.width = '30%';
   try {
-    const res = await fetch(API);
+    const rangeParam = currentRange === 'all' ? '&show=all' : '&from=' + new Date(Date.now() - parseInt(currentRange) * 86400000).toISOString().slice(0, 10);
+    const res = await fetch(API + '?action=list' + rangeParam);
     const json = await res.json();
     if (!json.success) throw new Error(json.error);
     data = json;
@@ -252,6 +262,7 @@ function renderLeads() {
         ${l.bookingInfo ? '<span style="color:var(--purple)">Booking: ' + l.bookingInfo + '</span>' : ''}
         ${l.cartTotal > 0 ? '<span style="color:var(--yellow)">Cart: \u20B9' + Math.round(l.cartTotal) + '</span>' : ''}
       </div>
+      ${l.lastMessage ? '<div style="font-size:10px;color:' + (l.lastMessageDir === 'in' ? 'var(--green)' : 'var(--blue)') + ';margin-bottom:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + (l.lastMessageDir === 'in' ? '\u2192 ' : '\u2190 ') + escHtml((l.lastMessage || '').substring(0, 80)) + '</div>' : ''}
       ${l.leadNotes ? '<div style="font-size:10px;color:var(--text2);font-style:italic;margin-bottom:4px">\u{1F4CC} ' + l.leadNotes + '</div>' : ''}
       <div class="lead-actions">
         ${needsCall ? '<a href="' + callLink + '" class="btn-call">\u260E Call</a>' : ''}
@@ -276,6 +287,14 @@ function formatStage(s) {
 }
 function timeAgo(iso) { if(!iso) return ''; const m = Math.floor((Date.now()-new Date(iso).getTime())/60000); if(m<1) return 'now'; if(m<60) return m+'m'; const h=Math.floor(m/60); if(h<24) return h+'h'; return Math.floor(h/24)+'d'; }
 function esc(s) { return (s||'').replace(/'/g,"\\'"); }
+
+function setRange(r) {
+  currentRange = r;
+  document.querySelectorAll('[data-range]').forEach(b => b.classList.toggle('active', b.dataset.range === r));
+  loadData();
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 async function updateStatus(waId, status) {
   await fetch(API + '?action=update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ waId, status }) });
