@@ -170,8 +170,8 @@ async function createSearchCampaign(accessToken, env) {
         },
         geoTargetTypeSetting: {
           positiveGeoTargetType: 'PRESENCE',
-          negativeGeoTargetType: 'PRESENCE_OR_INTEREST',
         },
+        containsEuPoliticalAdvertising: false,
       },
     }]);
     const campaignResource = campaignResults[0].resourceName;
