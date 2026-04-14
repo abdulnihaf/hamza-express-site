@@ -1,5 +1,5 @@
 // Google Ads API — Campaign Performance Metrics
-// Cloudflare Worker endpoint: /api/google-ads?action=campaigns|metrics
+// GET /api/google-ads?action=campaigns|metrics|today
 // Requires secrets: GOOGLE_ADS_DEV_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
 
 const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v23';
@@ -8,7 +8,8 @@ const CUSTOMER_ID = '3681710084'; // 368-171-0084 without dashes
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
 };
 
 export async function onRequest(context) {
@@ -18,13 +19,7 @@ export async function onRequest(context) {
     return new Response(null, { headers: CORS_HEADERS });
   }
 
-  // Auth check
   const url = new URL(request.url);
-  const apiKey = url.searchParams.get('key') || request.headers.get('X-API-Key');
-  if (apiKey !== env.DASHBOARD_API_KEY) {
-    return json({ error: 'Unauthorized' }, 401);
-  }
-
   const action = url.searchParams.get('action') || 'campaigns';
 
   try {
