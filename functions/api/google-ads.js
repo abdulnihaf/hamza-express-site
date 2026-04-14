@@ -33,8 +33,12 @@ export async function onRequest(context) {
         return await getCampaignMetrics(accessToken, env, url.searchParams);
       case 'today':
         return await getTodayMetrics(accessToken, env);
+      case 'keywords':
+        return await getKeywordIdeas(accessToken, env, url.searchParams);
+      case 'keyword-volumes':
+        return await getKeywordVolumes(accessToken, env, url.searchParams);
       default:
-        return json({ error: 'Unknown action. Use: campaigns, metrics, today' }, 400);
+        return json({ error: 'Unknown action. Use: campaigns, metrics, today, keywords, keyword-volumes' }, 400);
     }
   } catch (err) {
     return json({ error: err.message, stack: err.stack }, 500);
@@ -220,6 +224,122 @@ async function getTodayMetrics(accessToken, env) {
   };
 
   return json({ date: today, campaigns, totals });
+}
+
+// Action: Get keyword ideas with search volumes from Keyword Planner
+// Usage: /api/google-ads?action=keywords&seeds=biryani+shivajinagar,ghee+rice,kabab+near+me
+// Optional: &location=1007768 (default: Bangalore), &language=1000 (default: English)
+async function getKeywordIdeas(accessToken, env, params) {
+  const seedsParam = params.get('seeds') || 'biryani shivajinagar,restaurant shivajinagar';
+  const seeds = seedsParam.split(',').map(s => s.trim());
+  const locationId = params.get('location') || '1007768'; // 1007768 = Bangalore
+  const languageId = params.get('language') || '1000'; // 1000 = English
+
+  // Keyword Planner API — generateKeywordIdeas
+  const resp = await fetch(
+    `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}:generateKeywordIdeas`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        keywordSeed: { keywords: seeds },
+        geoTargetConstants: [`geoTargetConstants/${locationId}`],
+        language: `languageConstants/${languageId}`,
+        keywordPlanNetwork: 'GOOGLE_SEARCH',
+        includeAdultKeywords: false,
+      }),
+    }
+  );
+
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`Keyword Planner error (${resp.status}): ${errorText}`);
+  }
+
+  const data = await resp.json();
+  const results = (data.results || []).map(r => {
+    const metrics = r.keywordIdeaMetrics || {};
+    return {
+      keyword: r.text || '',
+      avgMonthlySearches: parseInt(metrics.avgMonthlySearches) || 0,
+      competition: metrics.competition || 'UNSPECIFIED',
+      competitionIndex: parseInt(metrics.competitionIndex) || 0,
+      lowTopOfPageBidMicros: metrics.lowTopOfPageBidMicros ? (parseInt(metrics.lowTopOfPageBidMicros) / 1000000).toFixed(2) : null,
+      highTopOfPageBidMicros: metrics.highTopOfPageBidMicros ? (parseInt(metrics.highTopOfPageBidMicros) / 1000000).toFixed(2) : null,
+      monthlySearchVolumes: (metrics.monthlySearchVolumes || []).slice(-6).map(m => ({
+        month: m.month, year: m.year, searches: parseInt(m.monthlySearches) || 0,
+      })),
+    };
+  });
+
+  // Sort by volume descending
+  results.sort((a, b) => b.avgMonthlySearches - a.avgMonthlySearches);
+
+  return json({
+    seeds,
+    location: locationId === '1007768' ? 'Bangalore' : locationId,
+    language: languageId === '1000' ? 'English' : languageId,
+    totalIdeas: results.length,
+    keywords: results,
+  });
+}
+
+// Also: Get historical metrics for SPECIFIC keywords (exact volumes)
+// Usage: /api/google-ads?action=keyword-volumes&keywords=biryani+shivajinagar,ghee+rice+bangalore
+async function getKeywordVolumes(accessToken, env, params) {
+  const keywordsParam = params.get('keywords') || '';
+  if (!keywordsParam) return json({ error: 'keywords param required' }, 400);
+  const keywords = keywordsParam.split(',').map(s => s.trim());
+  const locationId = params.get('location') || '1007768';
+  const languageId = params.get('language') || '1000';
+
+  const resp = await fetch(
+    `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}:generateKeywordHistoricalMetrics`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        keywords,
+        geoTargetConstants: [`geoTargetConstants/${locationId}`],
+        language: `languageConstants/${languageId}`,
+        keywordPlanNetwork: 'GOOGLE_SEARCH',
+      }),
+    }
+  );
+
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`Keyword Historical Metrics error (${resp.status}): ${errorText}`);
+  }
+
+  const data = await resp.json();
+  const results = (data.results || []).map(r => {
+    const metrics = r.keywordMetrics || {};
+    return {
+      keyword: r.text || '',
+      avgMonthlySearches: parseInt(metrics.avgMonthlySearches) || 0,
+      competition: metrics.competition || 'UNSPECIFIED',
+      competitionIndex: parseInt(metrics.competitionIndex) || 0,
+      lowBidINR: metrics.lowTopOfPageBidMicros ? (parseInt(metrics.lowTopOfPageBidMicros) / 1000000).toFixed(2) : null,
+      highBidINR: metrics.highTopOfPageBidMicros ? (parseInt(metrics.highTopOfPageBidMicros) / 1000000).toFixed(2) : null,
+      monthly: (metrics.monthlySearchVolumes || []).slice(-6).map(m => ({
+        month: m.month, year: m.year, searches: parseInt(m.monthlySearches) || 0,
+      })),
+    };
+  });
+
+  return json({
+    keywords: results,
+    location: locationId === '1007768' ? 'Bangalore' : locationId,
+  });
 }
 
 // Helpers
