@@ -172,7 +172,6 @@ async function createSearchCampaign(accessToken, env) {
           positiveGeoTargetType: 'PRESENCE',
           negativeGeoTargetType: 'PRESENCE_OR_INTEREST',
         },
-        startDate: todayIST(),
       },
     }]);
     const campaignResource = campaignResults[0].resourceName;
