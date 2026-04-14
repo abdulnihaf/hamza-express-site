@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HE Google Ads Cockpit</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--red:#ef4444;--orange:#f97316;--yellow:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;--cyan:#06b6d4;--ggreen:#34a853;--gblue:#4285f4;--gyellow:#fbbc05;--gred:#ea4335}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+.container{max-width:1300px;margin:0 auto;padding:16px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.header h1::before{content:'';width:5px;height:20px;background:linear-gradient(180deg,var(--gblue),var(--ggreen));border-radius:3px}
+.status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.filters{display:flex;gap:6px;margin-bottom:14px}
+.fbtn{padding:5px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer}
+.fbtn:hover{border-color:var(--gblue);color:var(--text)}
+.fbtn.active{background:var(--gblue);color:#fff;border-color:var(--gblue)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.kpi-value{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kpi-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.kpi .kpi-value.green{color:var(--ggreen)}.kpi .kpi-value.blue{color:var(--gblue)}.kpi .kpi-value.orange{color:var(--orange)}.kpi .kpi-value.red{color:var(--gred)}.kpi .kpi-value.yellow{color:var(--gyellow)}.kpi .kpi-value.cyan{color:var(--cyan)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.section-title::before{content:'';width:3px;height:14px;background:var(--gblue);border-radius:2px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{text-align:left;padding:6px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:6px;border-bottom:1px solid rgba(45,58,79,.4)}
+tr:hover{background:rgba(66,133,244,.05)}
+.winner{background:rgba(52,168,83,.08);border-left:3px solid var(--ggreen)}
+.chart{display:flex;align-items:flex-end;gap:2px;height:100px;margin-top:8px}
+.chart-bar{flex:1;border-radius:3px 3px 0 0;min-height:2px;cursor:pointer;transition:all .2s;position:relative}
+.chart-bar.impr{background:var(--gblue)}
+.chart-bar.clicks{background:var(--ggreen)}
+.chart-bar:hover{opacity:.7}
+.chart-bar:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:9px;white-space:nowrap;z-index:10}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.compare-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
+.compare-label{font-size:9px;color:var(--muted);text-transform:uppercase}
+.compare-value{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:2px}
+.search-term{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(45,58,79,.3);font-size:11px}
+.st-term{flex:1;font-weight:500;color:var(--text)}
+.st-metrics{display:flex;gap:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)}
+.g-logo{display:inline-flex;gap:1px;font-weight:700;font-size:14px;margin-right:6px}
+.g-logo span:nth-child(1){color:var(--gblue)}.g-logo span:nth-child(2){color:var(--gred)}.g-logo span:nth-child(3){color:var(--gyellow)}.g-logo span:nth-child(4){color:var(--gblue)}.g-logo span:nth-child(5){color:var(--ggreen)}.g-logo span:nth-child(6){color:var(--gred)}
+.badge{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600}
+.badge-nearme{background:rgba(66,133,244,.15);color:var(--gblue)}
+.badge-shivaji{background:rgba(52,168,83,.15);color:var(--ggreen)}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:12px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><span class="g-logo"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></span> Ads Command Center</h1>
+    <div class="status"><div class="status-dot"></div><span id="statusText">Loading...</span></div>
+  </div>
+
+  <div class="filters">
+    <button class="fbtn active" data-period="today">Today</button>
+    <button class="fbtn" data-period="7d">7 Days</button>
+    <button class="fbtn" data-period="30d">30 Days</button>
+    <button class="fbtn" data-period="all">All</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- Ad Group Comparison + Search Funnel -->
+  <div class="grid-2">
+    <div class="section">
+      <div class="section-title">Ad Group Performance</div>
+      <div id="adGroups"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Search Position</div>
+      <div class="compare" id="position"></div>
+    </div>
+  </div>
+
+  <!-- Keyword Performance -->
+  <div class="section">
+    <div class="section-title">Keyword Performance</div>
+    <div id="keywords"></div>
+  </div>
+
+  <!-- Daily Trend -->
+  <div class="section">
+    <div class="section-title">Daily Trend</div>
+    <div class="grid-2" style="margin-bottom:6px">
+      <div style="font-size:10px;color:var(--gblue)">Impressions</div>
+      <div style="font-size:10px;color:var(--ggreen);text-align:right">Clicks</div>
+    </div>
+    <div class="chart" id="dailyChart"></div>
+    <div id="dailyLabels" style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px"></div>
+  </div>
+
+  <!-- Search Terms -->
+  <div class="section">
+    <div class="section-title">What People Actually Searched</div>
+    <div id="searchTerms"></div>
+  </div>
+</div>
+
+<script>
+const API = '/api/google-cockpit';
+let currentPeriod = 'today';
+let refreshTimer;
+
+// Period buttons
+document.querySelectorAll('.fbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    loadData();
+  });
+});
+
+async function loadData() {
+  const status = document.getElementById('statusText');
+  status.textContent = 'Fetching...';
+  try {
+    const resp = await fetch(`${API}?period=${currentPeriod}`);
+    const data = await resp.json();
+    if (!data.success) { status.textContent = 'Error: ' + (data.error || 'unknown'); return; }
+    render(data);
+    status.textContent = `Live — ${new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'})} IST`;
+  } catch (err) {
+    status.textContent = 'Offline — ' + err.message;
+  }
+}
+
+function render(data) {
+  const o = data.overview;
+
+  // KPIs
+  const costPerClick = o.clicks > 0 ? (o.spend / o.clicks).toFixed(2) : '0';
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Impressions</div><div class="kpi-value blue">${fmt(o.impressions)}</div><div class="kpi-sub">Search Impr Share: ${o.searchImprShare}%</div></div>
+    <div class="kpi"><div class="kpi-label">Clicks</div><div class="kpi-value green">${fmt(o.clicks)}</div><div class="kpi-sub">CTR: ${o.ctr}%</div></div>
+    <div class="kpi"><div class="kpi-label">Spend</div><div class="kpi-value orange">₹${o.spend}</div><div class="kpi-sub">Budget: ₹500/day</div></div>
+    <div class="kpi"><div class="kpi-label">Avg CPC</div><div class="kpi-value cyan">₹${costPerClick}</div><div class="kpi-sub">Max bid: ₹8</div></div>
+    <div class="kpi"><div class="kpi-label">CPM</div><div class="kpi-value yellow">₹${o.avgCPM}</div></div>
+    <div class="kpi"><div class="kpi-label">Top Position</div><div class="kpi-value blue">${o.topImprPct}%</div><div class="kpi-sub">Abs top: ${o.absTopImprPct}%</div></div>
+  `;
+
+  // Ad Group comparison
+  const ags = data.adGroups;
+  if (ags.length > 0) {
+    const maxImpr = Math.max(...ags.map(a => a.impressions), 1);
+    document.getElementById('adGroups').innerHTML = `<table>
+      <tr><th>Ad Group</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>CPC</th></tr>
+      ${ags.map((a, i) => {
+        const isWinner = i === 0 && ags.length > 1;
+        const badge = a.name.includes('Near Me') ? '<span class="badge badge-nearme">Near Me</span>' :
+                      '<span class="badge badge-shivaji">Shivajinagar</span>';
+        return `<tr class="${isWinner ? 'winner' : ''}">
+          <td>${badge}</td><td class="mono">${fmt(a.impressions)}</td><td class="mono">${a.clicks}</td>
+          <td class="mono">${a.ctr}%</td><td class="mono">₹${a.spend}</td><td class="mono">₹${a.avgCPC}</td>
+        </tr>`;
+      }).join('')}
+    </table>`;
+  } else {
+    document.getElementById('adGroups').innerHTML = '<div class="empty">No data yet — campaign just started</div>';
+  }
+
+  // Search position
+  document.getElementById('position').innerHTML = `
+    <div class="compare-card"><div class="compare-label">Search Impr Share</div><div class="compare-value" style="color:var(--gblue)">${o.searchImprShare}%</div></div>
+    <div class="compare-card"><div class="compare-label">Top of Page %</div><div class="compare-value" style="color:var(--ggreen)">${o.topImprPct}%</div></div>
+    <div class="compare-card"><div class="compare-label">#1 Position %</div><div class="compare-value" style="color:var(--gyellow)">${o.absTopImprPct}%</div></div>
+    <div class="compare-card"><div class="compare-label">Conversions</div><div class="compare-value" style="color:var(--orange)">${o.conversions}</div></div>
+  `;
+
+  // Keywords
+  const kws = data.keywords;
+  if (kws.length > 0) {
+    const maxK = Math.max(...kws.map(k => k.impressions), 1);
+    document.getElementById('keywords').innerHTML = `<table>
+      <tr><th>Keyword</th><th>Group</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>CPC</th><th>Impr Share</th></tr>
+      ${kws.map((k, i) => {
+        const badge = k.adGroup.includes('Near Me') ? '<span class="badge badge-nearme">NM</span>' :
+                      '<span class="badge badge-shivaji">SJ</span>';
+        return `<tr class="${i === 0 ? 'winner' : ''}">
+          <td style="font-weight:600">${k.keyword}</td><td>${badge}</td>
+          <td class="mono">${fmt(k.impressions)}</td><td class="mono">${k.clicks}</td>
+          <td class="mono">${k.ctr}%</td><td class="mono">₹${k.spend}</td>
+          <td class="mono">₹${k.avgCPC}</td><td class="mono">${k.imprShare}%</td>
+        </tr>`;
+      }).join('')}
+    </table>`;
+  } else {
+    document.getElementById('keywords').innerHTML = '<div class="empty">No keyword data yet — campaign just started</div>';
+  }
+
+  // Daily trend chart
+  const days = data.daily;
+  if (days.length > 0) {
+    const maxI = Math.max(...days.map(d => d.impressions), 1);
+    const maxC = Math.max(...days.map(d => d.clicks), 1);
+    document.getElementById('dailyChart').innerHTML = days.map(d => {
+      const ih = Math.max(2, (d.impressions / maxI) * 100);
+      const ch = Math.max(2, (d.clicks / maxC) * 100);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
+        <div class="chart-bar impr" style="width:100%;height:${ih}px" data-tip="${d.date}: ${d.impressions} impr"></div>
+        <div class="chart-bar clicks" style="width:60%;height:${ch}px" data-tip="${d.date}: ${d.clicks} clicks"></div>
+      </div>`;
+    }).join('');
+    const labels = document.getElementById('dailyLabels');
+    if (days.length <= 14) {
+      labels.innerHTML = days.map(d => `<span>${d.date.slice(5)}</span>`).join('');
+    } else {
+      labels.innerHTML = `<span>${days[0].date.slice(5)}</span><span>${days[days.length-1].date.slice(5)}</span>`;
+    }
+  } else {
+    document.getElementById('dailyChart').innerHTML = '<div class="empty" style="width:100%">No daily data yet</div>';
+  }
+
+  // Search terms
+  const sts = data.searchTerms;
+  if (sts.length > 0) {
+    document.getElementById('searchTerms').innerHTML = sts.map(s =>
+      `<div class="search-term">
+        <div class="st-term">"${s.term}"</div>
+        <div class="st-metrics">
+          <span>${s.impressions} impr</span>
+          <span>${s.clicks} clicks</span>
+          <span>₹${s.spend}</span>
+        </div>
+      </div>`
+    ).join('');
+  } else {
+    document.getElementById('searchTerms').innerHTML = '<div class="empty">No search terms yet — Google reports these after a few hours of activity</div>';
+  }
+}
+
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+// Auto-refresh every 60s
+loadData();
+refreshTimer = setInterval(loadData, 60000);
+</script>
+</body>
+</html>
