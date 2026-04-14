@@ -77,6 +77,7 @@ export async function onRequest(context) {
           positiveGeoTargetType: 'PRESENCE',
           negativeGeoTargetType: 'PRESENCE',
         },
+        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
       },
     }]);
     const camp = campRes[0].resourceName;
