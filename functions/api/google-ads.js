@@ -1,5 +1,6 @@
-// Google Ads API — Campaign Performance Metrics
-// GET /api/google-ads?action=campaigns|metrics|today
+// Google Ads API — Campaign Management + Performance Metrics
+// GET  /api/google-ads?action=campaigns|metrics|today|keywords|keyword-volumes
+// POST /api/google-ads?action=create-search-campaign|pause-campaign|enable-campaign
 // Requires secrets: GOOGLE_ADS_DEV_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
 
 const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v23';
@@ -7,7 +8,7 @@ const CUSTOMER_ID = '3681710084'; // 368-171-0084 without dashes
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
@@ -23,7 +24,6 @@ export async function onRequest(context) {
   const action = url.searchParams.get('action') || 'campaigns';
 
   try {
-    // Get fresh access token
     const accessToken = await getAccessToken(env);
 
     switch (action) {
@@ -37,8 +37,14 @@ export async function onRequest(context) {
         return await getKeywordIdeas(accessToken, env, url.searchParams);
       case 'keyword-volumes':
         return await getKeywordVolumes(accessToken, env, url.searchParams);
+      case 'create-search-campaign':
+        return await createSearchCampaign(accessToken, env);
+      case 'pause-campaign':
+        return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'PAUSED');
+      case 'enable-campaign':
+        return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'ENABLED');
       default:
-        return json({ error: 'Unknown action. Use: campaigns, metrics, today, keywords, keyword-volumes' }, 400);
+        return json({ error: 'Unknown action' }, 400);
     }
   } catch (err) {
     return json({ error: err.message, stack: err.stack }, 500);
@@ -87,6 +93,268 @@ async function queryGoogleAds(accessToken, env, query) {
 
   const data = await resp.json();
   return data.results || [];
+}
+
+// Google Ads API mutate helper — for creating/updating resources
+async function mutateGoogleAds(accessToken, env, resource, operations) {
+  const resp = await fetch(
+    `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/${resource}:mutate`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ operations }),
+    }
+  );
+
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`Mutate ${resource} failed (${resp.status}): ${errorText}`);
+  }
+
+  const data = await resp.json();
+  return data.results || [];
+}
+
+// Action: Pause or enable a campaign by ID
+async function setCampaignStatus(accessToken, env, campaignId, status) {
+  if (!campaignId) return json({ error: 'id param required (campaign ID)' }, 400);
+  const resourceName = `customers/${CUSTOMER_ID}/campaigns/${campaignId}`;
+  const results = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+    update: { resourceName, status },
+    updateMask: 'status',
+  }]);
+  return json({ success: true, campaignId, status, result: results[0] });
+}
+
+// ============================================================
+// CREATE SEARCH CAMPAIGN — Full 8-step sequential creation
+// HE — Ghee Rice & Kabab — Local Search
+// 5km radius from Hamza Express (12.9868°N, 77.6044°E)
+// ============================================================
+async function createSearchCampaign(accessToken, env) {
+  const log = [];
+  const step = (n, msg) => log.push(`Step ${n}: ${msg}`);
+
+  try {
+    // ── Step 1: Campaign Budget ──
+    step(1, 'Creating campaign budget ₹500/day');
+    const budgetResults = await mutateGoogleAds(accessToken, env, 'campaignBudgets', [{
+      create: {
+        name: 'HE Search ₹500/day',
+        amountMicros: '500000000',
+        deliveryMethod: 'STANDARD',
+        explicitlyShared: false,
+      },
+    }]);
+    const budgetResource = budgetResults[0].resourceName;
+    step(1, `Budget created: ${budgetResource}`);
+
+    // ── Step 2: Campaign ──
+    step(2, 'Creating campaign');
+    const campaignResults = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+      create: {
+        name: 'HE — Ghee Rice & Kabab — Local Search',
+        status: 'PAUSED',
+        advertisingChannelType: 'SEARCH',
+        campaignBudget: budgetResource,
+        manualCpc: { enhancedCpcEnabled: false },
+        networkSettings: {
+          targetGoogleSearch: true,
+          targetSearchNetwork: false,
+          targetContentNetwork: false,
+          targetPartnerSearchNetwork: false,
+        },
+        geoTargetTypeSetting: {
+          positiveGeoTargetType: 'PRESENCE',
+          negativeGeoTargetType: 'PRESENCE_OR_INTEREST',
+        },
+        startDate: todayIST(),
+      },
+    }]);
+    const campaignResource = campaignResults[0].resourceName;
+    step(2, `Campaign created: ${campaignResource}`);
+
+    // ── Step 3: Two Ad Groups ──
+    step(3, 'Creating ad groups');
+    const adGroupResults = await mutateGoogleAds(accessToken, env, 'adGroups', [
+      {
+        create: {
+          name: 'Near Me — Ghee Rice Kabab Biryani',
+          campaign: campaignResource,
+          status: 'ENABLED',
+          type: 'SEARCH_STANDARD',
+          cpcBidMicros: '8000000',
+        },
+      },
+      {
+        create: {
+          name: 'Shivajinagar — Destination Intent',
+          campaign: campaignResource,
+          status: 'ENABLED',
+          type: 'SEARCH_STANDARD',
+          cpcBidMicros: '5000000',
+        },
+      },
+    ]);
+    const ag1 = adGroupResults[0].resourceName;
+    const ag2 = adGroupResults[1].resourceName;
+    step(3, `Ad groups created: ${ag1}, ${ag2}`);
+
+    // ── Step 4: Keywords ──
+    step(4, 'Creating keywords');
+    const nearMeKeywords = [
+      'best restaurant near me',
+      'best biryani near me',
+      'best ghee rice near me',
+      'best kabab near me',
+    ];
+    const shivajiKeywords = [
+      'shivajinagar restaurant',
+      'shivajinagar biryani',
+      'shivajinagar food',
+      'restaurants in shivajinagar',
+    ];
+    const kwOps = [
+      ...nearMeKeywords.map(kw => ({
+        create: { adGroup: ag1, status: 'ENABLED', keyword: { text: kw, matchType: 'PHRASE' } },
+      })),
+      ...shivajiKeywords.map(kw => ({
+        create: { adGroup: ag2, status: 'ENABLED', keyword: { text: kw, matchType: 'PHRASE' } },
+      })),
+    ];
+    await mutateGoogleAds(accessToken, env, 'adGroupCriteria', kwOps);
+    step(4, `8 keywords created (4 near-me + 4 shivajinagar)`);
+
+    // ── Step 5: Responsive Search Ads ──
+    step(5, 'Creating responsive search ads');
+    const headlines = [
+      { text: 'Hamza Express — Est. 1918', pinnedField: 'HEADLINE_1' },
+      { text: 'Ghee Rice. Kebab. Bheja Fry.' },
+      { text: '5.0★ Google (70+ Reviews)' },
+      { text: 'Best Ghee Rice in Bangalore' },
+      { text: 'HKP Road, Shivajinagar' },
+      { text: 'Legendary Kabab Since 1918' },
+      { text: 'Combo Meals from ₹139' },
+      { text: 'Open 12 PM to 12:30 AM' },
+      { text: 'Free Dal, Sherwa & Salad' },
+      { text: '108 Years, Same Kitchen' },
+      { text: 'Order on WhatsApp' },
+      { text: 'Drive-Worthy Bheja Fry' },
+      { text: 'Walk In or Takeaway' },
+      { text: 'Near Russell Market' },
+      { text: 'Dakhni Cuisine Since 1918' },
+    ];
+    const descriptions = [
+      { text: 'Ghee rice that glistens, charcoal kebabs people queue for, bheja fry worth the drive. Since 1918.' },
+      { text: '5.0 on Google, 70+ reviews. Combos from ₹139 with free Dal, Sherwa & Salad. Walk in anytime.' },
+      { text: '108-year Dakhni legacy on HKP Road. Ghee Rice, Kebab, Brain Fry, Shawarma. Open 12PM-12:30AM.' },
+      { text: 'WhatsApp us, pay UPI, collect in 15 min. Or walk in for dine-in. Near Russell Market.' },
+    ];
+    const adBody = {
+      responsiveSearchAd: { headlines, descriptions, path1: 'ghee-rice', path2: 'kebab' },
+      finalUrls: ['https://hamzaexpress.in'],
+    };
+    await mutateGoogleAds(accessToken, env, 'adGroupAds', [
+      { create: { adGroup: ag1, status: 'ENABLED', ad: adBody } },
+      { create: { adGroup: ag2, status: 'ENABLED', ad: adBody } },
+    ]);
+    step(5, '2 responsive search ads created (1 per ad group)');
+
+    // ── Step 6: Campaign Criteria — Location + Schedule + Negatives ──
+    step(6, 'Setting location, schedule, and negative keywords');
+    const c = campaignResource;
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+
+    // Location: 5km radius from Hamza Express 12.9868°N, 77.6044°E
+    const locationCriterion = {
+      create: {
+        campaign: c,
+        proximity: {
+          geoPoint: {
+            latitudeInMicroDegrees: 12986800,
+            longitudeInMicroDegrees: 77604400,
+          },
+          radius: 5.0,
+          radiusUnits: 'KILOMETERS',
+        },
+      },
+    };
+
+    // Ad schedules: 11:00-14:00 + 18:00-22:30, all 7 days
+    const scheduleOps = days.flatMap(day => [
+      { create: { campaign: c, adSchedule: { dayOfWeek: day, startHour: 11, startMinute: 'ZERO', endHour: 14, endMinute: 'ZERO' } } },
+      { create: { campaign: c, adSchedule: { dayOfWeek: day, startHour: 18, startMinute: 'ZERO', endHour: 22, endMinute: 'THIRTY' } } },
+    ]);
+
+    // Negative keywords (campaign-level)
+    const negatives = [
+      'recipe', 'how to make', 'ingredients', 'cooking', 'homemade',
+      'movie', 'download', 'streaming', 'watch online',
+      'Swiggy', 'Zomato', 'jobs', 'hiring', 'franchise',
+      'calories', 'nutrition', 'diet', 'veg', 'vegetarian',
+    ];
+    const negOps = negatives.map(kw => ({
+      create: { campaign: c, negative: true, keyword: { text: kw, matchType: 'PHRASE' } },
+    }));
+
+    await mutateGoogleAds(accessToken, env, 'campaignCriteria', [
+      locationCriterion,
+      ...scheduleOps,
+      ...negOps,
+    ]);
+    step(6, `Location (5km radius), 14 schedules, ${negatives.length} negative keywords set`);
+
+    // ── Step 7: Assets ──
+    step(7, 'Creating sitelink, callout, structured snippet assets');
+    const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
+      // 4 Sitelinks
+      { create: { sitelinkAsset: { linkText: 'View Our Menu', description1: '100+ dishes across 9 categories', description2: 'Ghee Rice, Kebab, Biryani & more', finalUrls: ['https://hamzaexpress.in/#menu'] } } },
+      { create: { sitelinkAsset: { linkText: 'Order on WhatsApp', description1: 'Skip the queue', description2: 'Pay UPI, collect in 15 min', finalUrls: ['https://hamzaexpress.in/go/google-ad'] } } },
+      { create: { sitelinkAsset: { linkText: 'Our 108-Year Legacy', description1: 'Same recipes since 1918', description2: 'Dakhni cuisine heritage', finalUrls: ['https://hamzaexpress.in/#legacy'] } } },
+      { create: { sitelinkAsset: { linkText: 'Get Directions', description1: 'HKP Road, Shivajinagar', description2: 'Near Russell Market', finalUrls: ['https://hamzaexpress.in/go/maps'] } } },
+      // 5 Callouts
+      { create: { calloutAsset: { calloutText: 'Est. 1918' } } },
+      { create: { calloutAsset: { calloutText: '5.0 on Google' } } },
+      { create: { calloutAsset: { calloutText: '108-Year Legacy' } } },
+      { create: { calloutAsset: { calloutText: 'HKP Road' } } },
+      { create: { calloutAsset: { calloutText: 'Free Salad & Sherwa' } } },
+      // 1 Structured Snippet
+      { create: { structuredSnippetAsset: { header: 'Menu', values: ['Ghee Rice', 'Chicken Kebab', 'Bheja Fry', 'Biryani', 'Shawarma', 'Tandoori'] } } },
+    ]);
+    step(7, `${assetResults.length} assets created`);
+
+    // ── Step 8: Link Assets to Campaign ──
+    step(8, 'Linking assets to campaign');
+    const assetLinkOps = assetResults.map((r, i) => {
+      let fieldType;
+      if (i < 4) fieldType = 'SITELINK';
+      else if (i < 9) fieldType = 'CALLOUT';
+      else fieldType = 'STRUCTURED_SNIPPET';
+      return { create: { campaign: c, asset: r.resourceName, fieldType } };
+    });
+    await mutateGoogleAds(accessToken, env, 'campaignAssets', assetLinkOps);
+    step(8, `${assetLinkOps.length} assets linked to campaign`);
+
+    return json({
+      success: true,
+      campaignName: 'HE — Ghee Rice & Kabab — Local Search',
+      status: 'PAUSED (enable when ready)',
+      budget: '₹500/day',
+      location: '5km radius from 12.9868°N, 77.6044°E',
+      schedule: '11AM-2PM + 6PM-10:30PM daily',
+      adGroups: ['Near Me (4 keywords, ₹8 max CPC)', 'Shivajinagar (4 keywords, ₹5 max CPC)'],
+      negativeKeywords: negatives.length,
+      assets: '4 sitelinks + 5 callouts + 1 structured snippet',
+      resources: { budget: budgetResource, campaign: campaignResource, adGroup1: ag1, adGroup2: ag2 },
+      log,
+    });
+  } catch (err) {
+    return json({ success: false, error: err.message, stepsCompleted: log, stack: err.stack }, 500);
+  }
 }
 
 // Action: Get all campaigns with status
