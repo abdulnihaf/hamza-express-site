@@ -31,21 +31,23 @@ async function fetchMetaAdsData(token, period) {
     const d30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     dateParam = `time_range={"since":"${d30}","until":"${today}"}`;
   } else {
-    dateParam = `time_range={"since":"2026-04-01","until":"${today}"}`;
+    dateParam = 'date_preset=maximum';
   }
 
   try {
-    const [campaignRes, perAdRes, audienceRes] = await Promise.all([
+    const [campaignRes, perAdRes, audienceRes, dailyRes] = await Promise.all([
       // 1. Campaign overview
-      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach,spend,actions,cost_per_action_type,cpc,cpm,ctr&access_token=${token}`),
+      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach,spend,actions,cost_per_action_type,cpc,cpm,ctr,frequency&access_token=${token}`),
       // 2. Per-ad breakdown
-      fetch(`https://graph.facebook.com/v25.0/${META_ADSET_ID}/insights?${dateParam}&level=ad&fields=ad_name,impressions,reach,spend,actions,cost_per_action_type&access_token=${token}`),
-      // 3. Audience breakdown
-      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach&breakdowns=age,gender&access_token=${token}`),
+      fetch(`https://graph.facebook.com/v25.0/${META_ADSET_ID}/insights?${dateParam}&level=ad&fields=ad_name,impressions,reach,spend,frequency,actions,cost_per_action_type&access_token=${token}`),
+      // 3. Audience breakdown (always lifetime for meaningful data)
+      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?date_preset=maximum&fields=impressions,reach,spend,actions&breakdowns=age,gender&access_token=${token}`),
+      // 4. Daily trend
+      fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?date_preset=maximum&time_increment=1&fields=impressions,spend,actions&access_token=${token}`),
     ]);
 
-    const [campaign, perAd, audience] = await Promise.all([
-      campaignRes.json(), perAdRes.json(), audienceRes.json(),
+    const [campaign, perAd, audience, daily] = await Promise.all([
+      campaignRes.json(), perAdRes.json(), audienceRes.json(), dailyRes.json(),
     ]);
 
     // Parse campaign overview
@@ -62,18 +64,39 @@ async function fetchMetaAdsData(token, period) {
         impressions: parseInt(a.impressions || 0),
         reach: parseInt(a.reach || 0),
         spend: parseFloat(a.spend || 0),
+        frequency: parseFloat(a.frequency || 0),
         clicks: aActions.link_click || 0,
         conversations: aActions['onsite_conversion.messaging_conversation_started_7d'] || 0,
         costPerConversation: aCosts['onsite_conversion.messaging_conversation_started_7d'] || 0,
+        depth2: aActions['onsite_conversion.messaging_user_depth_2_message_send'] || 0,
+        depth3: aActions['onsite_conversion.messaging_user_depth_3_message_send'] || 0,
       };
     });
 
-    // Parse audience
-    const aud = (audience.data || []).map(a => ({
-      age: a.age, gender: a.gender,
-      impressions: parseInt(a.impressions || 0),
-      reach: parseInt(a.reach || 0),
-    }));
+    // Parse audience (with actions — clicks, messages)
+    const aud = (audience.data || []).map(a => {
+      const aActs = (a.actions || []).reduce((m, x) => { m[x.action_type] = parseInt(x.value); return m; }, {});
+      return {
+        age: a.age, gender: a.gender,
+        impressions: parseInt(a.impressions || 0),
+        reach: parseInt(a.reach || 0),
+        spend: parseFloat(a.spend || 0),
+        clicks: aActs.link_click || 0,
+        conversations: aActs['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      };
+    });
+
+    // Parse daily trend
+    const dailyTrend = (daily.data || []).map(d => {
+      const dActs = (d.actions || []).reduce((m, x) => { m[x.action_type] = parseInt(x.value); return m; }, {});
+      return {
+        date: d.date_start,
+        impressions: parseInt(d.impressions || 0),
+        spend: parseFloat(d.spend || 0),
+        clicks: dActs.link_click || 0,
+        conversations: dActs['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      };
+    });
 
     return {
       available: true,
@@ -84,12 +107,18 @@ async function fetchMetaAdsData(token, period) {
       ctr: c.ctr || '0',
       cpc: parseFloat(c.cpc || 0),
       cpm: parseFloat(c.cpm || 0),
+      frequency: parseFloat(c.frequency || 0),
       conversations: actions['onsite_conversion.messaging_conversation_started_7d'] || 0,
       costPerConversation: costs['onsite_conversion.messaging_conversation_started_7d'] || 0,
+      depth2: actions['onsite_conversion.messaging_user_depth_2_message_send'] || 0,
+      depth3: actions['onsite_conversion.messaging_user_depth_3_message_send'] || 0,
       reactions: actions.post_reaction || 0,
+      saves: actions['onsite_conversion.post_save'] || 0,
       shares: actions.post || 0,
+      comments: actions.comment || 0,
       perAd: ads,
       audience: aud,
+      dailyTrend: dailyTrend,
     };
   } catch (e) {
     console.log('Meta Ads API error:', e.message);
