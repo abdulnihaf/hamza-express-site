@@ -155,47 +155,26 @@ async function createSearchCampaign(accessToken, env) {
 
     // ── Step 2: Campaign ──
     step(2, 'Creating campaign');
-    // Use googleAds:mutate unified endpoint for campaign creation
-    const campaignCreateResp = await fetch(
-      `${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/googleAds:mutate`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
-          'Content-Type': 'application/json',
+    const campaignResults = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+      create: {
+        name: 'HE — Ghee Rice & Kabab — Local Search',
+        status: 'PAUSED',
+        advertisingChannelType: 'SEARCH',
+        campaignBudget: budgetResource,
+        manualCpc: { enhancedCpcEnabled: false },
+        networkSettings: {
+          targetGoogleSearch: true,
+          targetSearchNetwork: false,
+          targetContentNetwork: false,
+          targetPartnerSearchNetwork: false,
         },
-        body: JSON.stringify({
-          mutateOperations: [{
-            campaignOperation: {
-              create: {
-                name: 'HE — Ghee Rice & Kabab — Local Search',
-                status: 'PAUSED',
-                advertisingChannelType: 'SEARCH',
-                campaignBudget: budgetResource,
-                manualCpc: { enhancedCpcEnabled: false },
-                networkSettings: {
-                  targetGoogleSearch: true,
-                  targetSearchNetwork: false,
-                  targetContentNetwork: false,
-                  targetPartnerSearchNetwork: false,
-                },
-                geoTargetTypeSetting: {
-                  positiveGeoTargetType: 'PRESENCE',
-                  negativeGeoTargetType: 'PRESENCE',
-                },
-              },
-            },
-          }],
-        }),
-      }
-    );
-    if (!campaignCreateResp.ok) {
-      const err = await campaignCreateResp.text();
-      throw new Error(`Campaign create failed (${campaignCreateResp.status}): ${err}`);
-    }
-    const campaignCreateData = await campaignCreateResp.json();
-    const campaignResource = campaignCreateData.mutateOperationResponses[0].campaignResult.resourceName;
+        geoTargetTypeSetting: {
+          positiveGeoTargetType: 'PRESENCE',
+          negativeGeoTargetType: 'PRESENCE',
+        },
+        containsEuPoliticalAdvertising: 'NOT_EU_POLITICAL_ADVERTISER',
+      },
+    }]);
     const campaignResource = campaignResults[0].resourceName;
     step(2, `Campaign created: ${campaignResource}`);
 
