@@ -172,7 +172,6 @@ async function createSearchCampaign(accessToken, env) {
           positiveGeoTargetType: 'PRESENCE',
           negativeGeoTargetType: 'PRESENCE',
         },
-        containsEuPoliticalAdvertising: 'NOT_EU_POLITICAL_ADVERTISER',
       },
     }]);
     const campaignResource = campaignResults[0].resourceName;
