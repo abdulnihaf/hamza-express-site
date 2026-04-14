@@ -1,4 +1,4 @@
-// Google Ads API — Campaign Management + Performance Metrics
+// Google Ads API — Campaign Management + Performance Metrics (v7)
 // GET  /api/google-ads?action=campaigns|metrics|today|keywords|keyword-volumes
 // POST /api/google-ads?action=create-search-campaign|pause-campaign|enable-campaign
 // Requires secrets: GOOGLE_ADS_DEV_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN
