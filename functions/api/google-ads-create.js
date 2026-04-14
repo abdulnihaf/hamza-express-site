@@ -52,8 +52,9 @@ export async function onRequest(context) {
 
     // ── Step 1: Budget ──
     step(1, 'Creating budget ₹500/day');
+    const budgetName = `HE Search ₹500 ${new Date().toISOString().slice(0, 10)}`;
     const budgetRes = await mutate('campaignBudgets', [{
-      create: { name: 'HE Local Search ₹500/day', amountMicros: '500000000', deliveryMethod: 'STANDARD' },
+      create: { name: budgetName, amountMicros: '500000000', deliveryMethod: 'STANDARD' },
     }]);
     const budget = budgetRes[0].resourceName;
     step(1, `OK: ${budget}`);
