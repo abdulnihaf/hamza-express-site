@@ -39,9 +39,7 @@ export async function onRequest(context) {
           campaign.id,
           campaign.name,
           campaign.status,
-          campaign.serving_status,
-          campaign.primary_status,
-          campaign.primary_status_reasons
+          campaign.serving_status
         FROM campaign
         WHERE campaign.id = '${CAMPAIGN_ID}'
       `),
@@ -50,9 +48,7 @@ export async function onRequest(context) {
           ad_group.id,
           ad_group.name,
           ad_group.status,
-          ad_group.effective_cpc_bid_micros,
-          ad_group.primary_status,
-          ad_group.primary_status_reasons
+          ad_group.effective_cpc_bid_micros
         FROM ad_group
         WHERE campaign.id = '${CAMPAIGN_ID}'
       `),
@@ -77,6 +73,7 @@ export async function onRequest(context) {
       `),
       gaql(token, env, `
         SELECT
+          campaign.id,
           campaign_budget.id,
           campaign_budget.name,
           campaign_budget.amount_micros,
@@ -95,16 +92,12 @@ export async function onRequest(context) {
     const campaign = {
       status: c.status,
       servingStatus: c.servingStatus,
-      primaryStatus: c.primaryStatus,
-      primaryStatusReasons: c.primaryStatusReasons || [],
     };
 
     // Parse ad groups
     const adGroups = adGroupRows.map(r => ({
       name: r.adGroup?.name,
       status: r.adGroup?.status,
-      primaryStatus: r.adGroup?.primaryStatus,
-      primaryStatusReasons: r.adGroup?.primaryStatusReasons || [],
       effectiveCpcINR: r.adGroup?.effectiveCpcBidMicros
         ? (parseInt(r.adGroup.effectiveCpcBidMicros) / 1e6).toFixed(2)
         : null,
