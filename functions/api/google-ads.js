@@ -43,6 +43,8 @@ export async function onRequest(context) {
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'PAUSED');
       case 'enable-campaign':
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'ENABLED');
+      case 'ad-health':
+        return await getAdHealth(accessToken, env);
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -128,6 +130,151 @@ async function setCampaignStatus(accessToken, env, campaignId, status) {
     updateMask: 'status',
   }]);
   return json({ success: true, campaignId, status, result: results[0] });
+}
+
+// Action: Full ad health check — serving status, policy, bid landscape, schedule
+async function getAdHealth(accessToken, env) {
+  const CAMPAIGN_ID = '23748431244';
+
+  const [adsRows, campaignRows, adGroupRows, criteriaRows, budgetRows] = await Promise.all([
+    // Ad approval + policy status
+    queryGoogleAds(accessToken, env, `
+      SELECT
+        ad_group_ad.ad.id,
+        ad_group_ad.status,
+        ad_group_ad.policy_summary.approval_status,
+        ad_group_ad.policy_summary.review_status,
+        ad_group_ad.policy_summary.policy_topic_entries,
+        ad_group.name,
+        ad_group.status,
+        ad_group.cpc_bid_micros,
+        ad_group.effective_cpc_bid_micros
+      FROM ad_group_ad
+      WHERE campaign.id = '${CAMPAIGN_ID}'
+    `),
+    // Campaign serving status + account-level issues
+    queryGoogleAds(accessToken, env, `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.serving_status,
+        campaign.primary_status,
+        campaign.primary_status_reasons
+      FROM campaign
+      WHERE campaign.id = '${CAMPAIGN_ID}'
+    `),
+    // Ad group effective status
+    queryGoogleAds(accessToken, env, `
+      SELECT
+        ad_group.id,
+        ad_group.name,
+        ad_group.status,
+        ad_group.effective_cpc_bid_micros,
+        ad_group.primary_status,
+        ad_group.primary_status_reasons
+      FROM ad_group
+      WHERE campaign.id = '${CAMPAIGN_ID}'
+    `),
+    // Keywords — match types, quality score, first page bid
+    queryGoogleAds(accessToken, env, `
+      SELECT
+        ad_group_criterion.keyword.text,
+        ad_group_criterion.keyword.match_type,
+        ad_group_criterion.status,
+        ad_group_criterion.approval_status,
+        ad_group_criterion.cpc_bid_micros,
+        ad_group_criterion.effective_cpc_bid_micros,
+        ad_group_criterion.quality_info.quality_score,
+        ad_group_criterion.quality_info.search_predicted_ctr,
+        ad_group_criterion.quality_info.creative_quality_score,
+        ad_group_criterion.position_estimates.first_position_cpc_micros,
+        ad_group_criterion.position_estimates.top_of_page_cpc_micros,
+        ad_group.name
+      FROM ad_group_criterion
+      WHERE campaign.id = '${CAMPAIGN_ID}'
+        AND ad_group_criterion.type = 'KEYWORD'
+        AND ad_group_criterion.negative = false
+    `),
+    // Budget details
+    queryGoogleAds(accessToken, env, `
+      SELECT
+        campaign_budget.id,
+        campaign_budget.name,
+        campaign_budget.amount_micros,
+        campaign_budget.status,
+        campaign_budget.period,
+        campaign_budget.delivery_method,
+        campaign_budget.has_recommended_budget,
+        campaign_budget.recommended_budget_amount_micros
+      FROM campaign_budget
+      WHERE campaign.id = '${CAMPAIGN_ID}'
+    `),
+  ]);
+
+  // Parse ads
+  const ads = adsRows.map(r => ({
+    adId: r.adGroupAd?.ad?.id,
+    adStatus: r.adGroupAd?.status,
+    approvalStatus: r.adGroupAd?.policySummary?.approvalStatus,
+    reviewStatus: r.adGroupAd?.policySummary?.reviewStatus,
+    policyTopics: r.adGroupAd?.policySummary?.policyTopicEntries || [],
+    adGroupName: r.adGroup?.name,
+    adGroupStatus: r.adGroup?.status,
+    cpcBidINR: r.adGroup?.cpcBidMicros ? (parseInt(r.adGroup.cpcBidMicros) / 1e6).toFixed(2) : null,
+  }));
+
+  // Parse campaign
+  const camp = campaignRows[0]?.campaign || {};
+  const campaign = {
+    status: camp.status,
+    servingStatus: camp.servingStatus,
+    primaryStatus: camp.primaryStatus,
+    primaryStatusReasons: camp.primaryStatusReasons || [],
+  };
+
+  // Parse ad groups
+  const adGroups = adGroupRows.map(r => ({
+    name: r.adGroup?.name,
+    status: r.adGroup?.status,
+    primaryStatus: r.adGroup?.primaryStatus,
+    primaryStatusReasons: r.adGroup?.primaryStatusReasons || [],
+    effectiveCpcINR: r.adGroup?.effectiveCpcBidMicros ? (parseInt(r.adGroup.effectiveCpcBidMicros) / 1e6).toFixed(2) : null,
+  }));
+
+  // Parse keywords with bid landscape
+  const keywords = criteriaRows.map(r => {
+    const c = r.adGroupCriterion || {};
+    const qi = c.qualityInfo || {};
+    const pe = c.positionEstimates || {};
+    return {
+      text: c.keyword?.text,
+      matchType: c.keyword?.matchType,
+      status: c.status,
+      approvalStatus: c.approvalStatus,
+      bidINR: c.cpcBidMicros ? (parseInt(c.cpcBidMicros) / 1e6).toFixed(2) : null,
+      effectiveBidINR: c.effectiveCpcBidMicros ? (parseInt(c.effectiveCpcBidMicros) / 1e6).toFixed(2) : null,
+      qualityScore: qi.qualityScore || 'N/A',
+      predictedCTR: qi.searchPredictedCtr,
+      creativeQuality: qi.creativeQualityScore,
+      firstPageBidINR: pe.firstPositionCpcMicros ? (parseInt(pe.firstPositionCpcMicros) / 1e6).toFixed(2) : null,
+      topOfPageBidINR: pe.topOfPageCpcMicros ? (parseInt(pe.topOfPageCpcMicros) / 1e6).toFixed(2) : null,
+      adGroup: r.adGroup?.name,
+    };
+  });
+
+  // Parse budget
+  const bud = budgetRows[0]?.campaignBudget || {};
+  const budget = {
+    amountINR: bud.amountMicros ? (parseInt(bud.amountMicros) / 1e6).toFixed(2) : null,
+    status: bud.status,
+    period: bud.period,
+    deliveryMethod: bud.deliveryMethod,
+    hasRecommendedBudget: bud.hasRecommendedBudget,
+    recommendedBudgetINR: bud.recommendedBudgetAmountMicros ? (parseInt(bud.recommendedBudgetAmountMicros) / 1e6).toFixed(2) : null,
+  };
+
+  return json({ campaign, adGroups, ads, keywords, budget });
 }
 
 // ============================================================
