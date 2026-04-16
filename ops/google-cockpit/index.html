@@ -109,6 +109,18 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .empty{text-align:center;padding:30px;color:var(--muted);font-size:12px;line-height:1.6}
 .empty small{display:block;margin-top:4px;font-size:10px}
 
+/* Organic section */
+.organic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.org-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px;text-align:center}
+.org-kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.org-kpi-value{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.org-kpi-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.connect-banner{background:rgba(66,133,244,.06);border:1px dashed rgba(66,133,244,.3);border-radius:8px;padding:16px;text-align:center;color:var(--muted);font-size:11px;line-height:1.7}
+.connect-banner code{background:var(--bg2);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)}
+.tab-row{display:flex;gap:2px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px}
+.tab{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);background:none;border:none;transition:all .15s}
+.tab.active{background:var(--bg2);color:var(--text)}
+
 /* Responsive */
 @media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
@@ -148,13 +160,14 @@ tr:hover td{background:rgba(66,133,244,.04)}
     </div>
   </div>
 
-  <!-- GBP Banner -->
-  <div class="gbp-banner">
-    <div class="gbp-icon">📍</div>
-    <div class="gbp-text">
-      <strong>Organic impressions (Google Maps + Search) are separate</strong>
-      Numbers above = paid ad impressions only. Your GBP listing gets additional free impressions every day from people searching on Google Maps — visible in Google Business Profile → Performance. These are not counted here.
+  <!-- Organic Impressions Section -->
+  <div class="section">
+    <div class="section-title">Organic Reach <span class="tip">— Google Maps + Search (free, no ad spend)</span></div>
+    <div class="tab-row">
+      <button class="tab active" data-org-tab="gbp">📍 Google Maps &amp; GBP</button>
+      <button class="tab" data-org-tab="gsc">🔍 Organic Search</button>
     </div>
+    <div id="organicContent"></div>
   </div>
 
   <!-- Keywords -->
@@ -186,7 +199,10 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
 <script>
 const API = '/api/google-cockpit';
+const ORGANIC_API = '/api/organic-insights';
 let currentPeriod = 'today';
+let organicData = null;
+let orgTab = 'gbp';
 
 document.querySelectorAll('.fbtn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -396,9 +412,136 @@ function fmt(n) {
   return (n || 0).toString();
 }
 
+// Organic tab switching
+document.querySelectorAll('[data-org-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-org-tab]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    orgTab = btn.dataset.orgTab;
+    if (organicData) renderOrganic(organicData);
+  });
+});
+
+async function loadOrganic() {
+  try {
+    const resp = await fetch(`${ORGANIC_API}?period=28d`);
+    const data = await resp.json();
+    organicData = data;
+    renderOrganic(data);
+  } catch (e) {
+    document.getElementById('organicContent').innerHTML =
+      `<div class="connect-banner">Could not reach /api/organic-insights</div>`;
+  }
+}
+
+function renderOrganic(data) {
+  const el = document.getElementById('organicContent');
+
+  if (!data.available) {
+    el.innerHTML = `<div class="connect-banner">
+      <strong style="color:var(--text);display:block;margin-bottom:8px">🔗 One-time setup required to unlock organic data</strong>
+      Run this on your Mac to generate a token with Search Console + Maps permissions:<br><br>
+      <code>node scripts/generate-organic-token.js</code><br><br>
+      Then add it to Cloudflare:<br>
+      <code>wrangler pages secret put GOOGLE_ORGANIC_REFRESH_TOKEN</code><br><br>
+      <span style="font-size:10px">Takes 2 minutes. Data will appear here automatically after setup.</span>
+    </div>`;
+    return;
+  }
+
+  if (orgTab === 'gbp') {
+    const g = data.gbp || {};
+    if (g.error) {
+      el.innerHTML = `<div class="connect-banner">GBP Error: ${g.error}</div>`;
+      return;
+    }
+    const totalImpr = (g.mapsImpressions || 0) + (g.searchImpressions || 0);
+    el.innerHTML = `
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Last 28 days · ${g.locationName || 'Hamza Express'}</div>
+      <div class="organic-grid">
+        <div class="org-kpi">
+          <div class="org-kpi-label">Maps Impressions</div>
+          <div class="org-kpi-value" style="color:var(--gblue)">${fmt(g.mapsImpressions || 0)}</div>
+          <div class="org-kpi-sub">Seen on Google Maps</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Search Impressions</div>
+          <div class="org-kpi-value" style="color:var(--ggreen)">${fmt(g.searchImpressions || 0)}</div>
+          <div class="org-kpi-sub">Seen in Search results</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Direction Requests</div>
+          <div class="org-kpi-value" style="color:var(--orange)">${fmt(g.directionRequests || 0)}</div>
+          <div class="org-kpi-sub">Tapped "Get Directions"</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Call Clicks</div>
+          <div class="org-kpi-value" style="color:var(--gyellow)">${fmt(g.callClicks || 0)}</div>
+          <div class="org-kpi-sub">Tapped phone number</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Website Clicks</div>
+          <div class="org-kpi-value" style="color:var(--cyan)">${fmt(g.websiteClicks || 0)}</div>
+          <div class="org-kpi-sub">Clicked website link</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Total Organic</div>
+          <div class="org-kpi-value" style="color:var(--purple)">${fmt(totalImpr)}</div>
+          <div class="org-kpi-sub">Maps + Search combined</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);padding:4px 0">
+        ↑ These are free, organic — no ad spend. Your paid ad gets ${fmt(${data.paidImpressions || 0})} additional impressions on top.
+      </div>`;
+  } else {
+    const s = data.gsc || {};
+    if (s.error) {
+      el.innerHTML = `<div class="connect-banner">GSC Error: ${s.error}</div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Last 28 days · hamzaexpress.in organic search</div>
+      <div class="organic-grid" style="margin-bottom:14px">
+        <div class="org-kpi">
+          <div class="org-kpi-label">Impressions</div>
+          <div class="org-kpi-value" style="color:var(--gblue)">${fmt(s.impressions || 0)}</div>
+          <div class="org-kpi-sub">Shown in search results</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Clicks</div>
+          <div class="org-kpi-value" style="color:var(--ggreen)">${fmt(s.clicks || 0)}</div>
+          <div class="org-kpi-sub">Organic website visits</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Avg CTR</div>
+          <div class="org-kpi-value" style="color:var(--orange)">${s.ctr || 0}%</div>
+          <div class="org-kpi-sub">Click-through rate</div>
+        </div>
+        <div class="org-kpi">
+          <div class="org-kpi-label">Avg Position</div>
+          <div class="org-kpi-value" style="color:${(s.avgPosition||99) <= 5 ? 'var(--ggreen)' : (s.avgPosition||99) <= 10 ? 'var(--gyellow)' : 'var(--gred)'}">#${s.avgPosition || '—'}</div>
+          <div class="org-kpi-sub">Google ranking</div>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">Top Queries</div>
+      ${(s.topQueries || []).slice(0, 10).map(q => `
+        <div class="st-row">
+          <div class="st-term">${q.query}</div>
+          <div class="st-metrics">
+            <span>${fmt(q.impressions)} impr</span>
+            <span>${q.clicks} clicks</span>
+            <span>#${q.position}</span>
+          </div>
+        </div>`).join('') || '<div class="empty">No query data</div>'}
+    `;
+  }
+}
+
 // Auto-refresh every 60s
 loadData();
+loadOrganic();
 setInterval(loadData, 60000);
+setInterval(loadOrganic, 300000); // organic refreshes every 5 min (GSC data lags ~2 days anyway)
 </script>
 </body>
 </html>
