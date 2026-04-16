@@ -59,7 +59,7 @@ export async function onRequest(context) {
 async function fetchGSC(token, startDate, endDate) {
   // Overall totals
   const overallResp = await fetch(
-    `https://searchconsoleapi.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
+    `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
     {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ async function fetchGSC(token, startDate, endDate) {
 
   // Top queries
   const queriesResp = await fetch(
-    `https://searchconsoleapi.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
+    `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
     {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -88,7 +88,7 @@ async function fetchGSC(token, startDate, endDate) {
 
   // Daily trend
   const dailyResp = await fetch(
-    `https://searchconsoleapi.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
+    `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
     {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -135,7 +135,7 @@ async function fetchGBP(token, startDate, endDate) {
   );
   const accounts = await accountsResp.json();
   const account = (accounts.accounts || [])[0];
-  if (!account) throw new Error('No GBP account found');
+  if (!account) throw new Error(`No GBP account found — raw: ${JSON.stringify(accounts).slice(0, 300)}`);
 
   // List locations
   const locsResp = await fetch(
