@@ -19,17 +19,19 @@ async function fetchMetaAdsData(token, period) {
   if (!token) return null;
 
   // Map period to Meta date_preset
-  // Build date param — use time_range to always include today
-  const today = new Date().toISOString().slice(0, 10);
+  // Always use IST (UTC+5:30) for date calculation — Meta resolves date_preset in US Pacific which is wrong for India
+  const nowIST = new Date(Date.now() + 5.5 * 3600 * 1000);
+  const todayIST = nowIST.toISOString().slice(0, 10);
   let dateParam;
-  if (period === '1d') {
-    dateParam = 'date_preset=today';
+  if (period === '1d' || period === 'today') {
+    // Use explicit time_range with IST today — never use date_preset=today (Meta uses Pacific time)
+    dateParam = `time_range={"since":"${todayIST}","until":"${todayIST}"}`;
   } else if (period === '7d') {
-    const d7 = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
-    dateParam = `time_range={"since":"${d7}","until":"${today}"}`;
+    const d7IST = new Date(Date.now() + 5.5 * 3600 * 1000 - 7 * 86400000).toISOString().slice(0, 10);
+    dateParam = `time_range={"since":"${d7IST}","until":"${todayIST}"}`;
   } else if (period === '30d') {
-    const d30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-    dateParam = `time_range={"since":"${d30}","until":"${today}"}`;
+    const d30IST = new Date(Date.now() + 5.5 * 3600 * 1000 - 30 * 86400000).toISOString().slice(0, 10);
+    dateParam = `time_range={"since":"${d30IST}","until":"${todayIST}"}`;
   } else {
     dateParam = 'date_preset=maximum';
   }
