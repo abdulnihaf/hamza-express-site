@@ -11,113 +11,183 @@
 body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .mono{font-family:'JetBrains Mono',monospace}
 .container{max-width:1300px;margin:0 auto;padding:16px}
+
+/* Header */
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
 .header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
 .header h1::before{content:'';width:5px;height:20px;background:linear-gradient(180deg,var(--gblue),var(--ggreen));border-radius:3px}
 .status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
 .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.status-dot.red{background:var(--red);animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.filters{display:flex;gap:6px;margin-bottom:14px}
-.fbtn{padding:5px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer}
+
+/* Filters */
+.filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.fbtn{padding:5px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
 .fbtn:hover{border-color:var(--gblue);color:var(--text)}
 .fbtn.active{background:var(--gblue);color:#fff;border-color:var(--gblue)}
+.campaign-badge{margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* KPIs */
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.blue::before{background:var(--gblue)}
+.kpi.green::before{background:var(--ggreen)}
+.kpi.orange::before{background:var(--orange)}
+.kpi.cyan::before{background:var(--cyan)}
+.kpi.yellow::before{background:var(--gyellow)}
+.kpi.purple::before{background:var(--purple)}
 .kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
 .kpi-value{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kpi-value.blue{color:var(--gblue)}.kpi-value.green{color:var(--ggreen)}.kpi-value.orange{color:var(--orange)}
+.kpi-value.cyan{color:var(--cyan)}.kpi-value.yellow{color:var(--gyellow)}.kpi-value.muted{color:var(--muted)}
 .kpi-sub{font-size:10px;color:var(--text2);margin-top:2px}
-.kpi .kpi-value.green{color:var(--ggreen)}.kpi .kpi-value.blue{color:var(--gblue)}.kpi .kpi-value.orange{color:var(--orange)}.kpi .kpi-value.red{color:var(--gred)}.kpi .kpi-value.yellow{color:var(--gyellow)}.kpi .kpi-value.cyan{color:var(--cyan)}
+
+/* Sections */
 .section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px}
 .section-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .section-title::before{content:'';width:3px;height:14px;background:var(--gblue);border-radius:2px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.section-title .tip{font-size:10px;color:var(--muted);font-weight:400;margin-left:4px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+
+/* Tables */
 table{width:100%;border-collapse:collapse;font-size:11px}
-th{text-align:left;padding:6px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
-td{padding:6px;border-bottom:1px solid rgba(45,58,79,.4)}
-tr:hover{background:rgba(66,133,244,.05)}
-.winner{background:rgba(52,168,83,.08);border-left:3px solid var(--ggreen)}
-.chart{display:flex;align-items:flex-end;gap:2px;height:100px;margin-top:8px}
-.chart-bar{flex:1;border-radius:3px 3px 0 0;min-height:2px;cursor:pointer;transition:all .2s;position:relative}
-.chart-bar.impr{background:var(--gblue)}
-.chart-bar.clicks{background:var(--ggreen)}
-.chart-bar:hover{opacity:.7}
-.chart-bar:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:9px;white-space:nowrap;z-index:10}
-.compare{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.compare-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
-.compare-label{font-size:9px;color:var(--muted);text-transform:uppercase}
-.compare-value{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:2px}
-.search-term{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(45,58,79,.3);font-size:11px}
-.st-term{flex:1;font-weight:500;color:var(--text)}
-.st-metrics{display:flex;gap:12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)}
-.g-logo{display:inline-flex;gap:1px;font-weight:700;font-size:14px;margin-right:6px}
-.g-logo span:nth-child(1){color:var(--gblue)}.g-logo span:nth-child(2){color:var(--gred)}.g-logo span:nth-child(3){color:var(--gyellow)}.g-logo span:nth-child(4){color:var(--gblue)}.g-logo span:nth-child(5){color:var(--ggreen)}.g-logo span:nth-child(6){color:var(--gred)}
-.badge{font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600}
+th{text-align:left;padding:6px 8px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid rgba(45,58,79,.4);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(66,133,244,.04)}
+.best-row td{background:rgba(52,168,83,.06);border-left:2px solid var(--ggreen)}
+.best-row td:first-child{border-left:2px solid var(--ggreen)}
+
+/* Badges */
+.badge{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
 .badge-nearme{background:rgba(66,133,244,.15);color:var(--gblue)}
 .badge-shivaji{background:rgba(52,168,83,.15);color:var(--ggreen)}
-.empty{text-align:center;padding:30px;color:var(--muted);font-size:12px}
-@media(max-width:768px){.grid-2{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.badge-serving{background:rgba(16,185,129,.15);color:var(--green)}
+.badge-paused{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* Position cards */
+.pos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pos-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center}
+.pos-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.pos-value{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:3px}
+.pos-hint{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* Chart */
+.chart-wrap{overflow-x:auto}
+.chart{display:flex;align-items:flex-end;gap:3px;height:80px;min-width:400px}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative}
+.chart-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;cursor:pointer;transition:opacity .15s;position:relative}
+.chart-bar:hover{opacity:.75}
+.chart-bar[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border);padding:3px 7px;border-radius:4px;font-size:9px;white-space:nowrap;z-index:10;font-family:'JetBrains Mono',monospace}
+.bar-impr{background:var(--gblue)}
+.bar-clicks{background:var(--ggreen);width:60%}
+.chart-legend{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:6px}
+.chart-legend span{display:flex;align-items:center;gap:5px}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+.chart-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px;padding:0 2px}
+
+/* Search terms */
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid rgba(45,58,79,.3);gap:8px}
+.st-row:last-child{border-bottom:none}
+.st-term{flex:1;font-weight:600;font-size:11px;color:var(--text)}
+.st-match{font-size:9px;color:var(--muted);background:var(--bg2);padding:1px 5px;border-radius:4px;white-space:nowrap}
+.st-metrics{display:flex;gap:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);white-space:nowrap}
+
+/* GBP banner */
+.gbp-banner{background:linear-gradient(135deg,rgba(66,133,244,.08),rgba(52,168,83,.08));border:1px solid rgba(66,133,244,.2);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.gbp-icon{font-size:20px}
+.gbp-text{font-size:11px;color:var(--text2);line-height:1.5}
+.gbp-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:12px}
+
+/* G logo */
+.g-logo{display:inline-flex;gap:1px;font-weight:700;font-size:14px;margin-right:4px}
+.g-logo span:nth-child(1){color:var(--gblue)}.g-logo span:nth-child(2){color:var(--gred)}.g-logo span:nth-child(3){color:var(--gyellow)}.g-logo span:nth-child(4){color:var(--gblue)}.g-logo span:nth-child(5){color:var(--ggreen)}.g-logo span:nth-child(6){color:var(--gred)}
+
+/* Empty */
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:12px;line-height:1.6}
+.empty small{display:block;margin-top:4px;font-size:10px}
+
+/* Responsive */
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}.pos-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="container">
+
+  <!-- Header -->
   <div class="header">
     <h1><span class="g-logo"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></span> Ads Command Center</h1>
-    <div class="status"><div class="status-dot"></div><span id="statusText">Loading...</span></div>
+    <div class="status"><div class="status-dot" id="statusDot"></div><span id="statusText">Loading...</span></div>
   </div>
 
+  <!-- Filters -->
   <div class="filters">
     <button class="fbtn active" data-period="today">Today</button>
     <button class="fbtn" data-period="7d">7 Days</button>
     <button class="fbtn" data-period="30d">30 Days</button>
-    <button class="fbtn" data-period="all">All</button>
+    <button class="fbtn" data-period="all">All Time</button>
+    <div class="campaign-badge" id="campaignBadge"></div>
   </div>
 
   <!-- KPIs -->
   <div class="kpis" id="kpis"></div>
 
-  <!-- Ad Group Comparison + Search Funnel -->
+  <!-- Ad Group + Position -->
   <div class="grid-2">
     <div class="section">
-      <div class="section-title">Ad Group Performance</div>
+      <div class="section-title">Ad Group Performance <span class="tip">— paid impressions only</span></div>
       <div id="adGroups"></div>
     </div>
     <div class="section">
       <div class="section-title">Search Position</div>
-      <div class="compare" id="position"></div>
+      <div class="pos-grid" id="position"></div>
     </div>
   </div>
 
-  <!-- Keyword Performance -->
+  <!-- GBP Banner -->
+  <div class="gbp-banner">
+    <div class="gbp-icon">📍</div>
+    <div class="gbp-text">
+      <strong>Organic impressions (Google Maps + Search) are separate</strong>
+      Numbers above = paid ad impressions only. Your GBP listing gets additional free impressions every day from people searching on Google Maps — visible in Google Business Profile → Performance. These are not counted here.
+    </div>
+  </div>
+
+  <!-- Keywords -->
   <div class="section">
-    <div class="section-title">Keyword Performance</div>
+    <div class="section-title">Keyword Performance <span class="tip">— what triggers your ad</span></div>
     <div id="keywords"></div>
   </div>
 
   <!-- Daily Trend -->
   <div class="section">
     <div class="section-title">Daily Trend</div>
-    <div class="grid-2" style="margin-bottom:6px">
-      <div style="font-size:10px;color:var(--gblue)">Impressions</div>
-      <div style="font-size:10px;color:var(--ggreen);text-align:right">Clicks</div>
+    <div class="chart-legend">
+      <span><div class="legend-dot" style="background:var(--gblue)"></div>Impressions</span>
+      <span><div class="legend-dot" style="background:var(--ggreen)"></div>Clicks</span>
     </div>
-    <div class="chart" id="dailyChart"></div>
-    <div id="dailyLabels" style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px"></div>
+    <div class="chart-wrap">
+      <div class="chart" id="dailyChart"></div>
+    </div>
+    <div class="chart-labels" id="dailyLabels"></div>
   </div>
 
   <!-- Search Terms -->
   <div class="section">
-    <div class="section-title">What People Actually Searched</div>
+    <div class="section-title">What People Actually Searched <span class="tip">— exact queries that showed your ad</span></div>
     <div id="searchTerms"></div>
   </div>
+
 </div>
 
 <script>
 const API = '/api/google-cockpit';
 let currentPeriod = 'today';
-let refreshTimer;
 
-// Period buttons
 document.querySelectorAll('.fbtn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
@@ -128,132 +198,207 @@ document.querySelectorAll('.fbtn').forEach(btn => {
 });
 
 async function loadData() {
-  const status = document.getElementById('statusText');
-  status.textContent = 'Fetching...';
+  const statusText = document.getElementById('statusText');
+  const statusDot = document.getElementById('statusDot');
+  statusText.textContent = 'Fetching...';
   try {
     const resp = await fetch(`${API}?period=${currentPeriod}`);
     const data = await resp.json();
-    if (!data.success) { status.textContent = 'Error: ' + (data.error || 'unknown'); return; }
+    if (!data.success) {
+      statusText.textContent = 'Error: ' + (data.error || 'unknown');
+      statusDot.classList.add('red');
+      return;
+    }
     render(data);
-    status.textContent = `Live — ${new Date().toLocaleTimeString('en-IN', {timeZone:'Asia/Kolkata'})} IST`;
+    statusDot.classList.remove('red');
+    statusText.textContent = `Updated ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST`;
   } catch (err) {
-    status.textContent = 'Offline — ' + err.message;
+    statusText.textContent = 'Offline — ' + err.message;
+    statusDot.classList.add('red');
   }
 }
 
 function render(data) {
   const o = data.overview;
 
+  // Campaign badge
+  const servingLabel = o.servingStatus === 'SERVING' ? '🟢 Serving' : o.status === 'ENABLED' ? '🟡 Enabled' : '🔴 ' + o.status;
+  document.getElementById('campaignBadge').textContent = `Campaign ID: ${data.campaignId} · ${servingLabel}`;
+
   // KPIs
-  const costPerClick = o.clicks > 0 ? (o.spend / o.clicks).toFixed(2) : '0';
+  const budgetInfo = currentPeriod === 'today' ? '₹500 daily budget' : '';
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Impressions</div><div class="kpi-value blue">${fmt(o.impressions)}</div><div class="kpi-sub">Search Impr Share: ${o.searchImprShare}%</div></div>
-    <div class="kpi"><div class="kpi-label">Clicks</div><div class="kpi-value green">${fmt(o.clicks)}</div><div class="kpi-sub">CTR: ${o.ctr}%</div></div>
-    <div class="kpi"><div class="kpi-label">Spend</div><div class="kpi-value orange">₹${o.spend}</div><div class="kpi-sub">Budget: ₹500/day</div></div>
-    <div class="kpi"><div class="kpi-label">Avg CPC</div><div class="kpi-value cyan">₹${costPerClick}</div><div class="kpi-sub">Max bid: ₹8</div></div>
-    <div class="kpi"><div class="kpi-label">CPM</div><div class="kpi-value yellow">₹${o.avgCPM}</div></div>
-    <div class="kpi"><div class="kpi-label">Top Position</div><div class="kpi-value blue">${o.topImprPct}%</div><div class="kpi-sub">Abs top: ${o.absTopImprPct}%</div></div>
+    <div class="kpi blue">
+      <div class="kpi-label">Impressions</div>
+      <div class="kpi-value blue">${fmt(o.impressions)}</div>
+      <div class="kpi-sub">Paid ad shown ${fmt(o.impressions)}×</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Clicks</div>
+      <div class="kpi-value green">${fmt(o.clicks)}</div>
+      <div class="kpi-sub">CTR: ${o.impressions > 0 ? ((o.clicks/o.impressions)*100).toFixed(2) : 0}%</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-label">Spend</div>
+      <div class="kpi-value orange">₹${o.spend}</div>
+      <div class="kpi-sub">${budgetInfo}</div>
+    </div>
+    <div class="kpi cyan">
+      <div class="kpi-label">Avg CPC</div>
+      <div class="kpi-value cyan">${o.clicks > 0 ? '₹' + o.avgCPC : '—'}</div>
+      <div class="kpi-sub">Cost per click</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-label">CPM</div>
+      <div class="kpi-value yellow">${o.avgCPM > 0 ? '₹' + o.avgCPM : '—'}</div>
+      <div class="kpi-sub">Cost per 1000 impr</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Conversions</div>
+      <div class="kpi-value ${o.conversions > 0 ? 'green' : 'muted'}">${o.conversions || '—'}</div>
+      <div class="kpi-sub">Tracked actions</div>
+    </div>
   `;
 
-  // Ad Group comparison
+  // Ad Groups
   const ags = data.adGroups;
   if (ags.length > 0) {
-    const maxImpr = Math.max(...ags.map(a => a.impressions), 1);
+    const bestIdx = ags.reduce((bi, a, i, arr) => a.impressions > arr[bi].impressions ? i : bi, 0);
     document.getElementById('adGroups').innerHTML = `<table>
-      <tr><th>Ad Group</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>CPC</th></tr>
+      <tr>
+        <th>Ad Group</th><th>Bid</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th>
+      </tr>
       ${ags.map((a, i) => {
-        const isWinner = i === 0 && ags.length > 1;
-        const badge = a.name.includes('Near Me') ? '<span class="badge badge-nearme">Near Me</span>' :
-                      '<span class="badge badge-shivaji">Shivajinagar</span>';
-        return `<tr class="${isWinner ? 'winner' : ''}">
-          <td>${badge}</td><td class="mono">${fmt(a.impressions)}</td><td class="mono">${a.clicks}</td>
-          <td class="mono">${a.ctr}%</td><td class="mono">₹${a.spend}</td><td class="mono">₹${a.avgCPC}</td>
+        const badge = a.name.includes('Near Me')
+          ? '<span class="badge badge-nearme">Near Me</span>'
+          : '<span class="badge badge-shivaji">Shivajinagar</span>';
+        const bidLabel = a.bidINR ? `₹${a.bidINR}` : '—';
+        const ctr = a.impressions > 0 ? ((a.clicks / a.impressions) * 100).toFixed(1) + '%' : '0%';
+        return `<tr class="${i === bestIdx && a.impressions > 0 ? 'best-row' : ''}">
+          <td>${badge}</td>
+          <td class="mono" style="color:var(--text2)">${bidLabel}</td>
+          <td class="mono">${fmt(a.impressions)}</td>
+          <td class="mono">${a.clicks}</td>
+          <td class="mono">${ctr}</td>
+          <td class="mono">₹${a.spend}</td>
         </tr>`;
       }).join('')}
     </table>`;
   } else {
-    document.getElementById('adGroups').innerHTML = '<div class="empty">No data yet — campaign just started</div>';
+    document.getElementById('adGroups').innerHTML = `<div class="empty">No data yet<small>Campaign is warming up — data appears after first impressions</small></div>`;
   }
 
-  // Search position
+  // Position metrics
+  const hasPositionData = o.searchImprShare > 0 || o.topImprPct > 0 || o.absTopImprPct > 0;
   document.getElementById('position').innerHTML = `
-    <div class="compare-card"><div class="compare-label">Search Impr Share</div><div class="compare-value" style="color:var(--gblue)">${o.searchImprShare}%</div></div>
-    <div class="compare-card"><div class="compare-label">Top of Page %</div><div class="compare-value" style="color:var(--ggreen)">${o.topImprPct}%</div></div>
-    <div class="compare-card"><div class="compare-label">#1 Position %</div><div class="compare-value" style="color:var(--gyellow)">${o.absTopImprPct}%</div></div>
-    <div class="compare-card"><div class="compare-label">Conversions</div><div class="compare-value" style="color:var(--orange)">${o.conversions}</div></div>
+    <div class="pos-card">
+      <div class="pos-label">Impr Share</div>
+      <div class="pos-value" style="color:var(--gblue)">${hasPositionData ? o.searchImprShare + '%' : '—'}</div>
+      <div class="pos-hint">% of eligible auctions won</div>
+    </div>
+    <div class="pos-card">
+      <div class="pos-label">Top of Page</div>
+      <div class="pos-value" style="color:var(--ggreen)">${hasPositionData ? o.topImprPct + '%' : '—'}</div>
+      <div class="pos-hint">Shown above organic results</div>
+    </div>
+    <div class="pos-card">
+      <div class="pos-label">Abs. #1</div>
+      <div class="pos-value" style="color:var(--gyellow)">${hasPositionData ? o.absTopImprPct + '%' : '—'}</div>
+      <div class="pos-hint">First position on page</div>
+    </div>
+    <div class="pos-card">
+      <div class="pos-label">Conversions</div>
+      <div class="pos-value" style="color:var(--orange)">${o.conversions || '—'}</div>
+      <div class="pos-hint">Tracked actions</div>
+    </div>
   `;
 
   // Keywords
   const kws = data.keywords;
   if (kws.length > 0) {
-    const maxK = Math.max(...kws.map(k => k.impressions), 1);
+    const bestKw = kws.reduce((bi, k, i, arr) => k.impressions > arr[bi].impressions ? i : bi, 0);
     document.getElementById('keywords').innerHTML = `<table>
-      <tr><th>Keyword</th><th>Group</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>CPC</th><th>Impr Share</th></tr>
+      <tr>
+        <th>Keyword</th><th>Group</th><th>Bid</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>Impr Share</th>
+      </tr>
       ${kws.map((k, i) => {
-        const badge = k.adGroup.includes('Near Me') ? '<span class="badge badge-nearme">NM</span>' :
-                      '<span class="badge badge-shivaji">SJ</span>';
-        return `<tr class="${i === 0 ? 'winner' : ''}">
-          <td style="font-weight:600">${k.keyword}</td><td>${badge}</td>
-          <td class="mono">${fmt(k.impressions)}</td><td class="mono">${k.clicks}</td>
-          <td class="mono">${k.ctr}%</td><td class="mono">₹${k.spend}</td>
-          <td class="mono">₹${k.avgCPC}</td><td class="mono">${k.imprShare}%</td>
+        const badge = k.adGroup.includes('Near Me')
+          ? '<span class="badge badge-nearme">NM</span>'
+          : '<span class="badge badge-shivaji">SJ</span>';
+        const bidLabel = k.bidINR ? `₹${k.bidINR}` : '—';
+        const imprShare = k.imprShare > 0 ? k.imprShare + '%' : '—';
+        const ctr = k.impressions > 0 ? ((k.clicks / k.impressions) * 100).toFixed(1) + '%' : '0%';
+        return `<tr class="${i === bestKw && k.impressions > 0 ? 'best-row' : ''}">
+          <td style="font-weight:600">"${k.keyword}"</td>
+          <td>${badge}</td>
+          <td class="mono" style="color:var(--text2)">${bidLabel}</td>
+          <td class="mono">${fmt(k.impressions)}</td>
+          <td class="mono">${k.clicks}</td>
+          <td class="mono">${ctr}</td>
+          <td class="mono">₹${k.spend}</td>
+          <td class="mono" style="color:${k.imprShare > 20 ? 'var(--ggreen)' : 'var(--text2)'}">${imprShare}</td>
         </tr>`;
       }).join('')}
     </table>`;
   } else {
-    document.getElementById('keywords').innerHTML = '<div class="empty">No keyword data yet — campaign just started</div>';
+    document.getElementById('keywords').innerHTML = `<div class="empty">No keyword data yet<small>Appears after first impressions are logged</small></div>`;
   }
 
-  // Daily trend chart
+  // Daily chart
   const days = data.daily;
   if (days.length > 0) {
     const maxI = Math.max(...days.map(d => d.impressions), 1);
     const maxC = Math.max(...days.map(d => d.clicks), 1);
     document.getElementById('dailyChart').innerHTML = days.map(d => {
-      const ih = Math.max(2, (d.impressions / maxI) * 100);
-      const ch = Math.max(2, (d.clicks / maxC) * 100);
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">
-        <div class="chart-bar impr" style="width:100%;height:${ih}px" data-tip="${d.date}: ${d.impressions} impr"></div>
-        <div class="chart-bar clicks" style="width:60%;height:${ch}px" data-tip="${d.date}: ${d.clicks} clicks"></div>
+      const ih = Math.max(2, Math.round((d.impressions / maxI) * 76));
+      const ch = d.clicks > 0 ? Math.max(2, Math.round((d.clicks / maxC) * 76)) : 0;
+      return `<div class="chart-col">
+        <div class="chart-bar bar-impr" style="height:${ih}px" data-tip="${d.date}: ${d.impressions} impr · ${d.clicks} clicks · ₹${d.spend}"></div>
+        ${ch > 0 ? `<div class="chart-bar bar-clicks" style="height:${ch}px"></div>` : '<div style="height:2px"></div>'}
       </div>`;
     }).join('');
+
     const labels = document.getElementById('dailyLabels');
     if (days.length <= 14) {
       labels.innerHTML = days.map(d => `<span>${d.date.slice(5)}</span>`).join('');
     } else {
-      labels.innerHTML = `<span>${days[0].date.slice(5)}</span><span>${days[days.length-1].date.slice(5)}</span>`;
+      const step = Math.ceil(days.length / 7);
+      labels.innerHTML = days.filter((_, i) => i % step === 0 || i === days.length - 1)
+        .map(d => `<span>${d.date.slice(5)}</span>`).join('');
     }
   } else {
     document.getElementById('dailyChart').innerHTML = '<div class="empty" style="width:100%">No daily data yet</div>';
+    document.getElementById('dailyLabels').innerHTML = '';
   }
 
   // Search terms
   const sts = data.searchTerms;
   if (sts.length > 0) {
     document.getElementById('searchTerms').innerHTML = sts.map(s =>
-      `<div class="search-term">
+      `<div class="st-row">
         <div class="st-term">"${s.term}"</div>
+        <div class="st-match">${s.matchType}</div>
         <div class="st-metrics">
-          <span>${s.impressions} impr</span>
+          <span>${fmt(s.impressions)} impr</span>
           <span>${s.clicks} clicks</span>
-          <span>₹${s.spend}</span>
+          ${s.spend > 0 ? `<span>₹${s.spend}</span>` : ''}
         </div>
       </div>`
     ).join('');
   } else {
-    document.getElementById('searchTerms').innerHTML = '<div class="empty">No search terms yet — Google reports these after a few hours of activity</div>';
+    document.getElementById('searchTerms').innerHTML = `<div class="empty">No search terms yet<small>Google reports these after a few hours of impressions</small></div>`;
   }
 }
 
 function fmt(n) {
-  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
-  return n.toString();
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return (n || 0).toString();
 }
 
 // Auto-refresh every 60s
 loadData();
-refreshTimer = setInterval(loadData, 60000);
+setInterval(loadData, 60000);
 </script>
 </body>
 </html>

@@ -35,7 +35,7 @@ export async function onRequest(context) {
     const token = tokenData.access_token;
     const devToken = env.GOOGLE_ADS_DEV_TOKEN;
 
-    // Date range
+    // Date range — always IST
     const today = todayIST();
     let dateFilter;
     if (period === 'today') dateFilter = `segments.date = '${today}'`;
@@ -46,36 +46,28 @@ export async function onRequest(context) {
     const query = async (gaql) => {
       const resp = await fetch(`${API}/customers/${CID}/googleAds:search`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'developer-token': devToken, 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'developer-token': devToken,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ query: gaql }),
       });
-      if (!resp.ok) {
-        const err = await resp.text();
-        console.log('GAQL error:', err.slice(0, 300));
-        return [];
-      }
+      if (!resp.ok) return [];
       return (await resp.json()).results || [];
     };
 
     // Run all queries in parallel
-    const [campaignData, adGroupData, keywordData, dailyData, searchTermData] = await Promise.all([
-      // 1. Campaign overview
-      query(`
-        SELECT
-          campaign.id, campaign.name, campaign.status,
-          metrics.impressions, metrics.clicks, metrics.cost_micros,
-          metrics.ctr, metrics.average_cpc, metrics.average_cpm,
-          metrics.conversions, metrics.interactions,
-          metrics.search_impression_share, metrics.search_top_impression_percentage,
-          metrics.search_absolute_top_impression_percentage
-        FROM campaign
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
-      `),
+    // NOTE: Campaign overview is split into 2 queries:
+    //   - Basic metrics (impressions/clicks/spend) — reliable even with new campaigns
+    //   - Position metrics (impression share) — may return null on new campaigns, handled gracefully
+    const [adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus] = await Promise.all([
 
-      // 2. Ad group breakdown
+      // 1. Ad group breakdown — source of truth for aggregate metrics
       query(`
         SELECT
           ad_group.id, ad_group.name, ad_group.status,
+          ad_group.cpc_bid_micros,
           metrics.impressions, metrics.clicks, metrics.cost_micros,
           metrics.ctr, metrics.average_cpc, metrics.conversions
         FROM ad_group
@@ -83,11 +75,12 @@ export async function onRequest(context) {
         ORDER BY metrics.impressions DESC
       `),
 
-      // 3. Keyword performance
+      // 2. Keyword performance
       query(`
         SELECT
           ad_group_criterion.keyword.text,
           ad_group_criterion.keyword.match_type,
+          ad_group_criterion.cpc_bid_micros,
           ad_group.name,
           metrics.impressions, metrics.clicks, metrics.cost_micros,
           metrics.ctr, metrics.average_cpc, metrics.conversions,
@@ -97,17 +90,17 @@ export async function onRequest(context) {
         ORDER BY metrics.impressions DESC
       `),
 
-      // 4. Daily trend
+      // 3. Daily trend
       query(`
         SELECT
           segments.date,
           metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions
-        FROM campaign
+        FROM ad_group
         WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
         ORDER BY segments.date ASC
       `),
 
-      // 5. Search terms (what people actually typed)
+      // 4. Search terms — what people actually typed
       query(`
         SELECT
           search_term_view.search_term,
@@ -118,41 +111,85 @@ export async function onRequest(context) {
         ORDER BY metrics.impressions DESC
         LIMIT 30
       `),
+
+      // 5. Position metrics — separate query, may return empty for new campaigns
+      query(`
+        SELECT
+          metrics.search_impression_share,
+          metrics.search_top_impression_percentage,
+          metrics.search_absolute_top_impression_percentage,
+          metrics.average_cpm,
+          metrics.interactions
+        FROM campaign
+        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+      `),
+
+      // 6. Campaign status (no date filter — always current)
+      query(`
+        SELECT campaign.id, campaign.name, campaign.status, campaign.serving_status
+        FROM campaign
+        WHERE campaign.id = ${CAMPAIGN_ID}
+      `),
     ]);
 
-    // Parse campaign overview
-    const c = campaignData[0] || {};
-    const cm = c.metrics || {};
+    // Build overview by summing ad group data (reliable source)
+    const aggImpressions = adGroupData.reduce((s, r) => s + int(r.metrics?.impressions), 0);
+    const aggClicks = adGroupData.reduce((s, r) => s + int(r.metrics?.clicks), 0);
+    const aggCostMicros = adGroupData.reduce((s, r) => s + (parseInt(r.metrics?.costMicros) || 0), 0);
+    const aggConversions = adGroupData.reduce((s, r) => s + float(r.metrics?.conversions), 0);
+
+    // Position metrics — graceful fallback
+    const pm = positionData[0]?.metrics || {};
+    const cs = campaignStatus[0]?.campaign || {};
+
     const overview = {
-      impressions: int(cm.impressions),
-      clicks: int(cm.clicks),
-      spend: micros(cm.costMicros),
-      ctr: pct(cm.ctr),
-      avgCPC: micros(cm.averageCpc),
-      avgCPM: micros(cm.averageCpm),
-      conversions: float(cm.conversions),
-      interactions: int(cm.interactions),
-      searchImprShare: pct(cm.searchImpressionShare),
-      topImprPct: pct(cm.searchTopImpressionPercentage),
-      absTopImprPct: pct(cm.searchAbsoluteTopImpressionPercentage),
-      status: c.campaign?.status || 'UNKNOWN',
+      impressions: aggImpressions,
+      clicks: aggClicks,
+      spend: +(aggCostMicros / 1000000).toFixed(2),
+      ctr: aggClicks > 0 && aggImpressions > 0 ? +((aggClicks / aggImpressions) * 100).toFixed(2) : 0,
+      avgCPC: aggClicks > 0 ? +(aggCostMicros / aggClicks / 1000000).toFixed(2) : 0,
+      avgCPM: micros(pm.averageCpm),
+      conversions: +aggConversions.toFixed(2),
+      interactions: int(pm.interactions),
+      searchImprShare: pct(pm.searchImpressionShare),
+      topImprPct: pct(pm.searchTopImpressionPercentage),
+      absTopImprPct: pct(pm.searchAbsoluteTopImpressionPercentage),
+      status: cs.status || 'UNKNOWN',
+      servingStatus: cs.servingStatus || '',
     };
 
     // Parse ad groups
-    const adGroups = adGroupData.map(r => ({
-      name: r.adGroup?.name || '',
-      impressions: int(r.metrics?.impressions),
-      clicks: int(r.metrics?.clicks),
-      spend: micros(r.metrics?.costMicros),
-      ctr: pct(r.metrics?.ctr),
-      avgCPC: micros(r.metrics?.averageCpc),
-      conversions: float(r.metrics?.conversions),
-    }));
+    const adGroups = adGroupData.reduce((acc, r) => {
+      const name = r.adGroup?.name || '';
+      const existing = acc.find(a => a.name === name);
+      if (existing) {
+        existing.impressions += int(r.metrics?.impressions);
+        existing.clicks += int(r.metrics?.clicks);
+        existing.spend += micros(r.metrics?.costMicros);
+        existing.conversions += float(r.metrics?.conversions);
+      } else {
+        acc.push({
+          name,
+          status: r.adGroup?.status || '',
+          bidINR: r.adGroup?.cpcBidMicros ? +(parseInt(r.adGroup.cpcBidMicros) / 1e6).toFixed(0) : null,
+          impressions: int(r.metrics?.impressions),
+          clicks: int(r.metrics?.clicks),
+          spend: micros(r.metrics?.costMicros),
+          ctr: pct(r.metrics?.ctr),
+          avgCPC: micros(r.metrics?.averageCpc),
+          conversions: float(r.metrics?.conversions),
+        });
+      }
+      return acc;
+    }, []).sort((a, b) => b.impressions - a.impressions);
 
     // Parse keywords
     const keywords = keywordData.map(r => ({
       keyword: r.adGroupCriterion?.keyword?.text || '',
       matchType: r.adGroupCriterion?.keyword?.matchType || '',
+      bidINR: r.adGroupCriterion?.cpcBidMicros
+        ? +(parseInt(r.adGroupCriterion.cpcBidMicros) / 1e6).toFixed(0)
+        : null,
       adGroup: r.adGroup?.name || '',
       impressions: int(r.metrics?.impressions),
       clicks: int(r.metrics?.clicks),
@@ -163,19 +200,27 @@ export async function onRequest(context) {
       imprShare: pct(r.metrics?.searchImpressionShare),
     }));
 
-    // Parse daily trend
-    const daily = dailyData.map(r => ({
-      date: r.segments?.date || '',
-      impressions: int(r.metrics?.impressions),
-      clicks: int(r.metrics?.clicks),
-      spend: micros(r.metrics?.costMicros),
-      conversions: float(r.metrics?.conversions),
-    }));
+    // Parse daily trend — deduplicate by date (sum across ad groups)
+    const dailyMap = {};
+    for (const r of dailyData) {
+      const date = r.segments?.date || '';
+      if (!date) continue;
+      if (!dailyMap[date]) dailyMap[date] = { date, impressions: 0, clicks: 0, spend: 0, conversions: 0 };
+      dailyMap[date].impressions += int(r.metrics?.impressions);
+      dailyMap[date].clicks += int(r.metrics?.clicks);
+      dailyMap[date].spend += micros(r.metrics?.costMicros);
+      dailyMap[date].conversions += float(r.metrics?.conversions);
+    }
+    const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
-    // Parse search terms
+    // Parse search terms — readable match type labels
+    const matchTypeLabel = {
+      NEAR_EXACT: 'Exact~', NEAR_PHRASE: 'Phrase~',
+      EXACT: 'Exact', PHRASE: 'Phrase', BROAD: 'Broad',
+    };
     const searchTerms = searchTermData.map(r => ({
       term: r.searchTermView?.searchTerm || '',
-      matchType: r.segments?.searchTermMatchType || '',
+      matchType: matchTypeLabel[r.segments?.searchTermMatchType] || r.segments?.searchTermMatchType || '',
       impressions: int(r.metrics?.impressions),
       clicks: int(r.metrics?.clicks),
       spend: micros(r.metrics?.costMicros),
@@ -185,6 +230,7 @@ export async function onRequest(context) {
     return new Response(JSON.stringify({
       success: true,
       period,
+      asOf: todayIST(),
       campaignId: CAMPAIGN_ID,
       campaignName: 'HE — Ghee Rice & Kabab — Local Search',
       overview,
