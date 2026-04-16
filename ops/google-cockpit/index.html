@@ -452,7 +452,14 @@ function renderOrganic(data) {
   if (orgTab === 'gbp') {
     const g = data.gbp || {};
     if (g.error) {
-      el.innerHTML = `<div class="connect-banner">GBP Error: ${g.error}</div>`;
+      const isQuota = g.error.includes('GBP_QUOTA_ZERO') || g.error.includes('quota') || g.error.includes('RESOURCE_EXHAUSTED');
+      el.innerHTML = isQuota
+        ? `<div class="connect-banner">
+            <strong style="color:var(--text);display:block;margin-bottom:6px">⏳ GBP Access Pending</strong>
+            Google restricts Business Profile API access for new projects. A one-time quota request has been filed.<br>
+            <span style="font-size:10px;color:var(--muted)">Maps impressions, direction requests & call data will appear here once Google approves (~1–3 days).</span>
+          </div>`
+        : `<div class="connect-banner">GBP Error: ${g.error}</div>`;
       return;
     }
     const totalImpr = (g.mapsImpressions || 0) + (g.searchImpressions || 0);

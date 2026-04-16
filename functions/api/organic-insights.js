@@ -134,7 +134,9 @@ async function fetchGBP(token, startDate, endDate) {
     { headers: { 'Authorization': `Bearer ${token}` } }
   );
   const accounts = await accountsResp.json();
-  if (accounts.error?.code === 429) throw new Error('GBP API quota exceeded — try again in 60s');
+  if (accounts.error?.code === 429 || accounts.error?.status === 'RESOURCE_EXHAUSTED') {
+    throw new Error('GBP_QUOTA_ZERO');
+  }
   const account = (accounts.accounts || [])[0];
   if (!account) throw new Error(`No GBP account found (check business.manage scope on token)`);
 
