@@ -30,3 +30,12 @@ database_id = "679aeb00-5afa-42a3-b24a-66821db05360"
 binding = "HIRING_DB"
 database_name = "hn-hiring"
 database_id = "a0107321-790a-4d46-ac3c-a54a676c6bcb"
+
+# Wave 3.0 Phase 2 — WhatsApp media vault.
+# Meta's media URLs die in ~5 minutes. whatsapp.js downloads every
+# inbound image/video/audio/document/sticker from Meta and PUTs to
+# this bucket (keyed wa-media/YYYY/MM/DD/{media_id}.{ext}).
+# Served back via /api/media/{media_id} with auth.
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "he-waba-media"

@@ -990,6 +990,19 @@ async function processWebhook(context, body) {
     new Date().toISOString()
   ).run().catch(() => {});
 
+  // ── Phase 2 media vault: download Meta media → R2 before URL expires ──
+  // The pre-signed URL from Meta dies in ~5 minutes. waitUntil lets the
+  // download run AFTER the webhook returns 200, so we never delay Meta
+  // (which would trigger retries). Filename for documents is preserved.
+  if (mediaId && context.env.MEDIA_BUCKET) {
+    const filename = message.document?.filename || null;
+    const mediaMsgType = msgType.type; // image | video | audio | document | sticker
+    context.waitUntil(
+      archiveMedia(context.env, mediaId, message.id || null, waId, mediaMsgType, filename)
+        .catch((e) => console.error('archiveMedia error:', mediaId, e.message))
+    );
+  }
+
   await routeState(context, session, user, msgType, waId, phoneId, token, db);
 }
 
@@ -6146,6 +6159,175 @@ async function logMessageStatus(db, status) {
   } catch (e) {
     console.error('logMessageStatus failed:', e.message);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// DATA VAULT — R2 media archiver (Wave 3.0 Phase 2)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Meta's media URL dies in ~5 minutes. If we don't pull the bytes before
+// then they are gone — no Graph API endpoint to recover them later.
+//
+// This runs from context.waitUntil AFTER the webhook returns 200, so Meta
+// is never blocked. Hard guardrails against cost overruns:
+//   1. Size cap 20 MB — WA max is ~16 MB, this is a safety margin.
+//   2. Retry cap 2 — third failure marks 'expired' and stops forever.
+//   3. Dedup on media_id UNIQUE — webhook retries cannot double-store.
+//   4. Cheap dedup check happens BEFORE the Meta GET, so most retries
+//      cost zero subrequests at all.
+
+const MEDIA_SIZE_LIMIT_BYTES = 20 * 1024 * 1024;  // 20 MB
+const MEDIA_MAX_ATTEMPTS = 2;
+
+async function archiveMedia(env, mediaId, waMessageId, waId, msgType, filename) {
+  if (!env.MEDIA_BUCKET || !env.DB || !mediaId) return;
+  const db = env.DB;
+  const token = env.WA_ACCESS_TOKEN;
+  if (!token) return;
+
+  // ── Cheap dedup BEFORE any paid operation ──────────────────────────
+  // Check if we already processed this media_id. If already 'ok' or
+  // exhausted attempts ('expired'), skip. This keeps webhook retries
+  // from costing us extra Graph API subrequests or R2 PUTs.
+  const existing = await db.prepare(
+    'SELECT download_status, attempts FROM wa_media_files WHERE media_id = ?'
+  ).bind(mediaId).first().catch(() => null);
+
+  if (existing?.download_status === 'ok') return;
+  if ((existing?.attempts || 0) >= MEDIA_MAX_ATTEMPTS) {
+    // Previously failed MAX times — do not try again, do not cost more.
+    return;
+  }
+
+  // Insert 'pending' row (or bump attempts on existing row).
+  // Done before the download so a crashed Worker leaves a trail.
+  if (!existing) {
+    await db.prepare(
+      `INSERT OR IGNORE INTO wa_media_files
+         (media_id, wa_message_id, wa_id, msg_type, filename, download_status, attempts)
+         VALUES (?, ?, ?, ?, ?, 'pending', 1)`
+    ).bind(mediaId, waMessageId, waId, msgType || null, filename || null).run().catch(() => {});
+  } else {
+    await db.prepare(
+      `UPDATE wa_media_files SET attempts = attempts + 1 WHERE media_id = ?`
+    ).bind(mediaId).run().catch(() => {});
+  }
+
+  try {
+    // Step 1 — resolve media_id to the temporary pre-signed URL
+    const metaResp = await fetch(`https://graph.facebook.com/${WA_API_VERSION}/${mediaId}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!metaResp.ok) {
+      const t = await metaResp.text();
+      throw new Error(`meta-resolve ${metaResp.status}: ${t.slice(0, 300)}`);
+    }
+    const meta = await metaResp.json();
+    const { url, mime_type, sha256, file_size } = meta;
+    if (!url) throw new Error('meta-resolve returned no url');
+
+    // Enforce size cap on Meta-reported file_size (if present).
+    // We still check actual downloaded bytes afterwards.
+    if (file_size && file_size > MEDIA_SIZE_LIMIT_BYTES) {
+      await db.prepare(
+        `UPDATE wa_media_files
+            SET download_status = 'expired', last_error = ?, mime_type = ?, size_bytes = ?
+          WHERE media_id = ?`
+      ).bind(
+        `size ${file_size} exceeds cap ${MEDIA_SIZE_LIMIT_BYTES}`,
+        mime_type || null, file_size, mediaId
+      ).run().catch(() => {});
+      return;
+    }
+
+    // Step 2 — fetch the actual bytes (still needs Bearer token)
+    const bytesResp = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!bytesResp.ok) throw new Error(`download ${bytesResp.status}`);
+    const arrayBuf = await bytesResp.arrayBuffer();
+    const actualSize = arrayBuf.byteLength;
+    if (actualSize > MEDIA_SIZE_LIMIT_BYTES) {
+      await db.prepare(
+        `UPDATE wa_media_files SET download_status = 'expired',
+            last_error = ?, mime_type = ?, size_bytes = ? WHERE media_id = ?`
+      ).bind(
+        `downloaded ${actualSize} exceeds cap`, mime_type || null, actualSize, mediaId
+      ).run().catch(() => {});
+      return;
+    }
+
+    // Step 3 — derive R2 key from date + extension
+    const ext = extFromMime(mime_type, filename);
+    const now = new Date();
+    const yyyy = now.getUTCFullYear();
+    const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(now.getUTCDate()).padStart(2, '0');
+    const r2Key = `wa-media/${yyyy}/${mm}/${dd}/${mediaId}${ext}`;
+
+    // Step 4 — PUT to R2 with content-type + custom metadata for traceability
+    await env.MEDIA_BUCKET.put(r2Key, arrayBuf, {
+      httpMetadata: {
+        contentType: mime_type || 'application/octet-stream',
+      },
+      customMetadata: {
+        wa_message_id: waMessageId || '',
+        wa_id: waId || '',
+        media_id: mediaId,
+        msg_type: msgType || '',
+        filename: filename || '',
+      },
+    });
+
+    // Step 5 — mark ok with final metadata
+    await db.prepare(
+      `UPDATE wa_media_files
+          SET download_status = 'ok', mime_type = ?, size_bytes = ?,
+              sha256 = ?, r2_key = ?, downloaded_at = ?, last_error = NULL
+        WHERE media_id = ?`
+    ).bind(
+      mime_type || null, actualSize, sha256 || null,
+      r2Key, new Date().toISOString(), mediaId
+    ).run();
+  } catch (e) {
+    // After MEDIA_MAX_ATTEMPTS failures we switch status to 'expired' so
+    // the cheap-dedup check at the top of this function will skip on
+    // any future webhook retry — no more paid ops on this media_id.
+    const row = await db.prepare('SELECT attempts FROM wa_media_files WHERE media_id = ?')
+      .bind(mediaId).first().catch(() => ({ attempts: 0 }));
+    const finalStatus = (row?.attempts || 0) >= MEDIA_MAX_ATTEMPTS ? 'expired' : 'failed';
+    await db.prepare(
+      `UPDATE wa_media_files SET download_status = ?, last_error = ? WHERE media_id = ?`
+    ).bind(finalStatus, (e.message || String(e)).slice(0, 2000), mediaId).run().catch(() => {});
+  }
+}
+
+// Pick a file extension from mime + original filename.
+// For documents, preserve the original extension (e.g. .pdf, .xlsx).
+function extFromMime(mime, filename) {
+  if (filename && filename.includes('.')) {
+    const f = filename.slice(filename.lastIndexOf('.')).toLowerCase();
+    if (f.length <= 6) return f; // sanity cap
+  }
+  if (!mime) return '';
+  const m = mime.toLowerCase();
+  if (m.includes('jpeg')) return '.jpg';
+  if (m.includes('png')) return '.png';
+  if (m.includes('webp')) return '.webp';
+  if (m.includes('gif')) return '.gif';
+  if (m.includes('mp4')) return '.mp4';
+  if (m.includes('quicktime')) return '.mov';
+  if (m.includes('3gpp')) return '.3gp';
+  if (m.includes('ogg')) return '.ogg';
+  if (m.includes('mpeg') || m.includes('mp3')) return '.mp3';
+  if (m.includes('aac')) return '.aac';
+  if (m.includes('amr')) return '.amr';
+  if (m.includes('pdf')) return '.pdf';
+  if (m.includes('msword')) return '.doc';
+  if (m.includes('spreadsheetml')) return '.xlsx';
+  if (m.includes('wordprocessingml')) return '.docx';
+  if (m.includes('plain')) return '.txt';
+  return '';
 }
 
 // ═══════════════════════════════════════════════════════════════════

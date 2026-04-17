@@ -372,6 +372,93 @@ let currentJourneyTab = 'conv';
 let journeyCache = null;
 let selectedIds = new Set();  // Wave 2.5 — bulk selection persists across refreshes
 
+// ── Wave 3.0 Phase 2 — Media rendering ────────────────────────────────────
+// Every message with a media_id (image/video/audio/document/sticker) is
+// fetched from /api/media/{wa_message_id} which streams from R2. The
+// endpoint accepts referer auth, so we just point <img>/<video>/<audio>
+// at it and the browser handles the rest. Status is joined in from
+// wa_media_files: 'ok' renders, 'pending' shows a placeholder, 'failed'
+// / 'expired' / 410 show a graceful degradation message.
+function mediaUrl(m) {
+  // Prefer wa_message_id (wamid.*) since it's always populated inbound.
+  // media_id is a fallback for any future outbound-media case.
+  const key = m.wa_message_id || m.media_id;
+  return '/api/media/' + encodeURIComponent(key);
+}
+function renderMediaTile(m) {
+  const status = m.media_status;
+  const mime = m.media_mime || '';
+  const size = m.media_size ? (m.media_size > 1024*1024
+      ? (m.media_size/1024/1024).toFixed(1) + ' MB'
+      : Math.round(m.media_size/1024) + ' KB') : '';
+
+  // Not yet downloaded — show a friendly placeholder. Next auto-refresh
+  // (30s polling) will pick it up once archiveMedia completes.
+  if (!status || status === 'pending') {
+    return '<div style="margin-top:4px;padding:6px 8px;background:rgba(59,130,246,.1);border:1px dashed var(--blue);border-radius:4px;color:var(--blue);font-size:10px">📦 Archiving media… <span style="color:var(--muted)">' + escHtml(m.msg_type || '') + (mime ? ' · ' + escHtml(mime) : '') + '</span></div>';
+  }
+  if (status === 'failed') {
+    return '<div style="margin-top:4px;padding:6px 8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:4px;color:var(--red);font-size:10px">⚠️ Media download failed <span style="color:var(--muted)">· ' + escHtml(m.msg_type || '') + (mime ? ' · ' + escHtml(mime) : '') + '</span></div>';
+  }
+  if (status === 'expired') {
+    return '<div style="margin-top:4px;padding:6px 8px;background:rgba(148,163,184,.1);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px">🗃️ Older than 30 days · Drive archive coming</div>';
+  }
+
+  const src = mediaUrl(m);
+  const esc = s => escHtml(s || '');
+
+  if (m.msg_type === 'image' || m.msg_type === 'sticker') {
+    return '<div style="margin-top:4px"><img src="' + src + '" loading="lazy" alt="' + esc(m.msg_type) + '" '
+      + 'style="max-width:220px;max-height:220px;border-radius:6px;cursor:zoom-in;display:block" '
+      + 'onclick="openLightbox(\'' + src + '\',\'image\')" '
+      + 'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{innerHTML:\'<div style=&quot;color:var(--muted);font-size:10px;padding:4px&quot;>⚠️ Image unavailable</div>\'}))"></div>';
+  }
+  if (m.msg_type === 'video') {
+    return '<div style="margin-top:4px"><video src="' + src + '" controls preload="metadata" '
+      + 'style="max-width:260px;max-height:260px;border-radius:6px;display:block;background:#000"></video></div>';
+  }
+  if (m.msg_type === 'audio') {
+    return '<div style="margin-top:4px"><audio src="' + src + '" controls preload="metadata" style="max-width:260px;height:32px;display:block"></audio>'
+      + (size ? '<div style="color:var(--muted);font-size:9px;margin-top:2px">🎙️ ' + size + '</div>' : '')
+      + '</div>';
+  }
+  if (m.msg_type === 'document') {
+    const fname = m.media_filename || (mime.split('/')[1] ? 'document.' + mime.split('/')[1] : 'document');
+    return '<div style="margin-top:4px"><a href="' + src + '" target="_blank" rel="noopener" '
+      + 'style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-size:11px">'
+      + '<span>📎</span><span style="font-weight:600">' + esc(fname) + '</span>'
+      + (size ? '<span style="color:var(--muted);font-size:10px">· ' + size + '</span>' : '')
+      + '</a></div>';
+  }
+  // Unknown type with media — just a download link
+  return '<div style="margin-top:4px"><a href="' + src + '" target="_blank" rel="noopener" style="color:var(--blue);font-size:10px">📎 Open media (' + esc(m.msg_type || 'file') + ')</a></div>';
+}
+
+// ── Lightbox ──────────────────────────────────────────────────────────────
+function openLightbox(src, type) {
+  let lb = document.getElementById('mediaLightbox');
+  if (!lb) {
+    lb = document.createElement('div');
+    lb.id = 'mediaLightbox';
+    lb.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px';
+    lb.onclick = closeLightbox;
+    document.body.appendChild(lb);
+  }
+  lb.innerHTML = '';
+  const inner = type === 'video'
+    ? '<video src="' + src + '" controls autoplay style="max-width:95vw;max-height:95vh;border-radius:8px"></video>'
+    : '<img src="' + src + '" style="max-width:95vw;max-height:95vh;border-radius:8px;object-fit:contain">';
+  lb.innerHTML = inner
+    + '<button onclick="closeLightbox()" style="position:absolute;top:16px;right:16px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer">&times;</button>'
+    + '<a href="' + src + '" target="_blank" rel="noopener" style="position:absolute;bottom:16px;right:16px;background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:12px">Open original ↗</a>';
+  lb.style.display = 'flex';
+}
+function closeLightbox() {
+  const lb = document.getElementById('mediaLightbox');
+  if (lb) { lb.style.display = 'none'; lb.innerHTML = ''; }
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
 // ── Identity ──────────────────────────────────────────────────────────────
 function promptIdentity() {
   document.getElementById('idOverlay').style.display = '';
@@ -844,7 +931,13 @@ function renderJourneyTab() {
         else { bgColor = 'rgba(59,130,246,.08)'; borderColor = 'var(--blue)'; label = 'Bot'; }
         html += '<div style="background:' + bgColor + ';border-left:2px solid ' + borderColor + ';border-radius:4px;padding:6px 8px;margin-bottom:3px;font-size:10px">';
         html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-weight:600;color:' + borderColor + '">' + label + '</span><span style="color:var(--muted)">' + formatTime(m.created_at) + '</span></div>';
-        html += '<div style="color:var(--text2);word-break:break-word;white-space:pre-wrap">' + escHtml(m.content || m.msg_type || '') + '</div>';
+        // Suppress redundant text line for media-only messages (e.g. content === "image")
+        const mediaTypes = ['image','video','audio','document','sticker'];
+        const isMediaOnly = m.media_id && mediaTypes.includes(m.msg_type) && (!m.content || m.content === m.msg_type);
+        if (!isMediaOnly) {
+          html += '<div style="color:var(--text2);word-break:break-word;white-space:pre-wrap">' + escHtml(m.content || m.msg_type || '') + '</div>';
+        }
+        if (m.media_id) html += renderMediaTile(m);
         html += '</div>';
       });
     }

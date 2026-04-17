@@ -345,8 +345,16 @@ export async function onRequest(context) {
       const user = await db.prepare('SELECT * FROM wa_users WHERE wa_id = ?').bind(waId).first();
       const session = await db.prepare('SELECT * FROM wa_sessions WHERE wa_id = ?').bind(waId).first();
       const messages = await db.prepare(
-        `SELECT wa_id, direction, msg_type, content, created_at FROM wa_messages
-          WHERE wa_id = ? ORDER BY created_at ASC LIMIT 100`
+        `SELECT m.wa_id, m.direction, m.msg_type, m.content, m.created_at,
+                m.wa_message_id, m.media_id, m.template_name,
+                f.download_status AS media_status,
+                f.mime_type AS media_mime,
+                f.filename AS media_filename,
+                f.r2_key AS media_r2_key,
+                f.size_bytes AS media_size
+           FROM wa_messages m
+      LEFT JOIN wa_media_files f ON f.media_id = m.media_id
+          WHERE m.wa_id = ? ORDER BY m.created_at ASC LIMIT 100`
       ).bind(waId).all();
       const orders = await db.prepare(
         `SELECT order_code, items, total, payment_status, status, created_at FROM wa_orders
