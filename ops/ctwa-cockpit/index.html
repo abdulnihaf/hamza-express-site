@@ -83,6 +83,27 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .msg-in{align-self:flex-start;background:var(--bg2);border:1px solid var(--border)}
 .msg-out{align-self:flex-end;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3)}
 
+/* Urgency bar (shared across all cockpits) */
+.urg-bar{display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.urg-bar.has-items{display:flex}
+.urg-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.urg-chip:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.urg-chip.critical{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.35)}
+.urg-chip.warning{background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.35)}
+.urg-chip.info{background:rgba(59,130,246,.15);color:var(--blue);border:1px solid rgba(59,130,246,.35)}
+.urg-dot{width:6px;height:6px;border-radius:50%;animation:pulse 1.8s infinite}
+.urg-chip.critical .urg-dot{background:var(--red)}
+.urg-chip.warning .urg-dot{background:var(--orange)}
+.urg-chip.info .urg-dot{background:var(--blue)}
+.urg-src{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
+
+/* Fatigue badge on ad creatives */
+.fatigue-badge{display:inline-block;font-size:8px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:6px;text-transform:uppercase;letter-spacing:.3px;vertical-align:middle}
+.fatigue-badge.hot{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.fatigue-badge.saturating{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
+.fatigue-badge.fatigued{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.fatigue-badge.cold{background:rgba(100,116,139,.15);color:var(--muted);border:1px solid rgba(100,116,139,.3)}
+
 @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -94,6 +115,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div class="status"><div class="status-dot"></div><span id="statusText">Loading...</span></div>
   </div>
 
+  <!-- Urgency bar (cross-dashboard) -->
+  <div class="urg-bar" id="urgBar"></div>
+
   <div class="filters">
     <button class="fbtn" data-period="7d">7 Days</button>
     <button class="fbtn active" data-period="1d">Today</button>
@@ -101,10 +125,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <button class="fbtn" data-period="all">All</button>
   </div>
 
-  <!-- Ad Metrics KPIs (from Meta Ads API) -->
-  <div class="kpis" id="adKpis"></div>
-
-  <!-- Conversion KPIs (from D1) -->
+  <!-- Unified KPI strip — ad funnel (Meta API) + conversion (D1) collapsed into one row -->
   <div class="kpis" id="kpis"></div>
 
   <div class="grid-2">
@@ -218,28 +239,27 @@ function render(d) {
   const o = d.overview;
   const ad = d.adMetrics || {};
 
-  // Ad Metrics KPIs (from Meta Ads API)
-  if (ad.available) {
-    document.getElementById('adKpis').innerHTML = `
-      <div class="kpi"><div class="kpi-label">Impressions</div><div class="kpi-value blue">${(ad.impressions||0).toLocaleString()}</div><div class="kpi-sub">${(ad.reach||0).toLocaleString()} reach \u00B7 ${(ad.frequency||0).toFixed(1)}x freq</div></div>
-      <div class="kpi"><div class="kpi-label">Ad Spend</div><div class="kpi-value orange">\u20B9${Math.round(ad.spend||0)}</div><div class="kpi-sub">CPM \u20B9${Math.round(ad.cpm||0)} \u00B7 CPC \u20B9${(ad.cpc||0).toFixed(1)}</div></div>
-      <div class="kpi"><div class="kpi-label">Link Clicks</div><div class="kpi-value cyan">${ad.linkClicks||0}</div><div class="kpi-sub">CTR ${parseFloat(ad.ctr||0).toFixed(2)}%</div></div>
-      <div class="kpi"><div class="kpi-label">WA Conversations</div><div class="kpi-value green">${ad.conversations||0}</div><div class="kpi-sub">\u20B9${Math.round(ad.costPerConversation||0)}/each</div></div>
-      <div class="kpi"><div class="kpi-label">Msg Depth</div><div class="kpi-value yellow">${ad.depth2||0} / ${ad.depth3||0}</div><div class="kpi-sub">2+ / 3+ messages</div></div>
-      <div class="kpi"><div class="kpi-label">Engagement</div><div class="kpi-value purple">${(ad.reactions||0)+(ad.saves||0)+(ad.shares||0)+(ad.comments||0)}</div><div class="kpi-sub">${ad.reactions||0}\u2764 ${ad.saves||0}\u{1F516} ${ad.shares||0}\u{1F4E4} ${ad.comments||0}\u{1F4AC}</div></div>
-    `;
-  } else {
-    document.getElementById('adKpis').innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px">Meta Ads data unavailable</div>';
-  }
+  // Unified KPI strip — follows the funnel from spend → conversion → revenue.
+  // Previously we had two duplicate rows (adKpis + kpis) that both surfaced
+  // conversations from different sources, creating confusion. Collapsed to one.
+  const roas = ad.available && ad.spend > 0 ? (o.revenue / ad.spend).toFixed(1) + 'x' : '\u2014';
+  const cpa = ad.available && ad.spend > 0 && o.orders > 0 ? Math.round(ad.spend / o.orders) : 0;
+  const msgCost = ad.available ? Math.round(ad.costPerConversation || 0) : 0;
+  const engagement = ad.available ? (ad.reactions||0)+(ad.saves||0)+(ad.shares||0)+(ad.comments||0) : 0;
 
-  // Conversion KPIs (from D1)
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">CTWA Leads</div><div class="kpi-value blue">${o.conversations}</div><div class="kpi-sub">in WhatsApp</div></div>
-    <div class="kpi"><div class="kpi-label">Orders</div><div class="kpi-value green">${o.orders}</div><div class="kpi-sub">${o.orderConvRate}% conv</div></div>
-    <div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-value cyan">${o.bookings}</div><div class="kpi-sub">${o.bookingConvRate}% conv</div></div>
-    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value green">\u20B9${o.revenue.toLocaleString()}</div><div class="kpi-sub">ROAS ${ad.available && ad.spend > 0 ? (o.revenue / ad.spend).toFixed(1) + 'x' : '—'}</div></div>
-    <div class="kpi"><div class="kpi-label">AOV</div><div class="kpi-value orange">\u20B9${o.aov}</div></div>
-    <div class="kpi"><div class="kpi-label">Total Conv</div><div class="kpi-value purple">${o.orders + o.bookings}</div></div>
+    ${ad.available ? `
+      <div class="kpi"><div class="kpi-label">Ad Spend</div><div class="kpi-value orange">\u20B9${Math.round(ad.spend||0)}</div><div class="kpi-sub">CPM \u20B9${Math.round(ad.cpm||0)} \u00B7 CPC \u20B9${(ad.cpc||0).toFixed(1)}</div></div>
+      <div class="kpi"><div class="kpi-label">Impressions</div><div class="kpi-value blue">${(ad.impressions||0).toLocaleString()}</div><div class="kpi-sub">${(ad.reach||0).toLocaleString()} reach \u00B7 ${(ad.frequency||0).toFixed(1)}x freq</div></div>
+      <div class="kpi"><div class="kpi-label">Clicks</div><div class="kpi-value cyan">${ad.linkClicks||0}</div><div class="kpi-sub">CTR ${parseFloat(ad.ctr||0).toFixed(2)}%</div></div>
+    ` : ''}
+    <div class="kpi"><div class="kpi-label">Conversations</div><div class="kpi-value green">${o.conversations}</div><div class="kpi-sub">${ad.available ? '\u20B9' + msgCost + '/each' : 'in WhatsApp'}</div></div>
+    <div class="kpi"><div class="kpi-label">Msg Depth 2/3+</div><div class="kpi-value yellow">${ad.available ? (ad.depth2||0)+' / '+(ad.depth3||0) : '\u2014'}</div><div class="kpi-sub">engaged replies</div></div>
+    <div class="kpi"><div class="kpi-label">Orders</div><div class="kpi-value green">${o.orders}</div><div class="kpi-sub">${o.orderConvRate}% of convs</div></div>
+    <div class="kpi"><div class="kpi-label">Bookings</div><div class="kpi-value cyan">${o.bookings}</div><div class="kpi-sub">${o.bookingConvRate}% of convs</div></div>
+    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-value green">\u20B9${o.revenue.toLocaleString()}</div><div class="kpi-sub">ROAS ${roas} \u00B7 AOV \u20B9${o.aov}</div></div>
+    ${cpa > 0 ? `<div class="kpi"><div class="kpi-label">Cost / Order</div><div class="kpi-value orange">\u20B9${cpa}</div><div class="kpi-sub">spend / orders</div></div>` : ''}
+    <div class="kpi"><div class="kpi-label">Engagement</div><div class="kpi-value purple">${engagement}</div><div class="kpi-sub">${ad.reactions||0}\u2764 ${ad.saves||0}\u{1F516} ${ad.shares||0}\u{1F4E4} ${ad.comments||0}\u{1F4AC}</div></div>
   `;
 
   // Funnel
@@ -270,14 +290,19 @@ function render(d) {
   // ingested before ad_source_id was captured may only have ad_headline).
   const perAd = ad.available ? (ad.perAd || []) : [];
   if (perAd.length > 0) {
+    // Compute campaign median cost-per-conv as the fatigue reference point
+    const validCpc = perAd.map(a => a.costPerConversation).filter(x => x > 0).sort((a,b)=>a-b);
+    const medianCpc = validCpc.length ? validCpc[Math.floor(validCpc.length / 2)] : 0;
+
     document.getElementById('comboTable').innerHTML = perAd.map(a => {
       const byId = a.adId && (d.comboPerformance || []).find(c => c.adId && String(c.adId) === String(a.adId));
       const byName = !byId && (d.comboPerformance || []).find(c => a.name && c.adHeadline && a.name.includes(c.adHeadline.split(' ')[0]));
       const d1 = byId || byName;
       const orders = d1 ? d1.orders : 0;
       const revenue = d1 ? d1.revenue : 0;
+      const fatigueBadge = computeFatigue(a, medianCpc);
       return `<tr>
-        <td><strong>${a.name}</strong></td>
+        <td><strong>${a.name}</strong>${fatigueBadge}</td>
         <td class="mono">${a.impressions.toLocaleString()}</td>
         <td class="mono">${(a.reach||0).toLocaleString()}</td>
         <td class="mono">${a.clicks}</td>
@@ -372,6 +397,60 @@ async function openConv(waId) {
 function closeConv(){document.getElementById('convPanel').style.display='none';document.getElementById('convOverlay').style.display='none';}
 function timeAgo(iso){if(!iso)return'';const d=Date.now()-new Date(iso).getTime();const m=Math.floor(d/60000);if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d';}
 
+// Fatigue scoring for a creative.
+// Signals available per-ad from Meta: frequency, costPerConversation, impressions, conversations.
+// We don't have per-day rising-CPM per-ad (would need daily breakdown per creative), so we use
+// frequency + cost-per-conv relative to campaign median as the proxy.
+function computeFatigue(a, medianCpc) {
+  if (!a.impressions || a.impressions < 500) return ''; // not enough data to label
+  const freq = a.frequency || 0;
+  const cpc = a.costPerConversation || 0;
+  const hasConv = a.conversations > 0;
+
+  // Fatigued: audience saturated AND cost is rising
+  if (freq >= 3.5 || (medianCpc > 0 && cpc > medianCpc * 2 && cpc > 0)) {
+    return '<span class="fatigue-badge fatigued" title="High frequency or cost — refresh creative">Fatigued</span>';
+  }
+  // Saturating: early warning
+  if (freq >= 2.5) {
+    return '<span class="fatigue-badge saturating" title="Frequency climbing — watch this">Saturating</span>';
+  }
+  // Cold: spending money but not converting
+  if (a.spend > 200 && !hasConv) {
+    return '<span class="fatigue-badge cold" title="Spending but no conversations — pause or rewrite">Cold</span>';
+  }
+  // Hot: strong signals
+  if (hasConv && cpc > 0 && medianCpc > 0 && cpc < medianCpc * 0.7 && a.conversations >= 3) {
+    return '<span class="fatigue-badge hot" title="Performing above median — scale this">Hot</span>';
+  }
+  return '';
+}
+
+// ─── Shared urgency bar ───────────────────────────────────────────────
+async function loadUrgency() {
+  const bar = document.getElementById('urgBar');
+  if (!bar) return;
+  try {
+    const res = await fetch('/api/urgency');
+    const d = await res.json();
+    if (!d.success || !d.items || d.items.length === 0) {
+      bar.classList.remove('has-items');
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = d.items.map(it => `
+      <a class="urg-chip ${it.severity}" href="${it.action}" title="${it.source}">
+        <span class="urg-dot"></span>
+        <span class="urg-src">${it.source}</span>
+        <span>${it.text}</span>
+      </a>
+    `).join('');
+    bar.classList.add('has-items');
+  } catch (e) {
+    bar.classList.remove('has-items');
+  }
+}
+
 async function loadNurture() {
   try {
     const [tRes, qRes] = await Promise.all([
@@ -432,8 +511,10 @@ async function runNurture() {
 
 load();
 loadNurture();
+loadUrgency();
 setInterval(load, 60000);
 setInterval(loadNurture, 120000);
+setInterval(loadUrgency, 60000);
 </script>
 </body>
 </html>

@@ -75,12 +75,21 @@ export async function onRequest(context) {
         ORDER BY metrics.impressions DESC
       `),
 
-      // 2. Keyword performance
+      // 2. Keyword performance (includes quality_info + position_estimates)
+      //    quality_info.quality_score — 1-10 Google's prediction of keyword quality
+      //    position_estimates.first_page_cpc_micros — what you'd need to bid to show on page 1
+      //    position_estimates.top_of_page_cpc_micros — bid to show above organic
       query(`
         SELECT
           ad_group_criterion.keyword.text,
           ad_group_criterion.keyword.match_type,
           ad_group_criterion.cpc_bid_micros,
+          ad_group_criterion.quality_info.quality_score,
+          ad_group_criterion.quality_info.creative_quality_score,
+          ad_group_criterion.quality_info.post_click_quality_score,
+          ad_group_criterion.quality_info.search_predicted_ctr,
+          ad_group_criterion.position_estimates.first_page_cpc_micros,
+          ad_group_criterion.position_estimates.top_of_page_cpc_micros,
           ad_group.name,
           metrics.impressions, metrics.clicks, metrics.cost_micros,
           metrics.ctr, metrics.average_cpc, metrics.conversions,
@@ -183,22 +192,34 @@ export async function onRequest(context) {
       return acc;
     }, []).sort((a, b) => b.impressions - a.impressions);
 
-    // Parse keywords
-    const keywords = keywordData.map(r => ({
-      keyword: r.adGroupCriterion?.keyword?.text || '',
-      matchType: r.adGroupCriterion?.keyword?.matchType || '',
-      bidINR: r.adGroupCriterion?.cpcBidMicros
-        ? +(parseInt(r.adGroupCriterion.cpcBidMicros) / 1e6).toFixed(0)
-        : null,
-      adGroup: r.adGroup?.name || '',
-      impressions: int(r.metrics?.impressions),
-      clicks: int(r.metrics?.clicks),
-      spend: micros(r.metrics?.costMicros),
-      ctr: pct(r.metrics?.ctr),
-      avgCPC: micros(r.metrics?.averageCpc),
-      conversions: float(r.metrics?.conversions),
-      imprShare: pct(r.metrics?.searchImpressionShare),
-    }));
+    // Parse keywords — include quality_info + position_estimates
+    const keywords = keywordData.map(r => {
+      const qi = r.adGroupCriterion?.qualityInfo || {};
+      const pe = r.adGroupCriterion?.positionEstimates || {};
+      return {
+        keyword: r.adGroupCriterion?.keyword?.text || '',
+        matchType: r.adGroupCriterion?.keyword?.matchType || '',
+        bidINR: r.adGroupCriterion?.cpcBidMicros
+          ? +(parseInt(r.adGroupCriterion.cpcBidMicros) / 1e6).toFixed(0)
+          : null,
+        adGroup: r.adGroup?.name || '',
+        impressions: int(r.metrics?.impressions),
+        clicks: int(r.metrics?.clicks),
+        spend: micros(r.metrics?.costMicros),
+        ctr: pct(r.metrics?.ctr),
+        avgCPC: micros(r.metrics?.averageCpc),
+        conversions: float(r.metrics?.conversions),
+        imprShare: pct(r.metrics?.searchImpressionShare),
+        // Quality signals — qualityScore is the composite 1-10 rating
+        qualityScore: int(qi.qualityScore),
+        creativeQuality: qi.creativeQualityScore || '',       // ABOVE_AVERAGE / AVERAGE / BELOW_AVERAGE
+        landingQuality: qi.postClickQualityScore || '',
+        predictedCtr: qi.searchPredictedCtr || '',
+        // Bid estimates — what it takes to show
+        firstPageCpc: pe.firstPageCpcMicros ? +(parseInt(pe.firstPageCpcMicros) / 1e6).toFixed(1) : null,
+        topOfPageCpc: pe.topOfPageCpcMicros ? +(parseInt(pe.topOfPageCpcMicros) / 1e6).toFixed(1) : null,
+      };
+    });
 
     // Parse daily trend — deduplicate by date (sum across ad groups)
     const dailyMap = {};

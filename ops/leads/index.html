@@ -116,6 +116,21 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 
 .refresh-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--orange);transition:width .3s;z-index:100}
 .empty{text-align:center;padding:20px;color:var(--muted);font-size:12px}
+
+/* Urgency bar (shared across cockpits) */
+.urg-bar{display:none;gap:6px;margin:8px 0 10px;flex-wrap:wrap;align-items:center}
+.urg-bar.has-items{display:flex}
+.urg-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.urg-chip:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.urg-chip.critical{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.35)}
+.urg-chip.warning{background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.35)}
+.urg-chip.info{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.35)}
+.urg-dot{width:6px;height:6px;border-radius:50%;animation:pulse 1.8s infinite}
+.urg-chip.critical .urg-dot{background:#f87171}
+.urg-chip.warning .urg-dot{background:var(--orange)}
+.urg-chip.info .urg-dot{background:#60a5fa}
+.urg-src{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 </style>
 </head>
 <body>
@@ -133,6 +148,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
     <div style="font-size:10px;color:var(--muted)" id="lastRefresh">—</div>
   </div>
 </div>
+
+<!-- Urgency bar (cross-dashboard) -->
+<div class="urg-bar" id="urgBar"></div>
 
 <!-- KPIs -->
 <div class="kpi-grid">
@@ -665,10 +683,43 @@ function esc(s) { return (s || '').replace(/'/g, "\\'"); }
 function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function cap(s) { return (s || '').charAt(0).toUpperCase() + (s || '').slice(1); }
 
+// ── Shared urgency bar ────────────────────────────────────────────────────
+async function loadUrgency() {
+  const bar = document.getElementById('urgBar');
+  if (!bar) return;
+  try {
+    const res = await fetch('/api/urgency');
+    const d = await res.json();
+    if (!d.success || !d.items || d.items.length === 0) {
+      bar.classList.remove('has-items');
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = d.items.map(it => `
+      <a class="urg-chip ${it.severity}" href="${it.action}" title="${it.source}">
+        <span class="urg-dot"></span>
+        <span class="urg-src">${it.source}</span>
+        <span>${escHtml(it.text)}</span>
+      </a>
+    `).join('');
+    bar.classList.add('has-items');
+  } catch (e) {
+    bar.classList.remove('has-items');
+  }
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 ensureIdentity();
+// Honour ?filter=stage on cold-load so urgency chips can deep-link into a specific queue
+const qp = new URLSearchParams(window.location.search).get('filter');
+if (qp) {
+  const valid = ['all','new','engaged','payment_pending','booking_dropped','ordered','booked','ctwa','mine'];
+  if (valid.includes(qp)) currentFilter = qp;
+}
 loadData();
+loadUrgency();
 setInterval(loadData, 15000);
+setInterval(loadUrgency, 60000);
 </script>
 </body>
 </html>

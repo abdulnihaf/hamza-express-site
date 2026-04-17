@@ -121,6 +121,27 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .tab{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);background:none;border:none;transition:all .15s}
 .tab.active{background:var(--bg2);color:var(--text)}
 
+/* Urgency bar (shared across cockpits) */
+.urg-bar{display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.urg-bar.has-items{display:flex}
+.urg-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.urg-chip:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.urg-chip.critical{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.35)}
+.urg-chip.warning{background:rgba(249,115,22,.15);color:var(--orange);border:1px solid rgba(249,115,22,.35)}
+.urg-chip.info{background:rgba(66,133,244,.15);color:var(--gblue);border:1px solid rgba(66,133,244,.35)}
+.urg-dot{width:6px;height:6px;border-radius:50%;animation:pulse 1.8s infinite}
+.urg-chip.critical .urg-dot{background:var(--red)}
+.urg-chip.warning .urg-dot{background:var(--orange)}
+.urg-chip.info .urg-dot{background:var(--gblue)}
+.urg-src{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
+
+/* Quality Score pill */
+.qs{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;min-width:28px;text-align:center}
+.qs.excellent{background:rgba(52,168,83,.2);color:var(--ggreen);border:1px solid rgba(52,168,83,.4)}
+.qs.good{background:rgba(251,188,5,.18);color:var(--gyellow);border:1px solid rgba(251,188,5,.4)}
+.qs.poor{background:rgba(234,67,53,.18);color:var(--gred);border:1px solid rgba(234,67,53,.4)}
+.qs.unrated{background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
+
 /* Responsive */
 @media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
@@ -135,6 +156,9 @@ tr:hover td{background:rgba(66,133,244,.04)}
     <h1><span class="g-logo"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></span> Ads Command Center</h1>
     <div class="status"><div class="status-dot" id="statusDot"></div><span id="statusText">Loading...</span></div>
   </div>
+
+  <!-- Urgency bar (cross-dashboard) -->
+  <div class="urg-bar" id="urgBar"></div>
 
   <!-- Filters -->
   <div class="filters">
@@ -329,13 +353,13 @@ function render(data) {
     </div>
   `;
 
-  // Keywords
+  // Keywords — includes Quality Score + first-page-CPC bid estimate
   const kws = data.keywords;
   if (kws.length > 0) {
     const bestKw = kws.reduce((bi, k, i, arr) => k.impressions > arr[bi].impressions ? i : bi, 0);
     document.getElementById('keywords').innerHTML = `<table>
       <tr>
-        <th>Keyword</th><th>Group</th><th>Bid</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>Impr Share</th>
+        <th>Keyword</th><th>Group</th><th>QS</th><th>Bid</th><th>1st Pg CPC</th><th>Impr</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>Impr Share</th>
       </tr>
       ${kws.map((k, i) => {
         const badge = k.adGroup.includes('Near Me')
@@ -344,10 +368,16 @@ function render(data) {
         const bidLabel = k.bidINR ? `₹${k.bidINR}` : '—';
         const imprShare = k.imprShare > 0 ? k.imprShare + '%' : '—';
         const ctr = k.impressions > 0 ? ((k.clicks / k.impressions) * 100).toFixed(1) + '%' : '0%';
+        const qs = qualityPill(k.qualityScore);
+        const firstPage = k.firstPageCpc
+          ? `<span class="mono" style="color:${k.bidINR && k.bidINR < k.firstPageCpc ? 'var(--gred)' : 'var(--text2)'}" title="To show on page 1">₹${k.firstPageCpc}</span>`
+          : '<span class="mono" style="color:var(--muted)">—</span>';
         return `<tr class="${i === bestKw && k.impressions > 0 ? 'best-row' : ''}">
           <td style="font-weight:600">"${k.keyword}"</td>
           <td>${badge}</td>
+          <td>${qs}</td>
           <td class="mono" style="color:var(--text2)">${bidLabel}</td>
+          <td>${firstPage}</td>
           <td class="mono">${fmt(k.impressions)}</td>
           <td class="mono">${k.clicks}</td>
           <td class="mono">${ctr}</td>
@@ -355,7 +385,11 @@ function render(data) {
           <td class="mono" style="color:${k.imprShare > 20 ? 'var(--ggreen)' : 'var(--text2)'}">${imprShare}</td>
         </tr>`;
       }).join('')}
-    </table>`;
+    </table>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">
+      <strong style="color:var(--text2)">QS</strong> (Quality Score, 1-10) is Google's prediction of keyword quality — higher = cheaper clicks and better position.
+      <strong style="color:var(--text2)">1st Pg CPC</strong> = minimum bid to appear on page 1 (red if your current bid is below this).
+    </div>`;
   } else {
     document.getElementById('keywords').innerHTML = `<div class="empty">No keyword data yet<small>Appears after first impressions are logged</small></div>`;
   }
@@ -410,6 +444,43 @@ function fmt(n) {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
   return (n || 0).toString();
+}
+
+// Google Quality Score → pill. Score is 1-10, null/0 = not yet rated (new keyword).
+function qualityPill(score) {
+  if (!score || score === 0) return '<span class="qs unrated" title="Not rated yet — needs more impressions">—</span>';
+  const cls = score >= 8 ? 'excellent' : score >= 5 ? 'good' : 'poor';
+  const tip = score >= 8
+    ? 'Excellent — cheap clicks, good position'
+    : score >= 5
+    ? 'OK — some room to improve'
+    : 'Poor — fix landing page / ad copy or pause';
+  return `<span class="qs ${cls}" title="${tip}">${score}/10</span>`;
+}
+
+// ─── Shared urgency bar ───────────────────────────────────────────────
+async function loadUrgency() {
+  const bar = document.getElementById('urgBar');
+  if (!bar) return;
+  try {
+    const res = await fetch('/api/urgency');
+    const d = await res.json();
+    if (!d.success || !d.items || d.items.length === 0) {
+      bar.classList.remove('has-items');
+      bar.innerHTML = '';
+      return;
+    }
+    bar.innerHTML = d.items.map(it => `
+      <a class="urg-chip ${it.severity}" href="${it.action}" title="${it.source}">
+        <span class="urg-dot"></span>
+        <span class="urg-src">${it.source}</span>
+        <span>${it.text}</span>
+      </a>
+    `).join('');
+    bar.classList.add('has-items');
+  } catch (e) {
+    bar.classList.remove('has-items');
+  }
 }
 
 // Organic tab switching
@@ -547,8 +618,10 @@ function renderOrganic(data) {
 // Auto-refresh every 60s
 loadData();
 loadOrganic();
+loadUrgency();
 setInterval(loadData, 60000);
 setInterval(loadOrganic, 300000); // organic refreshes every 5 min (GSC data lags ~2 days anyway)
+setInterval(loadUrgency, 60000);
 </script>
 </body>
 </html>
