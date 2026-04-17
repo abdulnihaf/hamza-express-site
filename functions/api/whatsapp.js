@@ -724,7 +724,27 @@ export async function onRequest(context) {
   if (context.request.method === 'POST') {
     try {
       const body = await context.request.json();
-      await processWebhook(context, body);
+
+      // ── Data Vault: capture raw webhook FIRST, before any processing ──
+      // Meta does not retain message history. If we don't store it, it's
+      // gone. This insert runs before processWebhook so even if processing
+      // throws, the raw event is preserved for replay/debug/recovery.
+      const vaultId = await vaultWebhookEvent(context.env.DB, body).catch(() => null);
+
+      let processingError = null;
+      try {
+        await processWebhook(context, body);
+      } catch (e) {
+        processingError = e.message || String(e);
+        throw e;
+      } finally {
+        if (vaultId && processingError) {
+          // Mark the event as failed so future replay can target these
+          context.env.DB.prepare(
+            'UPDATE wa_webhook_events SET processed = 0, error_text = ? WHERE id = ?'
+          ).bind(processingError.slice(0, 2000), vaultId).run().catch(() => {});
+        }
+      }
 
       // Forward hiring number messages to HN Hotels hiring dashboard
       // Check all 3 hiring tables: candidates (sourced), messages (outreach sent), conversations (replies)
@@ -797,11 +817,19 @@ async function processWebhook(context, body) {
   }
 
   // Handle payment status webhooks (native WhatsApp payments via Razorpay)
+  // Also log ALL status events (sent/delivered/read/failed) to wa_message_status
+  // so we can answer "did Basheer's reply actually land?" and track nurture
+  // template delivery. Meta only sends each status once — if we don't store it,
+  // it's gone.
   if (value?.statuses?.length) {
     for (const status of value.statuses) {
       if (status.type === 'payment') {
         await handlePaymentStatus(context, status, phoneId, token, db);
       }
+      // Log every status regardless of type — sent/delivered/read/failed
+      // all land here. Fire and forget so delivery callbacks never delay
+      // the webhook response.
+      logMessageStatus(db, status).catch(() => {});
     }
   }
 
@@ -817,6 +845,34 @@ async function processWebhook(context, body) {
   const ctwaSource = referral ? 'meta_ctwa' : null;
   const adSourceId = referral?.source_id || null;
   const adHeadline = referral?.headline || null;
+
+  // ── Immutable ad-referral vault (Wave 3.0) ───────────────────────────
+  // If Meta attached a referral object, append it to ad_referrals as a new
+  // permanent row. This preserves EVERY ad attribution even if wa_sessions
+  // later gets overwritten by a new non-ad conversation. Unique index on
+  // (wa_id, ctwa_clid, message_id) dedupes Meta retries automatically.
+  // Fire-and-forget — the vault never delays customer response.
+  if (referral) {
+    db.prepare(`INSERT OR IGNORE INTO ad_referrals
+        (wa_id, ctwa_clid, source_type, source_id, source_url, headline, body,
+         media_type, thumbnail_url, image_url, video_url, message_id, raw_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(
+        waId,
+        ctwaClid,
+        referral.source_type || null,
+        adSourceId,
+        referral.source_url || null,
+        adHeadline,
+        referral.body || null,
+        referral.media_type || null,
+        referral.thumbnail_url || null,
+        referral.image_url || null,
+        referral.video_url || null,
+        message.id || null,
+        JSON.stringify(referral).slice(0, 8000)
+      ).run().catch(() => {});
+  }
 
   // Skip ordering bot for hiring campaign numbers (candidates sourced or outreach sent).
   // conversations table is excluded — it's a chat log where non-hiring numbers can land accidentally.
@@ -884,6 +940,27 @@ async function processWebhook(context, body) {
     await db.prepare('INSERT INTO wa_users (wa_id, name, phone, first_source, created_at, last_active_at) VALUES (?, ?, ?, ?, ?, ?)')
       .bind(waId, name, waId, firstSource, now, now).run();
     user = { wa_id: waId, name, phone: waId, total_orders: 0, total_spent: 0, last_order_id: null, first_source: firstSource };
+
+    // ── Leads back-populate (Wave 3.0) ─────────────────────────────────
+    // Every new WhatsApp contact gets a leads row NOW, not at 2am via the
+    // nightly sync. The old behaviour meant CTWA attribution for a lead
+    // that ordered-then-vanished before midnight was silently lost because
+    // syncOne computes source from wa_sessions which may have been reset.
+    // INSERT OR IGNORE + UNIQUE(wa_id) is the idempotency guarantee.
+    const leadSource = ctwaClid ? 'ctwa_paid'
+                     : (session?.counter_source ? 'station_qr'
+                     : (firstSource === 'organic' ? 'direct' : firstSource));
+    const leadSourceDetail = session?.counter_source || (ctwaClid ? adSourceId : null);
+    db.prepare(`INSERT OR IGNORE INTO leads
+        (wa_id, phone, name, stage, source, source_detail, ad_source_id, ad_headline,
+         ctwa_clid, first_seen_at, last_seen_at)
+        VALUES (?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(
+        waId, waId, name,
+        leadSource, leadSourceDetail,
+        adSourceId, adHeadline, ctwaClid,
+        now, now
+      ).run().catch(() => {});
   } else {
     await db.prepare('UPDATE wa_users SET last_active_at = ? WHERE wa_id = ?')
       .bind(new Date().toISOString(), waId).run();
@@ -891,10 +968,27 @@ async function processWebhook(context, body) {
 
   const msgType = getMessageType(message);
 
-  // Log incoming message (fire and forget)
+  // Log incoming message (fire and forget) — with full JSON preservation.
+  //   content       — legacy single-string summary (backwards compatible)
+  //   content_json  — full message object (captions, interactive payloads,
+  //                   cart items, location coords, etc.) — never collapsed
+  //   wa_message_id — Meta's wamid.xxx for joining to wa_message_status
+  //   media_id      — for images/video/audio/docs/stickers → enables the
+  //                   Phase 2 R2 download. Meta's URL dies in ~5 minutes.
   const inContent = msgType.text || msgType.id || (msgType.type === 'order' ? 'cart_sent' : msgType.type);
-  db.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
-    .bind(waId, 'in', msgType.type, inContent, new Date().toISOString()).run().catch(() => {});
+  const mediaId =
+    message.image?.id || message.video?.id || message.audio?.id ||
+    message.document?.id || message.sticker?.id || null;
+  const contentJson = JSON.stringify(message).slice(0, 8000);
+  db.prepare(
+    `INSERT INTO wa_messages
+       (wa_id, direction, msg_type, content, wa_message_id, content_json, media_id, created_at)
+     VALUES (?, 'in', ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    waId, msgType.type, inContent,
+    message.id || null, contentJson, mediaId,
+    new Date().toISOString()
+  ).run().catch(() => {});
 
   await routeState(context, session, user, msgType, waId, phoneId, token, db);
 }
@@ -5977,6 +6071,84 @@ function buildReplyButtons(to, body, buttons) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// DATA VAULT — raw event capture (Wave 3.0)
+// ═══════════════════════════════════════════════════════════════════
+//
+// vaultWebhookEvent runs at the TOP of every POST, before processWebhook.
+// It writes the raw body to wa_webhook_events so that even if processing
+// throws, the event is preserved. Returns the row id so the caller can
+// mark it as failed if processing errors. All errors swallowed — the
+// vault must never block message handling.
+
+async function vaultWebhookEvent(db, body) {
+  if (!db) return null;
+  try {
+    const value = body?.entry?.[0]?.changes?.[0]?.value;
+    const phoneNumberId = value?.metadata?.phone_number_id || null;
+    let eventKind = 'other';
+    let waId = null;
+    let messageId = null;
+    if (value?.messages?.length) {
+      eventKind = 'message';
+      waId = value.messages[0].from || null;
+      messageId = value.messages[0].id || null;
+    } else if (value?.statuses?.length) {
+      eventKind = 'status';
+      waId = value.statuses[0].recipient_id || null;
+      messageId = value.statuses[0].id || null;
+    }
+    const raw = JSON.stringify(body);
+    const res = await db.prepare(
+      `INSERT INTO wa_webhook_events
+         (phone_number_id, event_kind, wa_id, message_id, raw_json, processed)
+       VALUES (?, ?, ?, ?, ?, 1)`
+    ).bind(phoneNumberId, eventKind, waId, messageId, raw).run();
+    return res.meta?.last_row_id || null;
+  } catch (e) {
+    // Never block message processing on vault failure. Log and move on.
+    console.error('vaultWebhookEvent failed:', e.message);
+    return null;
+  }
+}
+
+// Writes one row to wa_message_status per delivery callback. Handles
+// every status type (sent/delivered/read/failed) — each is a new row,
+// so we keep the full history per message. Errors silenced.
+async function logMessageStatus(db, status) {
+  if (!db || !status) return;
+  try {
+    const epochMs = status.timestamp ? (parseInt(status.timestamp, 10) * 1000) : Date.now();
+    const tsIso = new Date(epochMs).toISOString();
+    const err = (status.errors && status.errors[0]) || null;
+    const conv = status.conversation || {};
+    const pricing = status.pricing || {};
+    await db.prepare(
+      `INSERT INTO wa_message_status
+         (wa_message_id, recipient_id, status, ts,
+          conversation_id, conversation_origin,
+          pricing_category, pricing_billable,
+          error_code, error_title, error_message, raw_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      status.id || 'unknown',
+      status.recipient_id || null,
+      status.status || status.type || 'unknown',
+      tsIso,
+      conv.id || null,
+      conv.origin?.type || null,
+      pricing.category || null,
+      pricing.billable != null ? (pricing.billable ? 1 : 0) : null,
+      err?.code != null ? String(err.code) : null,
+      err?.title || null,
+      err?.message || err?.error_data?.details || null,
+      JSON.stringify(status).slice(0, 4000),
+    ).run();
+  } catch (e) {
+    console.error('logMessageStatus failed:', e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // WHATSAPP SEND HELPER
 // ═══════════════════════════════════════════════════════════════════
 
@@ -5991,17 +6163,61 @@ async function sendWhatsApp(phoneId, token, payload) {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+
+    // Parse Meta's response to recover wa_message_id. This is the ONLY
+    // moment we get the wamid for outbound messages — if we don't store
+    // it here we can't correlate later status callbacks (delivered/read/failed)
+    // back to the message we sent.
+    let waMessageId = null;
+    let responseText = null;
     if (!response.ok) {
-      const err = await response.text();
-      console.error('WA API error:', response.status, err);
-      response._errorText = `${response.status}: ${err}`;
+      responseText = await response.text();
+      console.error('WA API error:', response.status, responseText);
+      response._errorText = `${response.status}: ${responseText}`;
+    } else {
+      try {
+        const cloned = response.clone();
+        const data = await cloned.json();
+        waMessageId = data?.messages?.[0]?.id || null;
+      } catch (_) { /* not JSON — leave waMessageId null */ }
     }
-    // Log outgoing message (fire and forget)
+
+    // Log outgoing message (fire and forget) — with wa_message_id for
+    // correlation, template_name for template sends, and full payload JSON
+    // so we can reconstruct exactly what we sent.
     if (_logDb && payload.to) {
       const msgType = payload.interactive?.type || payload.type || 'unknown';
       const content = payload.text?.body || payload.interactive?.body?.text || payload.interactive?.type || msgType;
-      _logDb.prepare('INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at) VALUES (?, ?, ?, ?, ?)')
-        .bind(payload.to, 'out', msgType, (content || '').substring(0, 500), new Date().toISOString()).run().catch(() => {});
+      const templateName = payload.template?.name || null;
+      const contentJson = JSON.stringify(payload).slice(0, 8000);
+      _logDb.prepare(
+        `INSERT INTO wa_messages
+           (wa_id, direction, msg_type, content, wa_message_id, content_json, template_name, created_at)
+         VALUES (?, 'out', ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        payload.to, msgType,
+        (content || '').substring(0, 500),
+        waMessageId, contentJson, templateName,
+        new Date().toISOString()
+      ).run().catch(() => {});
+
+      // If send failed, record the error as a synthetic status so wa_message_status
+      // is a complete record of "what happened to every outbound message we tried to send".
+      if (!response.ok && responseText) {
+        _logDb.prepare(
+          `INSERT INTO wa_message_status
+             (wa_message_id, recipient_id, status, ts, error_code, error_title, error_message, raw_json)
+           VALUES (?, ?, 'send_failed', ?, ?, ?, ?, ?)`
+        ).bind(
+          waMessageId || 'send_failed',
+          payload.to,
+          new Date().toISOString(),
+          String(response.status),
+          'WA API error',
+          responseText.slice(0, 1000),
+          responseText.slice(0, 4000),
+        ).run().catch(() => {});
+      }
     }
     return response;
   } catch (e) {
