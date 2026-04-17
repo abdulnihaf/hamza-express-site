@@ -265,11 +265,15 @@ function render(d) {
     <div class="compare-card"><div class="compare-label">Organic Revenue</div><div class="compare-value" style="color:var(--green)">\u20B9${org.revenue.toLocaleString()}</div></div>
   `;
 
-  // Combo performance — merge Meta Ads data with D1 data
+  // Combo performance — merge Meta Ads data with D1 data.
+  // PREFER match on Meta ad_id (stable) → fall back to ad_name prefix (legacy rows
+  // ingested before ad_source_id was captured may only have ad_headline).
   const perAd = ad.available ? (ad.perAd || []) : [];
   if (perAd.length > 0) {
     document.getElementById('comboTable').innerHTML = perAd.map(a => {
-      const d1 = (d.comboPerformance || []).find(c => a.name && c.adHeadline && a.name.includes(c.adHeadline.split(' ')[0]));
+      const byId = a.adId && (d.comboPerformance || []).find(c => c.adId && String(c.adId) === String(a.adId));
+      const byName = !byId && (d.comboPerformance || []).find(c => a.name && c.adHeadline && a.name.includes(c.adHeadline.split(' ')[0]));
+      const d1 = byId || byName;
       const orders = d1 ? d1.orders : 0;
       const revenue = d1 ? d1.revenue : 0;
       return `<tr>

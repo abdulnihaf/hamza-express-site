@@ -40,8 +40,9 @@ async function fetchMetaAdsData(token, period) {
     const [campaignRes, perAdRes, audienceRes, dailyRes] = await Promise.all([
       // 1. Campaign overview
       fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?${dateParam}&fields=impressions,reach,spend,actions,cost_per_action_type,cpc,cpm,ctr,frequency&access_token=${token}`),
-      // 2. Per-ad breakdown
-      fetch(`https://graph.facebook.com/v25.0/${META_ADSET_ID}/insights?${dateParam}&level=ad&fields=ad_name,impressions,reach,spend,frequency,actions,cost_per_action_type&access_token=${token}`),
+      // 2. Per-ad breakdown — include ad_id for STABLE matching against D1 ad_source_id.
+      //    ad_name matching breaks silently when a marketer renames an ad.
+      fetch(`https://graph.facebook.com/v25.0/${META_ADSET_ID}/insights?${dateParam}&level=ad&fields=ad_id,ad_name,impressions,reach,spend,frequency,actions,cost_per_action_type&access_token=${token}`),
       // 3. Audience breakdown (always lifetime for meaningful data)
       fetch(`https://graph.facebook.com/v25.0/${META_CAMPAIGN_ID}/insights?date_preset=maximum&fields=impressions,reach,spend,actions&breakdowns=age,gender&access_token=${token}`),
       // 4. Daily trend
@@ -62,6 +63,7 @@ async function fetchMetaAdsData(token, period) {
       const aActions = (a.actions || []).reduce((m, x) => { m[x.action_type] = parseInt(x.value); return m; }, {});
       const aCosts = (a.cost_per_action_type || []).reduce((m, x) => { m[x.action_type] = parseFloat(x.value); return m; }, {});
       return {
+        adId: a.ad_id || null,                         // Meta ad_id — stable attribution key
         name: a.ad_name || 'Unknown',
         impressions: parseInt(a.impressions || 0),
         reach: parseInt(a.reach || 0),
