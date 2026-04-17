@@ -463,6 +463,85 @@ export async function onRequest(context) {
       return json({ success: true, scanned: (users.results || []).length, inserted, updated });
     }
 
+    // ─── POST reply (staff → customer WhatsApp reply) ──────────────────
+    // Body: { wa_id, text, actor }
+    // - Sends via WhatsApp Cloud API (same PhoneID + token as bot)
+    // - Logs outbound as msg_type='staff_reply' so UI can distinguish from bot
+    // - Logs audit entry (field='reply') attributing actor
+    // Intended primary users: Basheer + Faheem (core marketing / sales ops).
+    // Mumtaz uses it only when working a booking-drop conversion.
+    if (method === 'POST' && action === 'reply') {
+      const body = await context.request.json().catch(() => ({}));
+      const { wa_id, text, actor } = body;
+      if (!wa_id) return bad('wa_id required');
+      const msg = (text || '').trim();
+      if (!msg) return bad('text required');
+      if (msg.length > 4000) return bad('text too long (max 4000 chars)');
+      const a = sanitiseActor(actor);
+      if (a === 'unknown') return bad('actor required (basheer, faheem, nihaf, mumtaz, naveen)');
+
+      const token = context.env.WA_ACCESS_TOKEN;
+      const phoneId = context.env.WA_PHONE_ID;
+      if (!token || !phoneId) return bad('WhatsApp credentials not configured', 500);
+
+      // Send via WA Cloud API
+      const waUrl = `https://graph.facebook.com/v21.0/${phoneId}/messages`;
+      const payload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: wa_id,
+        type: 'text',
+        text: { body: msg, preview_url: false },
+      };
+      let waJson, waStatus;
+      try {
+        const waRes = await fetch(waUrl, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        waStatus = waRes.status;
+        waJson = await waRes.json().catch(() => ({}));
+        if (!waRes.ok) {
+          // Still audit the failed attempt so staff know the customer DIDN'T receive it
+          await db.prepare(
+            `INSERT INTO lead_audit (wa_id, actor, field, old_value, new_value, at)
+               VALUES (?, ?, 'reply_failed', ?, ?, datetime('now'))`
+          ).bind(wa_id, a, String(waStatus), msg.substring(0, 200)).run().catch(() => {});
+          return json({
+            success: false,
+            error: waJson?.error?.message || `WA API returned ${waStatus}`,
+            waStatus,
+            waBody: waJson,
+          }, 502);
+        }
+      } catch (e) {
+        return json({ success: false, error: 'Network error: ' + e.message }, 502);
+      }
+
+      const messageId = waJson?.messages?.[0]?.id || null;
+
+      // Log to wa_messages as outbound staff reply (distinct msg_type so UI shows attribution)
+      await db.prepare(
+        `INSERT INTO wa_messages (wa_id, direction, msg_type, content, created_at)
+           VALUES (?, 'out', ?, ?, ?)`
+      ).bind(wa_id, `staff_reply_${a}`, msg.substring(0, 500), new Date().toISOString())
+        .run().catch(() => {});
+
+      // Audit trail
+      await db.prepare(
+        `INSERT INTO lead_audit (wa_id, actor, field, old_value, new_value, at)
+           VALUES (?, ?, 'reply', NULL, ?, datetime('now'))`
+      ).bind(wa_id, a, msg.substring(0, 500)).run().catch(() => {});
+
+      // Touch lead updated_at + last_seen_at (don't change stage — staff reply isn't customer activity)
+      await db.prepare(
+        `UPDATE leads SET updated_at = datetime('now') WHERE wa_id = ?`
+      ).bind(wa_id).run().catch(() => {});
+
+      return json({ success: true, messageId, actor: a });
+    }
+
     // ─── POST save segment ──────────────────────────────────────────────
     if (method === 'POST' && action === 'segment-save') {
       const body = await context.request.json().catch(() => ({}));

@@ -117,6 +117,24 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .refresh-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--orange);transition:width .3s;z-index:100}
 .empty{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 
+/* Reply box (staff → customer WhatsApp) — Basheer/Faheem's main tool */
+.reply-box{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:10px 12px;margin:12px -16px -20px;display:flex;flex-direction:column;gap:6px}
+.reply-hint{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.reply-hint .as{color:var(--cyan);font-weight:700}
+.reply-hint .warn{color:var(--yellow)}
+.reply-row{display:flex;gap:6px;align-items:flex-end}
+.reply-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:12px;font-family:inherit;resize:vertical;min-height:40px;max-height:140px}
+.reply-input:focus{outline:none;border-color:var(--green)}
+.reply-send{background:var(--green);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;min-height:40px}
+.reply-send:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.reply-send.sending{background:var(--yellow);color:#000}
+.reply-templates{display:flex;gap:4px;flex-wrap:wrap}
+.reply-tmpl{font-size:9px;padding:3px 8px;border-radius:10px;background:var(--bg);border:1px dashed var(--border);color:var(--text2);cursor:pointer;white-space:nowrap}
+.reply-tmpl:hover{border-color:var(--green);color:var(--green)}
+.reply-status{font-size:10px;padding:4px 8px;border-radius:4px}
+.reply-status.ok{background:rgba(16,185,129,.15);color:var(--green)}
+.reply-status.err{background:rgba(239,68,68,.15);color:var(--red)}
+
 /* Urgency bar (shared across cockpits) */
 .urg-bar{display:none;gap:6px;margin:8px 0 10px;flex-wrap:wrap;align-items:center}
 .urg-bar.has-items{display:flex}
@@ -587,12 +605,18 @@ function renderJourneyTab() {
       messages.forEach(m => {
         if (m.msg_type === 'lead_status' || m.msg_type === 'lead_notes') return;
         const isIn = m.direction === 'in';
-        const bgColor = isIn ? 'rgba(16,185,129,.08)' : 'rgba(59,130,246,.08)';
-        const borderColor = isIn ? 'var(--green)' : 'var(--blue)';
-        const label = isIn ? 'Customer' : 'Bot';
+        const isStaff = !isIn && (m.msg_type || '').startsWith('staff_reply');
+        let bgColor, borderColor, label;
+        if (isIn) { bgColor = 'rgba(16,185,129,.08)'; borderColor = 'var(--green)'; label = 'Customer'; }
+        else if (isStaff) {
+          const who = (m.msg_type || '').replace(/^staff_reply_?/, '').trim();
+          bgColor = 'rgba(249,115,22,.1)'; borderColor = 'var(--orange)';
+          label = who ? 'Staff · ' + cap(who) : 'Staff';
+        }
+        else { bgColor = 'rgba(59,130,246,.08)'; borderColor = 'var(--blue)'; label = 'Bot'; }
         html += '<div style="background:' + bgColor + ';border-left:2px solid ' + borderColor + ';border-radius:4px;padding:6px 8px;margin-bottom:3px;font-size:10px">';
         html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-weight:600;color:' + borderColor + '">' + label + '</span><span style="color:var(--muted)">' + formatTime(m.created_at) + '</span></div>';
-        html += '<div style="color:var(--text2);word-break:break-word">' + escHtml(m.content || m.msg_type || '') + '</div>';
+        html += '<div style="color:var(--text2);word-break:break-word;white-space:pre-wrap">' + escHtml(m.content || m.msg_type || '') + '</div>';
         html += '</div>';
       });
     }
@@ -606,6 +630,30 @@ function renderJourneyTab() {
       if (s.counter_source) html += ' &middot; Station: ' + s.counter_source;
       html += '</div>';
     }
+
+    // ── Reply box (staff → customer WhatsApp) ──
+    // Basheer & Faheem drive the core lead-management op from here.
+    // Mumtaz uses it only when chasing booking-drop conversions.
+    const waId = (journeyCache.waId || '').replace(/[^\d]/g, '');
+    const who = actor ? cap(actor) : '—';
+    const needsId = !actor;
+    html += '<div class="reply-box">';
+    html += '  <div class="reply-hint">';
+    html += '    <span>You\'re replying as <span class="as">' + who + '</span>. Every reply is logged to the customer\'s journey + audit trail.</span>';
+    if (needsId) html += '    <span class="warn">Pick your name first ↑</span>';
+    html += '  </div>';
+    html += '  <div class="reply-templates">';
+    html += '    <span class="reply-tmpl" onclick="insertReplyTpl(\'Hi! This is ' + who + ' from Hamza Express. How can I help?\')">👋 Intro</span>';
+    html += '    <span class="reply-tmpl" onclick="insertReplyTpl(\'Is there anything I can help you order? We\\u2019re open 12 PM to 12:30 AM.\')">🍽️ Order nudge</span>';
+    html += '    <span class="reply-tmpl" onclick="insertReplyTpl(\'Would you like to book a table? I can help you pick a time.\')">📅 Booking</span>';
+    html += '    <span class="reply-tmpl" onclick="insertReplyTpl(\'Apologies for the delay. What would you like to try today?\')">🙏 Recovery</span>';
+    html += '  </div>';
+    html += '  <div class="reply-row">';
+    html += '    <textarea class="reply-input" id="replyInput" placeholder="Type a WhatsApp reply to the customer…" ' + (needsId ? 'disabled' : '') + ' onkeydown="if(event.key===\'Enter\'&&(event.metaKey||event.ctrlKey)){event.preventDefault();sendReply(\'' + waId + '\')}"></textarea>';
+    html += '    <button class="reply-send" id="replySendBtn" onclick="sendReply(\'' + waId + '\')" ' + (needsId ? 'disabled' : '') + '>Send</button>';
+    html += '  </div>';
+    html += '  <div id="replyStatus" style="display:none" class="reply-status"></div>';
+    html += '</div>';
   }
 
   else if (currentJourneyTab === 'orders') {
@@ -659,6 +707,72 @@ function closeJourney() {
   document.getElementById('journeyPanel').style.display = 'none';
   document.getElementById('journeyOverlay').style.display = 'none';
   journeyCache = null;
+}
+
+// ── Reply to customer via WhatsApp ────────────────────────────────────────
+// Primary users: Basheer + Faheem (this IS their core marketing operation).
+// Mumtaz only uses it for booking-drop conversions — his core job is the dine-in floor.
+function insertReplyTpl(text) {
+  const ta = document.getElementById('replyInput');
+  if (!ta) return;
+  ta.value = text;
+  ta.focus();
+}
+async function sendReply(waId) {
+  if (!actor) { promptIdentity(); return; }
+  if (!waId) { showReplyStatus('err', 'Missing wa_id'); return; }
+  const ta = document.getElementById('replyInput');
+  const btn = document.getElementById('replySendBtn');
+  const msg = (ta.value || '').trim();
+  if (!msg) { showReplyStatus('err', 'Type something first'); return; }
+  if (msg.length > 4000) { showReplyStatus('err', 'Too long (max 4000 chars)'); return; }
+
+  btn.disabled = true; btn.classList.add('sending'); btn.textContent = 'Sending…';
+  showReplyStatus('', '');
+  try {
+    const res = await fetch(API + '?action=reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wa_id: waId, text: msg, actor }),
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Send failed');
+
+    // Optimistic append + refresh journey so audit tab updates too
+    if (journeyCache && Array.isArray(journeyCache.messages)) {
+      journeyCache.messages.push({
+        wa_id: waId,
+        direction: 'out',
+        msg_type: 'staff_reply_' + actor,
+        content: msg,
+        created_at: new Date().toISOString(),
+      });
+    }
+    ta.value = '';
+    showReplyStatus('ok', 'Sent ✓');
+    renderJourneyTab();
+    // Refresh audit in background so Audit tab reflects new row next view
+    fetch(API + '?action=history&wa_id=' + waId)
+      .then(r => r.json())
+      .then(j => { if (j.success) journeyCache = j; })
+      .catch(() => {});
+    // Hide status after 3s
+    setTimeout(() => showReplyStatus('', ''), 3000);
+  } catch (e) {
+    showReplyStatus('err', 'Failed: ' + e.message);
+  } finally {
+    btn.disabled = !actor;
+    btn.classList.remove('sending');
+    btn.textContent = 'Send';
+  }
+}
+function showReplyStatus(kind, text) {
+  const el = document.getElementById('replyStatus');
+  if (!el) return;
+  if (!text) { el.style.display = 'none'; el.textContent = ''; el.className = 'reply-status'; return; }
+  el.style.display = '';
+  el.className = 'reply-status ' + (kind || '');
+  el.textContent = text;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
