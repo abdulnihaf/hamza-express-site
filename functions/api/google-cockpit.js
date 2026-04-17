@@ -81,6 +81,7 @@ export async function onRequest(context) {
       //    position_estimates.top_of_page_cpc_micros — bid to show above organic
       query(`
         SELECT
+          ad_group_criterion.criterion_id,
           ad_group_criterion.keyword.text,
           ad_group_criterion.keyword.match_type,
           ad_group_criterion.cpc_bid_micros,
@@ -90,6 +91,7 @@ export async function onRequest(context) {
           ad_group_criterion.quality_info.search_predicted_ctr,
           ad_group_criterion.position_estimates.first_page_cpc_micros,
           ad_group_criterion.position_estimates.top_of_page_cpc_micros,
+          ad_group.id,
           ad_group.name,
           metrics.impressions, metrics.clicks, metrics.cost_micros,
           metrics.ctr, metrics.average_cpc, metrics.conversions,
@@ -199,6 +201,8 @@ export async function onRequest(context) {
       return {
         keyword: r.adGroupCriterion?.keyword?.text || '',
         matchType: r.adGroupCriterion?.keyword?.matchType || '',
+        criterionId: r.adGroupCriterion?.criterionId || null,
+        adGroupId: r.adGroup?.id || null,
         bidINR: r.adGroupCriterion?.cpcBidMicros
           ? +(parseInt(r.adGroupCriterion.cpcBidMicros) / 1e6).toFixed(0)
           : null,

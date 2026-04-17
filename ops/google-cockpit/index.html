@@ -135,6 +135,25 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .urg-chip.info .urg-dot{background:var(--gblue)}
 .urg-src{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
 
+/* Campaign controls strip (Wave 2.1) */
+.ctrl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px}
+.ctrl-bar label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.ctrl-bar .ctrl-val{font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace}
+.ctrl-bar input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:4px;font-size:11px;font-family:'JetBrains Mono',monospace;width:80px}
+.ctrl-bar input.wide{width:180px;font-family:inherit}
+.ctrl-bar button{background:var(--gblue);color:#fff;border:none;padding:5px 12px;border-radius:4px;font-weight:600;font-size:11px;cursor:pointer;transition:filter .1s}
+.ctrl-bar button:hover{filter:brightness(1.15)}
+.ctrl-bar button.pause{background:var(--gyellow);color:#000}
+.ctrl-bar button.resume{background:var(--ggreen)}
+.ctrl-bar button.danger{background:var(--gred)}
+.ctrl-bar .ctrl-group{display:flex;gap:6px;align-items:center;padding-right:10px;border-right:1px solid var(--border)}
+.ctrl-bar .ctrl-group:last-child{border-right:none}
+.ctrl-bar .actor-sel{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px}
+.ctrl-bar .ctrl-status{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.ctrl-bar .ctrl-status.active{background:rgba(52,168,83,.2);color:var(--ggreen);border:1px solid rgba(52,168,83,.4)}
+.ctrl-bar .ctrl-status.paused{background:rgba(251,188,5,.2);color:var(--gyellow);border:1px solid rgba(251,188,5,.4)}
+.bid-edit{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:3px;padding:2px 6px;font-size:10px;font-family:'JetBrains Mono',monospace;width:46px;text-align:right}
+
 /* Quality Score pill */
 .qs{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace;min-width:28px;text-align:center}
 .qs.excellent{background:rgba(52,168,83,.2);color:var(--ggreen);border:1px solid rgba(52,168,83,.4)}
@@ -159,6 +178,38 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
   <!-- Urgency bar (cross-dashboard) -->
   <div class="urg-bar" id="urgBar"></div>
+
+  <!-- Campaign controls (Wave 2.1) -->
+  <div class="ctrl-bar">
+    <div class="ctrl-group">
+      <label>Acting as</label>
+      <select class="actor-sel" id="actorSel">
+        <option value="Nihaf">Nihaf</option>
+        <option value="Basheer">Basheer</option>
+        <option value="Faheem">Faheem</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Status</label>
+      <span class="ctrl-status" id="campStatus">…</span>
+      <button class="pause"  onclick="ctrlPauseResume('pause')">Pause</button>
+      <button class="resume" onclick="ctrlPauseResume('resume')">Resume</button>
+    </div>
+    <div class="ctrl-group">
+      <label>Daily budget</label>
+      <span class="ctrl-val" id="campBudget">₹—</span>
+      <input type="number" id="budgetInput" placeholder="500" min="50" step="50">
+      <button onclick="ctrlBudget()">Save</button>
+    </div>
+    <div class="ctrl-group">
+      <label>Add negative</label>
+      <input type="text" id="negInput" class="wide" placeholder="e.g. recipe, veg">
+      <button onclick="ctrlNegative()">Block</button>
+    </div>
+    <div class="ctrl-group" style="flex:1;justify-content:flex-end;border:none">
+      <a href="/api/ads-control?action=log&platform=google&limit=20" target="_blank" style="color:var(--muted);text-decoration:none;font-size:10px">Audit log →</a>
+    </div>
+  </div>
 
   <!-- Filters -->
   <div class="filters">
@@ -365,7 +416,10 @@ function render(data) {
         const badge = k.adGroup.includes('Near Me')
           ? '<span class="badge badge-nearme">NM</span>'
           : '<span class="badge badge-shivaji">SJ</span>';
-        const bidLabel = k.bidINR ? `₹${k.bidINR}` : '—';
+        const bidCell = k.criterionId && k.adGroupId
+          ? `<input class="bid-edit" id="bid_${k.criterionId}" type="number" step="0.5" min="1" value="${k.bidINR||''}" placeholder="${k.bidINR||'bid'}" title="Press Enter to save"
+                    onkeydown="if(event.key==='Enter')ctrlKeywordBid('${k.adGroupId}','${k.criterionId}','${k.keyword.replace(/'/g,"\\'")}')">`
+          : (k.bidINR ? `₹${k.bidINR}` : '—');
         const imprShare = k.imprShare > 0 ? k.imprShare + '%' : '—';
         const ctr = k.impressions > 0 ? ((k.clicks / k.impressions) * 100).toFixed(1) + '%' : '0%';
         const qs = qualityPill(k.qualityScore);
@@ -376,7 +430,7 @@ function render(data) {
           <td style="font-weight:600">"${k.keyword}"</td>
           <td>${badge}</td>
           <td>${qs}</td>
-          <td class="mono" style="color:var(--text2)">${bidLabel}</td>
+          <td class="mono" style="color:var(--text2)">${bidCell}</td>
           <td>${firstPage}</td>
           <td class="mono">${fmt(k.impressions)}</td>
           <td class="mono">${k.clicks}</td>
@@ -456,6 +510,99 @@ function qualityPill(score) {
     ? 'OK — some room to improve'
     : 'Poor — fix landing page / ad copy or pause';
   return `<span class="qs ${cls}" title="${tip}">${score}/10</span>`;
+}
+
+// ─── Campaign controls (pause/resume/budget/negative/bid) ─────────────
+const GOOGLE_CAMP = '23748431244';
+const ACTOR_KEY = 'ads_control_actor';
+function getActor(){ return document.getElementById('actorSel')?.value || localStorage.getItem(ACTOR_KEY) || 'Nihaf'; }
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('actorSel');
+  if (sel) {
+    const saved = localStorage.getItem(ACTOR_KEY);
+    if (saved) sel.value = saved;
+    sel.addEventListener('change', () => localStorage.setItem(ACTOR_KEY, sel.value));
+  }
+});
+
+async function loadCampaignControls() {
+  try {
+    const r = await fetch('/api/ads-control?action=status', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ platform:'google', action:'status' })
+    });
+    const d = await r.json();
+    const after = d.after || {};
+    const status = after.campaign?.status || '—';
+    const el = document.getElementById('campStatus');
+    if (el) {
+      el.textContent = status;
+      el.className = 'ctrl-status ' + (status === 'ENABLED' ? 'active' : 'paused');
+    }
+    const micros = parseInt(after.campaignBudget?.amountMicros || 0);
+    const rupees = micros ? Math.round(micros / 1e6) : 0;
+    const bEl = document.getElementById('campBudget');
+    if (bEl) bEl.textContent = rupees ? `₹${rupees}` : '₹—';
+    const input = document.getElementById('budgetInput');
+    if (input && rupees && !input.value) input.placeholder = rupees.toString();
+  } catch (e) { /* silent */ }
+}
+
+async function ctrlPauseResume(action) {
+  const verb = action === 'pause' ? 'Pause' : 'Resume';
+  if (!confirm(`${verb} the Google Ads search campaign?`)) return;
+  const r = await fetch('/api/ads-control', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ platform:'google', action, actor:getActor(), reason:`${verb} from cockpit` })
+  });
+  const d = await r.json();
+  if (d.success) { alert(`✔ Campaign ${verb.toLowerCase()}d`); loadCampaignControls(); loadUrgency(); }
+  else alert(`✗ ${d.error || 'Failed'}`);
+}
+
+async function ctrlBudget() {
+  const input = document.getElementById('budgetInput');
+  const val = parseFloat(input?.value);
+  if (!val || val < 50) { alert('Enter a daily budget ≥ ₹50'); return; }
+  if (!confirm(`Change Google daily budget to ₹${val}?`)) return;
+  const r = await fetch('/api/ads-control', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ platform:'google', action:'budget', value: val, actor:getActor() })
+  });
+  const d = await r.json();
+  if (d.success) { alert(`✔ Budget set to ₹${val}`); if (input) input.value=''; loadCampaignControls(); }
+  else alert(`✗ ${d.error || 'Failed'}`);
+}
+
+async function ctrlNegative() {
+  const input = document.getElementById('negInput');
+  const kw = (input?.value || '').trim();
+  if (!kw) { alert('Enter a negative keyword'); return; }
+  if (!confirm(`Block "${kw}" (phrase match) as a negative keyword?`)) return;
+  const r = await fetch('/api/ads-control', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ platform:'google', action:'negative', value: kw, matchType: 'PHRASE', actor:getActor() })
+  });
+  const d = await r.json();
+  if (d.success) { alert(`✔ Negative keyword added: "${kw}"`); if (input) input.value=''; loadData(); }
+  else alert(`✗ ${d.error || 'Failed'}`);
+}
+
+async function ctrlKeywordBid(adGroupId, criterionId, kw) {
+  const el = document.getElementById(`bid_${criterionId}`);
+  const val = parseFloat(el?.value);
+  if (!val || val <= 0) { alert('Enter a bid in rupees'); return; }
+  if (!confirm(`Set "${kw}" bid to ₹${val}?`)) return;
+  const r = await fetch('/api/ads-control', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      platform:'google', action:'bid', scope:'keyword',
+      id: `${adGroupId}~${criterionId}`, value: val, actor:getActor()
+    })
+  });
+  const d = await r.json();
+  if (d.success) { alert(`✔ Bid set to ₹${val}`); loadData(); }
+  else alert(`✗ ${d.error || 'Failed'}`);
 }
 
 // ─── Shared urgency bar ───────────────────────────────────────────────
@@ -619,9 +766,11 @@ function renderOrganic(data) {
 loadData();
 loadOrganic();
 loadUrgency();
+loadCampaignControls();
 setInterval(loadData, 60000);
 setInterval(loadOrganic, 300000); // organic refreshes every 5 min (GSC data lags ~2 days anyway)
 setInterval(loadUrgency, 60000);
+setInterval(loadCampaignControls, 60000);
 </script>
 </body>
 </html>
