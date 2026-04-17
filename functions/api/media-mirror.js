@@ -48,8 +48,8 @@ async function getAccessToken(env) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id:     env.GOOGLE_CLIENT_ID,
-      client_secret: env.GOOGLE_CLIENT_SECRET,
+      client_id:     env.GOOGLE_DRIVE_CLIENT_ID,
+      client_secret: env.GOOGLE_DRIVE_CLIENT_SECRET,
       refresh_token: env.GOOGLE_DRIVE_REFRESH_TOKEN,
       grant_type:    'refresh_token',
     }),
@@ -151,7 +151,7 @@ export async function onRequest(context) {
   }
 
   // Preflight: all required secrets present
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+  if (!env.GOOGLE_DRIVE_CLIENT_ID || !env.GOOGLE_DRIVE_CLIENT_SECRET) {
     return j({ error: 'missing_oauth_client' }, 500);
   }
   if (!env.GOOGLE_DRIVE_REFRESH_TOKEN) {

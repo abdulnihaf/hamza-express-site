@@ -69,8 +69,8 @@ async function serveFromDrive(env, row) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id:     env.GOOGLE_CLIENT_ID,
-      client_secret: env.GOOGLE_CLIENT_SECRET,
+      client_id:     env.GOOGLE_DRIVE_CLIENT_ID,
+      client_secret: env.GOOGLE_DRIVE_CLIENT_SECRET,
       refresh_token: env.GOOGLE_DRIVE_REFRESH_TOKEN,
       grant_type:    'refresh_token',
     }),
