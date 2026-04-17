@@ -401,7 +401,12 @@ function renderMediaTile(m) {
     return '<div style="margin-top:4px;padding:6px 8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:4px;color:var(--red);font-size:10px">⚠️ Media download failed <span style="color:var(--muted)">· ' + escHtml(m.msg_type || '') + (mime ? ' · ' + escHtml(mime) : '') + '</span></div>';
   }
   if (status === 'expired') {
-    return '<div style="margin-top:4px;padding:6px 8px;background:rgba(148,163,184,.1);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px">🗃️ Older than 30 days · Drive archive coming</div>';
+    // R2 GC'd before Drive mirror finished — rare, but show Drive link
+    // if we still have the Drive ID.
+    if (m.media_drive_link) {
+      return '<div style="margin-top:4px;padding:6px 8px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:4px;font-size:10px">🗃️ Archived in Drive <a href="' + escHtml(m.media_drive_link) + '" target="_blank" rel="noopener" style="color:var(--green);margin-left:6px">Open ↗</a></div>';
+    }
+    return '<div style="margin-top:4px;padding:6px 8px;background:rgba(148,163,184,.1);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px">🗃️ Media no longer available (R2 expired, no Drive backup)</div>';
   }
 
   const src = mediaUrl(m);
@@ -432,6 +437,16 @@ function renderMediaTile(m) {
   }
   // Unknown type with media — just a download link
   return '<div style="margin-top:4px"><a href="' + src + '" target="_blank" rel="noopener" style="color:var(--blue);font-size:10px">📎 Open media (' + esc(m.msg_type || 'file') + ')</a></div>';
+}
+
+// Optional "Open in Drive" link — shown for any media that's been
+// mirrored to Drive. Helpful when staff want a shareable link they
+// can drop into a WhatsApp / email reply without exposing the API.
+function renderDriveLink(m) {
+  if (!m.media_drive_link) return '';
+  return '<a href="' + escHtml(m.media_drive_link) + '" target="_blank" rel="noopener" '
+    + 'style="display:inline-block;margin-top:3px;font-size:9px;color:var(--muted);text-decoration:none" '
+    + 'title="Archived in Google Drive">☁️ Drive ↗</a>';
 }
 
 // ── Lightbox ──────────────────────────────────────────────────────────────
@@ -937,7 +952,7 @@ function renderJourneyTab() {
         if (!isMediaOnly) {
           html += '<div style="color:var(--text2);word-break:break-word;white-space:pre-wrap">' + escHtml(m.content || m.msg_type || '') + '</div>';
         }
-        if (m.media_id) html += renderMediaTile(m);
+        if (m.media_id) html += renderMediaTile(m) + renderDriveLink(m);
         html += '</div>';
       });
     }

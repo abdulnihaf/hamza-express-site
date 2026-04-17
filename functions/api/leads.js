@@ -351,7 +351,9 @@ export async function onRequest(context) {
                 f.mime_type AS media_mime,
                 f.filename AS media_filename,
                 f.r2_key AS media_r2_key,
-                f.size_bytes AS media_size
+                f.size_bytes AS media_size,
+                f.drive_file_id AS media_drive_id,
+                f.drive_web_link AS media_drive_link
            FROM wa_messages m
       LEFT JOIN wa_media_files f ON f.media_id = m.media_id
           WHERE m.wa_id = ? ORDER BY m.created_at ASC LIMIT 100`

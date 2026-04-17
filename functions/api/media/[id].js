@@ -41,11 +41,11 @@ function notFound(msg = 'Not found') {
 }
 
 function expired(row) {
-  // Drive-fallback placeholder — Phase 2b will replace this with actual
-  // streaming from Google Drive. For now returns JSON so UI can degrade.
+  // Used only when R2 is empty AND there is no Drive archive either
+  // (which should be rare once Phase 2b mirror has been running).
   return new Response(JSON.stringify({
-    error: 'expired_in_r2',
-    message: 'Object older than 30 days — awaiting Drive archive (Phase 2b)',
+    error: 'expired',
+    message: 'Media no longer available — R2 lifecycle expired and no Drive archive exists',
     media_id: row.media_id,
     wa_message_id: row.wa_message_id,
     mime_type: row.mime_type,
@@ -54,6 +54,57 @@ function expired(row) {
     status: 410,  // Gone
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
+}
+
+// ─── Drive fallback ────────────────────────────────────────────────
+// When R2 has been garbage-collected by the 30-day lifecycle rule,
+// pull the bytes from Google Drive via the Drive API. Requires the
+// same OAuth refresh token used by /api/media-mirror.
+// Streaming approach: we grab a fresh access token, then proxy the
+// Drive download through this Worker so the browser never sees any
+// token or Drive URL. Adds one extra hop but keeps auth tidy and
+// lets us cache the response aggressively (the file is immutable).
+async function serveFromDrive(env, row) {
+  const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id:     env.GOOGLE_ADS_CLIENT_ID,
+      client_secret: env.GOOGLE_ADS_CLIENT_SECRET,
+      refresh_token: env.GOOGLE_DRIVE_REFRESH_TOKEN,
+      grant_type:    'refresh_token',
+    }),
+  });
+  if (!tokenResp.ok) {
+    return new Response(JSON.stringify({ error: 'drive_token_failed' }), {
+      status: 502, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+  const { access_token } = await tokenResp.json();
+
+  const driveResp = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${row.drive_file_id}?alt=media`,
+    { headers: { 'Authorization': `Bearer ${access_token}` } },
+  );
+  if (!driveResp.ok) {
+    return new Response(JSON.stringify({
+      error: 'drive_fetch_failed',
+      status: driveResp.status,
+      drive_file_id: row.drive_file_id,
+    }), {
+      status: 502, headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const headers = new Headers(CORS);
+  headers.set('Content-Type',
+    row.mime_type || driveResp.headers.get('Content-Type') || 'application/octet-stream');
+  headers.set('Cache-Control', 'private, max-age=86400');
+  headers.set('X-Served-From', 'drive');
+  if (row.filename) {
+    headers.set('Content-Disposition', `inline; filename="${row.filename.replace(/"/g, '')}"`);
+  }
+  return new Response(driveResp.body, { status: 200, headers });
 }
 
 export async function onRequest(context) {
@@ -137,8 +188,10 @@ export async function onRequest(context) {
   // ── Fetch from R2 ─────────────────────────────────────────────────
   const object = await env.MEDIA_BUCKET.get(row.r2_key);
   if (!object) {
-    // R2 lifecycle rule (30 days) may have deleted it.
-    // Phase 2b will try Google Drive fallback here.
+    // R2 lifecycle rule (30 days) deleted it. Phase 2b: try Drive.
+    if (row.drive_file_id && env.GOOGLE_DRIVE_REFRESH_TOKEN) {
+      return serveFromDrive(env, row);
+    }
     return expired(row);
   }
 
@@ -147,6 +200,7 @@ export async function onRequest(context) {
   const headers = new Headers(CORS);
   headers.set('Content-Type', row.mime_type || object.httpMetadata?.contentType || 'application/octet-stream');
   headers.set('Cache-Control', 'private, max-age=86400');  // 1 day browser cache
+  headers.set('X-Served-From', 'r2');
   if (row.size_bytes) headers.set('Content-Length', String(row.size_bytes));
   if (row.filename) headers.set('Content-Disposition', `inline; filename="${row.filename.replace(/"/g, '')}"`);
 
