@@ -7,8 +7,10 @@
 // Nihaf's personal 2 TB Drive without storing a password.
 //
 // Prereq (do this ONCE in Google Cloud Console):
-//   1. Open the GOOGLE_ADS_CLIENT_ID OAuth client (the Web client used
-//      by Ads + Organic Insights)
+//   1. Open the GOOGLE_CLIENT_ID OAuth client (the Web-type "NCH Marketing
+//      Web" client — the one that already has nawabichaihouse.com and
+//      hamzaexpress.in callbacks). GOOGLE_ADS_* secrets point at a
+//      separate Desktop client that can't accept web redirects.
 //   2. Add `https://hamzaexpress.in/api/drive-auth` to Authorized
 //      redirect URIs
 //   3. Save
@@ -45,13 +47,13 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
-  const clientId = env.GOOGLE_ADS_CLIENT_ID;
-  const clientSecret = env.GOOGLE_ADS_CLIENT_SECRET;
+  const clientId = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
   const redirectUri = `${url.origin}/api/drive-auth`;
 
   if (!clientId || !clientSecret) {
     return htmlResp(
-      '<pre>Missing GOOGLE_ADS_CLIENT_ID / GOOGLE_ADS_CLIENT_SECRET secrets on this project.</pre>',
+      '<pre>Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET secrets on this project.</pre>',
       500,
     );
   }
