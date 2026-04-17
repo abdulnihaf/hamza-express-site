@@ -117,6 +117,30 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .refresh-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--orange);transition:width .3s;z-index:100}
 .empty{text-align:center;padding:20px;color:var(--muted);font-size:12px}
 
+/* Bulk action bar (Wave 2.5) — appears when ≥1 lead is checked */
+.lead-check{width:16px;height:16px;margin-right:6px;accent-color:var(--orange);cursor:pointer;flex-shrink:0}
+.lead-card.selected{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange) inset}
+.bulk-bar{display:none;position:sticky;top:0;z-index:50;background:var(--card);border:1px solid var(--orange);border-radius:8px;padding:8px 10px;margin-bottom:10px;align-items:center;gap:8px;flex-wrap:wrap;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.bulk-bar.visible{display:flex}
+.bulk-count{font-size:12px;font-weight:800;color:var(--orange);white-space:nowrap}
+.bulk-bar select{background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:4px 8px;font-family:inherit;cursor:pointer}
+.bulk-bar select:focus{outline:none;border-color:var(--orange)}
+.bulk-bar button{background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text2);font-size:10px;padding:4px 8px;font-weight:600;cursor:pointer;font-family:inherit}
+.bulk-bar button:hover{border-color:var(--orange);color:var(--orange)}
+.bulk-bar .bulk-clear{color:var(--red)}
+.bulk-bar .bulk-clear:hover{border-color:var(--red);color:var(--red)}
+.bulk-bar .sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+.bulk-bar .label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.select-all-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:6px;padding:0 2px}
+.select-all-row input{accent-color:var(--orange);cursor:pointer}
+.select-all-row .hint{margin-left:auto;font-style:italic}
+
+/* Toast (bulk feedback) */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text);z-index:500;box-shadow:0 6px 20px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.visible{opacity:1;pointer-events:auto}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+
 /* Reply box (staff → customer WhatsApp) — Basheer/Faheem's main tool */
 .reply-box{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:10px 12px;margin:12px -16px -20px;display:flex;flex-direction:column;gap:6px}
 .reply-hint{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
@@ -221,6 +245,57 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
   <button class="filter-btn" data-filter="mine" onclick="setFilter('mine')">👤 Mine</button>
 </div>
 
+<!-- Bulk Action Bar (Wave 2.5) -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count" id="bulkCount">0 selected</span>
+  <span class="sep"></span>
+  <span class="label">Assign</span>
+  <select id="bulkAssign" onchange="bulkApply('assignee', this.value); this.value=''">
+    <option value="">—</option>
+    <option value="basheer">Basheer</option>
+    <option value="faheem">Faheem</option>
+    <option value="mumtaz">Mumtaz</option>
+    <option value="nihaf">Nihaf</option>
+    <option value="naveen">Naveen</option>
+    <option value="unassigned">Unassign</option>
+  </select>
+  <span class="sep"></span>
+  <span class="label">Status</span>
+  <select id="bulkStatus" onchange="bulkApply('status', this.value); this.value=''">
+    <option value="">—</option>
+    <option value="new">New</option>
+    <option value="called">Called</option>
+    <option value="interested">Interested</option>
+    <option value="converted">Converted</option>
+    <option value="not_interested">Not interested</option>
+    <option value="follow_up">Follow up</option>
+    <option value="dnd">DND</option>
+  </select>
+  <span class="sep"></span>
+  <span class="label">Stage</span>
+  <select id="bulkStage" onchange="bulkApply('manual_stage', this.value); this.value=''">
+    <option value="">—</option>
+    <option value="new">New</option>
+    <option value="engaged">Engaged</option>
+    <option value="booking_dropped">Book drop</option>
+    <option value="booked">Booked</option>
+    <option value="ordered">Ordered</option>
+    <option value="lost">Lost</option>
+  </select>
+  <span class="sep"></span>
+  <button onclick="bulkTag()" title="Add a tag to every selected lead">+ Tag</button>
+  <button onclick="bulkNote()" title="Append a note (timestamped) to every selected lead">+ Note</button>
+  <span class="sep"></span>
+  <button class="bulk-clear" onclick="clearSelection()">Clear</button>
+</div>
+
+<!-- Select-all row (always visible above list) -->
+<div class="select-all-row">
+  <input type="checkbox" id="selectAllVisible" onchange="toggleSelectAll(this.checked)">
+  <label for="selectAllVisible">Select all visible</label>
+  <span class="hint">Tick individual cards to bulk-edit</span>
+</div>
+
 <!-- Lead List -->
 <div id="leadList"></div>
 
@@ -295,6 +370,7 @@ let currentQuery = '';
 let actor = localStorage.getItem('hn_leads_actor') || null;
 let currentJourneyTab = 'conv';
 let journeyCache = null;
+let selectedIds = new Set();  // Wave 2.5 — bulk selection persists across refreshes
 
 // ── Identity ──────────────────────────────────────────────────────────────
 function promptIdentity() {
@@ -394,6 +470,9 @@ function renderLeads() {
   }
 
   document.getElementById('leadList').innerHTML = leads.map(renderLeadCard).join('');
+  // Wave 2.5 — keep bulk bar + select-all in sync with current filtered view
+  window.__visibleWaIds = leads.map(l => l.waId);
+  refreshBulkBar();
 }
 
 function renderLeadCard(l) {
@@ -405,10 +484,12 @@ function renderLeadCard(l) {
   const assignee = l.assignee || 'unassigned';
   const tags = Array.isArray(l.tags) ? l.tags : [];
   const scoreClass = (l.score || 0) >= 60 ? 'hot' : '';
+  const isSelected = selectedIds.has(l.waId);
 
   return `
-  <div class="lead-card ${l.source || 'unknown'}">
+  <div class="lead-card ${l.source || 'unknown'}${isSelected ? ' selected' : ''}">
     <div class="lead-top">
+      <input type="checkbox" class="lead-check" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${l.waId}', this.checked)" onclick="event.stopPropagation()">
       <div style="min-width:0;flex:1">
         <span class="lead-name">${escHtml(l.name)}</span>
         <span class="stage-badge ${l.stage}">${formatStage(l.stage)}</span>
@@ -501,6 +582,153 @@ async function removeTag(waId, tag) {
   const next = (l.tags || []).filter(t => t !== tag);
   const ok = await patchLead(waId, { tags: next });
   if (ok) renderLeads();
+}
+
+// ── Bulk actions (Wave 2.5) ───────────────────────────────────────────────
+// Select multiple leads → apply assign / status / stage / tag / note in one shot.
+// Every change goes through POST /api/leads?action=bulk which audits per-lead.
+function toggleSelect(waId, checked) {
+  if (checked) selectedIds.add(waId);
+  else selectedIds.delete(waId);
+  refreshBulkBar();
+  // Cheaper than full re-render — just toggle selected class on this card
+  const card = document.querySelector(`.lead-check[onchange*="'${waId}'"]`)?.closest('.lead-card');
+  if (card) card.classList.toggle('selected', checked);
+  syncSelectAllCheckbox();
+}
+function toggleSelectAll(checked) {
+  const visible = window.__visibleWaIds || [];
+  if (checked) visible.forEach(id => selectedIds.add(id));
+  else visible.forEach(id => selectedIds.delete(id));
+  renderLeads();   // re-render so every card shows correct state
+}
+function syncSelectAllCheckbox() {
+  const el = document.getElementById('selectAllVisible');
+  if (!el) return;
+  const visible = window.__visibleWaIds || [];
+  if (!visible.length) { el.checked = false; el.indeterminate = false; return; }
+  const selectedCount = visible.filter(id => selectedIds.has(id)).length;
+  el.checked = selectedCount === visible.length;
+  el.indeterminate = selectedCount > 0 && selectedCount < visible.length;
+}
+function clearSelection() {
+  selectedIds.clear();
+  renderLeads();
+}
+function refreshBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  const count = document.getElementById('bulkCount');
+  if (!bar || !count) return;
+  const n = selectedIds.size;
+  count.textContent = n + ' selected';
+  bar.classList.toggle('visible', n > 0);
+  syncSelectAllCheckbox();
+}
+async function bulkApply(field, value) {
+  if (!value) return;
+  if (!actor) { promptIdentity(); return; }
+  const ids = Array.from(selectedIds);
+  if (!ids.length) { toast('err', 'Select at least 1 lead'); return; }
+  if (ids.length > 500) { toast('err', 'Max 500 leads per bulk op'); return; }
+
+  // Friendly confirmation for destructive-ish changes
+  const fieldLabel = { assignee: 'assignee', status: 'status', manual_stage: 'stage' }[field] || field;
+  if (!confirm(`Set ${fieldLabel} = "${value}" for ${ids.length} lead${ids.length > 1 ? 's' : ''}?`)) return;
+
+  const patch = { [field]: value };
+  await runBulk(ids, patch, `${fieldLabel} → ${value}`);
+}
+async function bulkTag() {
+  if (!actor) { promptIdentity(); return; }
+  const ids = Array.from(selectedIds);
+  if (!ids.length) { toast('err', 'Select at least 1 lead'); return; }
+  const tag = prompt(`Add tag to ${ids.length} lead${ids.length > 1 ? 's' : ''}:`, '');
+  if (!tag) return;
+  const clean = tag.trim().toLowerCase().replace(/\s+/g, '-');
+  if (!clean) return;
+
+  // Merge per-lead so we don't overwrite existing tags
+  // Uses the single-PATCH endpoint in parallel (bulk endpoint REPLACES tags, which we don't want)
+  const btn = event?.target; if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let ok = 0, failed = 0;
+  await Promise.all(ids.map(async (id) => {
+    const l = data.leads.find(x => x.waId === id);
+    const current = Array.isArray(l?.tags) ? l.tags : [];
+    if (current.includes(clean)) { ok++; return; }   // already tagged — no-op
+    const next = [...current, clean];
+    try {
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wa_id: id, patch: { tags: next }, actor }),
+      });
+      const j = await r.json();
+      if (j.success) ok++; else failed++;
+    } catch { failed++; }
+  }));
+  if (btn) { btn.disabled = false; btn.textContent = '+ Tag'; }
+  toast(failed ? 'err' : 'ok', `Tagged ${ok}/${ids.length}` + (failed ? ` (${failed} failed)` : ''));
+  await loadData();
+}
+async function bulkNote() {
+  if (!actor) { promptIdentity(); return; }
+  const ids = Array.from(selectedIds);
+  if (!ids.length) { toast('err', 'Select at least 1 lead'); return; }
+  const note = prompt(`Append note to ${ids.length} lead${ids.length > 1 ? 's' : ''} (timestamp + your name will prefix):`, '');
+  if (!note || !note.trim()) return;
+
+  const stamp = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const prefix = `[${stamp} · ${cap(actor)}]`;
+  const btn = event?.target; if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  let ok = 0, failed = 0;
+  await Promise.all(ids.map(async (id) => {
+    const l = data.leads.find(x => x.waId === id);
+    const existing = (l?.notes || '').trim();
+    const newNote = existing ? `${existing}\n${prefix} ${note.trim()}` : `${prefix} ${note.trim()}`;
+    try {
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wa_id: id, patch: { notes: newNote.substring(0, 4000) }, actor }),
+      });
+      const j = await r.json();
+      if (j.success) ok++; else failed++;
+    } catch { failed++; }
+  }));
+  if (btn) { btn.disabled = false; btn.textContent = '+ Note'; }
+  toast(failed ? 'err' : 'ok', `Noted ${ok}/${ids.length}` + (failed ? ` (${failed} failed)` : ''));
+  await loadData();
+}
+async function runBulk(wa_ids, patch, label) {
+  try {
+    const r = await fetch(API + '?action=bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wa_ids, patch, actor }),
+    });
+    const j = await r.json();
+    if (!j.success) { toast('err', 'Bulk failed: ' + j.error); return; }
+    const failed = (j.failed || []).length;
+    toast(failed ? 'err' : 'ok', `${label} — ${j.updated}/${wa_ids.length}` + (failed ? ` (${failed} failed)` : ''));
+    await loadData();   // re-fetch so all changes reflect
+  } catch (e) {
+    toast('err', 'Bulk error: ' + e.message);
+  }
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────
+function toast(kind, text) {
+  let el = document.getElementById('bulkToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bulkToast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.className = 'toast visible ' + (kind || '');
+  el.textContent = text;
+  clearTimeout(window.__toastTmr);
+  window.__toastTmr = setTimeout(() => { el.classList.remove('visible'); }, 3500);
 }
 
 // ── Notes modal ───────────────────────────────────────────────────────────
