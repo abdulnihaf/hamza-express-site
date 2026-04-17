@@ -61,7 +61,7 @@ export async function onRequest(context) {
     // NOTE: Campaign overview is split into 2 queries:
     //   - Basic metrics (impressions/clicks/spend) — reliable even with new campaigns
     //   - Position metrics (impression share) — may return null on new campaigns, handled gracefully
-    const [adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus] = await Promise.all([
+    const [adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus, negativeData] = await Promise.all([
 
       // 1. Ad group breakdown — source of truth for aggregate metrics
       query(`
@@ -140,6 +140,18 @@ export async function onRequest(context) {
         SELECT campaign.id, campaign.name, campaign.status, campaign.serving_status
         FROM campaign
         WHERE campaign.id = ${CAMPAIGN_ID}
+      `),
+
+      // 7. Existing negative keywords — so the UI can flip search-terms to "Blocked"
+      query(`
+        SELECT
+          campaign_criterion.keyword.text,
+          campaign_criterion.keyword.match_type,
+          campaign_criterion.status
+        FROM campaign_criterion
+        WHERE campaign.id = ${CAMPAIGN_ID}
+          AND campaign_criterion.type = 'KEYWORD'
+          AND campaign_criterion.negative = true
       `),
     ]);
 
@@ -252,6 +264,13 @@ export async function onRequest(context) {
       conversions: float(r.metrics?.conversions),
     }));
 
+    // Existing negative keywords — lets the UI flip blocked rows without a round-trip
+    const negatives = (negativeData || []).map(r => ({
+      text: r.campaignCriterion?.keyword?.text || '',
+      matchType: r.campaignCriterion?.keyword?.matchType || '',
+      status: r.campaignCriterion?.status || '',
+    })).filter(n => n.text);
+
     return new Response(JSON.stringify({
       success: true,
       period,
@@ -263,6 +282,7 @@ export async function onRequest(context) {
       keywords,
       daily,
       searchTerms,
+      negatives,
     }, null, 2), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: CORS });

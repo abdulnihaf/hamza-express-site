@@ -91,9 +91,15 @@ tr:hover td{background:rgba(66,133,244,.04)}
 /* Search terms */
 .st-row{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid rgba(45,58,79,.3);gap:8px}
 .st-row:last-child{border-bottom:none}
+.st-row.wasted{background:rgba(234,67,53,.04)}
 .st-term{flex:1;font-weight:600;font-size:11px;color:var(--text)}
 .st-match{font-size:9px;color:var(--muted);background:var(--bg2);padding:1px 5px;border-radius:4px;white-space:nowrap}
 .st-metrics{display:flex;gap:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);white-space:nowrap}
+.st-block{background:transparent;border:1px solid rgba(234,67,53,.35);color:var(--gred);padding:3px 9px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;transition:all .12s;white-space:nowrap}
+.st-block:hover{background:var(--gred);color:#fff;border-color:var(--gred)}
+.st-block:disabled{opacity:.35;cursor:not-allowed;background:transparent!important;color:var(--muted)!important}
+.st-block.blocked{background:rgba(100,116,139,.12);color:var(--muted);border-color:var(--border);cursor:default}
+.st-own{font-size:9px;color:var(--ggreen);padding:2px 6px;border:1px solid rgba(52,168,83,.3);border-radius:4px;background:rgba(52,168,83,.08);white-space:nowrap}
 
 /* GBP banner */
 .gbp-banner{background:linear-gradient(135deg,rgba(66,133,244,.08),rgba(52,168,83,.08));border:1px solid rgba(66,133,244,.2);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
@@ -475,22 +481,82 @@ function render(data) {
     document.getElementById('dailyLabels').innerHTML = '';
   }
 
-  // Search terms
+  // Search terms — one-click "Block" adds term as negative keyword
   const sts = data.searchTerms;
   if (sts.length > 0) {
-    document.getElementById('searchTerms').innerHTML = sts.map(s =>
-      `<div class="st-row">
-        <div class="st-term">"${s.term}"</div>
+    // Build lookups so we don't let users block their own paying keywords
+    const ownKeywords = (data.keywords || []).map(k => (k.keyword || '').toLowerCase().trim()).filter(Boolean);
+    // Merge server-known negatives with session-added ones so reloads remember
+    const serverNegs = (data.negatives || []).map(n => (n.text || '').toLowerCase().trim()).filter(Boolean);
+    const alreadyBlocked = new Set([...serverNegs, ...(window.__blockedTerms || []).map(t => t.toLowerCase().trim())]);
+
+    document.getElementById('searchTerms').innerHTML = sts.map((s, i) => {
+      const term = (s.term || '').trim();
+      const termLc = term.toLowerCase();
+      const isOwn = ownKeywords.some(kw => kw === termLc || termLc.includes(kw));
+      const wasBlocked = alreadyBlocked.has(termLc);
+      const wasted = !isOwn && s.spend > 0;
+
+      let actionCell;
+      if (isOwn) {
+        actionCell = `<span class="st-own" title="Matches one of your keywords">Your kw</span>`;
+      } else if (wasBlocked) {
+        actionCell = `<button class="st-block blocked" disabled>Blocked</button>`;
+      } else {
+        // Double-click guard via id-based disable inside ctrlBlockSearchTerm
+        const esc = term.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        actionCell = `<button class="st-block" id="stblock_${i}" onclick="ctrlBlockSearchTerm('${esc}', ${i})" title="Add as PHRASE negative keyword — this term will never trigger your ad again">Block</button>`;
+      }
+
+      return `<div class="st-row ${wasted ? 'wasted' : ''}">
+        <div class="st-term">"${term}"</div>
         <div class="st-match">${s.matchType}</div>
         <div class="st-metrics">
           <span>${fmt(s.impressions)} impr</span>
           <span>${s.clicks} clicks</span>
-          ${s.spend > 0 ? `<span>₹${s.spend}</span>` : ''}
+          ${s.spend > 0 ? `<span style="color:var(--gred)">₹${s.spend}</span>` : ''}
         </div>
-      </div>`
-    ).join('');
+        ${actionCell}
+      </div>`;
+    }).join('');
   } else {
     document.getElementById('searchTerms').innerHTML = `<div class="empty">No search terms yet<small>Google reports these after a few hours of impressions</small></div>`;
+  }
+}
+
+// Wave 2.2: one-click block from search-term row.
+// Adds the exact term as a PHRASE-match negative at campaign level. Phrase is
+// the safe default — broad risks blocking unrelated close variants, exact
+// leaves loopholes. Remembers the term client-side so the row flips to
+// "Blocked" immediately without waiting for the next Google Ads sync.
+async function ctrlBlockSearchTerm(term, rowIdx) {
+  if (!term) return;
+  if (!confirm(`Block "${term}" so Google never shows your ad for this search again?`)) return;
+
+  const btn = document.getElementById(`stblock_${rowIdx}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Blocking…'; }
+
+  try {
+    const r = await fetch('/api/ads-control', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        platform: 'google', action: 'negative',
+        value: term, matchType: 'PHRASE',
+        actor: getActor(),
+        reason: 'one-click from search-terms table',
+      }),
+    });
+    const d = await r.json();
+    if (d.success) {
+      window.__blockedTerms = [...(window.__blockedTerms || []), term];
+      if (btn) { btn.textContent = 'Blocked'; btn.classList.add('blocked'); }
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = 'Block'; }
+      alert(`✗ ${d.error || 'Failed to add negative'}`);
+    }
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Block'; }
+    alert(`✗ ${e.message}`);
   }
 }
 
