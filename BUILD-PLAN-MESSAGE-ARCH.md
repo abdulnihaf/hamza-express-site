@@ -13,7 +13,7 @@ doc: <https://hamzaexpress.in/ops/message-architecture/>.
 
 ## Phase 1 — New intent module (SHIPPED ✅)
 
-**File:** `functions/lib/wa-intents.js` (NEW, 145 lines, pure exports)
+**File:** `functions/_lib/wa-intents.js` (NEW, 145 lines, pure exports)
 **Touches:** zero existing files
 **Risk:** zero — nothing imports this yet
 **Deployed:** commit [pending — this PR]
@@ -41,7 +41,7 @@ doc: <https://hamzaexpress.in/ops/message-architecture/>.
 1. Add `ALTER TABLE wa_messages ADD COLUMN intent TEXT;` migration (run via `wrangler d1 execute`).
 2. In `whatsapp.js`, add at top:
    ```js
-   import { classifyIntent } from '../lib/wa-intents.js';
+   import { classifyIntent } from '../_lib/wa-intents.js';
    ```
 3. In `_handleIdleInner` (line 1333), add near the top:
    ```js
@@ -183,7 +183,7 @@ async function handleCodDeflect(phoneId, token, waId) { /* same, different copy 
 
 **Wire up `dishLookup`:**
 ```js
-import { classifyIntent, dishLookup } from '../lib/wa-intents.js';
+import { classifyIntent, dishLookup } from '../_lib/wa-intents.js';
 
 if (classifiedIntent === 'specific_dish') {
   return handleDishQuery(phoneId, token, waId, msg.text, user, db);

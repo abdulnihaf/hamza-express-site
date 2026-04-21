@@ -4,6 +4,10 @@
 // Architecture: WhatsApp Cloud API → Razorpay UPI → Odoo POS → KDS
 // All orders are takeaway/counter pickup — NO delivery
 
+// Phase 2 of message-architecture rollout: log-only intent classification.
+// See /ops/message-architecture/ and BUILD-PLAN-MESSAGE-ARCH.md
+import { classifyIntent } from '../_lib/wa-intents.js';
+
 // ── Product catalog: retailer_id → Odoo product + price (excl. GST) + category ──
 // Price = base price (Half for chicken, Qtr for mutton), GST-exclusive
 // parentCatId = parent KDS routing category (22=Indian,23=Biryani,24=Chinese,25=Tandoor,26=FC,27=Juices,28=BM,29=Shawarma,30=Grill)
@@ -980,13 +984,30 @@ async function processWebhook(context, body) {
     message.image?.id || message.video?.id || message.audio?.id ||
     message.document?.id || message.sticker?.id || null;
   const contentJson = JSON.stringify(message).slice(0, 8000);
+  // Phase 2 message-architecture: classify intent at insert time (log-only,
+  // no branching impact). For text → regex-match against INTENT_PATTERNS.
+  // For non-text → synthesise a tag so the column is useful for all types.
+  let classifiedIntent = null;
+  try {
+    if (msgType.type === 'text' && msgType.text) {
+      classifiedIntent = classifyIntent(msgType.text);
+    } else if (msgType.type === 'button_reply' || msgType.type === 'list_reply') {
+      classifiedIntent = `tap:${msgType.id || 'unknown'}`;
+    } else if (msgType.type === 'order') {
+      classifiedIntent = 'cart_submitted';
+    } else if (msgType.type === 'nfm_reply') {
+      classifiedIntent = 'flow_submitted';
+    } else if (msgType.type) {
+      classifiedIntent = `media:${msgType.type}`;
+    }
+  } catch (e) { /* never block the insert on classifier error */ }
   db.prepare(
     `INSERT INTO wa_messages
-       (wa_id, direction, msg_type, content, wa_message_id, content_json, media_id, created_at)
-     VALUES (?, 'in', ?, ?, ?, ?, ?, ?)`
+       (wa_id, direction, msg_type, content, wa_message_id, content_json, media_id, intent, created_at)
+     VALUES (?, 'in', ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     waId, msgType.type, inContent,
-    message.id || null, contentJson, mediaId,
+    message.id || null, contentJson, mediaId, classifiedIntent,
     new Date().toISOString()
   ).run().catch(() => {});
 
