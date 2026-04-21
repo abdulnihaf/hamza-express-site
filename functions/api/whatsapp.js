@@ -357,19 +357,69 @@ const ORDERING_PATTERNS = [
 ];
 
 // Question detection: customer asking a question, not ordering
+// Question intent patterns. Order matters — first match wins. More specific
+// patterns (talk_to_human, complaint) are checked before generic ones.
+// See /ops/message-architecture/ for the full taxonomy + rationale.
 const QUESTION_PATTERNS = {
+  // Hard handoff triggers — always route to a human
+  talk_to_human: /\b(talk\s*to|speak\s*to|connect\s*to|call\s*(the\s*)?(manager|owner|person|someone|staff|human))|(manager|owner)\s*(please|plz)?|real\s*person|human\s*agent|not\s*a\s*bot|are\s*you\s*a\s*bot/i,
+  complaint: /\b(complain[t]?|worst|terrible|disgusting|awful|rude|bad\s*experience|not\s*fresh|stale|rotten|hair\s*in|insect|cockroach|food\s*poison|refund\s*please|want\s*my\s*money|cheat|fraud|ripped\s*off)/i,
+  // Menu / price asks — outlet-first response with menu URL
+  menu: /\b(menu|menu\s*card|what.*(available|have)|what.*(serve|selling)|rate\s*card|rate\s*list|price\s*list|show\s*me\s*menu)/i,
+  // Soft asks — answer + nudge to outlet or takeaway
   hours: /\b(open|close[ds]?|closing|timing[s]?|time|hours|when\b.*open|when\b.*close|what\s*time|till\s*when|how\s*late)/i,
   location: /\b(where|location|address|direction[s]?|how\s*to\s*reach|find\s*you|map|which\s*road|hkp|shivajinagar|russell)/i,
-  delivery: /\b(deliver[y]?|home\s*deliver|online\s*deliver|ship|door\s*step|come\s*to\s*my)/i,
+  delivery: /\b(deliver[y]?|home\s*deliver|online\s*deliver|ship|door\s*step|come\s*to\s*my|food\s*deliver)/i,
   dinein: /\b(dine\s*in|dine-in|sit\b|table|seat|reserv|book\s*table|eat\s*here|eat\s*there)/i,
+  cod: /\b(cod|cash\s*on\s*deliver|pay\s*on\s*deliver|pay\s*when|card\s*on\s*deliver|deliver\s*cod)/i,
 };
 
-// FAQ responses for detected questions
+// FAQ responses — OUTLET-FIRST. Every answer ends with an explicit or
+// implicit nudge to (a) visit the outlet, (b) order for pickup, or
+// (c) for delivery only, go via Swiggy/Zomato. Never leave the customer
+// without a next step.
+//
+// Design rule: direct customers who want to eat our food to us. The only
+// legitimate reason we point off-platform is delivery (we don't do it
+// direct — we're pickup-only).
 const FAQ_RESPONSES = {
-  hours: 'Open 12 PM \u2013 1 AM, every day.',
-  location: '151-154, HKP Road, Shivajinagar\nNear Russell Market, Bangalore',
-  delivery: "We're takeaway only \u2014 order here, pay UPI, collect in 15 min.",
-  dinein: 'Walk in anytime! Or order ahead on WhatsApp for quick pickup.',
+  hours: '*Open 12 PM \u2013 12:30 AM, every day* 🔥\n\n' +
+         'Dine-in, takeaway, delivery (via Swiggy/Zomato).\n' +
+         'Dine-in is busiest 7:30 \u2013 9:30 PM \u2014 book a table if you want one held.\n\n' +
+         '📍 HKP Road, Shivajinagar, opp Russell Market',
+
+  location: '*HKP Road, Shivajinagar* \u2014 opposite Russell Market\n' +
+            '151-154, HKP Road, Bangalore 560051\n\n' +
+            '🗺️ Directions: hamzaexpress.in/go/maps\n\n' +
+            '5.0★ on Google \u00B7 Open 12 PM \u2013 12:30 AM\n' +
+            'Come dine in \u2014 charcoal kebabs hit different fresh off the grill 🔥',
+
+  delivery: "We don't deliver directly \u2014 we're *pickup-only* to keep food fresh 🥡\n\n" +
+            'For delivery order via:\n' +
+            '\u2022 *Swiggy*: hamzaexpress.in/go/swiggy\n' +
+            '\u2022 *Zomato*: hamzaexpress.in/go/zomato\n\n' +
+            'Or come dine in / order here for pickup (ready in 15 min).',
+
+  cod: "We don't do cash-on-delivery (we're pickup-only here).\n\n" +
+       'For delivery with COD or UPI, order via:\n' +
+       '\u2022 *Swiggy*: hamzaexpress.in/go/swiggy\n' +
+       '\u2022 *Zomato*: hamzaexpress.in/go/zomato\n\n' +
+       'Or pay UPI here and collect in 15 min \u2014 no delivery fee, hottest food.',
+
+  menu: '*Full menu with photos, prices, combos:*\n' +
+        'hamzaexpress.in/#menu\n\n' +
+        'Top picks: Mutton Biryani ₹349 \u00B7 Ghee Rice ₹149 \u00B7 ' +
+        'Chicken Kebab ₹99/4pc \u00B7 Bheja Fry ₹199\n\n' +
+        'Order for pickup below or come dine in \u2014 kebabs are best fresh off the charcoal 🔥',
+
+  dinein: '*Walk in anytime!* Open 12 PM \u2013 12:30 AM 🔥\n\n' +
+          '📍 HKP Road, Shivajinagar (opp Russell Market)\n' +
+          'Book a table to get one held at peak hours (7:30 \u2013 9:30 PM).',
+
+  // These are handled specially (route to openEscalation) — the text below
+  // is the customer-facing ack that shows while we page Ops staff.
+  talk_to_human: "Got it \u2014 I'm getting *Faheem* on this now. He'll message you in a few minutes (usually within 10 min during 12 PM \u2013 10:30 PM).",
+  complaint: "I'm really sorry to hear that. I'm getting *Faheem* on this right now \u2014 he'll message you personally in a few minutes to make it right.",
 };
 
 // Booking intent detection
@@ -1142,7 +1192,33 @@ async function routeState(context, session, user, msg, waId, phoneId, token, db)
       const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
       return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
     }
-    if (msg.id === 'talk_to_staff') return handleHelp(waId, phoneId, token);
+    if (msg.id === 'talk_to_staff') {
+      // Phase 3: escalate to Faheem (tier 1). Customer gets ack, bot pauses,
+      // Faheem receives WhatsApp ping with /ops/inbox/ link.
+      await sendWhatsApp(phoneId, token, buildText(waId, FAQ_RESPONSES.talk_to_human));
+      try {
+        await openEscalation(db, context.env, waId, 'user_requested', user?.name || null);
+      } catch (e) { /* customer already got ack */ }
+      return;
+    }
+    // Phase 3 universal 4-CTA buttons (from build4CtaFallback list card)
+    if (msg.id === 'get_directions') {
+      const body = FAQ_RESPONSES.location;
+      const buttons = [
+        { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+        { type: 'reply', reply: { id: 'order_now',  title: 'Order Pickup' } },
+      ];
+      return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    }
+    if (msg.id === 'view_menu') {
+      const body = FAQ_RESPONSES.menu;
+      const buttons = [
+        { type: 'reply', reply: { id: 'order_now',  title: 'Order for Pickup' } },
+        { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+      ];
+      return sendWhatsApp(phoneId, token, buildReplyButtons(waId, body, buttons));
+    }
+    if (msg.id === 'order_takeaway') return handleShowMenu(context, user, waId, phoneId, token, db);
 
     // Meal-intent selection → send multi-MPMs
     if (msg.id.startsWith('intent_')) {
@@ -1486,8 +1562,50 @@ function detectQuestion(text) {
 // ── New Handler Functions ──
 
 async function handleQuestion(context, user, waId, phoneId, token, db, questionType) {
+  // Hard handoff intents: talk_to_human and complaint both open an escalation.
+  // Customer gets an immediate acknowledgement, then Faheem receives a WA ping.
+  // Bot is paused for 24h so it doesn't interfere with Faheem's reply.
+  if (questionType === 'talk_to_human' || questionType === 'complaint') {
+    const ack = FAQ_RESPONSES[questionType] || "Got it \u2014 I'm getting Faheem on this.";
+    await sendWhatsApp(phoneId, token, buildText(waId, ack));
+    try {
+      await openEscalation(
+        db, context.env, waId, questionType,
+        user?.name || null
+      );
+    } catch (e) { /* swallow — customer already acknowledged */ }
+    return;
+  }
+
   const answer = FAQ_RESPONSES[questionType] || 'How can we help?';
-  const buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
+
+  // Outlet-first CTA choice per question type:
+  //   - location/hours/dinein → "Book a Table" (primary) + "Order Pickup"
+  //   - delivery/cod          → "See on Swiggy" + "See on Zomato"
+  //                             (we've already redirected in the copy)
+  //   - menu                  → "Order for Pickup" (direct path)
+  //   - default               → "Order Now"
+  let buttons;
+  if (questionType === 'delivery' || questionType === 'cod') {
+    // Customer wants delivery. Answer already has Swiggy/Zomato links.
+    // Offer pickup as the alternative (no delivery fee, hottest food).
+    buttons = [
+      { type: 'reply', reply: { id: 'order_now',  title: 'Pickup Instead' } },
+      { type: 'reply', reply: { id: 'book_table', title: 'Or Dine In' } },
+    ];
+  } else if (questionType === 'location' || questionType === 'hours' || questionType === 'dinein') {
+    buttons = [
+      { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+      { type: 'reply', reply: { id: 'order_now',  title: 'Order Pickup' } },
+    ];
+  } else if (questionType === 'menu') {
+    buttons = [
+      { type: 'reply', reply: { id: 'order_now',  title: 'Order for Pickup' } },
+      { type: 'reply', reply: { id: 'book_table', title: 'Book a Table' } },
+    ];
+  } else {
+    buttons = [{ type: 'reply', reply: { id: 'order_now', title: 'Order Now' } }];
+  }
   await sendWhatsApp(phoneId, token, buildReplyButtons(waId, answer, buttons));
   // Stay in idle — don't change state
 }
