@@ -1024,6 +1024,45 @@ async function processWebhook(context, body) {
     );
   }
 
+  // ── Phase 3 cascade heartbeat: piggyback overdue-escalation checks on
+  // every inbound webhook. Runs AFTER the webhook returns 200 (waitUntil),
+  // so it never delays Meta. During business hours this keeps the 5-min
+  // cascade honest without needing a dedicated cron.
+  context.waitUntil(
+    checkCascadeTimers(db, context.env).catch((e) =>
+      console.error('cascade-check error:', e.message)
+    )
+  );
+
+  // ── Phase 3 bot-pause gate: if this conversation has been handed to an
+  // Ops agent, skip all bot routing. The inbound message is already logged
+  // above (wa_messages INSERT) so the agent sees it in /ops/inbox/.
+  //
+  // Three exit conditions re-enable bot routing:
+  //   1. Agent taps "Release to bot" in inbox → bot_paused=0
+  //   2. paused_until timestamp has passed (24h safety auto-resume)
+  //   3. No active session row at all (shouldn't happen for known waIds)
+  //
+  // We intentionally check session (the pre-route snapshot) and re-query
+  // fresh to catch the case where another webhook in flight just paused.
+  if (session && session.bot_paused === 1) {
+    const pausedUntil = session.paused_until;
+    if (pausedUntil && pausedUntil > new Date().toISOString().slice(0, 19)) {
+      // Still paused — log only, do not route.
+      // If this is the first inbound message since pause started, the agent
+      // inbox will pick it up via its next poll. We do NOT auto-reply —
+      // the customer has been told "Faheem will message you shortly".
+      return;
+    }
+    // paused_until expired — auto-resume and continue routing normally.
+    try {
+      await db.prepare(
+        'UPDATE wa_sessions SET bot_paused = 0, paused_until = NULL, paused_reason = NULL WHERE wa_id = ?'
+      ).bind(waId).run();
+      session.bot_paused = 0;
+    } catch (e) { /* swallow */ }
+  }
+
   await routeState(context, session, user, msgType, waId, phoneId, token, db);
 }
 
@@ -6102,6 +6141,262 @@ function buildReplyButtons(to, body, buttons) {
       action: { buttons },
     },
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PHASE 3 — HUMAN HANDOFF & ESCALATION CASCADE
+// ═══════════════════════════════════════════════════════════════════
+//
+// See /ops/message-architecture/ and BUILD-PLAN-MESSAGE-ARCH.md
+//
+// When the bot routes a conversation to a human (explicit "talk to a person",
+// complaint, or cancel-paid-order), we pause the bot for that wa_id and ping
+// the Ops staff in a tiered cascade:
+//    Tier 1 → Faheem  (HR id 35)
+//    Tier 2 → Basheer (HR id 33)   after 5 min no reply
+//    Tier 3 → Nihaf   (HR id 29)   after 10 min no reply
+// First /api/agent-reply from any tier claims the case and stops the cascade.
+
+const ESCALATION_CASCADE = [
+  { tier: 1, hr_id: 35, name: 'Faheem',  phone: '919149967411' },
+  { tier: 2, hr_id: 33, name: 'Basheer', phone: '919061906916' },
+  { tier: 3, hr_id: 29, name: 'Nihaf',   phone: '917010426808' },
+];
+
+const CASCADE_STEP_MIN = 5; // minutes between tiers
+
+// The universal 4-CTA list card — outlet-first ordering.
+// Directions first (primary goal is drive footfall to outlet), then Book,
+// then Menu (URL link), then Takeaway (MPM). Optional 5th row escalates to
+// a human; on by default for unknown/confused states.
+function build4CtaFallback(waId, bodyText, opts = {}) {
+  const rows = [
+    { id: 'get_directions', title: 'Get Directions',     description: 'HKP Road, opp Russell Market' },
+    { id: 'book_table',     title: 'Book a Table',       description: 'Reserve for dine-in' },
+    { id: 'view_menu',      title: 'View Full Menu',     description: 'Photos + combos on site' },
+    { id: 'order_takeaway', title: 'Order for Pickup',   description: 'Pay UPI, collect in 15 min' },
+  ];
+  if (opts.includeTalkToHuman !== false) {
+    rows.push({ id: 'talk_to_staff', title: 'Talk to a person', description: 'Faheem will reach out' });
+  }
+  return {
+    messaging_product: 'whatsapp', to: waId, type: 'interactive',
+    interactive: {
+      type: 'list',
+      body: { text: bodyText },
+      action: { button: 'See Options', sections: [{ title: 'How can we help?', rows }] },
+    },
+  };
+}
+
+// Fetch fresh name/phone for a cascade tier from HIRING_DB (hr_employees).
+// Falls back to the hardcoded ESCALATION_CASCADE on any error.
+async function getEscalationTarget(env, tier) {
+  const fallback = ESCALATION_CASCADE.find(t => t.tier === tier);
+  if (!fallback) return null;
+  try {
+    if (!env.HIRING_DB) return fallback;
+    const row = await env.HIRING_DB.prepare(
+      'SELECT id, name, phone FROM hr_employees WHERE id = ? AND is_active = 1'
+    ).bind(fallback.hr_id).first();
+    if (row && row.phone) {
+      // Normalize to international format (prepend 91 if missing)
+      const phone = String(row.phone).replace(/\D/g, '');
+      const normalized = phone.startsWith('91') ? phone : '91' + phone;
+      return { tier, hr_id: row.id, name: row.name || fallback.name, phone: normalized };
+    }
+  } catch (e) { /* swallow and use fallback */ }
+  return fallback;
+}
+
+// Send a plain WA text ping to an Ops staff member's personal number.
+// This is what wakes Faheem/Basheer/Nihaf when an escalation fires.
+async function pingOpsStaff(env, target, customerWaId, customerName, reason, recentLines) {
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) return { sent: false, reason: 'no_creds' };
+  const displayName = customerName || 'Customer';
+  const phoneDisplay = customerWaId.length > 10
+    ? `+${customerWaId.slice(0, 2)} ${customerWaId.slice(2, 7)} ${customerWaId.slice(7)}`
+    : customerWaId;
+  const tailLines = (recentLines || []).slice(-3).map(l => `  • ${l}`).join('\n') || '  (no recent messages)';
+  const inboxUrl = `https://hamzaexpress.in/ops/inbox/?wa=${encodeURIComponent(customerWaId)}`;
+  const body =
+    `🔔 New handoff — tier ${target.tier}\n\n` +
+    `*${displayName}* (${phoneDisplay})\n` +
+    `Reason: *${reason}*\n\n` +
+    `Recent messages:\n${tailLines}\n\n` +
+    `Reply in the Ops inbox:\n${inboxUrl}\n\n` +
+    `(The bot is paused for this customer for 24h or until you release it. First agent to reply claims the case.)`;
+  try {
+    const resp = await sendWhatsApp(env.WA_PHONE_ID, env.WA_ACCESS_TOKEN, buildText(target.phone, body));
+    return { sent: true, resp };
+  } catch (e) {
+    return { sent: false, error: String(e) };
+  }
+}
+
+// Pause the bot for a wa_id, log the action, and return the new session row.
+// Safe to call multiple times — the escalation row is only created if there
+// isn't an active one for this wa_id.
+async function pauseBotForWaId(db, waId, reason, assignedHrId) {
+  const pausedUntil = new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 19);
+  try {
+    await db.prepare(
+      `UPDATE wa_sessions
+          SET bot_paused = 1, paused_until = ?, paused_reason = ?, assigned_to = ?
+        WHERE wa_id = ?`
+    ).bind(pausedUntil, reason, assignedHrId || null, waId).run();
+  } catch (e) { /* table may not exist in old deploys — swallow */ }
+  try {
+    await db.prepare(
+      `INSERT INTO agent_actions (wa_id, hr_id, action, details, created_at)
+       VALUES (?, ?, 'bot_paused', ?, ?)`
+    ).bind(waId, assignedHrId || null, reason, new Date().toISOString()).run();
+  } catch (e) { /* swallow */ }
+}
+
+// Unpause the bot (used when Ops taps "Release to bot" in /ops/inbox/).
+async function resumeBotForWaId(db, waId, hrId, note) {
+  try {
+    await db.prepare(
+      `UPDATE wa_sessions
+          SET bot_paused = 0, paused_until = NULL, paused_reason = NULL, assigned_to = NULL
+        WHERE wa_id = ?`
+    ).bind(waId).run();
+  } catch (e) { /* swallow */ }
+  try {
+    await db.prepare(
+      `UPDATE escalations
+          SET status = 'resolved', resolved_at = ?
+        WHERE wa_id = ? AND status IN ('active','claimed')`
+    ).bind(new Date().toISOString(), waId).run();
+  } catch (e) { /* swallow */ }
+  try {
+    await db.prepare(
+      `INSERT INTO agent_actions (wa_id, hr_id, action, details, created_at)
+       VALUES (?, ?, 'bot_resumed', ?, ?)`
+    ).bind(waId, hrId || null, note || '', new Date().toISOString()).run();
+  } catch (e) { /* swallow */ }
+}
+
+// Open an escalation: create the row, pause the bot, ping tier 1.
+// Safe against double-call: if there's already an active escalation for this
+// wa_id we just return the existing row (idempotent).
+async function openEscalation(db, env, waId, reason, customerName) {
+  const now = new Date();
+  // Check for active escalation
+  try {
+    const existing = await db.prepare(
+      `SELECT id, tier, status FROM escalations
+        WHERE wa_id = ? AND status IN ('active','claimed')
+        ORDER BY id DESC LIMIT 1`
+    ).bind(waId).first();
+    if (existing) return { escalation_id: existing.id, existing: true };
+  } catch (e) { /* table may not exist — fall through */ }
+
+  // Pull last 5 inbound messages for context
+  let recentLines = [];
+  try {
+    const msgs = await db.prepare(
+      `SELECT content, msg_type, created_at FROM wa_messages
+        WHERE wa_id = ? AND direction = 'in'
+        ORDER BY id DESC LIMIT 5`
+    ).bind(waId).all();
+    recentLines = (msgs.results || []).reverse().map(m => {
+      const snippet = (m.content || '').slice(0, 120);
+      return snippet || `[${m.msg_type}]`;
+    });
+  } catch (e) { /* swallow */ }
+
+  // Get tier-1 target
+  const target = await getEscalationTarget(env, 1);
+  if (!target) return { escalation_id: null, error: 'no_target' };
+
+  // Insert escalation row
+  const nextAt = new Date(now.getTime() + CASCADE_STEP_MIN * 60 * 1000).toISOString().slice(0, 19);
+  let escalationId = null;
+  try {
+    const res = await db.prepare(
+      `INSERT INTO escalations
+         (wa_id, reason, tier, status, last_pinged_tier, next_escalate_at, created_at, context_snapshot)
+       VALUES (?, ?, 1, 'active', 1, ?, ?, ?)`
+    ).bind(
+      waId, reason, nextAt, now.toISOString().slice(0, 19),
+      JSON.stringify({ customerName: customerName || null, recentLines })
+    ).run();
+    escalationId = res.meta?.last_row_id || null;
+  } catch (e) { /* swallow */ }
+
+  // Pause the bot for this customer
+  await pauseBotForWaId(db, waId, reason, target.hr_id);
+
+  // Ping tier 1
+  await pingOpsStaff(env, target, waId, customerName, reason, recentLines);
+
+  return { escalation_id: escalationId, tier: 1, target_name: target.name };
+}
+
+// Advance active escalations whose next_escalate_at has passed.
+// Called opportunistically from processWebhook and from /api/inbox-list polls.
+// Does nothing expensive — just picks up to 5 overdue rows per call and pings
+// the next tier. Claim-blocked rows (status='claimed') are left alone.
+async function checkCascadeTimers(db, env) {
+  const nowIso = new Date().toISOString().slice(0, 19);
+  let overdue = [];
+  try {
+    const q = await db.prepare(
+      `SELECT id, wa_id, reason, tier, last_pinged_tier, context_snapshot
+         FROM escalations
+        WHERE status = 'active' AND next_escalate_at <= ?
+        ORDER BY id ASC LIMIT 5`
+    ).bind(nowIso).all();
+    overdue = q.results || [];
+  } catch (e) { return; }
+
+  for (const row of overdue) {
+    const nextTier = (row.last_pinged_tier || row.tier || 1) + 1;
+    if (nextTier > 3) {
+      // Exhausted cascade — re-ping tier 1 every 5 min until claimed
+      const t1 = await getEscalationTarget(env, 1);
+      if (t1) {
+        let ctx = {};
+        try { ctx = JSON.parse(row.context_snapshot || '{}'); } catch (_) {}
+        await pingOpsStaff(env, t1, row.wa_id, ctx.customerName, row.reason + ' (UNCLAIMED — retry)', ctx.recentLines || []);
+      }
+      const retryAt = new Date(Date.now() + CASCADE_STEP_MIN * 60 * 1000).toISOString().slice(0, 19);
+      try {
+        await db.prepare(
+          `UPDATE escalations SET next_escalate_at = ? WHERE id = ?`
+        ).bind(retryAt, row.id).run();
+      } catch (e) { /* swallow */ }
+      continue;
+    }
+
+    const target = await getEscalationTarget(env, nextTier);
+    if (!target) continue;
+    let ctx = {};
+    try { ctx = JSON.parse(row.context_snapshot || '{}'); } catch (_) {}
+    await pingOpsStaff(env, target, row.wa_id, ctx.customerName, row.reason, ctx.recentLines || []);
+
+    const nextAt = new Date(Date.now() + CASCADE_STEP_MIN * 60 * 1000).toISOString().slice(0, 19);
+    try {
+      await db.prepare(
+        `UPDATE escalations
+            SET tier = ?, last_pinged_tier = ?, next_escalate_at = ?
+          WHERE id = ?`
+      ).bind(nextTier, nextTier, nextAt, row.id).run();
+    } catch (e) { /* swallow */ }
+  }
+}
+
+// Claim an escalation (called when an agent sends a reply). Idempotent.
+async function claimEscalation(db, waId, hrId) {
+  try {
+    await db.prepare(
+      `UPDATE escalations
+          SET status = 'claimed', claimed_by = ?, claimed_at = ?
+        WHERE wa_id = ? AND status = 'active'`
+    ).bind(hrId, new Date().toISOString(), waId).run();
+  } catch (e) { /* swallow */ }
 }
 
 // ═══════════════════════════════════════════════════════════════════
