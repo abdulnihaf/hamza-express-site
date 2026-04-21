@@ -1628,8 +1628,8 @@ async function handleVague(context, user, waId, phoneId, token, db) {
     { id: 'order_now', title: 'Order & Pickup', description: 'Browse menu, pay UPI, collect at outlet' },
     { id: 'book_table', title: 'Book a Table', description: 'Reserve for dine-in' },
     { id: 'track_order', title: 'Track Order', description: 'Check your order status' },
-    { id: 'hours_location', title: 'Hours & Location', description: 'Open 12 PM \u2013 1 AM \u00B7 HKP Road' },
-    { id: 'talk_to_staff', title: 'Call Us', description: 'Talk to staff: 80080 02045' },
+    { id: 'hours_location', title: 'Hours & Location', description: 'Open 12 PM \u2013 12:30 AM \u00B7 HKP Road' },
+    { id: 'talk_to_staff', title: 'Call Us', description: 'Talk to staff: 80080 02049' },
   ];
 
   const listMsg = {
@@ -5890,7 +5890,7 @@ async function handleHelp(waId, phoneId, token) {
     '*"track"* — Check your order status\n' +
     '*"cancel"* — Cancel a pending order\n\n' +
     '151-154, HKP Road, Shivajinagar\n' +
-    '*Call:* +91 80080 02045'));
+    '*Call:* +91 80080 02049'));
 }
 
 // ═══════════════════════════════════════════════════════════════════
