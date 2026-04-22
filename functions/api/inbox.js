@@ -68,7 +68,7 @@ async function validateOpsPin(env, pin) {
   if (!env.HIRING_DB) return null;
   try {
     const row = await env.HIRING_DB.prepare(
-      `SELECT id, name, phone, brand_label, role_current, is_active
+      `SELECT id, name, phone, brand_label, job_name, is_active
          FROM hr_employees
         WHERE pin = ? AND is_active = 1
         LIMIT 1`
