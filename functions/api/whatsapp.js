@@ -356,6 +356,17 @@ const ORDERING_PATTERNS = [
   /looking\s*to\s*order/i,
 ];
 
+// Small-talk detection: customer making conversation, not asking anything
+// actionable. Routed to handleSmallTalk — warm one-liner, no list dump.
+// Matches "how are you", "how's it going", "wassup", "long time", etc.
+const SMALL_TALK_PATTERNS = [
+  /\bhow\s+(are|r)\s+(you|u)\b/i,
+  /\bhru\b|\bhry\b/i,
+  /\bhow(s|'s)?\s+(it\s+going|business|things|life|the\s+day|everything)\b/i,
+  /\bwha?ts?\s*up\b|\bwa?ssup\b|^sup[\s\.,!?]*$/i,
+  /\blong\s+time\b|\bhow\s+have\s+you\s+been\b|\bhow\s+you\s+doing\b/i,
+];
+
 // Question detection: customer asking a question, not ordering
 // Question intent patterns. Order matters — first match wins. More specific
 // patterns (talk_to_human, complaint) are checked before generic ones.
@@ -1523,6 +1534,12 @@ async function _handleIdleInner(context, session, user, msg, waId, phoneId, toke
     return handleQuestion(context, user, waId, phoneId, token, db, questionType);
   }
 
+  // 4.5 Small-talk — warm one-liner, no list dump. Comes after question
+  // detection so we don't eclipse "how long till ready?" or similar.
+  if (detectSmallTalk(text)) {
+    return handleSmallTalk(context, user, waId, phoneId, token, db);
+  }
+
   // 5. Vague or unclear — show intent list
   return handleVague(context, user, waId, phoneId, token, db);
 }
@@ -1545,6 +1562,20 @@ function detectBookingIntent(text) {
   if (!text) return false;
   for (const pattern of BOOKING_PATTERNS) {
     if (pattern.test(text)) return true;
+  }
+  return false;
+}
+
+// Detects conversational small-talk ("how are you", "wassup", "long time") so
+// we can send a warm one-liner instead of dumping the greeting list again.
+// Kept narrow: only fires when the message is predominantly small-talk, not
+// when it's mixed with an actionable intent.
+function detectSmallTalk(text) {
+  if (!text) return false;
+  const t = text.trim();
+  if (t.length < 3 || t.length > 80) return false;
+  for (const pattern of SMALL_TALK_PATTERNS) {
+    if (pattern.test(t)) return true;
   }
   return false;
 }
@@ -1610,9 +1641,51 @@ async function handleQuestion(context, user, waId, phoneId, token, db, questionT
   // Stay in idle — don't change state
 }
 
+// Warm one-liner for conversational small-talk. Time-of-day aware, never
+// dumps the menu list, never changes state. Designed to feel human rather
+// than robotic — the customer gets acknowledged AND nudged forward.
+async function handleSmallTalk(context, user, waId, phoneId, token, db) {
+  const displayName = user.name ? user.name.split(' ')[0] : '';
+  const istHour = (new Date(Date.now() + 5.5 * 3600 * 1000)).getUTCHours();
+  const period = istHour < 11 ? 'morning'
+               : istHour < 16 ? 'afternoon'
+               : istHour < 21 ? 'evening'
+               : 'late';
+
+  const nameSuffix = displayName ? ` ${displayName}` : '';
+  const messages = {
+    morning:   `All good${nameSuffix}! 🌅 Kitchen's warming up — full menu live by 12. Pre-order for pickup?`,
+    afternoon: `🔥 Busy lunch${nameSuffix}! Ghee rice, kebabs, combos ready. Dine in, pickup, or delivery?`,
+    evening:   `Dinner rush on${nameSuffix} 🔥 Charcoal's hot. What's it today?`,
+    late:      `Still serving till 12:30${nameSuffix} 🔥 Late dinner or takeaway?`,
+  };
+
+  await sendWhatsApp(phoneId, token, buildText(waId, messages[period]));
+  // Stay in idle — don't change state, don't list
+}
+
 async function handleVague(context, user, waId, phoneId, token, db) {
   const tier = getCustomerTier(user.total_orders || 0);
   const displayName = user.name ? user.name.split(' ')[0] : '';
+
+  // Anti-spam dedupe: if we sent a list to this wa_id within the last 120s,
+  // don't re-list — send a short text nudge instead. Keeps the conversation
+  // from feeling like a broken record when customers ping twice in a row.
+  try {
+    const recentList = await db.prepare(
+      `SELECT id FROM wa_messages
+        WHERE wa_id = ? AND direction = 'out' AND msg_type = 'list'
+          AND created_at > datetime('now', '-120 seconds')
+        ORDER BY id DESC LIMIT 1`
+    ).bind(waId).first();
+    if (recentList) {
+      const nudge = displayName
+        ? `Tap the options above, ${displayName} 👆 — or just type *menu*, *table*, *hours*, or *order*.`
+        : 'Tap the options above 👆 — or just type *menu*, *table*, *hours*, or *order*.';
+      await sendWhatsApp(phoneId, token, buildText(waId, nudge));
+      return;
+    }
+  } catch (e) { /* fall through to normal list on any DB hiccup */ }
 
   let bodyText;
   if (tier === 'regular') {

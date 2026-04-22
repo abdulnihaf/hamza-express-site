@@ -51,8 +51,10 @@ export const INTENT_PATTERNS = [
   ['specific_dish',        /\b(biryani|biriyani|biriani|mandhi|mandi|kab+ab|kebab|ghee\s*rice|bheja|brain|shawarma|tandoor|chicken|mutton|fish|prawn|paneer|naan|roti|juice|tea|chai|coffee|fry|tikka|pulao|rice|kulcha|dal|shak|sheek|butter\s*chicken|dum\s*ka|kheema)\b/i],
 
   // Conversational
-  ['greeting',             /^(hi|hii+|hey+|hello+|yo+|salam|assalam|as-?salam|namaste|good\s+(morning|afternoon|evening)|bro|sir|madam|anna|annna)[\s\.,!?]*$/i],
-  ['thanks',               /^(thanks?|thank\s+you|ty|thanku|shukriya|shukran)[\s\.,!?]*$/i],
+  // Small talk (must be BEFORE greeting and name_reply fallback — catches "how are you" etc.)
+  ['small_talk',           /\b(how\s+(are|r)\s+(you|u)|hru|hry)\b|\bhow(s|'s)?\s+(it\s+going|business|things|life|the\s+day|everything)\b|\bwha?ts?\s*up\b|\bwa?ssup\b|\bsup\b|\blong\s+time\b|\bhow\s+have\s+you\s+been\b|\bhow\s+you\s+doing\b/i],
+  ['greeting',             /^(hi|hii+|hey+|hello+|yo+|salam|assalam|as-?salam|namaste|good\s+(morning|afternoon|evening|night)|bro|sir|madam|anna|annna)[\s\.,!?]*$/i],
+  ['thanks',               /^(thanks?|thank\s+you|ty|thanku|shukriya|shukran|thx|tq)[\s\.,!?]*$/i],
   ['yes_no',               /^(yes|yeah|yup|yep|sure|ok|okay|k|kk|done|correct|right|no|nope|nah)[\s\.,!?]*$/i],
   ['gibberish',            /^[^a-z0-9]{1,4}$/i],
 
@@ -97,8 +99,11 @@ export function classifyIntent(text) {
   for (const [name, pattern] of INTENT_PATTERNS) {
     if (pattern.test(t)) return name;
   }
-  // Heuristic: short (1-2 words) and alphabetic = likely name reply
-  if (t.length <= 30 && /^[a-z][a-z\s]+$/i.test(t) && t.split(/\s+/).length <= 3) {
+  // Heuristic: short (1-2 words), alphabetic, no common small-talk filler = likely name reply.
+  // Note: real validation that this IS a name_reply (rather than just a short word)
+  // happens in the routing layer, which only honours this tag when session state
+  // is awaiting_name. This fallback is just a hint.
+  if (t.length <= 24 && /^[a-z][a-z\s]+$/i.test(t) && t.split(/\s+/).length <= 2) {
     return 'name_reply';
   }
   return 'unclassified';
