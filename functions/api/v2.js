@@ -461,8 +461,13 @@ async function recordExpense(body, user, DB) {
   if (!DB) return json({ error: 'DB not configured' }, 500);
   const { shift_id, category_id, category_label, product_id, product_name,
           vendor_id, vendor_name, amount, payment_method, notes, photo_b64 } = body;
-  if (!shift_id || !category_id || !product_id || !amount) {
-    return json({ error: 'shift_id, category_id, product_id, amount required' }, 400);
+  if (!shift_id || !category_id || !amount) {
+    return json({ error: 'shift_id, category_id, amount required' }, 400);
+  }
+  // Cat 14 (Direct Vendor Bill) has no product — other cats require one.
+  // Central hnhotels.in/api/spend does the final validation per category.
+  if (category_id !== 14 && !product_id) {
+    return json({ error: 'product_id required (except cat 14)' }, 400);
   }
 
   const shift = await DB.prepare(`SELECT * FROM he_v2_shifts WHERE id = ?`).bind(shift_id).first();

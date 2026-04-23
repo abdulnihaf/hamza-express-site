@@ -226,6 +226,23 @@
 
   /* Scroll helpers */
   .list-wrap { max-height: 340px; overflow-y: auto; }
+
+  /* Searchable combobox (mirrors NCH v2) — type-to-filter with inline "+ Add new" */
+  .searchable { position: relative; }
+  .searchable-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 10px; max-height: 260px; overflow-y: auto; z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .searchable-item {
+    padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+    color: var(--text); font-size: 13px; line-height: 1.3;
+  }
+  .searchable-item:hover, .searchable-item.active { background: rgba(249,115,22,0.15); }
+  .searchable-item .meta { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+  .searchable-add { color: var(--orange); font-weight: 700; border-bottom: none; }
+  .searchable-empty { padding: 14px; color: var(--text-faint); font-size: 12px; text-align: center; }
 </style>
 </head>
 <body>
@@ -411,13 +428,29 @@
     <div class="modal-card">
       <button class="modal-close" onclick="closeModal('expense-form-modal')">✕</button>
       <div class="modal-title" id="ef-cat-title">Expense</div>
-      <div class="field">
-        <label>Product</label>
-        <select id="ef-product"><option value="">Loading…</option></select>
+      <div class="field" id="ef-product-wrap">
+        <label id="ef-product-label">Product</label>
+        <div class="searchable">
+          <input id="ef-product-search" type="text" autocomplete="off"
+                 placeholder="Search or + add new item…"
+                 oninput="sFilter('product', this.value)"
+                 onfocus="sOpen('product')"
+                 onblur="setTimeout(() => sClose('product'), 200)">
+          <div id="ef-product-list" class="searchable-list hidden"></div>
+        </div>
+        <input type="hidden" id="ef-product">
       </div>
-      <div class="field">
-        <label>Vendor <span class="hint">required for most categories</span></label>
-        <select id="ef-vendor"><option value="">Loading…</option></select>
+      <div class="field" id="ef-vendor-wrap">
+        <label id="ef-vendor-label">Vendor <span class="hint">required for most categories</span></label>
+        <div class="searchable">
+          <input id="ef-vendor-search" type="text" autocomplete="off"
+                 placeholder="Search or + add new vendor…"
+                 oninput="sFilter('vendor', this.value)"
+                 onfocus="sOpen('vendor')"
+                 onblur="setTimeout(() => sClose('vendor'), 200)">
+          <div id="ef-vendor-list" class="searchable-list hidden"></div>
+        </div>
+        <input type="hidden" id="ef-vendor">
       </div>
       <div class="field">
         <label>Amount (₹)</label>
@@ -585,8 +618,14 @@ let ES_CURRENT_CONFIG = null;
 
 // Expense entry state
 let EXP_CURRENT_CAT = null;
-let EXP_PRODUCTS = [];
-let EXP_VENDORS = [];
+// Caches mirror NCH v2: products per-category, vendors global
+let _hnProductCache = {};   // { catId: [ {id, name, default_code}, ... ] }
+let _hnVendorCache = null;  // [ {id, name, phone}, ... ]
+
+// Categories where VENDOR is OPTIONAL (NCH v2 parity)
+const VENDOR_OPTIONAL_CATS = new Set([3, 4, 13]);  // Salary / Advance / Owner Drawing
+// Categories with NO product dropdown (NCH v2 parity)
+const NO_PRODUCT_CATS = new Set([14]);  // Direct Vendor Bill — vendor name is the line item
 
 // ── Utilities ──────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -948,39 +987,159 @@ async function pickCategory(catId, label, emoji) {
   EXP_CURRENT_CAT = { id: catId, label, emoji };
   closeModal('expense-cats-modal');
   $('ef-cat-title').textContent = `${emoji || '🧾'} ${label}`;
-  $('ef-product').innerHTML = '<option value="">Loading…</option>';
-  $('ef-vendor').innerHTML = '<option value="">Loading…</option>';
-  $('ef-amount').value = '';
-  $('ef-notes').value = '';
+
+  // Reset form fields
+  $('ef-product-search').value = ''; $('ef-product').value = '';
+  $('ef-vendor-search').value  = ''; $('ef-vendor').value  = '';
+  $('ef-amount').value = ''; $('ef-notes').value = '';
+  $('ef-photo').value = ''; $('ef-photo-preview').textContent = '';
+  sClose('product'); sClose('vendor');
+
+  // Show/hide product field based on category (NCH v2 parity: cat 14 has no product)
+  const showProduct = !NO_PRODUCT_CATS.has(catId);
+  $('ef-product-wrap').style.display = showProduct ? '' : 'none';
+  // Vendor label reflects required vs optional
+  const vendorReq = !VENDOR_OPTIONAL_CATS.has(catId);
+  $('ef-vendor-label').innerHTML = `Vendor ${vendorReq ? '' : '<span class="hint">(optional)</span>'}`;
+
   openModal('expense-form-modal');
 
-  // Fetch products + vendors in parallel
+  // Fetch products (per-cat cache) + vendors (global cache) in parallel
   const [prodR, vendR] = await Promise.all([
-    fetch(`${HN_SPEND}?action=products&pin=${USER.pin}&cat=${catId}&brand=HE`).then(x => x.json()).catch(e => ({ error: e.message })),
-    fetch(`${HN_SPEND}?action=vendors&brand=HE&cat_id=${catId}`).then(x => x.json()).catch(e => ({ error: e.message })),
+    showProduct
+      ? (_hnProductCache[catId]
+          ? Promise.resolve({ products: _hnProductCache[catId] })
+          : fetch(`${HN_SPEND}?action=products&pin=${USER.pin}&cat=${catId}&brand=HE`).then(x => x.json()).catch(e => ({ error: e.message })))
+      : Promise.resolve({ products: [] }),
+    _hnVendorCache
+      ? Promise.resolve({ vendors: _hnVendorCache })
+      : fetch(`${HN_SPEND}?action=vendors&pin=${USER.pin}&brand=HE&cat_id=${catId}`).then(x => x.json()).catch(e => ({ error: e.message })),
   ]);
 
-  EXP_PRODUCTS = prodR.products || [];
-  EXP_VENDORS = vendR.vendors || [];
-  $('ef-product').innerHTML = `<option value="">— Pick product —</option>` +
-    EXP_PRODUCTS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}${p.default_code ? ' (' + p.default_code + ')' : ''}</option>`).join('');
-  $('ef-vendor').innerHTML = `<option value="">— Pick vendor ${[3,4,13].includes(catId) ? '(optional)' : ''} —</option>` +
-    EXP_VENDORS.map(v => `<option value="${v.id}">${escapeHtml(v.name)}${v.phone ? ' · ' + v.phone : ''}</option>`).join('');
+  if (showProduct) _hnProductCache[catId] = prodR.products || [];
+  if (!_hnVendorCache) _hnVendorCache = vendR.vendors || [];
+
+  // Pre-render lists (closed) so open-on-focus shows immediately
+  if (showProduct) sRender('product', _hnProductCache[catId], '');
+  sRender('vendor', _hnVendorCache, '');
+}
+
+// ─────────── Searchable combobox (mirrors NCH v2) ───────────
+function sOpen(kind) {
+  const source = kind === 'product' ? _hnProductCache[EXP_CURRENT_CAT?.id] : _hnVendorCache;
+  if (!source) return;
+  const q = $(`ef-${kind}-search`).value || '';
+  sRender(kind, source, q);
+  $(`ef-${kind}-list`).classList.remove('hidden');
+}
+function sClose(kind) { $(`ef-${kind}-list`)?.classList.add('hidden'); }
+
+function sFilter(kind, q) {
+  const source = kind === 'product' ? _hnProductCache[EXP_CURRENT_CAT?.id] : _hnVendorCache;
+  if (!source) return;
+  sRender(kind, source, q);
+  $(`ef-${kind}-list`).classList.remove('hidden');
+  // Clear the hidden id if user is retyping (they haven't re-picked yet)
+  $(`ef-${kind}`).value = '';
+}
+
+function sRender(kind, items, q) {
+  items = items || [];
+  const needle = (q || '').toLowerCase().trim();
+  const filtered = needle
+    ? items.filter(x => (x.name || '').toLowerCase().includes(needle) ||
+                        (x.default_code || '').toLowerCase().includes(needle) ||
+                        (x.phone || '').includes(needle))
+    : items;
+
+  const rows = filtered.slice(0, 50).map(x => {
+    const label = escapeHtml(x.name || '');
+    const meta = kind === 'product'
+      ? (x.default_code ? `code ${escapeHtml(x.default_code)}` : '')
+      : (x.phone ? escapeHtml(x.phone) : '');
+    const safeName = escapeHtml(x.name || '').replace(/'/g, "\\'");
+    return `<div class="searchable-item" onmousedown="sPick('${kind}', ${x.id}, '${safeName}')">
+      <div>${label}</div>
+      ${meta ? `<div class="meta">${meta}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const moreCount = filtered.length > 50
+    ? `<div class="searchable-empty">${filtered.length - 50} more · refine search</div>` : '';
+  const empty = filtered.length === 0
+    ? `<div class="searchable-empty">No match. Type a name, then tap "+ Add" below.</div>` : '';
+
+  const addLabel = kind === 'product' ? '+ Add new item' : '+ Add new vendor';
+  const addRow = needle
+    ? `<div class="searchable-item searchable-add" onmousedown="sAddNew('${kind}', '${escapeHtml(needle).replace(/'/g, "\\'")}')">
+         ${addLabel}: "${escapeHtml(q)}"
+       </div>`
+    : `<div class="searchable-item searchable-add" onmousedown="sAddNew('${kind}', '')">${addLabel}…</div>`;
+
+  $(`ef-${kind}-list`).innerHTML = rows + empty + moreCount + addRow;
+}
+
+function sPick(kind, id, name) {
+  $(`ef-${kind}`).value = id;
+  $(`ef-${kind}-search`).value = name;
+  $(`ef-${kind}-list`).classList.add('hidden');
+}
+
+async function sAddNew(kind, prefilledName) {
+  const label = kind === 'product' ? 'item' : 'vendor';
+  const hint = kind === 'product'
+    ? ' (e.g. Cleaning Materials, Beat Cop Hafta)'
+    : ' (e.g. Sharma Provisions, BESCOM)';
+  const name = prompt(`New ${label} name${hint}:`, prefilledName);
+  if (!name || !name.trim()) return;
+
+  try {
+    let r;
+    if (kind === 'product') {
+      r = await fetch(`${HN_SPEND}?action=create-expense-product`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: USER.pin, cat_id: EXP_CURRENT_CAT?.id, name: name.trim() }),
+      }).then(x => x.json());
+      if (!r.success) throw new Error(r.error || 'Create failed');
+      const p = { id: r.product?.id || r.id, name: (r.product?.name || name.trim()), default_code: null };
+      _hnProductCache[EXP_CURRENT_CAT.id] = _hnProductCache[EXP_CURRENT_CAT.id] || [];
+      _hnProductCache[EXP_CURRENT_CAT.id].push(p);
+      sPick('product', p.id, p.name);
+    } else {
+      const phone = prompt(`Phone for ${name.trim()} (optional, 10 digits):`, '') || '';
+      r = await fetch(`${HN_SPEND}?action=create-vendor`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: USER.pin, name: name.trim(), phone: phone.trim() }),
+      }).then(x => x.json());
+      if (!r.success) throw new Error(r.error || 'Create failed');
+      const v = r.vendor || { id: r.id, name: name.trim(), phone };
+      _hnVendorCache = _hnVendorCache || [];
+      _hnVendorCache.push(v);
+      sPick('vendor', v.id, v.name);
+    }
+    toast(`✓ Added ${label} "${name.trim()}"`, 'ok');
+  } catch (e) {
+    toast(`Could not add ${label}: ${e.message}`, 'err');
+  }
 }
 
 async function submitExpense() {
+  const catId     = EXP_CURRENT_CAT?.id;
   const productId = parseInt($('ef-product').value);
   const vendorId  = parseInt($('ef-vendor').value) || null;
   const amount    = parseFloat($('ef-amount').value);
   const pm        = $('ef-pm').value;
   const notes     = $('ef-notes').value.trim();
-  if (!productId) return toast('Pick a product', 'err');
+
+  // Cat 14 (Direct Vendor Bill) has no product — skip product check
+  if (!NO_PRODUCT_CATS.has(catId) && !productId) return toast('Pick a product (type to search or + Add new)', 'err');
   if (!(amount > 0)) return toast('Positive amount required', 'err');
   // Vendor required unless Salary/Advance/Drawings (cats 3,4,13)
-  if (![3, 4, 13].includes(EXP_CURRENT_CAT.id) && !vendorId) return toast('Vendor required', 'err');
+  if (!VENDOR_OPTIONAL_CATS.has(catId) && !vendorId) return toast('Pick a vendor (type to search or + Add new)', 'err');
 
-  const prod = EXP_PRODUCTS.find(p => p.id === productId);
-  const vend = EXP_VENDORS.find(v => v.id === vendorId);
+  // Look up display names from caches (for local D1 mirror + UI echo)
+  const prod = (_hnProductCache[catId] || []).find(p => p.id === productId);
+  const vend = (_hnVendorCache || []).find(v => v.id === vendorId);
 
   // Read photo (if picked) as base64 — strips data URI prefix before sending
   let photo_b64 = null;
