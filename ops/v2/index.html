@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HE Cashier">
+<meta name="theme-color" content="#0a0f1a">
+<link rel="manifest" href="/ops/v2/manifest.json">
+<link rel="apple-touch-icon" href="/ops/v2/icon-192.png">
+<title>HE Cashier — v2</title>
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --surface: #111827;
+    --surface-2: #1f2937;
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.12);
+    --text: #e5e7eb;
+    --text-dim: #9ca3af;
+    --text-faint: #6b7280;
+    --orange: #f97316;
+    --orange-dim: #c2410c;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px; line-height: 1.5;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .hidden { display: none !important; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea {
+    font-family: inherit; font-size: 15px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 12px 14px;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--orange); }
+
+  /* ── Header ─────────────────────────────────────────── */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--bg);
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+  .logo .accent { color: var(--orange); }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: var(--surface); border-radius: 999px;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .user-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* ── Screens ─────────────────────────────────────────── */
+  main { flex: 1; padding: 14px 16px 100px; }
+
+  /* PIN screen */
+  .pin-wrap { padding: 40px 20px; text-align: center; min-height: 60vh; display: flex; flex-direction: column; justify-content: center; }
+  .pin-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .pin-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
+  .pin-input {
+    font-size: 34px; text-align: center; letter-spacing: 14px;
+    padding: 22px 10px; margin-bottom: 16px;
+    background: var(--surface); border: 2px solid var(--border);
+  }
+  .pin-input:focus { border-color: var(--orange); }
+  .pin-error { color: var(--red); font-size: 13px; min-height: 18px; margin-bottom: 8px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-dim); letter-spacing: 0.5px; margin-bottom: 10px;
+  }
+  .card.warning { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
+  .card.danger  { border-color: rgba(239,68,68,0.3);  background: rgba(239,68,68,0.06); }
+  .card.ok      { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
+
+  /* Buttons */
+  .btn {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; font-size: 14px; font-weight: 600;
+    background: var(--surface-2); color: var(--text);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary   { background: var(--orange); color: #fff; border-color: var(--orange); }
+  .btn.primary:disabled { opacity: 0.4; }
+  .btn.ghost     { background: transparent; border-color: var(--border-strong); }
+  .btn.success   { background: var(--green); color: #05351f; border-color: var(--green); }
+  .btn.danger    { background: transparent; color: var(--red); border-color: rgba(239,68,68,0.35); }
+  .btn.full      { width: 100%; }
+  .btn.sm        { padding: 8px 12px; font-size: 12px; min-height: 36px; }
+
+  /* Money */
+  .money { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .money.big { font-size: 22px; }
+  .money.huge { font-size: 34px; letter-spacing: -0.5px; }
+  .money.pos { color: var(--green); }
+  .money.neg { color: var(--red); }
+
+  /* Alerts list */
+  .alert-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px dashed var(--border);
+    gap: 10px;
+  }
+  .alert-row:last-child { border-bottom: none; }
+  .alert-name { font-weight: 600; font-size: 14px; }
+  .alert-meta { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+  .alert-amt { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
+  .alert-amt.owes { color: var(--orange); }
+  .alert-amt.excess { color: var(--red); }
+  .alert-amt.zero { color: var(--text-faint); }
+
+  /* Drawer formula */
+  .formula { font-size: 13px; color: var(--text-dim); }
+  .formula-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .formula-row .v { color: var(--text); font-variant-numeric: tabular-nums; }
+  .formula-row.plus .v::before  { content: '+ '; color: var(--green); }
+  .formula-row.minus .v::before { content: '− '; color: var(--red); }
+  .formula-row.total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px; font-weight: 700; color: var(--text); font-size: 15px; }
+
+  /* Handover / expense rows */
+  .item-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    gap: 10px; font-size: 13px;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row .left { flex: 1; min-width: 0; }
+  .item-row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-row .meta { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+  .item-row .right { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; flex-shrink: 0; }
+
+  /* Quick actions */
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .qa-btn {
+    padding: 14px 10px; border-radius: 12px; background: var(--surface);
+    border: 1px solid var(--border); text-align: left; color: var(--text);
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .qa-btn .qa-icon { font-size: 22px; }
+  .qa-btn .qa-label { font-size: 13px; font-weight: 600; }
+  .qa-btn .qa-sub { font-size: 11px; color: var(--text-dim); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 100; display: flex; align-items: flex-end; padding: 0;
+  }
+  .modal-card {
+    background: var(--bg); border-top-left-radius: 20px; border-top-right-radius: 20px;
+    width: 100%; max-width: 480px; margin: 0 auto;
+    padding: 18px 18px 30px; max-height: 86vh; overflow-y: auto;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .modal-close { float: right; color: var(--text-dim); background: transparent; border: none; font-size: 22px; padding: 0 6px; margin-top: -4px; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+  .field .hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+  /* Captain view */
+  .captain-big {
+    text-align: center; padding: 36px 20px;
+    border-radius: 18px; background: linear-gradient(135deg, #1f2937, #111827);
+    margin-bottom: 16px;
+  }
+  .captain-big .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .captain-big .amount { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  .captain-big .amount.owes { color: var(--orange); }
+  .captain-big .amount.clear { color: var(--green); }
+  .captain-big .sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+  /* Expense category grid */
+  .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 12px; text-align: center; color: var(--text);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .cat-card .emoji { font-size: 24px; }
+  .cat-card .label { font-size: 12px; font-weight: 600; }
+  .cat-card:active { transform: scale(0.97); background: var(--surface-2); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    z-index: 200; max-width: 90vw;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .toast.ok   { background: var(--green);  color: #04311c; }
+  .toast.err  { background: var(--red);    color: #fff; }
+  .toast.warn { background: var(--yellow); color: #382400; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .badge.cashier  { background: rgba(168,85,247,0.15); color: #c084fc; }
+  .badge.captain  { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .badge.waiter   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .badge.admin    { background: rgba(16,185,129,0.15); color: #34d399; }
+  .badge.gm       { background: rgba(16,185,129,0.15); color: #34d399; }
+
+  /* Scroll helpers */
+  .list-wrap { max-height: 340px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER (hidden on PIN screen) -->
+  <header id="app-header" class="hidden">
+    <div class="logo">HE <span class="accent">Cashier</span></div>
+    <div class="user-chip" id="user-chip">
+      <span class="dot"></span>
+      <span id="user-name">—</span>
+      <button class="btn sm ghost" id="logout-btn" style="padding: 2px 8px; min-height: 24px; font-size: 11px; margin-left: 4px;">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- S-PIN: Entry screen                                      -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="s-pin" class="pin-wrap">
+      <div style="font-size: 48px; margin-bottom: 12px;">🏪</div>
+      <div class="pin-title">Hamza Express — Cashier</div>
+      <div class="pin-sub">Enter your staff PIN</div>
+      <input id="pin-input" type="tel" inputmode="numeric" autocomplete="off" maxlength="5" class="pin-input" placeholder="••••">
+      <div id="pin-error" class="pin-error"></div>
+      <button id="pin-submit" class="btn primary full" style="margin-top: 8px;">Enter</button>
+      <div style="margin-top: 24px; font-size: 11px; color: var(--text-faint); line-height: 1.6;">
+        Cashier · Captain · Waiter · Admin<br>
+        Shift state: <span id="pin-shift-state">—</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- S-CASHIER: Main dashboard (Noor + admin + gm)            -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="s-cashier" class="hidden">
+
+      <!-- Shift banner -->
+      <div id="shift-banner"></div>
+
+      <!-- Alerts: who owes + excess -->
+      <div class="card" id="alerts-card">
+        <div class="card-title">Staff cash balances</div>
+        <div id="alerts-list">—</div>
+      </div>
+
+      <!-- Counter drawer -->
+      <div class="card">
+        <div class="card-title">Counter drawer</div>
+        <div class="money huge" id="drawer-expected">₹0</div>
+        <div class="formula" id="drawer-formula"></div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="openHandoverModal()">
+          <span class="qa-icon">📥</span>
+          <span class="qa-label">Record handover</span>
+          <span class="qa-sub">Captain/waiter → counter</span>
+        </button>
+        <button class="qa-btn" onclick="openExpenseCategories()">
+          <span class="qa-icon">🧾</span>
+          <span class="qa-label">Expense</span>
+          <span class="qa-sub">Cash from drawer</span>
+        </button>
+        <button class="qa-btn" onclick="openPaytmModal()">
+          <span class="qa-icon">📱</span>
+          <span class="qa-label">Paytm UPI</span>
+          <span class="qa-sub">Upload/enter total</span>
+        </button>
+        <button class="qa-btn" id="qa-collect" onclick="openCollectModal()">
+          <span class="qa-icon">💰</span>
+          <span class="qa-label">Collect cash</span>
+          <span class="qa-sub">Collector only</span>
+        </button>
+      </div>
+
+      <!-- Recent handovers -->
+      <div class="card" style="margin-top: 14px;">
+        <div class="card-title">Recent handovers</div>
+        <div id="recent-handovers">—</div>
+      </div>
+
+      <!-- Recent expenses -->
+      <div class="card">
+        <div class="card-title">Recent expenses</div>
+        <div id="recent-expenses">—</div>
+      </div>
+
+      <!-- End shift -->
+      <button class="btn primary full" id="end-shift-btn" onclick="startEndShift()" style="margin-top: 12px;">
+        End shift · Reconcile
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- S-CAPTAIN: Self-view for captains + waiters              -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="s-captain" class="hidden">
+      <div class="captain-big">
+        <div class="label">You owe counter</div>
+        <div class="amount owes" id="captain-amount">₹0</div>
+        <div class="sub" id="captain-sub">—</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Breakdown</div>
+        <div class="formula-row"><span>Cash you collected</span><span class="v" id="captain-collected">₹0</span></div>
+        <div class="formula-row minus"><span>Already handed over</span><span class="v" id="captain-handed">₹0</span></div>
+        <div class="formula-row total"><span>Owes counter</span><span class="v" id="captain-net">₹0</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">What to do</div>
+        <p style="color: var(--text-dim); font-size: 13px; line-height: 1.6;">
+          When you hand cash to the cashier (Noor), they will record it and your balance will go down.<br><br>
+          Log in with your PIN to check your balance anytime.
+        </p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- S-NO-SHIFT: No shift open                                 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="s-no-shift" class="hidden">
+      <div class="card" style="text-align: center; padding: 30px 20px;">
+        <div style="font-size: 48px; margin-bottom: 12px;">⏸</div>
+        <h3 style="margin-bottom: 8px;">No shift open</h3>
+        <p style="color: var(--text-dim); font-size: 13px; margin-bottom: 18px;">
+          Open a shift to start tracking today's cash flow.
+        </p>
+        <button class="btn primary" id="open-shift-btn" onclick="openShift()">Open shift</button>
+        <div style="margin-top: 12px; font-size: 11px; color: var(--text-faint);">
+          Opening float will default to ₹0 unless admin seeded via CLI.<br>
+          You can override below.
+        </div>
+        <div style="margin-top: 12px;">
+          <input id="opening-float-input" type="number" inputmode="decimal" placeholder="Opening float (optional)" style="text-align: center;">
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Handover modal                                            -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="handover-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('handover-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('handover-modal')">✕</button>
+      <div class="modal-title">Record handover</div>
+      <div class="field">
+        <label>Who handed cash?</label>
+        <select id="ho-operator">
+          <option value="">— Select —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Amount (₹)</label>
+        <input id="ho-amount" type="number" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Notes <span class="hint">optional</span></label>
+        <input id="ho-notes" type="text" placeholder="e.g. Table 4, 7, 12 batch">
+      </div>
+      <button class="btn primary full" onclick="submitHandover()">✓ Record handover</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Expense category picker                                    -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="expense-cats-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('expense-cats-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('expense-cats-modal')">✕</button>
+      <div class="modal-title">Pick category</div>
+      <div class="cat-grid" id="cat-grid">Loading…</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Expense entry form                                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="expense-form-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('expense-form-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('expense-form-modal')">✕</button>
+      <div class="modal-title" id="ef-cat-title">Expense</div>
+      <div class="field">
+        <label>Product</label>
+        <select id="ef-product"><option value="">Loading…</option></select>
+      </div>
+      <div class="field">
+        <label>Vendor <span class="hint">required for most categories</span></label>
+        <select id="ef-vendor"><option value="">Loading…</option></select>
+      </div>
+      <div class="field">
+        <label>Amount (₹)</label>
+        <input id="ef-amount" type="number" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Paid via</label>
+        <select id="ef-pm">
+          <option value="cash" selected>💵 Cash — from drawer</option>
+          <option value="hdfc">🏦 HDFC bank transfer</option>
+          <option value="upi">📱 UPI</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notes <span class="hint">optional</span></label>
+        <input id="ef-notes" type="text" placeholder="anything worth remembering">
+      </div>
+      <button class="btn primary full" onclick="submitExpense()">✓ Save expense</button>
+      <div style="margin-top: 10px; font-size: 11px; color: var(--text-faint); text-align: center;">
+        Writes to Odoo + local shift ledger
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Paytm upload modal                                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="paytm-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('paytm-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('paytm-modal')">✕</button>
+      <div class="modal-title">Paytm UPI reconciliation</div>
+      <div style="padding: 10px 12px; background: var(--surface); border-radius: 10px; margin-bottom: 14px; font-size: 12px; color: var(--text-dim);">
+        Open Paytm Business app → today's transactions → export CSV OR note total.
+      </div>
+      <div class="field">
+        <label>Source</label>
+        <select id="pm-source">
+          <option value="manual_total">📱 Manual total (quickest)</option>
+          <option value="csv">📄 Paste CSV content</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Total amount (₹) <span class="hint">sum of today's Paytm UPI</span></label>
+        <input id="pm-total" type="number" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="field">
+        <label>Transaction count <span class="hint">optional</span></label>
+        <input id="pm-count" type="number" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="field" id="pm-csv-wrap" style="display: none;">
+        <label>CSV content <span class="hint">paste from Paytm dashboard</span></label>
+        <textarea id="pm-csv" rows="6" style="font-family: ui-monospace, monospace; font-size: 11px;" placeholder="Date,Amount,Status,..."></textarea>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input id="pm-notes" type="text" placeholder="e.g. period covered, anomalies">
+      </div>
+      <button class="btn primary full" onclick="submitPaytm()">✓ Save statement</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Cash collection modal                                      -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="collect-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('collect-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('collect-modal')">✕</button>
+      <div class="modal-title">Collect cash from drawer</div>
+      <div class="card" style="background: var(--surface-2); padding: 10px 12px; margin-bottom: 14px;">
+        <div class="card-title">Drawer expected</div>
+        <div class="money big" id="collect-drawer-display">₹0</div>
+      </div>
+      <div class="field">
+        <label>Amount to collect (₹)</label>
+        <input id="cc-amount" type="number" inputmode="decimal" placeholder="0">
+        <div class="hint">Leave rest in drawer as running float.</div>
+      </div>
+      <div class="field">
+        <label>Destination</label>
+        <select id="cc-destination">
+          <option value="HDFC">🏦 HDFC bank</option>
+          <option value="Safe">🔒 Office safe</option>
+          <option value="Other">Other (specify in notes)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input id="cc-notes" type="text" placeholder="e.g. Nihaf 14:30 pickup">
+      </div>
+      <button class="btn primary full" onclick="submitCollection()">✓ Confirm collection</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- End shift / reconciliation wizard                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="endshift-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('endshift-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('endshift-modal')">✕</button>
+      <div class="modal-title" id="es-title">End shift — Counter</div>
+      <div class="card" style="background: var(--surface-2); padding: 10px 12px; margin-bottom: 14px;">
+        <div class="card-title" id="es-pos-label">POS</div>
+        <div class="formula-row"><span>Odoo cash</span><span class="v" id="es-odoo-cash">—</span></div>
+        <div class="formula-row"><span>Odoo UPI</span><span class="v" id="es-odoo-upi">—</span></div>
+        <div class="formula-row"><span>Odoo card</span><span class="v" id="es-odoo-card">—</span></div>
+        <div class="formula-row"><span>Odoo comp</span><span class="v" id="es-odoo-comp">—</span></div>
+      </div>
+      <div class="field">
+        <label>Physical cash counted (₹)</label>
+        <input id="es-phy-cash" type="number" inputmode="decimal" placeholder="0">
+        <div class="hint">Match against Odoo cash above.</div>
+      </div>
+      <div class="field">
+        <label>Paytm actual (₹)</label>
+        <input id="es-phy-upi" type="number" inputmode="decimal" placeholder="0">
+        <div class="hint">From Paytm dashboard. Match against Odoo UPI.</div>
+      </div>
+      <div class="field">
+        <label>Card batch total (₹)</label>
+        <input id="es-phy-card" type="number" inputmode="decimal" placeholder="0">
+        <div class="hint">From card machine batch close. Optional.</div>
+      </div>
+      <div class="field">
+        <label>Notes <span class="hint">optional</span></label>
+        <input id="es-notes" type="text" placeholder="variance explanation">
+      </div>
+      <button class="btn primary full" onclick="submitSettlement()" id="es-submit-btn">Submit reconciliation</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+const API = '/api/v2';
+const HN_SPEND = 'https://hnhotels.in/api/spend';
+
+let USER = null;        // { pin, name, role, can_collect, can_reconcile }
+let SHIFT = null;       // current open shift
+let LIVE = null;        // last shift-live payload
+let REFRESH_TIMER = null;
+
+// End-shift wizard state
+let ES_CONFIGS = [5, 6];  // counter, then captain
+let ES_INDEX = 0;
+let ES_CURRENT_CONFIG = null;
+
+// Expense entry state
+let EXP_CURRENT_CAT = null;
+let EXP_PRODUCTS = [];
+let EXP_VENDORS = [];
+
+// ── Utilities ──────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+function fmtINR(n) {
+  n = Math.round(Number(n) || 0);
+  return '₹' + n.toLocaleString('en-IN');
+}
+function fmtMinAgo(mins) {
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
+}
+function toast(msg, type = 'ok', ms = 3000) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), ms);
+}
+function show(id) { $(id).classList.remove('hidden'); }
+function hide(id) { $(id).classList.add('hidden'); }
+function openModal(id)  { show(id); }
+function closeModal(id) { hide(id); }
+
+async function apiGet(qs) {
+  const r = await fetch(`${API}?${qs}`).then(x => x.json()).catch(e => ({ error: e.message }));
+  return r;
+}
+async function apiPost(action, body) {
+  const r = await fetch(`${API}?action=${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin: USER?.pin, ...body }),
+  }).then(x => x.json()).catch(e => ({ error: e.message }));
+  return r;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// BOOT — PIN gate
+// ══════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', boot);
+
+async function boot() {
+  // Show shift state hint on PIN screen
+  try {
+    const cs = await apiGet('action=current-shift');
+    if (cs.shift) {
+      $('pin-shift-state').textContent = `Shift #${cs.shift.id} OPEN since ${cs.shift.opened_at.replace('T', ' ')}`;
+    } else {
+      $('pin-shift-state').textContent = 'No shift open';
+    }
+  } catch (e) { /* ignore */ }
+
+  $('pin-submit').addEventListener('click', submitPin);
+  $('pin-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
+  $('pin-input').focus();
+  $('logout-btn').addEventListener('click', logout);
+
+  // Restore session if PIN in sessionStorage
+  const savedPin = sessionStorage.getItem('hev2_pin');
+  if (savedPin) {
+    $('pin-input').value = savedPin;
+    submitPin();
+  }
+}
+
+async function submitPin() {
+  const pin = ($('pin-input').value || '').trim();
+  if (!pin) return;
+  $('pin-error').textContent = '';
+  const r = await apiGet(`action=verify-pin&pin=${encodeURIComponent(pin)}`);
+  if (!r.success) {
+    $('pin-error').textContent = r.error || 'Invalid PIN';
+    $('pin-input').value = '';
+    sessionStorage.removeItem('hev2_pin');
+    return;
+  }
+  USER = { pin, ...r.user, can_collect: r.can_collect, can_reconcile: r.can_reconcile, read_only: r.read_only };
+  sessionStorage.setItem('hev2_pin', pin);
+  $('user-name').textContent = `${USER.name} · ${USER.role}`;
+  $('app-header').classList.remove('hidden');
+  hide('s-pin');
+  routeUser();
+}
+
+function logout() {
+  USER = null; SHIFT = null; LIVE = null;
+  sessionStorage.removeItem('hev2_pin');
+  clearInterval(REFRESH_TIMER);
+  hide('s-cashier'); hide('s-captain'); hide('s-no-shift');
+  hide('app-header');
+  show('s-pin');
+  $('pin-input').value = '';
+  $('pin-error').textContent = '';
+  $('pin-input').focus();
+}
+
+function routeUser() {
+  if (['cashier', 'admin', 'gm'].includes(USER.role)) {
+    loadCashier();
+  } else if (['captain', 'waiter'].includes(USER.role)) {
+    loadCaptain();
+  } else if (USER.role === 'cfo') {
+    // Read-only CFO — show cashier view but hide action buttons
+    loadCashier();
+  } else {
+    toast('Unknown role — contact admin', 'err');
+    logout();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CASHIER DASHBOARD
+// ══════════════════════════════════════════════════════════════════════
+async function loadCashier() {
+  const live = await apiGet(`action=shift-live&pin=${USER.pin}`);
+  if (!live.success) { toast(live.error || 'Failed to load', 'err'); return; }
+
+  LIVE = live;
+  SHIFT = live.shift;
+
+  if (!SHIFT) {
+    hide('s-cashier'); hide('s-captain');
+    show('s-no-shift');
+    return;
+  }
+
+  hide('s-no-shift'); hide('s-captain');
+  show('s-cashier');
+  renderCashier();
+
+  // Live refresh every 45s
+  clearInterval(REFRESH_TIMER);
+  REFRESH_TIMER = setInterval(async () => {
+    const r = await apiGet(`action=shift-live&pin=${USER.pin}`);
+    if (r.success) { LIVE = r; SHIFT = r.shift; renderCashier(); }
+  }, 45000);
+
+  // Hide collect action for non-collectors
+  $('qa-collect').style.display = USER.can_collect ? '' : 'none';
+  $('end-shift-btn').style.display = USER.can_reconcile ? '' : 'none';
+}
+
+function renderCashier() {
+  // Shift banner
+  const age = LIVE.shift.age_minutes || 0;
+  $('shift-banner').innerHTML = `
+    <div class="card" style="padding: 10px 14px; margin-bottom: 10px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px;">
+        <span>Shift #${LIVE.shift.id} · opened by ${LIVE.shift.opened_by_name}</span>
+        <span style="color: var(--text-dim);">${fmtMinAgo(age)}</span>
+      </div>
+    </div>`;
+
+  // Alerts: staff balances
+  const ops = LIVE.captain_owes || [];
+  const withBalance = ops.filter(o => o.owes > 0 || o.excess_handover > 0);
+  const withZero    = ops.filter(o => o.owes === 0 && o.excess_handover === 0);
+  const alertsEl = $('alerts-list');
+
+  if (ops.length === 0) {
+    alertsEl.innerHTML = '<div style="color: var(--text-dim); font-size: 13px;">No POS operators tracked.</div>';
+  } else {
+    let html = '';
+    if (withBalance.length === 0) {
+      html += '<div style="color: var(--green); font-size: 13px; padding: 6px 0;">✓ All clear — no pending handovers</div>';
+    }
+    for (const o of withBalance) {
+      const roleBadge = `<span class="badge ${o.role}">${o.role}</span>`;
+      if (o.owes > 0) {
+        html += `
+          <div class="alert-row">
+            <div class="left">
+              <div class="alert-name">${escapeHtml(o.name)} ${roleBadge}</div>
+              <div class="alert-meta">Collected ${fmtINR(o.cash_collected)} · handed ${fmtINR(o.cash_handed_over)}</div>
+            </div>
+            <div class="alert-amt owes">${fmtINR(o.owes)}</div>
+          </div>`;
+      }
+      if (o.excess_handover > 0) {
+        html += `
+          <div class="alert-row">
+            <div class="left">
+              <div class="alert-name">${escapeHtml(o.name)} ${roleBadge}</div>
+              <div class="alert-meta" style="color: var(--red);">⚠ Excess: handed more than collected (check voids/refunds)</div>
+            </div>
+            <div class="alert-amt excess">+${fmtINR(o.excess_handover)}</div>
+          </div>`;
+      }
+    }
+    for (const o of withZero) {
+      const roleBadge = `<span class="badge ${o.role}">${o.role}</span>`;
+      html += `
+        <div class="alert-row">
+          <div class="left">
+            <div class="alert-name" style="font-weight: 500;">${escapeHtml(o.name)} ${roleBadge}</div>
+          </div>
+          <div class="alert-amt zero">—</div>
+        </div>`;
+    }
+    if (LIVE.captain_unattributed?.orders > 0) {
+      html += `
+        <div class="alert-row">
+          <div class="left">
+            <div class="alert-name" style="color: var(--yellow);">⚠ Unattributed (Admin session)</div>
+            <div class="alert-meta">${LIVE.captain_unattributed.orders} captain orders without PIN login</div>
+          </div>
+          <div class="alert-amt">${fmtINR(LIVE.captain_unattributed.cash)}</div>
+        </div>`;
+    }
+    alertsEl.innerHTML = html;
+  }
+
+  // Drawer formula
+  const d = LIVE.drawer;
+  $('drawer-expected').textContent = fmtINR(d.expected);
+  $('drawer-expected').className = 'money huge ' + (d.expected >= 0 ? '' : 'neg');
+  $('drawer-formula').innerHTML = `
+    <div class="formula-row"><span>Opening float</span><span class="v">${fmtINR(d.opening_float)}</span></div>
+    <div class="formula-row plus"><span>Counter cash sales</span><span class="v">${fmtINR(d.counter_cash)}</span></div>
+    <div class="formula-row plus"><span>Captain handovers</span><span class="v">${fmtINR(d.handover_total)}</span></div>
+    <div class="formula-row minus"><span>Cash expenses</span><span class="v">${fmtINR(d.cash_expense_total)}</span></div>
+    <div class="formula-row minus"><span>Collections</span><span class="v">${fmtINR(d.collections_total)}</span></div>
+    <div class="formula-row total"><span>Expected in drawer</span><span class="v">${fmtINR(d.expected)}</span></div>
+  `;
+
+  // Recent handovers
+  const hos = (LIVE.handovers || []).slice(0, 5);
+  if (hos.length === 0) {
+    $('recent-handovers').innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">No handovers yet this shift.</div>';
+  } else {
+    $('recent-handovers').innerHTML = hos.map(h => `
+      <div class="item-row">
+        <div class="left">
+          <div class="name">${escapeHtml(h.from_employee_name)}</div>
+          <div class="meta">${h.handed_over_at.replace('T', ' ')}${h.notes ? ' · ' + escapeHtml(h.notes) : ''}</div>
+        </div>
+        <div class="right">${fmtINR(h.amount)}</div>
+      </div>`).join('');
+  }
+
+  // Recent expenses
+  const exps = (LIVE.expenses || []).slice(0, 5);
+  if (exps.length === 0) {
+    $('recent-expenses').innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">No expenses yet this shift.</div>';
+  } else {
+    $('recent-expenses').innerHTML = exps.map(e => `
+      <div class="item-row">
+        <div class="left">
+          <div class="name">${escapeHtml(e.product_name || '—')}</div>
+          <div class="meta">${escapeHtml(e.category_label || '—')}${e.vendor_name ? ' · ' + escapeHtml(e.vendor_name) : ''} · ${e.payment_method}${e.hnhotels_expense_id ? '' : ' · <span style="color: var(--yellow);">local-only</span>'}</div>
+        </div>
+        <div class="right">${fmtINR(e.amount)}</div>
+      </div>`).join('');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CAPTAIN SELF-VIEW
+// ══════════════════════════════════════════════════════════════════════
+async function loadCaptain() {
+  const live = await apiGet(`action=shift-live&pin=${USER.pin}`);
+  if (!live.success) { toast(live.error || 'Failed', 'err'); return; }
+  LIVE = live;
+  SHIFT = live.shift;
+  if (!SHIFT) {
+    hide('s-cashier'); hide('s-captain');
+    show('s-no-shift');
+    $('open-shift-btn').style.display = 'none';
+    return;
+  }
+  hide('s-cashier'); hide('s-no-shift');
+  show('s-captain');
+  const me = (live.captain_owes || []).find(o => o.employee_id === USER.test_emp_id);
+  if (!me) {
+    $('captain-amount').textContent = '₹0';
+    $('captain-sub').textContent = 'No orders found this shift.';
+    return;
+  }
+  $('captain-amount').textContent = fmtINR(me.owes);
+  $('captain-amount').className = 'amount ' + (me.owes > 0 ? 'owes' : 'clear');
+  $('captain-sub').textContent = me.owes > 0 ? `Hand over ₹${me.owes} to Noor at counter` : 'All caught up — thank you';
+  $('captain-collected').textContent = fmtINR(me.cash_collected);
+  $('captain-handed').textContent    = fmtINR(me.cash_handed_over);
+  $('captain-net').textContent       = fmtINR(me.owes);
+
+  clearInterval(REFRESH_TIMER);
+  REFRESH_TIMER = setInterval(loadCaptain, 60000);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// OPEN SHIFT
+// ══════════════════════════════════════════════════════════════════════
+async function openShift() {
+  const float = parseFloat($('opening-float-input').value) || 0;
+  const r = await apiPost('open-shift', { opening_float: float, notes: null });
+  if (!r.success) { toast(r.error || 'Failed', 'err'); return; }
+  toast(r.created ? `Shift #${r.shift.id} opened` : 'Using existing shift', 'ok');
+  loadCashier();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// HANDOVER MODAL
+// ══════════════════════════════════════════════════════════════════════
+function openHandoverModal() {
+  if (!SHIFT) return toast('No shift open', 'err');
+  const ops = (LIVE?.captain_owes || []).filter(o => o.role !== 'cashier');
+  $('ho-operator').innerHTML = `<option value="">— Select —</option>` +
+    ops.map(o => `<option value="${o.employee_id}">${escapeHtml(o.name)} (${o.role}) ${o.owes > 0 ? `— owes ${fmtINR(o.owes)}` : ''}</option>`).join('');
+  $('ho-amount').value = '';
+  $('ho-notes').value = '';
+  openModal('handover-modal');
+  setTimeout(() => $('ho-operator').focus(), 80);
+}
+async function submitHandover() {
+  const empId = parseInt($('ho-operator').value);
+  const amount = parseFloat($('ho-amount').value);
+  const notes = $('ho-notes').value.trim();
+  if (!empId || !(amount > 0)) return toast('Pick operator + positive amount', 'err');
+  const r = await apiPost('record-handover', {
+    shift_id: SHIFT.id, from_employee_id: empId, amount, notes: notes || null,
+  });
+  if (!r.success) return toast(r.error || 'Failed', 'err');
+  toast(`✓ ${fmtINR(amount)} from ${r.handover.from} recorded`, 'ok');
+  closeModal('handover-modal');
+  loadCashier();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// EXPENSE FLOW (cross-origin to hnhotels.in)
+// ══════════════════════════════════════════════════════════════════════
+async function openExpenseCategories() {
+  if (!SHIFT) return toast('No shift open', 'err');
+  $('cat-grid').innerHTML = 'Loading…';
+  openModal('expense-cats-modal');
+  // Fetch categories via hnhotels.in verify-pin (returns user's visible cats)
+  try {
+    const r = await fetch(`${HN_SPEND}?action=verify-pin&pin=${USER.pin}`).then(x => x.json());
+    if (!r.success) throw new Error(r.error || 'hnhotels auth failed');
+    const cats = (r.categories || []).filter(c => !c.hidden);
+    $('cat-grid').innerHTML = cats.map(c => `
+      <button class="cat-card" onclick="pickCategory(${c.id}, ${JSON.stringify(c.label).replace(/"/g, '&quot;')}, ${JSON.stringify(c.emoji || '').replace(/"/g, '&quot;')})">
+        <span class="emoji">${c.emoji || '📄'}</span>
+        <span class="label">${escapeHtml(c.label)}</span>
+      </button>`).join('');
+  } catch (e) {
+    $('cat-grid').innerHTML = `<div style="color: var(--red); grid-column: 1/-1;">Load failed: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function pickCategory(catId, label, emoji) {
+  EXP_CURRENT_CAT = { id: catId, label, emoji };
+  closeModal('expense-cats-modal');
+  $('ef-cat-title').textContent = `${emoji || '🧾'} ${label}`;
+  $('ef-product').innerHTML = '<option value="">Loading…</option>';
+  $('ef-vendor').innerHTML = '<option value="">Loading…</option>';
+  $('ef-amount').value = '';
+  $('ef-notes').value = '';
+  openModal('expense-form-modal');
+
+  // Fetch products + vendors in parallel
+  const [prodR, vendR] = await Promise.all([
+    fetch(`${HN_SPEND}?action=products&pin=${USER.pin}&cat=${catId}&brand=HE`).then(x => x.json()).catch(e => ({ error: e.message })),
+    fetch(`${HN_SPEND}?action=vendors&brand=HE&cat_id=${catId}`).then(x => x.json()).catch(e => ({ error: e.message })),
+  ]);
+
+  EXP_PRODUCTS = prodR.products || [];
+  EXP_VENDORS = vendR.vendors || [];
+  $('ef-product').innerHTML = `<option value="">— Pick product —</option>` +
+    EXP_PRODUCTS.map(p => `<option value="${p.id}">${escapeHtml(p.name)}${p.default_code ? ' (' + p.default_code + ')' : ''}</option>`).join('');
+  $('ef-vendor').innerHTML = `<option value="">— Pick vendor ${[3,4,13].includes(catId) ? '(optional)' : ''} —</option>` +
+    EXP_VENDORS.map(v => `<option value="${v.id}">${escapeHtml(v.name)}${v.phone ? ' · ' + v.phone : ''}</option>`).join('');
+}
+
+async function submitExpense() {
+  const productId = parseInt($('ef-product').value);
+  const vendorId  = parseInt($('ef-vendor').value) || null;
+  const amount    = parseFloat($('ef-amount').value);
+  const pm        = $('ef-pm').value;
+  const notes     = $('ef-notes').value.trim();
+  if (!productId) return toast('Pick a product', 'err');
+  if (!(amount > 0)) return toast('Positive amount required', 'err');
+  // Vendor required unless Salary/Advance/Drawings (cats 3,4,13)
+  if (![3, 4, 13].includes(EXP_CURRENT_CAT.id) && !vendorId) return toast('Vendor required', 'err');
+
+  const prod = EXP_PRODUCTS.find(p => p.id === productId);
+  const vend = EXP_VENDORS.find(v => v.id === vendorId);
+
+  const r = await apiPost('record-expense', {
+    shift_id: SHIFT.id,
+    category_id: EXP_CURRENT_CAT.id,
+    category_label: EXP_CURRENT_CAT.label,
+    product_id: productId,
+    product_name: prod?.name,
+    vendor_id: vendorId,
+    vendor_name: vend?.name,
+    amount, payment_method: pm, notes: notes || null,
+  });
+  if (!r.success) return toast(r.error || 'Failed', 'err');
+  const warn = r.hn_warning ? ` (central-sync warning: ${r.hn_warning})` : '';
+  toast(`✓ ${fmtINR(amount)} · ${EXP_CURRENT_CAT.label}${warn}`, r.hn_warning ? 'warn' : 'ok', 4000);
+  closeModal('expense-form-modal');
+  loadCashier();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PAYTM UPLOAD
+// ══════════════════════════════════════════════════════════════════════
+function openPaytmModal() {
+  if (!SHIFT) return toast('No shift open', 'err');
+  $('pm-source').onchange = () => {
+    $('pm-csv-wrap').style.display = $('pm-source').value === 'csv' ? '' : 'none';
+  };
+  $('pm-source').value = 'manual_total';
+  $('pm-csv-wrap').style.display = 'none';
+  $('pm-total').value = ''; $('pm-count').value = ''; $('pm-csv').value = ''; $('pm-notes').value = '';
+  openModal('paytm-modal');
+}
+async function submitPaytm() {
+  const source = $('pm-source').value;
+  const total  = parseFloat($('pm-total').value);
+  const count  = parseInt($('pm-count').value) || 0;
+  const csv    = $('pm-csv').value.trim();
+  const notes  = $('pm-notes').value.trim();
+  if (!(total >= 0)) return toast('Enter total amount', 'err');
+  if (source === 'csv' && !csv) return toast('Paste CSV content', 'err');
+
+  const r = await apiPost('upload-paytm', {
+    shift_id: SHIFT.id, source, total_amount: total, total_count: count,
+    raw_content: source === 'csv' ? csv : null, notes: notes || null,
+  });
+  if (!r.success) return toast(r.error || 'Failed', 'err');
+  toast(`✓ Paytm ${fmtINR(total)} saved (${source})`, 'ok');
+  closeModal('paytm-modal');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CASH COLLECTION
+// ══════════════════════════════════════════════════════════════════════
+function openCollectModal() {
+  if (!USER.can_collect) return toast('Not authorized', 'err');
+  if (!SHIFT) return toast('No shift open', 'err');
+  $('collect-drawer-display').textContent = fmtINR(LIVE?.drawer?.expected || 0);
+  $('cc-amount').value = ''; $('cc-destination').value = 'HDFC'; $('cc-notes').value = '';
+  openModal('collect-modal');
+}
+async function submitCollection() {
+  const amount = parseFloat($('cc-amount').value);
+  const destination = $('cc-destination').value;
+  const notes = $('cc-notes').value.trim();
+  if (!(amount > 0)) return toast('Positive amount required', 'err');
+  const r = await apiPost('record-collection', {
+    shift_id: SHIFT.id, amount, destination, notes: notes || null,
+  });
+  if (!r.success) return toast(r.error || 'Failed', 'err');
+  toast(`✓ ${fmtINR(amount)} collected to ${destination}`, 'ok');
+  closeModal('collect-modal');
+  loadCashier();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// END-SHIFT WIZARD (2 configs: counter + captain)
+// ══════════════════════════════════════════════════════════════════════
+async function startEndShift() {
+  if (!USER.can_reconcile) return toast('Not authorized', 'err');
+  if (!SHIFT) return toast('No shift open', 'err');
+  if (!confirm('Start end-shift reconciliation? You\'ll reconcile Counter POS then Captain POS.')) return;
+  ES_INDEX = 0;
+  showEndShiftStep();
+}
+
+async function showEndShiftStep() {
+  if (ES_INDEX >= ES_CONFIGS.length) {
+    // Both done — attempt to close shift
+    const r = await apiPost('close-shift', { shift_id: SHIFT.id, notes: 'Closed via end-shift wizard' });
+    if (r.success) {
+      toast('✓ Shift closed', 'ok', 5000);
+      closeModal('endshift-modal');
+      logout();
+    } else {
+      toast(r.error || 'Failed to close shift', 'err');
+    }
+    return;
+  }
+
+  ES_CURRENT_CONFIG = ES_CONFIGS[ES_INDEX];
+  const label = ES_CURRENT_CONFIG === 5 ? 'Counter' : 'Captain';
+  $('es-title').textContent = `End shift — ${label} (${ES_INDEX + 1}/${ES_CONFIGS.length})`;
+  $('es-pos-label').textContent = `${label} POS (config ${ES_CURRENT_CONFIG})`;
+  $('es-odoo-cash').textContent = 'Loading…';
+  $('es-odoo-upi').textContent = 'Loading…';
+  $('es-odoo-card').textContent = 'Loading…';
+  $('es-odoo-comp').textContent = 'Loading…';
+  $('es-phy-cash').value = ''; $('es-phy-upi').value = '';
+  $('es-phy-card').value = ''; $('es-notes').value = '';
+
+  openModal('endshift-modal');
+
+  // Fetch current Odoo totals by doing a pre-submit with no physical values
+  // (the backend computes totals live; we'll use the result for display)
+  // Temporary: we do NOT have a "preview" endpoint, so submit-settlement
+  // with null values will still compute + store. To keep it clean, we
+  // instead hit the backend with a harmless preview-like call on the
+  // settlement table later. For now: call submit-settlement with null
+  // physical values (draft state) then re-read.
+  try {
+    const r = await fetch(`${API}?action=submit-settlement`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: USER.pin, shift_id: SHIFT.id,
+                              pos_config_id: ES_CURRENT_CONFIG,
+                              physical_cash: null, paytm_reported: null, card_reported: null }),
+    }).then(x => x.json());
+    if (!r.success) throw new Error(r.error || 'failed');
+    $('es-odoo-cash').textContent = fmtINR(r.settlement.odoo_cash || 0);
+    $('es-odoo-upi').textContent  = fmtINR(r.settlement.odoo_upi || 0);
+    $('es-odoo-card').textContent = fmtINR(r.settlement.odoo_card || 0);
+    $('es-odoo-comp').textContent = fmtINR(r.settlement.odoo_comp || 0);
+    $('es-phy-cash').placeholder = String(Math.round(r.settlement.odoo_cash || 0));
+    $('es-phy-upi').placeholder  = String(Math.round(r.settlement.odoo_upi || 0));
+    $('es-phy-card').placeholder = String(Math.round(r.settlement.odoo_card || 0));
+  } catch (e) {
+    $('es-odoo-cash').textContent = '⚠ ' + e.message;
+  }
+}
+
+async function submitSettlement() {
+  const phyCash = parseFloat($('es-phy-cash').value);
+  const phyUpi  = parseFloat($('es-phy-upi').value);
+  const phyCard = parseFloat($('es-phy-card').value);
+  const notes   = $('es-notes').value.trim();
+  if (isNaN(phyCash)) return toast('Enter physical cash count', 'err');
+
+  const r = await apiPost('submit-settlement', {
+    shift_id: SHIFT.id,
+    pos_config_id: ES_CURRENT_CONFIG,
+    physical_cash: phyCash,
+    paytm_reported: isNaN(phyUpi) ? null : phyUpi,
+    card_reported: isNaN(phyCard) ? null : phyCard,
+    notes: notes || null,
+  });
+  if (!r.success) return toast(r.error || 'Failed', 'err');
+  toast(`✓ ${r.settlement.pos_label} reconciled`, 'ok');
+  ES_INDEX++;
+  showEndShiftStep();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// UTIL
+// ══════════════════════════════════════════════════════════════════════
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+}
+</script>
+</body>
+</html>
