@@ -113,15 +113,18 @@ async function preflight(apiKey) {
   if (!cfg6?.[0]?.module_pos_hr) out.issues.push('pos.config 6 (Captain) has module_pos_hr=false — orders will NOT have employee_id, captain tracking impossible');
 
   // B. Payment methods — do all the IDs in settlement.js actually exist?
+  // Note: the existing PMs 14 ("HE - UPI Counter") and 52 ("HE - UPI Captain")
+  // are provider-neutral by name — they represent "UPI received at this POS"
+  // regardless of whether the physical QR is Razorpay or Paytm. At settlement
+  // time we reconcile sum(PM 14+52) against Paytm dashboard aggregate. No need
+  // for separate PM 59/60 unless Razorpay + Paytm coexist at the same counter.
   const expectedPMs = [
-    { id: 11, purpose: 'cash_counter' },
-    { id: 19, purpose: 'cash_captain' },
-    { id: 14, purpose: 'upi_counter_razorpay' },
-    { id: 52, purpose: 'upi_captain_razorpay' },
-    { id: 59, purpose: 'upi_counter_paytm' },
-    { id: 60, purpose: 'upi_captain_paytm' },
-    { id: 12, purpose: 'card' },
-    { id: 57, purpose: 'comp' },
+    { id: 11, purpose: 'cash_counter',       required: true  },
+    { id: 19, purpose: 'cash_captain',       required: true  },
+    { id: 14, purpose: 'upi_counter',        required: true  }, // provider-neutral
+    { id: 52, purpose: 'upi_captain',        required: true  }, // provider-neutral
+    { id: 12, purpose: 'card',               required: true  },
+    { id: 57, purpose: 'comp',               required: true  },
   ];
   const pmIds = expectedPMs.map(p => p.id);
   const pms = await odoo(apiKey, 'pos.payment.method', 'read', [pmIds],
@@ -129,17 +132,19 @@ async function preflight(apiKey) {
   const pmById = Object.fromEntries((pms || []).map(p => [p.id, p]));
   out.test_hamzahotel_com.payment_methods = {};
   for (const ep of expectedPMs) {
-    out.test_hamzahotel_com.payment_methods[ep.purpose] = pmById[ep.id] || { missing: true, expected_id: ep.id };
-    if (!pmById[ep.id]) out.warnings.push(`Payment method id=${ep.id} (${ep.purpose}) not found on test.hamzahotel.com`);
+    const found = pmById[ep.id];
+    out.test_hamzahotel_com.payment_methods[ep.purpose] = found || { missing: true, expected_id: ep.id };
+    if (!found && ep.required) out.issues.push(`Required payment method id=${ep.id} (${ep.purpose}) not found on test.hamzahotel.com`);
   }
-  // Which PMs are actually wired into configs 5 and 6?
   const cfg5Pms = cfg5?.[0]?.payment_method_ids || [];
   const cfg6Pms = cfg6?.[0]?.payment_method_ids || [];
   out.test_hamzahotel_com.config_5_pms_wired = cfg5Pms;
   out.test_hamzahotel_com.config_6_pms_wired = cfg6Pms;
-  // Check Paytm is wired (user said "only paytm" — PM 59/60 should be on configs)
-  if (!cfg5Pms.includes(59)) out.warnings.push(`Counter (config 5) does NOT have Paytm UPI (PM 59) wired — UPI reconciliation will use Razorpay PM 14 until migrated`);
-  if (!cfg6Pms.includes(60)) out.warnings.push(`Captain (config 6) does NOT have Paytm UPI (PM 60) wired — UPI reconciliation will use Razorpay PM 52 until migrated`);
+  // Critical wiring: cash + UPI PMs must be on their configs
+  if (!cfg5Pms.includes(11)) out.issues.push('Counter config 5 missing Cash PM 11');
+  if (!cfg5Pms.includes(14)) out.issues.push('Counter config 5 missing UPI PM 14');
+  if (!cfg6Pms.includes(19)) out.issues.push('Captain config 6 missing Cash PM 19');
+  if (!cfg6Pms.includes(52)) out.issues.push('Captain config 6 missing UPI PM 52');
 
   // C. Employee sync sanity — confirm the 14 we created are there + Muntaz/Noor exist
   const heEmps = await odoo(apiKey, 'hr.employee', 'search_read',
@@ -149,10 +154,10 @@ async function preflight(apiKey) {
   const key = (s) => (s || '').trim().toLowerCase();
   const byName = new Map(heEmps.map(e => [key(e.name), e]));
   const requiredPosOperators = [
-    { name: 'SK Muntaz', pin: '7', role: 'captain' },
-    { name: 'Shaik Noor Ahmed', pin: '15', role: 'cashier' },
-    { name: 'Faizan Hussain', pin: '4', role: 'waiter' },
-    { name: 'Hardev Prasad Singh', pin: '3', role: 'waiter' },
+    { name: 'SK Muntaz',          pin: '7',  role: 'captain'   },
+    { name: 'Shaik Noor Ahmed',   pin: '15', role: 'cashier'   },
+    { name: 'Faizan Hussain',     pin: '4',  role: 'waiter_1'  },
+    { name: 'Hardev Prasad Singh',pin: '3',  role: 'waiter_2'  },
   ];
   out.test_hamzahotel_com.required_operators_verified = {};
   for (const r of requiredPosOperators) {
@@ -171,6 +176,22 @@ async function preflight(apiKey) {
         pin_correct: pinOk, barcode_correct: barcodeOk,
       };
     }
+  }
+
+  // E2. Probe PM 58 + any other PMs on configs (what is PM 58?)
+  const wiredPms = [...new Set([...(cfg5?.[0]?.payment_method_ids || []), ...(cfg6?.[0]?.payment_method_ids || [])])];
+  const allWiredPms = await odoo(apiKey, 'pos.payment.method', 'read', [wiredPms],
+    { fields: ['id', 'name', 'type', 'is_cash_count'] });
+  out.test_hamzahotel_com.all_wired_pms_detail = allWiredPms;
+
+  // E3. Check for any OPEN POS sessions that could interfere with /ops/v2/ cutover
+  const openSessions = await odoo(apiKey, 'pos.session', 'search_read',
+    [[['state', 'in', ['opened', 'opening_control']], ['config_id', 'in', [5, 6]]]],
+    { fields: ['id', 'name', 'state', 'start_at', 'user_id', 'config_id'] });
+  out.test_hamzahotel_com.open_sessions_count = openSessions.length;
+  out.test_hamzahotel_com.open_sessions = openSessions;
+  if (openSessions.length > 0) {
+    out.warnings.push(`${openSessions.length} open POS session(s) on HE — these will populate captain-owes ledger on /ops/v2/ immediately after launch (not a blocker, just FYI)`);
   }
 
   // D. Bridge query test: can we filter pos.order by employee_id?
