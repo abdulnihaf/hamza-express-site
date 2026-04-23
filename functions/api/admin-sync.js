@@ -80,10 +80,102 @@ export async function onRequest(context) {
     if (action === 'audit-shift-pos') {
       return await auditShiftPos(apiKey, env.DB);
     }
-    return json({ error: `Unknown action: ${action}. Use discover|sync-dry|sync|preflight|migrate-v2-schema|audit-shift-pos` }, 400);
+    if (action === 'probe-pos-employees') {
+      return await probePosEmployees(apiKey);
+    }
+    if (action === 'grant-pos-employees') {
+      return await grantPosEmployees(apiKey, body);
+    }
+    return json({ error: `Unknown action: ${action}` }, 400);
   } catch (e) {
     return json({ error: e.message, stack: e.stack }, 500);
   }
+}
+
+/* ━━━ Probe: why is Noor missing from POS login? ━━━
+ * Compares pos.config.employee_ids (the whitelist) vs hr.employee for HE
+ * company. Shows which of the 14 synced employees are / aren't in the
+ * login list of each POS config. Read-only. */
+async function probePosEmployees(apiKey) {
+  if (!apiKey) return json({ error: 'ODOO_API_KEY missing' }, 500);
+
+  const cfgs = await odoo(apiKey, 'pos.config', 'read', [[5, 6]],
+    { fields: ['id', 'name', 'module_pos_hr', 'employee_ids', 'basic_employee_ids', 'company_id'] });
+
+  // All active hr.employees on HE company (id=1 on test.hamzahotel.com)
+  const emps = await odoo(apiKey, 'hr.employee', 'search_read',
+    [[['active', '=', true], ['company_id', '=', 1]]],
+    { fields: ['id', 'name', 'barcode', 'pin', 'job_title', 'department_id', 'company_id'],
+      order: 'name asc' });
+
+  const mapped_ids = [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87];
+  const my_emps = emps.filter(e => mapped_ids.includes(e.id));
+
+  // For each POS config, check which of my synced employees are in its employee_ids list
+  const out = { configs: {} };
+  for (const cfg of cfgs) {
+    const whitelist = cfg.employee_ids || [];
+    const basicList = cfg.basic_employee_ids || [];
+    out.configs[cfg.id] = {
+      name: cfg.name,
+      module_pos_hr: cfg.module_pos_hr,
+      has_whitelist: whitelist.length > 0,
+      whitelist_size: whitelist.length,
+      whitelist_ids: whitelist,
+      basic_list_size: basicList.length,
+      basic_list_ids: basicList,
+      my_employees_in_list: my_emps.filter(e => whitelist.includes(e.id)).map(e => e.name),
+      my_employees_MISSING: my_emps.filter(e => !whitelist.includes(e.id)).map(e => ({ id: e.id, name: e.name })),
+    };
+  }
+
+  return json({
+    success: true,
+    configs: out.configs,
+    all_he_employees_count: emps.length,
+    my_synced_employees_count: my_emps.length,
+    my_synced_employees: my_emps.map(e => ({ id: e.id, name: e.name, pin: e.pin, barcode: e.barcode })),
+    interpretation: cfgs.every(c => !c.employee_ids?.length)
+      ? "No employee whitelist — ALL active hr.employees should show in POS login. Something else is blocking."
+      : "Whitelist IS set — newly-created employees aren't added to pos.config.employee_ids, which is why they don't show in Select Cashier.",
+  });
+}
+
+/* ━━━ Fix: add synced employees to POS config whitelist ━━━
+ * Adds the 14 synced employee IDs to pos.config.employee_ids on both
+ * configs (5 Counter, 6 Captain) so they appear in Select Cashier.
+ * Uses (4, id, 0) link command to append without removing existing ones.
+ * Body: { pin, only_ids?: [...] }  (default: all 14 synced) */
+async function grantPosEmployees(apiKey, body) {
+  if (!apiKey) return json({ error: 'ODOO_API_KEY missing' }, 500);
+  const ids = Array.isArray(body.only_ids) && body.only_ids.length
+    ? body.only_ids.map(Number)
+    : [74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87];
+
+  const results = {};
+  for (const cfgId of [5, 6]) {
+    const cfg = await odoo(apiKey, 'pos.config', 'read', [[cfgId]],
+      { fields: ['id', 'name', 'employee_ids'] });
+    const before = cfg[0].employee_ids || [];
+    // Odoo write many2many: (6, 0, [all_ids]) replaces; (4, id, 0) appends; use array of (4, id, 0)
+    const commands = ids.filter(id => !before.includes(id)).map(id => [4, id, 0]);
+    if (commands.length === 0) {
+      results[cfgId] = { name: cfg[0].name, added: 0, already_present: ids.length };
+      continue;
+    }
+    await odoo(apiKey, 'pos.config', 'write',
+      [[cfgId], { employee_ids: commands }]);
+    const after = await odoo(apiKey, 'pos.config', 'read', [[cfgId]],
+      { fields: ['employee_ids'] });
+    results[cfgId] = {
+      name: cfg[0].name,
+      before_count: before.length,
+      after_count: after[0].employee_ids.length,
+      added: commands.length,
+    };
+  }
+  return json({ success: true, results,
+    note: 'POS terminals may cache the cashier list — close session + reopen on the POS to pick up new list.' });
 }
 
 /* ━━━ Audit: exactly what the shift-live API sees on test.hamzahotel.com ━━━
