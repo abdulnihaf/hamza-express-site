@@ -77,10 +77,132 @@ export async function onRequest(context) {
     if (action === 'migrate-v2-schema') {
       return await migrateV2Schema(env.DB);
     }
-    return json({ error: `Unknown action: ${action}. Use discover|sync-dry|sync|preflight|migrate-v2-schema` }, 400);
+    if (action === 'audit-shift-pos') {
+      return await auditShiftPos(apiKey, env.DB);
+    }
+    return json({ error: `Unknown action: ${action}. Use discover|sync-dry|sync|preflight|migrate-v2-schema|audit-shift-pos` }, 400);
   } catch (e) {
     return json({ error: e.message, stack: e.stack }, 500);
   }
+}
+
+/* ━━━ Audit: exactly what the shift-live API sees on test.hamzahotel.com ━━━
+ * Dumps every POS order + payment in the current shift window, grouped by
+ * (config, payment_method, employee). Used to verify the captain-owes +
+ * counter-cash logic matches reality. Read-only; safe to call anytime. */
+async function auditShiftPos(apiKey, DB) {
+  if (!DB) return json({ error: 'D1 not configured' }, 500);
+  if (!apiKey) return json({ error: 'ODOO_API_KEY missing' }, 500);
+
+  const shift = await DB.prepare(
+    `SELECT * FROM he_v2_shifts WHERE state IN ('open','reconciling') ORDER BY id DESC LIMIT 1`
+  ).first();
+  if (!shift) return json({ success: true, note: 'No open shift', orders: [] });
+
+  // Convert shift opened_at (IST) → UTC for Odoo date comparison
+  const startUtc = new Date(new Date(shift.opened_at + '+05:30').getTime())
+    .toISOString().slice(0, 19).replace('T', ' ');
+
+  // Fetch ALL orders across BOTH POS configs since shift start, ANY state
+  // (including draft/cancel so we can see what's filtered out)
+  const orders = await odoo(apiKey, 'pos.order', 'search_read',
+    [[['config_id', 'in', [5, 6]], ['date_order', '>=', startUtc]]],
+    { fields: ['id', 'name', 'config_id', 'state', 'amount_total', 'employee_id',
+                'user_id', 'date_order', 'partner_id', 'session_id'],
+      order: 'date_order desc', limit: 500 });
+
+  // Fetch ALL payments for these orders
+  let payments = [];
+  if (orders.length > 0) {
+    payments = await odoo(apiKey, 'pos.payment', 'search_read',
+      [[['pos_order_id', 'in', orders.map(o => o.id)]]],
+      { fields: ['id', 'amount', 'payment_method_id', 'pos_order_id', 'payment_date'] });
+  }
+
+  // Fetch active POS sessions so we know WHO is logged in
+  const sessions = await odoo(apiKey, 'pos.session', 'search_read',
+    [[['state', 'in', ['opened', 'opening_control']], ['config_id', 'in', [5, 6]]]],
+    { fields: ['id', 'name', 'state', 'config_id', 'user_id', 'start_at', 'cash_register_balance_start'] });
+
+  // Fetch payment methods for reference
+  const pms = await odoo(apiKey, 'pos.payment.method', 'read',
+    [[11, 12, 14, 19, 52, 57, 58]], { fields: ['id', 'name', 'type', 'is_cash_count'] });
+  const pmById = Object.fromEntries(pms.map(p => [p.id, p]));
+
+  // Aggregate: cash (PM 11, 19) by config + by employee_id presence
+  const summary = {
+    counter_cash_total: 0,           // sum PM 11 on cfg 5 — INCLUDED in drawer formula
+    captain_cash_total: 0,            // sum PM 19 on cfg 6 — split into tracked vs unattributed below
+    captain_cash_tracked: 0,          // attributed to one of the 4 mapped employees
+    captain_cash_unattributed: 0,     // cfg 6 cash with NO employee_id (e.g. Admin session)
+    captain_cash_unknown_emp: 0,      // cfg 6 cash with employee_id that's NOT one of our 4 mapped (edge case)
+    by_employee: {},                  // { emp_id: { name, cash } }
+    filtered_out_state: [],           // orders in draft/cancel we exclude from drawer math
+    unattributed_orders_detail: [],
+  };
+  const MAPPED_EMP_IDS = new Set([82, 83, 84, 86]); // Muntaz, Noor, Faizan, Hardev
+  const orderById = Object.fromEntries(orders.map(o => [o.id, o]));
+
+  for (const p of payments) {
+    const oid = p.pos_order_id?.[0];
+    const o = orderById[oid];
+    if (!o) continue;
+
+    const pmId = p.payment_method_id?.[0];
+    const amt = p.amount || 0;
+    const included = ['paid', 'done', 'invoiced'].includes(o.state);
+    if (!included) {
+      summary.filtered_out_state.push({
+        order: o.name, state: o.state, amount: amt, pm: pmById[pmId]?.name,
+      });
+      continue;
+    }
+
+    // Counter cash (cfg 5, PM 11) — no employee filter in /ops/v2/ drawer math
+    if (o.config_id?.[0] === 5 && pmId === 11) {
+      summary.counter_cash_total += amt;
+    }
+    // Captain cash (cfg 6, PM 19) — attributed per-employee
+    if (o.config_id?.[0] === 6 && pmId === 19) {
+      summary.captain_cash_total += amt;
+      const empId = o.employee_id?.[0];
+      if (!empId) {
+        summary.captain_cash_unattributed += amt;
+        summary.unattributed_orders_detail.push({
+          order: o.name, user: o.user_id?.[1], amount: amt,
+        });
+      } else if (MAPPED_EMP_IDS.has(empId)) {
+        summary.captain_cash_tracked += amt;
+        const key = empId;
+        if (!summary.by_employee[key]) {
+          summary.by_employee[key] = { name: o.employee_id[1], cash: 0, emp_id: empId };
+        }
+        summary.by_employee[key].cash += amt;
+      } else {
+        summary.captain_cash_unknown_emp += amt;
+        summary.by_employee[empId] = summary.by_employee[empId] || {
+          name: o.employee_id[1] + ' (NOT IN MAPPED SET — orphan)', cash: 0, emp_id: empId,
+        };
+        summary.by_employee[empId].cash += amt;
+      }
+    }
+  }
+
+  return json({
+    success: true,
+    shift: { id: shift.id, opened_at: shift.opened_at, state: shift.state },
+    window_utc: startUtc,
+    orders_found: orders.length,
+    payments_found: payments.length,
+    summary,
+    sessions_open: sessions,
+    payment_methods_reference: pmById,
+    orders_detail: orders.slice(0, 50).map(o => ({
+      id: o.id, name: o.name, state: o.state, amount_total: o.amount_total,
+      config: o.config_id?.[1], employee: o.employee_id?.[1] || '(none)',
+      session_user: o.user_id?.[1], date_order: o.date_order,
+    })),
+  });
 }
 
 /* ━━━ V2 schema migration ━━━
