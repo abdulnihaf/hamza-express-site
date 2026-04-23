@@ -100,12 +100,11 @@ async function preflight(apiKey) {
     { fields: ['id', 'name', 'currency_id'] });
   out.test_hamzahotel_com.companies = companies;
 
+  // Minimal safe field set (Odoo 18 removed iface_start_categ_id etc.)
   const cfg5 = await odoo(apiKey, 'pos.config', 'read', [[5]],
-    { fields: ['id', 'name', 'company_id', 'module_pos_hr', 'payment_method_ids',
-               'iface_start_categ_id', 'default_fiscal_position_id', 'pricelist_id'] });
+    { fields: ['id', 'name', 'company_id', 'module_pos_hr', 'payment_method_ids'] });
   const cfg6 = await odoo(apiKey, 'pos.config', 'read', [[6]],
-    { fields: ['id', 'name', 'company_id', 'module_pos_hr', 'payment_method_ids',
-               'iface_start_categ_id', 'default_fiscal_position_id', 'pricelist_id'] });
+    { fields: ['id', 'name', 'company_id', 'module_pos_hr', 'payment_method_ids'] });
   out.test_hamzahotel_com.pos_config_5 = cfg5?.[0] || null;
   out.test_hamzahotel_com.pos_config_6 = cfg6?.[0] || null;
 
