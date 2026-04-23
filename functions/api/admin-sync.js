@@ -74,10 +74,105 @@ export async function onRequest(context) {
     if (action === 'preflight') {
       return await preflight(apiKey);
     }
-    return json({ error: `Unknown action: ${action}. Use discover|sync-dry|sync|preflight` }, 400);
+    if (action === 'migrate-v2-schema') {
+      return await migrateV2Schema(env.DB);
+    }
+    return json({ error: `Unknown action: ${action}. Use discover|sync-dry|sync|preflight|migrate-v2-schema` }, 400);
   } catch (e) {
     return json({ error: e.message, stack: e.stack }, 500);
   }
+}
+
+/* ━━━ V2 schema migration ━━━
+ * Creates the he_v2_* tables on the `he-whatsapp` D1 database. Idempotent
+ * (CREATE TABLE IF NOT EXISTS). Safe to re-run. Schema source of truth is
+ * schema-v2.sql — this function mirrors those DDL statements so we don't
+ * have to ship the SQL file to the Worker. */
+async function migrateV2Schema(DB) {
+  if (!DB) return json({ error: 'D1 binding "DB" not configured' }, 500);
+  const stmts = [
+    `CREATE TABLE IF NOT EXISTS he_v2_shifts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      opened_by_pin TEXT NOT NULL, opened_by_name TEXT NOT NULL,
+      opened_at TEXT NOT NULL, opening_float REAL NOT NULL DEFAULT 0,
+      closed_at TEXT, closed_by_pin TEXT, closed_by_name TEXT,
+      state TEXT NOT NULL DEFAULT 'open', notes TEXT)`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_shifts_state ON he_v2_shifts(state)`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_shifts_opened ON he_v2_shifts(opened_at)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_handovers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL, handed_over_at TEXT NOT NULL,
+      from_employee_id INTEGER NOT NULL, from_employee_name TEXT NOT NULL, from_employee_pin TEXT NOT NULL,
+      amount REAL NOT NULL, cashier_pin TEXT NOT NULL, cashier_name TEXT NOT NULL, notes TEXT,
+      FOREIGN KEY (shift_id) REFERENCES he_v2_shifts(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_handovers_shift ON he_v2_handovers(shift_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_handovers_emp ON he_v2_handovers(from_employee_id)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_shift_settlements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL, pos_config_id INTEGER NOT NULL, pos_label TEXT NOT NULL,
+      odoo_cash REAL NOT NULL DEFAULT 0, odoo_upi REAL NOT NULL DEFAULT 0,
+      odoo_card REAL NOT NULL DEFAULT 0, odoo_comp REAL NOT NULL DEFAULT 0,
+      physical_cash REAL, paytm_reported REAL, card_reported REAL,
+      variance_cash REAL, variance_upi REAL, variance_card REAL,
+      state TEXT DEFAULT 'draft', submitted_at TEXT, submitted_by_pin TEXT, notes TEXT,
+      FOREIGN KEY (shift_id) REFERENCES he_v2_shifts(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_settlements_shift ON he_v2_shift_settlements(shift_id)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_paytm_statements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL, uploaded_at TEXT NOT NULL,
+      uploaded_by_pin TEXT NOT NULL, uploaded_by_name TEXT NOT NULL,
+      source TEXT NOT NULL, total_amount REAL NOT NULL, total_count INTEGER NOT NULL DEFAULT 0,
+      raw_content TEXT, notes TEXT,
+      FOREIGN KEY (shift_id) REFERENCES he_v2_shifts(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_paytm_shift ON he_v2_paytm_statements(shift_id)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_paytm_reconciliation (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      statement_id INTEGER NOT NULL, paytm_txn_id TEXT, paytm_amount REAL NOT NULL, paytm_ts TEXT,
+      odoo_payment_id INTEGER, match_type TEXT NOT NULL,
+      resolved_by_pin TEXT, resolution_note TEXT,
+      FOREIGN KEY (statement_id) REFERENCES he_v2_paytm_statements(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_paytm_recon_stmt ON he_v2_paytm_reconciliation(statement_id)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_cash_collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL, collected_at TEXT NOT NULL,
+      collector_pin TEXT NOT NULL, collector_name TEXT NOT NULL,
+      amount REAL NOT NULL, destination TEXT NOT NULL,
+      receipt_drive_id TEXT, receipt_drive_link TEXT, notes TEXT,
+      FOREIGN KEY (shift_id) REFERENCES he_v2_shifts(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_collections_shift ON he_v2_cash_collections(shift_id)`,
+    `CREATE TABLE IF NOT EXISTS he_v2_shift_expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      shift_id INTEGER NOT NULL, recorded_at TEXT NOT NULL,
+      recorded_by_pin TEXT NOT NULL, recorded_by_name TEXT NOT NULL,
+      category_id INTEGER NOT NULL, category_label TEXT NOT NULL,
+      product_id INTEGER NOT NULL, product_name TEXT NOT NULL,
+      vendor_id INTEGER, vendor_name TEXT,
+      amount REAL NOT NULL, payment_method TEXT NOT NULL DEFAULT 'cash',
+      hnhotels_expense_id INTEGER, photo_drive_link TEXT, notes TEXT,
+      FOREIGN KEY (shift_id) REFERENCES he_v2_shifts(id))`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_expenses_shift ON he_v2_shift_expenses(shift_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_he_v2_expenses_category ON he_v2_shift_expenses(category_id)`,
+  ];
+  const executed = [];
+  const errors = [];
+  for (const sql of stmts) {
+    try {
+      await DB.prepare(sql).run();
+      const head = sql.replace(/\s+/g, ' ').slice(0, 80);
+      executed.push(head);
+    } catch (e) {
+      errors.push({ sql: sql.slice(0, 80), error: e.message });
+    }
+  }
+  return json({
+    success: errors.length === 0,
+    executed_count: executed.length,
+    error_count: errors.length,
+    tables_now_present: ['he_v2_shifts','he_v2_handovers','he_v2_shift_settlements',
+                          'he_v2_paytm_statements','he_v2_paytm_reconciliation',
+                          'he_v2_cash_collections','he_v2_shift_expenses'],
+    executed, errors,
+  });
 }
 
 /* ━━━ Preflight check ━━━
