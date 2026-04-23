@@ -136,7 +136,8 @@ export async function onRequest(context) {
       if (action === 'record-expense')   return await recordExpense(body, user, DB);
       if (action === 'record-collection') return await recordCollection(body, user, DB);
       if (action === 'submit-settlement') return await submitSettlement(body, user, DB, apiKey);
-      if (action === 'upload-paytm')     return await uploadPaytm(body, user, DB);
+      if (action === 'upload-paytm')     return await uploadPaytm(body, user, DB, apiKey);
+      if (action === 'reconcile-paytm')  return await reconcilePaytmAction(body, user, DB, apiKey);
       if (action === 'retry-expense-sync') return await retryExpenseSync(body, user, DB);
       return json({ error: `Unknown POST action: ${action}` }, 400);
     }
@@ -560,21 +561,39 @@ async function recordCollection(body, user, DB) {
 
 // ──────────────────────────────────────────────────────────────────────
 // POST: upload-paytm
-// Records a Paytm statement for reconciliation. Supports CSV (parsed
-// client-side-free via server parser), manual_total, or mobile_upload.
-// Body: { pin, shift_id, source, total_amount, total_count, raw_content }
+// Records a Paytm statement for reconciliation. Supports CSV (parsed +
+// auto-matched against Odoo pos.payment), manual_total (just stores total),
+// or mobile_upload (phone-side export).
+// Body: { pin, shift_id, source, total_amount?, total_count?, raw_content }
+//   - If source='csv' with raw_content, server parses CSV and derives
+//     total_amount + total_count, then auto-runs reconciliation.
+//   - Returns match summary { matched, paytm_only, odoo_only }
 // ──────────────────────────────────────────────────────────────────────
-async function uploadPaytm(body, user, DB) {
+async function uploadPaytm(body, user, DB, apiKey) {
   if (!DB) return json({ error: 'DB not configured' }, 500);
   if (!user.can_reconcile) return json({ error: 'Not authorized' }, 403);
 
   const { shift_id, source, total_amount, total_count, raw_content, notes } = body;
-  if (!shift_id || !source || total_amount == null) {
-    return json({ error: 'shift_id, source, total_amount required' }, 400);
+  if (!shift_id || !source) {
+    return json({ error: 'shift_id, source required' }, 400);
   }
   if (!['csv', 'manual_total', 'mobile_upload'].includes(source)) {
     return json({ error: 'source must be csv|manual_total|mobile_upload' }, 400);
   }
+
+  let finalTotal = parseFloat(total_amount) || 0;
+  let finalCount = parseInt(total_count) || 0;
+  let parsed = null;
+
+  // If CSV with content → parse now to get authoritative total + count
+  if (source === 'csv' && raw_content) {
+    parsed = parsePaytmCSV(raw_content);
+    if (parsed.error) return json({ error: `CSV parse: ${parsed.error}` }, 400);
+    finalTotal = parsed.total;
+    finalCount = parsed.count;
+  }
+
+  if (!(finalTotal >= 0)) return json({ error: 'total_amount required (or valid CSV)' }, 400);
 
   const res = await DB.prepare(
     `INSERT INTO he_v2_paytm_statements
@@ -582,10 +601,245 @@ async function uploadPaytm(body, user, DB) {
         total_amount, total_count, raw_content, notes)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(shift_id, istISO(), user.pin, user.name, source,
-         parseFloat(total_amount), parseInt(total_count) || 0,
+         finalTotal, finalCount,
          raw_content || null, notes || null).run();
 
-  return json({ success: true, statement_id: res.meta.last_row_id });
+  const statementId = res.meta.last_row_id;
+
+  // Auto-reconcile if we have CSV transactions
+  let recon = null;
+  if (parsed && parsed.transactions && parsed.transactions.length > 0 && apiKey) {
+    try {
+      recon = await reconcilePaytmStatement(statementId, shift_id, parsed.transactions, apiKey, DB);
+    } catch (e) {
+      recon = { error: e.message };
+    }
+  }
+
+  return json({
+    success: true,
+    statement_id: statementId,
+    total: finalTotal, count: finalCount,
+    reconciliation: recon,
+  });
+}
+
+// POST: reconcile-paytm (manual re-run on existing statement)
+// Body: { pin, statement_id }
+async function reconcilePaytmAction(body, user, DB, apiKey) {
+  if (!DB) return json({ error: 'DB not configured' }, 500);
+  if (!user.can_reconcile) return json({ error: 'Not authorized' }, 403);
+  const { statement_id } = body;
+  if (!statement_id) return json({ error: 'statement_id required' }, 400);
+
+  const stmt = await DB.prepare(`SELECT * FROM he_v2_paytm_statements WHERE id = ?`).bind(statement_id).first();
+  if (!stmt) return json({ error: 'Statement not found' }, 404);
+  if (!stmt.raw_content) return json({ error: 'Statement has no CSV content to parse' }, 400);
+
+  const parsed = parsePaytmCSV(stmt.raw_content);
+  if (parsed.error) return json({ error: `CSV parse: ${parsed.error}` }, 400);
+
+  // Clear old reconciliation for this statement (re-run)
+  await DB.prepare(`DELETE FROM he_v2_paytm_reconciliation WHERE statement_id = ?`).bind(statement_id).run();
+
+  const recon = await reconcilePaytmStatement(statement_id, stmt.shift_id, parsed.transactions, apiKey, DB);
+  return json({ success: true, reconciliation: recon });
+}
+
+/* ━━━ Paytm CSV parser ━━━
+ * Handles Paytm Business dashboard CSV exports. Column names vary across
+ * export types (merchant statement, UPI report, daily txn list) so we
+ * do flexible header matching.
+ *
+ * Minimum required: some "amount" column. Everything else best-effort.
+ * Returns: { transactions: [{amount, date, txn_id, status}], total, count }
+ * Or: { error: "..." } */
+function parsePaytmCSV(raw) {
+  const lines = String(raw || '').split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return { error: 'CSV has no data rows', transactions: [], total: 0, count: 0 };
+
+  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim().replace(/[_\s]+/g, ' '));
+
+  // Flexible column detection — match first column whose name contains a keyword
+  const findCol = (...patterns) => {
+    for (const p of patterns) {
+      const re = typeof p === 'string' ? new RegExp(p) : p;
+      const idx = headers.findIndex(h => re.test(h));
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+
+  // Amount: prefer clean "txn amount" / "amount" but NOT fee/tax/gst/net/refund
+  const amountCol = headers.findIndex(h => /(^|\s)(txn\s*)?amount|^amt|^txn\s*amt/.test(h) && !/fee|tax|gst|net|refund|charge/.test(h));
+  if (amountCol === -1) {
+    return { error: `No amount column. Headers found: ${headers.join(', ')}`, transactions: [], total: 0, count: 0 };
+  }
+  const dateCol   = findCol(/date|time|timestamp/);
+  const statusCol = findCol(/status|state/);
+  const txnIdCol  = findCol(/^(txn|transaction)\s*id/, /order\s*id/);
+
+  const transactions = [];
+  let skipped = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const cells = parseCSVLine(lines[i]);
+    if (cells.length < headers.length - 2) { skipped++; continue; } // malformed
+    const status = statusCol >= 0 ? (cells[statusCol] || '').trim() : 'SUCCESS';
+    // Include only success-equivalent statuses
+    if (status && !/success|paid|completed|settled|txn\s*success/i.test(status)) { skipped++; continue; }
+    const amt = parseFloat((cells[amountCol] || '').replace(/[,₹\s]/g, ''));
+    if (!isFinite(amt) || amt <= 0) { skipped++; continue; }
+    transactions.push({
+      amount: amt,
+      date: dateCol >= 0 ? (cells[dateCol] || '').trim() : null,
+      txn_id: txnIdCol >= 0 ? (cells[txnIdCol] || '').trim() : null,
+      status,
+    });
+  }
+  return {
+    transactions,
+    total: transactions.reduce((s, t) => s + t.amount, 0),
+    count: transactions.length,
+    skipped_rows: skipped,
+    detected_columns: { amountCol, dateCol, statusCol, txnIdCol },
+  };
+}
+
+/* RFC-4180-ish CSV line parser. Handles quoted fields with embedded commas.
+ * Doesn't support multi-line quoted fields (rare in Paytm exports). */
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuote && line[i + 1] === '"') { cur += '"'; i++; }  // escaped quote
+      else inQuote = !inQuote;
+    } else if (c === ',' && !inQuote) {
+      result.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur);
+  return result.map(s => s.trim());
+}
+
+/* ━━━ Paytm ↔ Odoo matcher ━━━
+ * For each Paytm transaction, finds best-match Odoo pos.payment:
+ *   1. Exact amount match (± ₹0.01), not already used → 'exact'
+ *   2. Exact amount + timestamp within ±2 min → 'exact' (preferred over step 1)
+ *   3. No match → 'paytm_only'
+ * Unused Odoo payments → 'odoo_only'.
+ * Greedy: processes Paytm txns in order; exact-amount+close-time wins.
+ * Writes to he_v2_paytm_reconciliation table. */
+async function reconcilePaytmStatement(statementId, shiftId, paytmTxns, apiKey, DB) {
+  if (!apiKey) throw new Error('ODOO_API_KEY missing');
+
+  const shift = await DB.prepare(`SELECT * FROM he_v2_shifts WHERE id = ?`).bind(shiftId).first();
+  if (!shift) throw new Error('Shift not found');
+
+  // Fetch all UPI pos.payments in shift window. Use both configs (counter + captain).
+  const startUtc = new Date(new Date(shift.opened_at + '+05:30').getTime()).toISOString().slice(0, 19).replace('T', ' ');
+  const orderIds = await odoo(apiKey, 'pos.order', 'search', [[
+    ['config_id', 'in', [POS_CONFIG_COUNTER, POS_CONFIG_CAPTAIN]],
+    ['date_order', '>=', startUtc],
+    ['state', 'in', ['paid', 'done', 'invoiced']],
+  ]], { limit: 2000 });
+
+  let odooPayments = [];
+  if (orderIds.length > 0) {
+    odooPayments = await odoo(apiKey, 'pos.payment', 'search_read',
+      [[['pos_order_id', 'in', orderIds], ['payment_method_id', 'in', UPI_PMS_ALL]]],
+      { fields: ['id', 'amount', 'payment_date', 'payment_method_id'] });
+  }
+
+  // Parse Paytm timestamps (best-effort — formats vary)
+  const parseTs = (s) => {
+    if (!s) return null;
+    // Try ISO, then DD/MM/YYYY HH:MM:SS, then YYYY-MM-DD HH:MM:SS
+    let d = new Date(s);
+    if (isFinite(d.getTime())) return d.getTime();
+    // DD/MM/YYYY HH:MM:SS → swap
+    const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (m) {
+      const y = m[3].length === 2 ? '20' + m[3] : m[3];
+      d = new Date(`${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}T${m[4].padStart(2, '0')}:${m[5]}:${m[6] || '00'}+05:30`);
+      if (isFinite(d.getTime())) return d.getTime();
+    }
+    return null;
+  };
+
+  const odooUsed = new Set();
+  const results = [];
+
+  // For each Paytm txn, pick best unused Odoo match
+  for (const pt of paytmTxns) {
+    const candidates = odooPayments
+      .filter(op => !odooUsed.has(op.id) && Math.abs(op.amount - pt.amount) < 0.01);
+    let best = null;
+    if (candidates.length > 0) {
+      if (candidates.length === 1) best = candidates[0];
+      else {
+        // Multiple exact-amount matches → pick closest by timestamp
+        const ptTs = parseTs(pt.date);
+        if (ptTs) {
+          candidates.sort((a, b) => {
+            const at = new Date(a.payment_date + ' UTC').getTime();
+            const bt = new Date(b.payment_date + ' UTC').getTime();
+            return Math.abs(at - ptTs) - Math.abs(bt - ptTs);
+          });
+        }
+        best = candidates[0];
+      }
+    }
+    if (best) {
+      odooUsed.add(best.id);
+      results.push({
+        paytm_txn_id: pt.txn_id, paytm_amount: pt.amount, paytm_ts: pt.date,
+        odoo_payment_id: best.id, match_type: 'exact',
+      });
+    } else {
+      results.push({
+        paytm_txn_id: pt.txn_id, paytm_amount: pt.amount, paytm_ts: pt.date,
+        odoo_payment_id: null, match_type: 'paytm_only',
+      });
+    }
+  }
+
+  // Unused Odoo payments
+  for (const op of odooPayments) {
+    if (!odooUsed.has(op.id)) {
+      results.push({
+        paytm_txn_id: null, paytm_amount: op.amount, paytm_ts: null,
+        odoo_payment_id: op.id, match_type: 'odoo_only',
+      });
+    }
+  }
+
+  // Persist
+  for (const r of results) {
+    await DB.prepare(
+      `INSERT INTO he_v2_paytm_reconciliation
+         (statement_id, paytm_txn_id, paytm_amount, paytm_ts, odoo_payment_id, match_type)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(statementId, r.paytm_txn_id, r.paytm_amount, r.paytm_ts,
+           r.odoo_payment_id, r.match_type).run();
+  }
+
+  const matched = results.filter(r => r.match_type === 'exact').length;
+  const paytm_only = results.filter(r => r.match_type === 'paytm_only').length;
+  const odoo_only = results.filter(r => r.match_type === 'odoo_only').length;
+  const total_paytm = paytmTxns.reduce((s, t) => s + t.amount, 0);
+  const total_odoo = odooPayments.reduce((s, p) => s + p.amount, 0);
+
+  return {
+    matched, paytm_only, odoo_only,
+    total_paytm, total_odoo,
+    variance: total_paytm - total_odoo,
+    unmatched_details: results.filter(r => r.match_type !== 'exact').slice(0, 20),
+  };
 }
 
 // ──────────────────────────────────────────────────────────────────────

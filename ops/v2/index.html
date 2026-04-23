@@ -435,10 +435,26 @@
         <label>Notes <span class="hint">optional</span></label>
         <input id="ef-notes" type="text" placeholder="anything worth remembering">
       </div>
+      <div class="field">
+        <label>Bill photo <span class="hint">optional — goes to Drive + Odoo</span></label>
+        <input id="ef-photo" type="file" accept="image/*" capture="environment" style="padding: 8px;">
+        <div id="ef-photo-preview" style="margin-top: 8px; font-size: 11px; color: var(--text-dim);"></div>
+      </div>
       <button class="btn primary full" onclick="submitExpense()">✓ Save expense</button>
       <div style="margin-top: 10px; font-size: 11px; color: var(--text-faint); text-align: center;">
         Writes to Odoo + local shift ledger
       </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Paytm results modal                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div id="paytm-results-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('paytm-results-modal')">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeModal('paytm-results-modal')">✕</button>
+      <div class="modal-title">Paytm ↔ Odoo reconciliation</div>
+      <div id="paytm-results-body">—</div>
     </div>
   </div>
 
@@ -652,7 +668,12 @@ async function submitPin() {
   }
   USER = { pin, ...r.user, can_collect: r.can_collect, can_reconcile: r.can_reconcile, read_only: r.read_only };
   sessionStorage.setItem('hev2_pin', pin);
-  $('user-name').textContent = `${USER.name} · ${USER.role}`;
+  // Role display: Admin / GM / Cashier / CFO / Captain / Waiter (pretty case)
+  const roleLabel = {
+    admin: 'Admin', gm: 'GM', cashier: 'Cashier', cfo: 'CFO',
+    captain: 'Captain', waiter: 'Waiter',
+  }[USER.role] || USER.role;
+  $('user-name').textContent = `${USER.name} · ${roleLabel}`;
   $('app-header').classList.remove('hidden');
   hide('s-pin');
   routeUser();
@@ -961,6 +982,29 @@ async function submitExpense() {
   const prod = EXP_PRODUCTS.find(p => p.id === productId);
   const vend = EXP_VENDORS.find(v => v.id === vendorId);
 
+  // Read photo (if picked) as base64 — strips data URI prefix before sending
+  let photo_b64 = null;
+  const photoFile = $('ef-photo').files[0];
+  if (photoFile) {
+    try {
+      // Large photos (>8MB raw) are rejected client-side to avoid Odoo errors.
+      if (photoFile.size > 8 * 1024 * 1024) {
+        return toast('Photo too large (max 8MB)', 'err');
+      }
+      photo_b64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || null);
+        reader.onerror = reject;
+        reader.readAsDataURL(photoFile);
+      });
+    } catch (e) {
+      return toast('Could not read photo: ' + e.message, 'err');
+    }
+  }
+
+  const submitBtn = document.querySelector('#expense-form-modal .btn.primary');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = photo_b64 ? 'Uploading photo…' : 'Saving…'; }
+
   const r = await apiPost('record-expense', {
     shift_id: SHIFT.id,
     category_id: EXP_CURRENT_CAT.id,
@@ -970,11 +1014,17 @@ async function submitExpense() {
     vendor_id: vendorId,
     vendor_name: vend?.name,
     amount, payment_method: pm, notes: notes || null,
+    photo_b64,
   });
+
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✓ Save expense'; }
+
   if (!r.success) return toast(r.error || 'Failed', 'err');
   const warn = r.hn_warning ? ` (central-sync warning: ${r.hn_warning})` : '';
   toast(`✓ ${fmtINR(amount)} · ${EXP_CURRENT_CAT.label}${warn}`, r.hn_warning ? 'warn' : 'ok', 4000);
   closeModal('expense-form-modal');
+  $('ef-photo').value = '';
+  $('ef-photo-preview').textContent = '';
   loadCashier();
 }
 
@@ -997,16 +1047,92 @@ async function submitPaytm() {
   const count  = parseInt($('pm-count').value) || 0;
   const csv    = $('pm-csv').value.trim();
   const notes  = $('pm-notes').value.trim();
-  if (!(total >= 0)) return toast('Enter total amount', 'err');
-  if (source === 'csv' && !csv) return toast('Paste CSV content', 'err');
+  if (source === 'csv') {
+    if (!csv) return toast('Paste CSV content', 'err');
+    // When CSV, server parses — total + count are derived
+  } else {
+    if (!(total >= 0)) return toast('Enter total amount', 'err');
+  }
+
+  const submitBtn = document.querySelector('#paytm-modal .btn.primary');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Processing…'; }
 
   const r = await apiPost('upload-paytm', {
-    shift_id: SHIFT.id, source, total_amount: total, total_count: count,
-    raw_content: source === 'csv' ? csv : null, notes: notes || null,
+    shift_id: SHIFT.id, source,
+    total_amount: source === 'csv' ? 0 : total,
+    total_count: source === 'csv' ? 0 : count,
+    raw_content: source === 'csv' ? csv : null,
+    notes: notes || null,
   });
+
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✓ Save statement'; }
+
   if (!r.success) return toast(r.error || 'Failed', 'err');
-  toast(`✓ Paytm ${fmtINR(total)} saved (${source})`, 'ok');
   closeModal('paytm-modal');
+
+  // If CSV with matching results, show reconciliation modal
+  if (source === 'csv' && r.reconciliation) {
+    showPaytmResults(r);
+  } else {
+    toast(`✓ Paytm ${fmtINR(r.total)} saved (${source})`, 'ok');
+  }
+}
+
+function showPaytmResults(r) {
+  const rc = r.reconciliation || {};
+  const hasError = rc.error;
+  const body = $('paytm-results-body');
+  if (hasError) {
+    body.innerHTML = `<div class="card danger"><div class="card-title">Reconciliation failed</div>${escapeHtml(rc.error)}</div>`;
+  } else {
+    const variance = rc.variance || 0;
+    const varClass = Math.abs(variance) < 1 ? 'ok' : (variance > 0 ? 'warning' : 'danger');
+    body.innerHTML = `
+      <div class="card ${varClass}" style="margin-bottom: 10px;">
+        <div class="card-title">Totals</div>
+        <div class="formula-row"><span>Paytm</span><span class="v">${fmtINR(rc.total_paytm)}</span></div>
+        <div class="formula-row"><span>Odoo (UPI PMs 14/52/58)</span><span class="v">${fmtINR(rc.total_odoo)}</span></div>
+        <div class="formula-row total">
+          <span>Variance</span>
+          <span class="v" style="color: ${Math.abs(variance) < 1 ? 'var(--green)' : 'var(--red)'};">
+            ${variance >= 0 ? '+' : ''}${fmtINR(variance)}
+          </span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; text-align: center;">
+        <div class="card" style="margin: 0; padding: 10px; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3);">
+          <div style="font-size: 22px; font-weight: 700; color: var(--green);">${rc.matched || 0}</div>
+          <div style="font-size: 11px; color: var(--text-dim);">Matched</div>
+        </div>
+        <div class="card" style="margin: 0; padding: 10px; background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3);">
+          <div style="font-size: 22px; font-weight: 700; color: var(--red);">${rc.paytm_only || 0}</div>
+          <div style="font-size: 11px; color: var(--text-dim);">Paytm only</div>
+        </div>
+        <div class="card" style="margin: 0; padding: 10px; background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3);">
+          <div style="font-size: 22px; font-weight: 700; color: var(--yellow);">${rc.odoo_only || 0}</div>
+          <div style="font-size: 11px; color: var(--text-dim);">Odoo only</div>
+        </div>
+      </div>`;
+
+    if ((rc.unmatched_details || []).length > 0) {
+      body.innerHTML += `
+        <div class="card" style="padding: 10px;">
+          <div class="card-title">Unmatched (investigate)</div>
+          ${rc.unmatched_details.map(u => {
+            const label = u.match_type === 'paytm_only'
+              ? `📱 Paytm: ${fmtINR(u.paytm_amount)} ${u.paytm_ts ? '· ' + escapeHtml(u.paytm_ts) : ''} ${u.paytm_txn_id ? '· ' + escapeHtml(u.paytm_txn_id) : ''}`
+              : `🏪 Odoo: ${fmtINR(u.paytm_amount)} (payment #${u.odoo_payment_id})`;
+            const badge = u.match_type === 'paytm_only'
+              ? '<span class="badge" style="background: rgba(239,68,68,0.15); color: #f87171;">Paytm only</span>'
+              : '<span class="badge" style="background: rgba(245,158,11,0.15); color: var(--yellow);">Odoo only</span>';
+            return `<div class="item-row"><div class="left"><div class="name" style="font-size: 12px;">${label}</div></div><div>${badge}</div></div>`;
+          }).join('')}
+        </div>`;
+    } else {
+      body.innerHTML += `<div class="card ok" style="text-align: center;">✓ Everything matched perfectly.</div>`;
+    }
+  }
+  openModal('paytm-results-modal');
 }
 
 // ══════════════════════════════════════════════════════════════════════
