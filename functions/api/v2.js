@@ -626,8 +626,9 @@ async function listOpenPOsHE(url) {
     const qs = `?action=purchase-ledger&pin=${encodeURIComponent(pin)}&brand=HE&from=2026-01-01&to=2030-12-31`;
     const r = await fetch(`${HN_SPEND_URL_HE}${qs}`).then(x => x.json());
     if (!r?.success) return json({ success: false, error: r?.error || 'ledger fetch failed' }, 500);
+    // purchase-ledger returns raw Odoo states ('purchase', 'done', ...)
     const openPOs = (r.rows || [])
-      .filter(row => row.kind === 'PO' && ['open-po', 'po-draft'].includes(row.state))
+      .filter(row => row.kind === 'PO' && ['purchase', 'done'].includes(row.state))
       .sort((a, b) => String(b.date).localeCompare(String(a.date)))
       .map(p => ({
         po_id: p.odoo_id, po_name: p.odoo_name,
