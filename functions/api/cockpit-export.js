@@ -84,6 +84,39 @@ export async function onRequest(context) {
       shift_id: r.shift_id || null,
     }));
 
+    // ── Phase 3: optional cash_summary for /ops/money/ Cash Position card ──
+    let cash_summary = null;
+    if ((url.searchParams.get('include') || '').includes('cash_summary')) {
+      try {
+        const todayDate = todayIST();
+        const todayStr = `${todayDate}T00:00:00`;
+        // Today's expenses out from HE shift expenses
+        const expRow = await env.DB.prepare(
+          `SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS n
+             FROM he_v2_shift_expenses
+            WHERE recorded_at >= ?`
+        ).bind(todayStr).first().catch(() => ({ total: 0, n: 0 }));
+
+        // In-transit cash collections (cashier handed off to collector but not deposited)
+        const inTransitRow = await env.DB.prepare(
+          `SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS n,
+                  GROUP_CONCAT(collector_name || ': ' || amount, ', ') AS breakdown
+             FROM he_v2_cash_collections
+            WHERE destination NOT IN ('deposited', 'naveen_received')`
+        ).first().catch(() => ({ total: 0, n: 0, breakdown: null }));
+
+        cash_summary = {
+          today_expenses_out: expRow.total || 0,
+          today_expenses_count: expRow.n || 0,
+          in_transit_total: inTransitRow.total || 0,
+          in_transit_count: inTransitRow.n || 0,
+          in_transit_breakdown: inTransitRow.breakdown || '',
+        };
+      } catch (e) {
+        cash_summary = { error: e.message };
+      }
+    }
+
     return json({
       success: true,
       brand: 'HE',
@@ -92,6 +125,7 @@ export async function onRequest(context) {
       total: normalized.reduce((s, r) => s + (r.amount || 0), 0),
       orphan_count: normalized.filter((r) => r.state === 'paid-orphan').length,
       rows: normalized,
+      cash_summary,
     });
   } catch (e) {
     return json({ success: false, error: e.message }, 500);
