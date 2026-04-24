@@ -437,6 +437,18 @@
       <div class="modal-title">Pick category</div>
       <div class="cat-grid" id="cat-grid">Loading…</div>
 
+      <!-- Phase 2 Surface B: Pay an open Zoya PO (cash from HE till) -->
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+        <button type="button" id="pay-po-tile-he" onclick="openPayPOModalHE()"
+                style="width:100%; padding:14px; background:var(--surface); border:1.5px solid #a855f7; border-radius:12px; color:var(--text); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <span><span style="font-size:18px; margin-right:6px;">📦</span> Pay open PO</span>
+          <span id="pay-po-count-he" style="font-size:11px; color:#c4b5fd; background:rgba(168,85,247,0.15); padding:2px 9px; border-radius:999px; font-weight:700;">—</span>
+        </button>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:6px; text-align:center;">
+          Till cash drops + Zoya's PO marked paid — all in one click.
+        </div>
+      </div>
+
       <!-- Past expenses (mirrors NCH /ops/v2/) — see what's already entered
            BEFORE picking a category, to prevent duplicate re-entry -->
       <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);">
@@ -458,6 +470,43 @@
   <!-- ══════════════════════════════════════════════════════ -->
   <!-- Expense entry form                                         -->
   <!-- ══════════════════════════════════════════════════════ -->
+  <!-- Phase 2 Surface B: Pay open PO modal (HE) -->
+  <div id="pay-po-modal-he" class="modal-overlay hidden" onclick="if(event.target===this)closePayPOModalHE()">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close" onclick="closePayPOModalHE()">✕</button>
+      <div class="modal-title">📦 Pay an open PO</div>
+      <div id="pay-po-err-he" style="display:none; background:rgba(239,68,68,0.10); border:1px solid rgba(239,68,68,0.4); color:#f87171; padding:10px 12px; border-radius:8px; font-size:12px; margin-bottom:10px;"></div>
+
+      <div id="pay-po-pick-he" style="margin-bottom:12px;">
+        <div style="font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; font-weight:700; margin-bottom:6px;">Open POs for HE</div>
+        <div id="pay-po-list-he" style="max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
+          <div style="padding:16px; text-align:center; color:var(--text-dim); font-size:13px;">Loading POs…</div>
+        </div>
+      </div>
+
+      <div id="pay-po-confirm-he" class="hidden">
+        <div id="pay-po-chosen-he" style="background:var(--surface-2); border:1px solid #a855f7; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:13px;"></div>
+        <div class="field">
+          <label>Amount paid (₹)</label>
+          <input id="pay-po-amount-he" type="number" inputmode="decimal" placeholder="0">
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">Full or partial. Remaining paid later from /ops/bills/.</div>
+        </div>
+        <div class="field">
+          <label>Paid by <span class="hint">your name</span></label>
+          <input id="pay-po-by-he" type="text" placeholder="e.g. Noor">
+        </div>
+        <div class="field">
+          <label>Bill photo <span class="hint">optional</span></label>
+          <input id="pay-po-photo-he" type="file" accept="image/*" capture="environment">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn" onclick="backToPayPOListHE()" style="flex:1; background:var(--surface); color:var(--text); border:1px solid var(--border); padding:10px; border-radius:8px;">← Pick different</button>
+          <button class="btn primary" id="pay-po-confirm-btn-he" onclick="confirmPayPOHE()" style="flex:2;">Confirm payment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="expense-form-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('expense-form-modal')">
     <div class="modal-card">
       <button class="modal-close" onclick="closeModal('expense-form-modal')">✕</button>
@@ -937,6 +986,132 @@ function setHistDaysModal(days) {
 async function loadHistoryExpensesModal() {
   return _loadHistoryInto('recent-expenses-modal', HIST_DAYS_MODAL);
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Phase 2 Surface B — Pay an open Zoya PO from HE counter till cash
+// (mirror of NCH /ops/v2/ flow; backend in /api/v2?action=pay-open-po)
+// ═══════════════════════════════════════════════════════════════════════
+let _OPEN_POS_CACHE_HE = null;
+let _CHOSEN_PO_HE = null;
+
+async function loadOpenPOsCountHE() {
+  try {
+    const r = await apiGet(`action=list-open-pos&pin=${encodeURIComponent(USER.pin)}`);
+    if (r.success) {
+      _OPEN_POS_CACHE_HE = r.pos || [];
+      const el = $('pay-po-count-he');
+      if (el) el.textContent = r.count || 0;
+    }
+  } catch (_) { /* silent */ }
+}
+
+async function openPayPOModalHE() {
+  closeModal('expense-cats-modal');  // close categories modal first
+  openModal('pay-po-modal-he');
+  $('pay-po-err-he').style.display = 'none';
+  $('pay-po-pick-he').classList.remove('hidden');
+  $('pay-po-confirm-he').classList.add('hidden');
+
+  const list = $('pay-po-list-he');
+  list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-dim);font-size:13px;">Loading POs…</div>';
+  try {
+    const r = await apiGet(`action=list-open-pos&pin=${encodeURIComponent(USER.pin)}`);
+    if (!r.success) throw new Error(r.error || 'load failed');
+    _OPEN_POS_CACHE_HE = r.pos || [];
+    $('pay-po-count-he').textContent = _OPEN_POS_CACHE_HE.length;
+    if (!_OPEN_POS_CACHE_HE.length) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-dim);font-size:13px;">✓ No open POs to pay.<br>All caught up.</div>';
+      return;
+    }
+    list.innerHTML = _OPEN_POS_CACHE_HE.map((p, i) => `
+      <div class="item-row" style="cursor:pointer; padding:10px 12px;" onclick="pickOpenPOHE(${i})">
+        <div class="left">
+          <div class="name">${escapeHtml(p.vendor_name || '?')}</div>
+          <div class="meta">${escapeHtml(p.po_name || '?')} · ${escapeHtml(p.item || '')}</div>
+        </div>
+        <div class="right">${fmtINR(p.amount)}<span class="when">${escapeHtml((p.date || '').slice(0, 10))}</span></div>
+      </div>`).join('');
+  } catch (e) {
+    list.innerHTML = `<div style="padding:16px;color:var(--text-dim);font-size:12px;">Could not load: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function closePayPOModalHE() { closeModal('pay-po-modal-he'); _CHOSEN_PO_HE = null; }
+
+function pickOpenPOHE(idx) {
+  const p = _OPEN_POS_CACHE_HE[idx];
+  if (!p) return;
+  _CHOSEN_PO_HE = p;
+  $('pay-po-pick-he').classList.add('hidden');
+  $('pay-po-confirm-he').classList.remove('hidden');
+  $('pay-po-chosen-he').innerHTML = `
+    <div style="font-weight:700; margin-bottom:4px;">${escapeHtml(p.vendor_name || '?')}</div>
+    <div style="color:var(--text-dim); font-size:12px;">${escapeHtml(p.po_name || '?')} · ${escapeHtml(p.item || '')}</div>
+    <div style="margin-top:4px;"><b style="color:#c4b5fd;">${fmtINR(p.amount)}</b> total</div>`;
+  $('pay-po-amount-he').value = Math.round(p.amount);
+  $('pay-po-by-he').value = USER.name || '';
+}
+
+function backToPayPOListHE() {
+  _CHOSEN_PO_HE = null;
+  $('pay-po-pick-he').classList.remove('hidden');
+  $('pay-po-confirm-he').classList.add('hidden');
+}
+
+async function confirmPayPOHE() {
+  $('pay-po-err-he').style.display = 'none';
+  const btn = $('pay-po-confirm-btn-he');
+  btn.disabled = true; btn.textContent = 'Paying…';
+  try {
+    if (!_CHOSEN_PO_HE) throw new Error('No PO selected');
+    if (!SHIFT) throw new Error('No shift open');
+    const amount = parseFloat($('pay-po-amount-he').value);
+    if (!(amount > 0)) throw new Error('Enter a valid amount');
+    if (amount > _CHOSEN_PO_HE.amount + 0.01) throw new Error(`Amount exceeds PO total ₹${Math.round(_CHOSEN_PO_HE.amount)}`);
+    const by = $('pay-po-by-he').value.trim();
+
+    const f = $('pay-po-photo-he').files[0];
+    let attachment = null;
+    if (f) {
+      if (f.size > 8 * 1024 * 1024) throw new Error('Photo too large (>8MB)');
+      attachment = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => {
+          const s = r.result;
+          const b64 = s.includes(',') ? s.split(',')[1] : s;
+          resolve({ name: f.name, mimetype: f.type || 'image/jpeg', data_b64: b64 });
+        };
+        r.onerror = () => reject(new Error('Photo read failed'));
+        r.readAsDataURL(f);
+      });
+    }
+
+    const r = await apiPost('pay-open-po', {
+      shift_id: SHIFT.id,
+      po_id: _CHOSEN_PO_HE.po_id,
+      po_name: _CHOSEN_PO_HE.po_name,
+      vendor_id: _CHOSEN_PO_HE.vendor_id,
+      vendor_name: _CHOSEN_PO_HE.vendor_name,
+      payment_amount: amount,
+      payment_method_label: by ? `HE counter · ${by}` : 'HE counter',
+      attachment,
+    });
+    if (!r.success) throw new Error(r.error || 'Payment failed');
+    if (r.partial_failure) {
+      toast(`Till cash dropped — Odoo sync pending: ${r.odoo_error}`, 'err');
+    } else {
+      toast(`✓ Paid ${fmtINR(amount)} · ${r.po_name} · bill ${r.payment_state}`, 'ok');
+    }
+    closePayPOModalHE();
+    // Refresh cashier view to pick up the new expense
+    loadCashier();
+  } catch (e) {
+    $('pay-po-err-he').textContent = e.message;
+    $('pay-po-err-he').style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirm payment';
+  }
+}
 async function _loadHistoryInto(targetId, days) {
   const target = document.getElementById(targetId);
   if (!target) return;
@@ -1085,6 +1260,7 @@ async function openExpenseCategories() {
     c.classList.toggle('active', c.dataset.days === '1')
   );
   loadHistoryExpensesModal();
+  loadOpenPOsCountHE();  // Phase 2 Surface B
   // Fetch categories via hnhotels.in verify-pin (returns user's visible cats)
   try {
     const r = await fetch(`${HN_SPEND}?action=verify-pin&pin=${USER.pin}`).then(x => x.json());

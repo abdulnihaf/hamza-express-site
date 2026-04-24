@@ -123,6 +123,7 @@ export async function onRequest(context) {
       if (action === 'recent-handovers') return await recentHandovers(url, DB);
       if (action === 'recent-expenses')  return await recentExpenses(url, DB);
       if (action === 'history-expenses') return await historyExpenses(url, DB);
+      if (action === 'list-open-pos')    return await listOpenPOsHE(url);
       return json({ error: `Unknown GET action: ${action}` }, 400);
     }
 
@@ -140,6 +141,7 @@ export async function onRequest(context) {
       if (action === 'upload-paytm')     return await uploadPaytm(body, user, DB, apiKey);
       if (action === 'reconcile-paytm')  return await reconcilePaytmAction(body, user, DB, apiKey);
       if (action === 'retry-expense-sync') return await retryExpenseSync(body, user, DB);
+      if (action === 'pay-open-po')        return await payOpenPOHE(body, user, DB);
       return json({ error: `Unknown POST action: ${action}` }, 400);
     }
 
@@ -599,6 +601,138 @@ function istNextDay(ymd) {
 }
 function istShiftDate(ymd, deltaDays) {
   return new Date(Date.parse(`${ymd}T00:00:00.000Z`) + deltaDays * 86400000).toISOString().slice(0, 10);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Phase 2 Surface B — HE outlet "Pay open PO" tile
+//
+// Mirror of NCH pay-open-po (see nawabichaihouse-sit rectify.js). Scenario:
+// Zoya raises PO for HE vendor, delivery happens at HE outlet, Noor pays
+// cash from HE till. Atomic flow:
+//   1. Write he_v2_shift_expenses row with category_label='PO Settlement'
+//      and description '[PO P00xxx settled — Vendor]' → till cash drops
+//      for shift reconciliation.
+//   2. Cross-domain call to hnhotels.in/api/spend?action=settle-po → Odoo
+//      creates bill from PO + payment + reconciles.
+//
+// HE cash journal = id 10 (hard-coded per per-brand schema).
+// ══════════════════════════════════════════════════════════════════════
+const HN_SPEND_URL_HE = 'https://hnhotels.in/api/spend';
+
+async function listOpenPOsHE(url) {
+  const pin = url.searchParams.get('pin');
+  if (!pin) return json({ error: 'pin required' }, 400);
+  try {
+    const qs = `?action=purchase-ledger&pin=${encodeURIComponent(pin)}&brand=HE&from=2026-01-01&to=2030-12-31`;
+    const r = await fetch(`${HN_SPEND_URL_HE}${qs}`).then(x => x.json());
+    if (!r?.success) return json({ success: false, error: r?.error || 'ledger fetch failed' }, 500);
+    const openPOs = (r.rows || [])
+      .filter(row => row.kind === 'PO' && ['open-po', 'po-draft'].includes(row.state))
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .map(p => ({
+        po_id: p.odoo_id, po_name: p.odoo_name,
+        vendor_id: p.vendor?.id, vendor_name: p.vendor?.name,
+        date: p.date, amount: p.amount,
+        item: p.item_or_ref, state: p.state,
+      }));
+    return json({ success: true, pos: openPOs, count: openPOs.length });
+  } catch (e) {
+    return json({ success: false, error: `fetch failed: ${e.message}` }, 500);
+  }
+}
+
+async function payOpenPOHE(body, user, DB) {
+  if (!DB) return json({ error: 'DB not configured' }, 500);
+  const { shift_id, po_id, po_name, vendor_name, vendor_id, payment_amount,
+          payment_method_label, attachment } = body;
+
+  if (!user.can_reconcile && user.role !== 'cashier') {
+    return json({ error: 'Only cashier / captain / admin can pay POs' }, 403);
+  }
+  if (!shift_id) return json({ error: 'shift_id required' }, 400);
+  if (!po_id) return json({ error: 'po_id required' }, 400);
+  const amt = parseFloat(payment_amount);
+  if (!(amt > 0)) return json({ error: 'payment_amount > 0 required' }, 400);
+
+  const shift = await DB.prepare(`SELECT * FROM he_v2_shifts WHERE id = ?`).bind(shift_id).first();
+  if (!shift) return json({ error: 'Shift not found' }, 404);
+  if (shift.state === 'closed') return json({ error: 'Cannot record to closed shift' }, 400);
+
+  const now = istISO();
+  const description = `[PO ${po_name || '#' + po_id} settled${vendor_name ? ' — ' + vendor_name : ''}]${
+    payment_method_label ? ' · ' + payment_method_label : ''
+  }`;
+
+  // Step 1 — D1 till-cash drop FIRST (source of truth for shift settlement)
+  let d1Id;
+  try {
+    const result = await DB.prepare(
+      `INSERT INTO he_v2_shift_expenses
+         (shift_id, recorded_at, recorded_by_pin, recorded_by_name,
+          category_id, category_label, product_id, product_name,
+          vendor_id, vendor_name, amount, payment_method,
+          hnhotels_expense_id, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      shift_id, now, user.pin, user.name,
+      1, 'PO Settlement', null, po_name || null,
+      vendor_id || null, vendor_name || null,
+      amt, 'cash',
+      null, description
+    ).run();
+    d1Id = result.meta.last_row_id;
+  } catch (e) {
+    return json({ error: `Till cash record failed: ${e.message}` }, 500);
+  }
+
+  // Step 2 — Odoo settle-po (bill from PO + payment + reconcile)
+  const HE_CASH_JOURNAL = 10;
+  try {
+    const settleRes = await fetch(`${HN_SPEND_URL_HE}?action=settle-po`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pin: user.pin, brand: 'HE', po_id: parseInt(po_id, 10),
+        payment_amount: amt,
+        payment_journal_id: HE_CASH_JOURNAL,
+        payment_date: now.slice(0, 10),
+        payment_method_label: payment_method_label || `HE counter · ${user.name}`,
+        attachment: attachment || null,
+      }),
+    }).then(x => x.json());
+
+    if (!settleRes.success) {
+      return json({
+        success: true, partial_failure: true,
+        d1_id: d1Id,
+        odoo_error: settleRes.error || settleRes.payment_error || 'unknown',
+        message: 'Till cash dropped in D1 but Odoo settlement failed — retry from cockpit',
+      });
+    }
+
+    // Success — back-fill the D1 row with Odoo bill id for traceability
+    try {
+      await DB.prepare(
+        `UPDATE he_v2_shift_expenses SET hnhotels_expense_id = ? WHERE id = ?`
+      ).bind(settleRes.bill_id, d1Id).run();
+    } catch (_) {}
+
+    return json({
+      success: true,
+      d1_id: d1Id,
+      po_id: settleRes.po_id, po_name: settleRes.po_name,
+      bill_id: settleRes.bill_id,
+      payment_state: settleRes.payment_state,
+      amount_paid: settleRes.amount_paid,
+    });
+  } catch (e) {
+    return json({
+      success: true, partial_failure: true,
+      d1_id: d1Id,
+      odoo_error: `Network error: ${e.message}`,
+      message: 'Till cash dropped but Odoo call failed — retry later',
+    });
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────────
