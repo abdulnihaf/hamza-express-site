@@ -151,9 +151,9 @@
   .item-row .right { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; flex-shrink: 0; }
   .item-row .right .when { display:block; font-size:10px; color:var(--text-dim); font-weight:400; margin-top:2px; }
   /* Past-expenses date selector + grouped list */
-  .hist-chip { padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-family: inherit; }
-  .hist-chip:active { transform: scale(0.97); }
-  .hist-chip.active { background: rgba(232,147,12,0.15); border-color: rgba(232,147,12,0.5); color: #fbbf24; }
+  .hist-chip, .hist-chip-modal { padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-family: inherit; }
+  .hist-chip:active, .hist-chip-modal:active { transform: scale(0.97); }
+  .hist-chip.active, .hist-chip-modal.active { background: rgba(232,147,12,0.15); border-color: rgba(232,147,12,0.5); color: #fbbf24; }
   .hist-day-hdr { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0 6px; border-bottom: 1px solid var(--border); margin-top: 4px; }
   .hist-day-hdr .d { font-size:10px; font-weight:700; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px; }
   .hist-day-hdr .meta { font-size:10px; color:var(--text-dim); }
@@ -436,6 +436,22 @@
       <button class="modal-close" onclick="closeModal('expense-cats-modal')">✕</button>
       <div class="modal-title">Pick category</div>
       <div class="cat-grid" id="cat-grid">Loading…</div>
+
+      <!-- Past expenses (mirrors NCH /ops/v2/) — see what's already entered
+           BEFORE picking a category, to prevent duplicate re-entry -->
+      <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 8px;">
+          <div style="font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Past expenses</div>
+          <div style="font-size:10px; color:var(--text-dim); font-style:italic;">check before re-entering</div>
+        </div>
+        <div id="hist-chips-modal" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 10px;">
+          <button type="button" class="hist-chip-modal active" data-days="1"  onclick="setHistDaysModal(1)">Today</button>
+          <button type="button" class="hist-chip-modal"        data-days="2"  onclick="setHistDaysModal(2)">+ Yesterday</button>
+          <button type="button" class="hist-chip-modal"        data-days="7"  onclick="setHistDaysModal(7)">Last 7 days</button>
+          <button type="button" class="hist-chip-modal"        data-days="30" onclick="setHistDaysModal(30)">Last 30 days</button>
+        </div>
+        <div id="recent-expenses-modal" style="max-height: 320px; overflow-y: auto;">—</div>
+      </div>
     </div>
   </div>
 
@@ -907,14 +923,29 @@ function setHistDays(days) {
   loadHistoryExpenses();
 }
 async function loadHistoryExpenses() {
-  const target = $('recent-expenses');
+  return _loadHistoryInto('recent-expenses', HIST_DAYS);
+}
+// Modal-version (inside expense-cats-modal — mirrors NCH UX placement)
+let HIST_DAYS_MODAL = 1;
+function setHistDaysModal(days) {
+  HIST_DAYS_MODAL = days;
+  document.querySelectorAll('.hist-chip-modal').forEach(c =>
+    c.classList.toggle('active', String(c.dataset.days) === String(days))
+  );
+  loadHistoryExpensesModal();
+}
+async function loadHistoryExpensesModal() {
+  return _loadHistoryInto('recent-expenses-modal', HIST_DAYS_MODAL);
+}
+async function _loadHistoryInto(targetId, days) {
+  const target = document.getElementById(targetId);
   if (!target) return;
   target.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">Loading…</div>';
   try {
-    const r = await apiGet(`action=history-expenses&days=${HIST_DAYS}`);
+    const r = await apiGet(`action=history-expenses&days=${days}`);
     const items = r.expenses || [];
     if (!items.length) {
-      target.innerHTML = '<div class="hist-empty">No expenses recorded in this range.<br>Use the Expense button above to log one.</div>';
+      target.innerHTML = '<div class="hist-empty">No expenses recorded in this range.</div>';
       return;
     }
     // Group by IST date
@@ -1048,6 +1079,12 @@ async function openExpenseCategories() {
   if (!SHIFT) return toast('No shift open', 'err');
   $('cat-grid').innerHTML = 'Loading…';
   openModal('expense-cats-modal');
+  // Reset modal history view to today + load it
+  HIST_DAYS_MODAL = 1;
+  document.querySelectorAll('.hist-chip-modal').forEach(c =>
+    c.classList.toggle('active', c.dataset.days === '1')
+  );
+  loadHistoryExpensesModal();
   // Fetch categories via hnhotels.in verify-pin (returns user's visible cats)
   try {
     const r = await fetch(`${HN_SPEND}?action=verify-pin&pin=${USER.pin}`).then(x => x.json());
