@@ -149,6 +149,16 @@
   .item-row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .item-row .meta { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
   .item-row .right { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; flex-shrink: 0; }
+  .item-row .right .when { display:block; font-size:10px; color:var(--text-dim); font-weight:400; margin-top:2px; }
+  /* Past-expenses date selector + grouped list */
+  .hist-chip { padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-family: inherit; }
+  .hist-chip:active { transform: scale(0.97); }
+  .hist-chip.active { background: rgba(232,147,12,0.15); border-color: rgba(232,147,12,0.5); color: #fbbf24; }
+  .hist-day-hdr { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0 6px; border-bottom: 1px solid var(--border); margin-top: 4px; }
+  .hist-day-hdr .d { font-size:10px; font-weight:700; color:#fbbf24; text-transform:uppercase; letter-spacing:0.5px; }
+  .hist-day-hdr .meta { font-size:10px; color:var(--text-dim); }
+  .hist-day-hdr .meta b { color:var(--text); font-weight:700; font-variant-numeric: tabular-nums; }
+  .hist-empty { padding:18px 4px; color:var(--text-dim); font-size:12px; text-align:center; font-style:italic; }
 
   /* Quick actions */
   .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
@@ -326,9 +336,17 @@
         <div id="recent-handovers">—</div>
       </div>
 
-      <!-- Recent expenses -->
+      <!-- Past expenses (history view — across shifts, prevents duplicates) -->
       <div class="card">
-        <div class="card-title">Recent expenses</div>
+        <div class="card-title">Past expenses
+          <span style="font-size:11px;color:var(--text-dim);margin-left:8px;font-weight:400;">check before re-entering</span>
+        </div>
+        <div id="hist-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;">
+          <button type="button" class="hist-chip active" data-days="1"  onclick="setHistDays(1)">Today</button>
+          <button type="button" class="hist-chip"        data-days="2"  onclick="setHistDays(2)">+ Yesterday</button>
+          <button type="button" class="hist-chip"        data-days="7"  onclick="setHistDays(7)">Last 7 days</button>
+          <button type="button" class="hist-chip"        data-days="30" onclick="setHistDays(30)">Last 30 days</button>
+        </div>
         <div id="recent-expenses">—</div>
       </div>
 
@@ -874,20 +892,82 @@ function renderCashier() {
       </div>`).join('');
   }
 
-  // Recent expenses
-  const exps = (LIVE.expenses || []).slice(0, 5);
-  if (exps.length === 0) {
-    $('recent-expenses').innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">No expenses yet this shift.</div>';
-  } else {
-    $('recent-expenses').innerHTML = exps.map(e => `
-      <div class="item-row">
-        <div class="left">
-          <div class="name">${escapeHtml(e.product_name || '—')}</div>
-          <div class="meta">${escapeHtml(e.category_label || '—')}${e.vendor_name ? ' · ' + escapeHtml(e.vendor_name) : ''} · ${e.payment_method}${e.hnhotels_expense_id ? '' : ' · <span style="color: var(--yellow);">local-only</span>'}</div>
-        </div>
-        <div class="right">${fmtINR(e.amount)}</div>
-      </div>`).join('');
+  // Past expenses — date-aware history view
+  loadHistoryExpenses();
+}
+
+// History view — across shifts, prevents the "I think it didn't save"
+// re-entry pattern that caused 5 silent HE orphans (now healed).
+let HIST_DAYS = 1;
+function setHistDays(days) {
+  HIST_DAYS = days;
+  document.querySelectorAll('.hist-chip').forEach(c =>
+    c.classList.toggle('active', String(c.dataset.days) === String(days))
+  );
+  loadHistoryExpenses();
+}
+async function loadHistoryExpenses() {
+  const target = $('recent-expenses');
+  if (!target) return;
+  target.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">Loading…</div>';
+  try {
+    const r = await apiGet(`action=history-expenses&days=${HIST_DAYS}`);
+    const items = r.expenses || [];
+    if (!items.length) {
+      target.innerHTML = '<div class="hist-empty">No expenses recorded in this range.<br>Use the Expense button above to log one.</div>';
+      return;
+    }
+    // Group by IST date
+    const byDate = {};
+    for (const it of items) {
+      const d = it.ist_date || (it.recorded_at || '').slice(0, 10);
+      if (!byDate[d]) byDate[d] = [];
+      byDate[d].push(it);
+    }
+    const dates = Object.keys(byDate).sort().reverse();
+    let html = '';
+    for (const d of dates) {
+      const rows = byDate[d];
+      const total = rows.reduce((s, x) => s + (x.amount || 0), 0);
+      html += `<div class="hist-day-hdr"><span class="d">${niceDateLabel(d)}</span>
+                 <span class="meta">${rows.length} ${rows.length === 1 ? 'entry' : 'entries'} &middot; <b>${fmtINR(total)}</b></span></div>`;
+      for (const e of rows) {
+        const local = e.sync_status === 'local-only';
+        html += `<div class="item-row">
+          <div class="left">
+            <div class="name">${escapeHtml(e.product_name || e.category_label || '—')}</div>
+            <div class="meta">${escapeHtml(e.category_label || '—')}${e.vendor_name ? ' &middot; ' + escapeHtml(e.vendor_name) : ''} &middot; by ${escapeHtml(e.recorded_by_name || '?')} &middot; ${escapeHtml(e.payment_method || 'cash')}${local ? ' &middot; <span style="color:var(--yellow);">local-only</span>' : ''}</div>
+          </div>
+          <div class="right">${fmtINR(e.amount)}<span class="when">${fmtTimeOnly(e.recorded_at)}</span></div>
+        </div>`;
+      }
+    }
+    target.innerHTML = html;
+  } catch (e) {
+    target.innerHTML = '<div style="color: var(--text-dim); font-size: 12px;">Could not load.</div>';
   }
+}
+function niceDateLabel(ymd) {
+  if (!ymd) return '—';
+  const todayIST = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  const yIST = new Date(Date.now() + 5.5 * 3600 * 1000 - 86400000).toISOString().slice(0, 10);
+  if (ymd === todayIST) return `Today &middot; ${prettyDate(ymd)}`;
+  if (ymd === yIST)     return `Yesterday &middot; ${prettyDate(ymd)}`;
+  return prettyDate(ymd);
+}
+function prettyDate(ymd) {
+  const d = new Date(ymd + 'T00:00:00Z');
+  if (isNaN(d)) return ymd;
+  return d.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function fmtTimeOnly(s) {
+  if (!s) return '';
+  // HE recorded_at is IST-local string ('2026-04-24T00:59:14') — parse as IST
+  // by appending +05:30 if no TZ suffix
+  const t = /[zZ+\-]\d/.test(s) ? s : s + '+05:30';
+  const d = new Date(t);
+  if (isNaN(d)) return '';
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
 }
 
 // ══════════════════════════════════════════════════════════════════════

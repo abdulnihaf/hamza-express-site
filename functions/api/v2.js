@@ -122,6 +122,7 @@ export async function onRequest(context) {
       if (action === 'shift-live')     return await shiftLive(url, DB, apiKey);
       if (action === 'recent-handovers') return await recentHandovers(url, DB);
       if (action === 'recent-expenses')  return await recentExpenses(url, DB);
+      if (action === 'history-expenses') return await historyExpenses(url, DB);
       return json({ error: `Unknown GET action: ${action}` }, 400);
     }
 
@@ -537,6 +538,67 @@ async function recentExpenses(url, DB) {
   ).bind(shift.id).all();
   const total = (rows.results || []).reduce((s, r) => s + (r.amount || 0), 0);
   return json({ success: true, expenses: rows.results || [], total });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// GET: history-expenses
+// Cross-shift history view — surfaces what's already been entered so the
+// cashier doesn't re-key items they think didn't save.
+// Query: ?days=N (1..30, default 1=today only) OR ?from=YYYY-MM-DD&to=YYYY-MM-DD
+//
+// IMPORTANT: filters across ALL shifts (not bound to current shift) so Noor
+// can see Basheer's prior entries too. Brand-scoped (HE only by location).
+// ──────────────────────────────────────────────────────────────────────
+async function historyExpenses(url, DB) {
+  if (!DB) return json({ error: 'DB not configured' }, 500);
+
+  const daysParam = parseInt(url.searchParams.get('days') || '1', 10);
+  const days = Math.min(Math.max(isNaN(daysParam) ? 1 : daysParam, 1), 30);
+  const fromParam = url.searchParams.get('from');
+  const toParam   = url.searchParams.get('to');
+
+  // HE recorded_at is stored via istISO() — IST-local string like
+  // '2026-04-24T00:59:14' (no Z). Compare as strings with IST date prefix.
+  let startStr, endStr;
+  if (fromParam && toParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam) && /^\d{4}-\d{2}-\d{2}$/.test(toParam)) {
+    startStr = `${fromParam}T00:00:00`;
+    const toPlus1 = istNextDay(toParam);
+    endStr = `${toPlus1}T00:00:00`;
+  } else {
+    const todayIST = istTodayDate();
+    const fromIST = istShiftDate(todayIST, -(days - 1));
+    startStr = `${fromIST}T00:00:00`;
+    const toPlus1 = istNextDay(todayIST);
+    endStr = `${toPlus1}T00:00:00`;
+  }
+
+  const rows = await DB.prepare(
+    `SELECT id, shift_id, recorded_at, recorded_by_pin, recorded_by_name,
+            category_id, category_label, product_id, product_name,
+            vendor_id, vendor_name, amount, payment_method,
+            hnhotels_expense_id, notes
+       FROM he_v2_shift_expenses
+      WHERE recorded_at >= ? AND recorded_at < ?
+   ORDER BY recorded_at DESC`
+  ).bind(startStr, endStr).all();
+
+  const items = (rows.results || []).map(r => ({
+    ...r,
+    ist_date: (r.recorded_at || '').slice(0, 10),
+    sync_status: r.hnhotels_expense_id ? 'synced' : 'local-only',
+  }));
+  const total = items.reduce((s, r) => s + (r.amount || 0), 0);
+  return json({ success: true, expenses: items, total, days, from: fromParam, to: toParam });
+}
+
+function istTodayDate() {
+  return new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+}
+function istNextDay(ymd) {
+  return new Date(Date.parse(`${ymd}T00:00:00.000Z`) + 86400000).toISOString().slice(0, 10);
+}
+function istShiftDate(ymd, deltaDays) {
+  return new Date(Date.parse(`${ymd}T00:00:00.000Z`) + deltaDays * 86400000).toISOString().slice(0, 10);
 }
 
 // ──────────────────────────────────────────────────────────────────────
