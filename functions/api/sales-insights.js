@@ -15,7 +15,7 @@ export async function onRequest(context) {
   const ODOO_DB = 'main';
   const ODOO_UID = 2;
   const ODOO_API_KEY = context.env.ODOO_API_KEY;
-  const CONFIG_IDS = [5, 6]; // HE Cash Counter (5), HE Captain (6)
+  const CONFIG_IDS = [5, 6, 32]; // HE Cash Counter (5), HE Captain (6), Ground Floor Waiter Non-AC (32)
 
   // Timezone: input params are IST, Odoo stores UTC
   let fromUTC, toUTC;
@@ -166,7 +166,8 @@ function processInsights(orders, lines, payments, categories, paymentMethods, pr
   let totalRevenue = 0;
   const channelSales = {
     cashCounter: { amount: 0, orders: 0 },
-    captain: { amount: 0, orders: 0 }
+    captain: { amount: 0, orders: 0 },
+    groundFloor: { amount: 0, orders: 0 }
   };
   const hourlyData = {};
 
@@ -177,6 +178,9 @@ function processInsights(orders, lines, payments, categories, paymentMethods, pr
     if (configId === 6) {
       channelSales.captain.amount += order.amount_total;
       channelSales.captain.orders++;
+    } else if (configId === 32) {
+      channelSales.groundFloor.amount += order.amount_total;
+      channelSales.groundFloor.orders++;
     } else {
       channelSales.cashCounter.amount += order.amount_total;
       channelSales.cashCounter.orders++;
@@ -248,6 +252,10 @@ function processInsights(orders, lines, payments, categories, paymentMethods, pr
       captain: {
         ...channelSales.captain,
         percentage: totalRevenue > 0 ? Math.round((channelSales.captain.amount / totalRevenue) * 100) : 0
+      },
+      groundFloor: {
+        ...channelSales.groundFloor,
+        percentage: totalRevenue > 0 ? Math.round((channelSales.groundFloor.amount / totalRevenue) * 100) : 0
       }
     },
     payments: Object.values(paymentTotals).sort((a, b) => b.amount - a.amount).map(p => ({
@@ -270,7 +278,7 @@ function emptyData() {
   return {
     summary: { totalRevenue: 0, totalOrders: 0, totalQty: 0, avgOrderValue: 0, complimentary: { amount: 0, count: 0 } },
     topProducts: [], categories: [], products: [],
-    channels: { cashCounter: { amount: 0, orders: 0, percentage: 0 }, captain: { amount: 0, orders: 0, percentage: 0 } },
+    channels: { cashCounter: { amount: 0, orders: 0, percentage: 0 }, captain: { amount: 0, orders: 0, percentage: 0 }, groundFloor: { amount: 0, orders: 0, percentage: 0 } },
     payments: [],
     hourly: hourlyArray
   };
