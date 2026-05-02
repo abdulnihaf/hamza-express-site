@@ -1,0 +1,782 @@
+{
+  "_generated": "2026-05-02T22:49:11.284014",
+  "_environment": "production",
+  "tvs": {
+    "TV-V1": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo",
+        "Biryani_Combo"
+      ],
+      "ip": "192.168.31.113",
+      "playlist": "Menu Page 1",
+      "deviceId": "69a0bd975b9a6c146ac9dfae",
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Hero_C1_GheeRice_DalFry.jpg",
+        "stem": "Hero_C1_GheeRice_DalFry",
+        "ext": ".jpg",
+        "isImage": true,
+        "isVideo": false,
+        "size": 8563693,
+        "mtime": 1777718745,
+        "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.jpg"
+      }
+    },
+    "TV-V2": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "192.168.31.81",
+      "playlist": "Menu Page 2",
+      "deviceId": "69a0dd165b9a6c146ad84a85",
+      "playing": null
+    },
+    "TV-V3": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Shawarma"
+      ],
+      "ip": "192.168.31.135",
+      "playlist": "Menu Page 3",
+      "deviceId": "69a0dd165b9a6c146ad84a7d",
+      "playing": null
+    },
+    "TV-V4": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Sheek"
+      ],
+      "ip": "192.168.31.164",
+      "playlist": "KDS Bain Marie",
+      "deviceId": "69a060985b9a6c146a9dc94f",
+      "playing": null
+    },
+    "TV-H1": {
+      "orient": "horizontal",
+      "primaryConveyances": [
+        "Grill"
+      ],
+      "ip": "192.168.31.33",
+      "playlist": "KDS Kitchen Pass",
+      "deviceId": "69a05aad5b9a6c146a9ae416",
+      "playing": null
+    },
+    "TV-H2": {
+      "orient": "horizontal",
+      "primaryConveyances": [
+        "Outdoor"
+      ],
+      "ip": "192.168.31.103",
+      "playlist": "(unpaired)",
+      "deviceId": null,
+      "blocker": "License",
+      "playing": null
+    }
+  },
+  "conveyances": {
+    "GheeRice_Combo": {
+      "tv": "TV-V1",
+      "color": "#f59e0b",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "C1",
+          "name": "Ghee Rice + Dal Fry",
+          "originalPrice": 210,
+          "comboPrice": 149,
+          "save": 61
+        },
+        {
+          "code": "C2",
+          "name": "Ghee Rice + Dal Fry + 2pc Kabab",
+          "originalPrice": 280,
+          "comboPrice": 199,
+          "save": 81
+        },
+        {
+          "code": "C3",
+          "name": "Ghee Rice + Butter Chicken + 2pc Kabab",
+          "originalPrice": 380,
+          "comboPrice": 249,
+          "save": 131,
+          "smartPick": true
+        },
+        {
+          "code": "C4",
+          "name": "Ghee Rice + Mutton Chatpata + 2pc Kabab",
+          "originalPrice": 420,
+          "comboPrice": 289,
+          "save": 131
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Ghee_Rice",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Ghee_Rice.jpg",
+              "stem": "Item_Ghee_Rice",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2159188,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Ghee_Rice.jpg"
+            }
+          },
+          {
+            "id": "Item_Dal_Fry",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Dal_Fry.jpg",
+              "stem": "Item_Dal_Fry",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2111858,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Dal_Fry.jpg"
+            }
+          },
+          {
+            "id": "Item_Butter_Chicken",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Butter_Chicken.jpg",
+              "stem": "Item_Butter_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2194082,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Butter_Chicken.jpg"
+            }
+          },
+          {
+            "id": "Item_Mutton_Chatpata",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Mutton_Chatpata.jpg",
+              "stem": "Item_Mutton_Chatpata",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2327000,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Mutton_Chatpata.jpg"
+            }
+          },
+          {
+            "id": "Item_Chicken_Kebab",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Chicken_Kebab.jpg",
+              "stem": "Item_Chicken_Kebab",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2405664,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
+            }
+          }
+        ],
+        "done": 5,
+        "total": 5
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_C1_GheeRice_DalFry",
+            "desc": "Plated combo \u00b7 GR + Dal Fry + Salad",
+            "source": "real-photo",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C1_GheeRice_DalFry.jpg",
+              "stem": "Hero_C1_GheeRice_DalFry",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 8563693,
+              "mtime": 1777718745,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.jpg"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_C2_GheeRice_DalFry_Kebab",
+            "desc": "Plated combo \u00b7 GR + Dal Fry + Kabab plate",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C2_GheeRice_DalFry_Kebab.png",
+              "stem": "Hero_C2_GheeRice_DalFry_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 744982,
+              "mtime": 1777726570,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_C3_GheeRice_ButterChicken_Kebab",
+            "desc": "Plated combo \u00b7 GR + Butter Chicken + Kabab + Naan (SMART PICK)",
+            "source": "ai-edit",
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C3_GheeRice_ButterChicken_Kebab.png",
+              "stem": "Hero_C3_GheeRice_ButterChicken_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 729000,
+              "mtime": 1777730714,
+              "url": "assets/02_Hero_Images_WIP/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
+            "desc": "Plated combo \u00b7 GR + Mutton Chatpata + Kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_AllInOne_FullSpread",
+            "desc": "Hero spread for all-in-one creative",
+            "source": "real-photo",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_AllInOne_FullSpread.jpg",
+              "stem": "Hero_AllInOne_FullSpread",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 9026887,
+              "mtime": 1777718745,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_AllInOne_FullSpread.jpg"
+            },
+            "state": "LOCKED"
+          }
+        ],
+        "done": 3,
+        "total": 5
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V1_GR_AllInOne",
+            "desc": "All 4 combos in one decision-matrix view (high screen-time)",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Final_TV-V1_GR_VegPair",
+            "desc": "C1 + C2 side-by-side \u00b7 Veg ladder",
+            "scene": "S2",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Final_TV-V1_GR_ProteinPair",
+            "desc": "C3 + C4 side-by-side \u00b7 Protein ladder",
+            "scene": "S3",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 3
+      },
+      "overallPct": 46
+    },
+    "Biryani_Combo": {
+      "tv": "TV-V1",
+      "color": "#dc2626",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "C5",
+          "name": "Chicken Biryani + 2pc Kabab",
+          "originalPrice": 320,
+          "comboPrice": 229,
+          "save": 91
+        },
+        {
+          "code": "C6",
+          "name": "Mutton Biryani + 2pc Kabab",
+          "originalPrice": 410,
+          "comboPrice": 309,
+          "save": 101
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Chicken_Biryani",
+            "present": true,
+            "asset": {
+              "category": "Biryani_Combo",
+              "filename": "Item_Chicken_Biryani.jpg",
+              "stem": "Item_Chicken_Biryani",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2230532,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Biryani_Combo/Item_Chicken_Biryani.jpg"
+            }
+          },
+          {
+            "id": "Item_Mutton_Biryani",
+            "present": true,
+            "asset": {
+              "category": "Biryani_Combo",
+              "filename": "Item_Mutton_Biryani.jpg",
+              "stem": "Item_Mutton_Biryani",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2258197,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Biryani_Combo/Item_Mutton_Biryani.jpg"
+            }
+          },
+          {
+            "id": "Item_Chicken_Kebab",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Chicken_Kebab.jpg",
+              "stem": "Item_Chicken_Kebab",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2405664,
+              "mtime": 1777718745,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
+            }
+          }
+        ],
+        "done": 3,
+        "total": 3
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_C5_ChickenBiryani_Kebab",
+            "desc": "Chicken Biryani plated with kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_C6_MuttonBiryani_Kebab",
+            "desc": "Mutton Biryani plated with kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V1_Biryani_Pair",
+            "desc": "C5 + C6 side-by-side \u00b7 Biryani ladder",
+            "scene": "S4",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 30
+    },
+    "Kathi": {
+      "tv": "TV-V2",
+      "color": "#16a34a",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "K1",
+          "name": "Chicken Kathi",
+          "originalPrice": null,
+          "comboPrice": 139,
+          "save": null
+        },
+        {
+          "code": "K2",
+          "name": "Chicken Kathi + Egg",
+          "originalPrice": null,
+          "comboPrice": 159,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Chicken_Kathi",
+            "present": true,
+            "asset": {
+              "category": "Kathi",
+              "filename": "Item_Chicken_Kathi.jpg",
+              "stem": "Item_Chicken_Kathi",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 899174,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Kathi/Item_Chicken_Kathi.jpg"
+            }
+          },
+          {
+            "id": "Item_Kathi_Egg",
+            "present": true,
+            "asset": {
+              "category": "Kathi",
+              "filename": "Item_Kathi_Egg.jpg",
+              "stem": "Item_Kathi_Egg",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 899436,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Kathi/Item_Kathi_Egg.jpg"
+            }
+          }
+        ],
+        "done": 2,
+        "total": 2
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_K1_Chicken_Kathi",
+            "desc": "Chicken Kathi roll cross-section",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_K2_Kathi_Egg",
+            "desc": "Chicken Kathi + Egg roll cross-section",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V2_Kathi_Pair",
+            "desc": "K1 + K2 + 'First Bite' BUY 2 GET 1 FREE offer",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 22
+    },
+    "Shawarma": {
+      "tv": "TV-V3",
+      "color": "#0ea5e9",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "SH1",
+          "name": "Arabic Chicken Shawarma (roll)",
+          "originalPrice": null,
+          "comboPrice": 139,
+          "save": null
+        },
+        {
+          "code": "SH2",
+          "name": "Shawarma Plate",
+          "originalPrice": null,
+          "comboPrice": 219,
+          "save": null
+        },
+        {
+          "code": "SH-OFFER",
+          "name": "Office Lunch Power \u00b7 Plate + Drink",
+          "comboPrice": 249
+        }
+      ],
+      "references": {
+        "items": [],
+        "done": 0,
+        "total": 0
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_SH1_Shawarma_Roll",
+            "desc": "Levantine spit-roasted chicken shawarma roll cross-section",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_SH2_Shawarma_Plate",
+            "desc": "Shawarma plate with toum + pickles",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V3_Shawarma_Lunch",
+            "desc": "Shawarma + Office Lunch Power offer",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 0
+    },
+    "Sheek": {
+      "tv": "TV-V4",
+      "color": "#9333ea",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "SK1",
+          "name": "Mutton Sheekh Kabab Plate",
+          "originalPrice": null,
+          "comboPrice": 150,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Mutton_Sheek",
+            "present": true,
+            "asset": {
+              "category": "Sheek",
+              "filename": "Item_Mutton_Sheek.jpg",
+              "stem": "Item_Mutton_Sheek",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2217315,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Sheek/Item_Mutton_Sheek.jpg"
+            }
+          }
+        ],
+        "done": 1,
+        "total": 1
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_SK1_Mutton_Sheek_Plate",
+            "desc": "Cylindrical charcoal-grilled mutton sheekh on a plate",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V4_Sheek_Iftar",
+            "desc": "Iftar Hour \u00b7 Mutton Sheekh BUY 1 GET 1 FREE \u00b7 5-7pm",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 17
+    },
+    "Grill": {
+      "tv": "TV-H1",
+      "color": "#ea580c",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "GR1",
+          "name": "Grilled Chicken (Half)",
+          "originalPrice": null,
+          "comboPrice": 229,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Tandoori_Chicken",
+            "present": true,
+            "asset": {
+              "category": "Grill",
+              "filename": "Item_Tandoori_Chicken.jpg",
+              "stem": "Item_Tandoori_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2043191,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Grill/Item_Tandoori_Chicken.jpg"
+            }
+          },
+          {
+            "id": "Item_Grilled_Chicken",
+            "present": true,
+            "asset": {
+              "category": "Grill",
+              "filename": "Item_Grilled_Chicken.jpg",
+              "stem": "Item_Grilled_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2117264,
+              "mtime": 1777718781,
+              "url": "assets/01_Reference_Images/Grill/Item_Grilled_Chicken.jpg"
+            }
+          }
+        ],
+        "done": 2,
+        "total": 2
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_GR1_Grilled_Chicken_Horizontal",
+            "desc": "Whole bird charcoal-grilled, family setting",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-H1_Grill_FamilyHour",
+            "desc": "Family Power Hour \u00b7 BUY 1 GET 1 \u00b7 8-10pm",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 29
+    },
+    "Outdoor": {
+      "tv": "TV-H2",
+      "color": "#64748b",
+      "blocker": "License blocked \u00b7 awaiting PiSignage support",
+      "skus": [],
+      "references": {
+        "items": [],
+        "done": 0,
+        "total": 0
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_Outdoor_Hook",
+            "desc": "First-glance hook \u00b7 combo + 'NOW OPEN' for street traffic",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-H2_Outdoor_Hook",
+            "desc": "Outdoor facade hook \u00b7 Combo Meals from \u20b9149 \u00b7 INSIDE \u2192",
+            "scene": "static",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 0
+    }
+  },
+  "totals": {
+    "references": {
+      "done": 13,
+      "total": 13
+    },
+    "heroes": {
+      "done": 3,
+      "total": 14
+    },
+    "finals": {
+      "done": 0,
+      "total": 9
+    }
+  }
+}
