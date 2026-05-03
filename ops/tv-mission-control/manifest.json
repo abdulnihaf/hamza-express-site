@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T17:26:18.418901",
+  "_generated": "2026-05-03T17:29:33.280661",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -18,7 +18,7 @@
           "isImage": true,
           "isVideo": false,
           "size": 3128121,
-          "mtime": 1777809337,
+          "mtime": 1777809549,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_AllInOne"
@@ -30,8 +30,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 4557848,
-          "mtime": 1777809334,
+          "size": 4573975,
+          "mtime": 1777809546,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_ProteinPair.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_ProteinPair"
@@ -43,8 +43,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 5974539,
-          "mtime": 1777809317,
+          "size": 5696787,
+          "mtime": 1777809529,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_Single_C1.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_Single_C1"
@@ -56,8 +56,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 4207289,
-          "mtime": 1777809320,
+          "size": 4164461,
+          "mtime": 1777809533,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_Single_C2.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_Single_C2"
@@ -69,8 +69,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 4682191,
-          "mtime": 1777809324,
+          "size": 5220687,
+          "mtime": 1777809536,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_Single_C3.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_Single_C3"
@@ -82,8 +82,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 4168367,
-          "mtime": 1777809327,
+          "size": 4115271,
+          "mtime": 1777809539,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_Single_C4.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_Single_C4"
@@ -95,8 +95,8 @@
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
-          "size": 4492056,
-          "mtime": 1777809330,
+          "size": 4484055,
+          "mtime": 1777809543,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_VegPair"
@@ -111,7 +111,7 @@
         "isImage": true,
         "isVideo": false,
         "size": 3128121,
-        "mtime": 1777809337,
+        "mtime": 1777809549,
         "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png",
         "_state": "WIP_FINAL",
         "_id": "Final_TV-V1_GR_AllInOne"
@@ -402,7 +402,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 3128121,
-              "mtime": 1777809337,
+              "mtime": 1777809549,
               "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png"
             },
             "locked": null,
@@ -419,8 +419,8 @@
               "ext": ".png",
               "isImage": true,
               "isVideo": false,
-              "size": 4492056,
-              "mtime": 1777809330,
+              "size": 4484055,
+              "mtime": 1777809543,
               "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png"
             },
             "locked": null,
@@ -437,8 +437,8 @@
               "ext": ".png",
               "isImage": true,
               "isVideo": false,
-              "size": 4557848,
-              "mtime": 1777809334,
+              "size": 4573975,
+              "mtime": 1777809546,
               "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_ProteinPair.png"
             },
             "locked": null,
