@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T16:37:17.343210",
+  "_generated": "2026-05-03T16:42:04.010922",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -252,9 +252,19 @@
             "id": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
             "desc": "Plated combo \u00b7 GR + Mutton Chatpata + Kabab",
             "source": "ai-edit",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C4_GheeRice_MuttonChatpata_Kebab.png",
+              "stem": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 747890,
+              "mtime": 1777806677,
+              "url": "assets/02_Hero_Images_WIP/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           },
           {
             "id": "Hero_AllInOne_FullSpread",
