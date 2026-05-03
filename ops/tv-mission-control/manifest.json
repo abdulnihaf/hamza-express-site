@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T18:20:06.500616",
+  "_generated": "2026-05-03T18:50:49.065245",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -18,10 +18,23 @@
           "isImage": true,
           "isVideo": false,
           "size": 1961455,
-          "mtime": 1777812606,
+          "mtime": 1777814448,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v2_TV-V1_GR_Single_C3.png",
           "_state": "WIP_FINAL",
           "_id": "Final_v2_TV-V1_GR_Single_C3"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V1_GR_Single_C2.png",
+          "stem": "Final_v3_TV-V1_GR_Single_C2",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1995090,
+          "mtime": 1777814449,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v3_TV-V1_GR_Single_C2.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V1_GR_Single_C2"
         },
         {
           "category": "GheeRice_Combo",
@@ -85,7 +98,7 @@
         "isImage": true,
         "isVideo": false,
         "size": 1961455,
-        "mtime": 1777812606,
+        "mtime": 1777814448,
         "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v2_TV-V1_GR_Single_C3.png",
         "_state": "WIP_FINAL",
         "_id": "Final_v2_TV-V1_GR_Single_C3"
@@ -198,7 +211,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1414260,
-              "mtime": 1777812604,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Ghee_Rice.jpg"
             }
           },
@@ -213,7 +226,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1429522,
-              "mtime": 1777812604,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Dal_Fry.jpg"
             }
           },
@@ -228,7 +241,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1336203,
-              "mtime": 1777812603,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Butter_Chicken.jpg"
             }
           },
@@ -243,7 +256,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1479799,
-              "mtime": 1777812603,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Mutton_Chatpata.jpg"
             }
           },
@@ -258,7 +271,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1225393,
-              "mtime": 1777812604,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
             }
           }
@@ -281,7 +294,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 254132,
-              "mtime": 1777812606,
+              "mtime": 1777814448,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.jpg"
             },
             "state": "LOCKED"
@@ -299,7 +312,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 384816,
-              "mtime": 1777812605,
+              "mtime": 1777814448,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
             },
             "state": "LOCKED"
@@ -317,7 +330,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 419603,
-              "mtime": 1777812606,
+              "mtime": 1777814448,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
             },
             "state": "LOCKED"
@@ -335,7 +348,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 396124,
-              "mtime": 1777812605,
+              "mtime": 1777814448,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
             },
             "state": "LOCKED"
@@ -353,7 +366,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 283467,
-              "mtime": 1777812605,
+              "mtime": 1777814447,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_AllInOne_FullSpread.jpg"
             },
             "state": "LOCKED"
@@ -427,7 +440,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1168628,
-              "mtime": 1777812601,
+              "mtime": 1777814444,
               "url": "assets/01_Reference_Images/Biryani_Combo/Item_Chicken_Biryani.jpg"
             }
           },
@@ -442,7 +455,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1167167,
-              "mtime": 1777812601,
+              "mtime": 1777814444,
               "url": "assets/01_Reference_Images/Biryani_Combo/Item_Mutton_Biryani.jpg"
             }
           },
@@ -457,7 +470,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1225393,
-              "mtime": 1777812604,
+              "mtime": 1777814446,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
             }
           }
@@ -671,7 +684,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1511225,
-              "mtime": 1777812603,
+              "mtime": 1777814445,
               "url": "assets/01_Reference_Images/Sheek/Item_Mutton_Sheek.jpg"
             }
           }
@@ -735,7 +748,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1186267,
-              "mtime": 1777812602,
+              "mtime": 1777814444,
               "url": "assets/01_Reference_Images/Grill/Item_Tandoori_Chicken.jpg"
             }
           },
@@ -750,7 +763,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1454180,
-              "mtime": 1777812602,
+              "mtime": 1777814444,
               "url": "assets/01_Reference_Images/Grill/Item_Grilled_Chicken.jpg"
             }
           }
