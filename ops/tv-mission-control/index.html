@@ -93,9 +93,9 @@
     cursor: pointer;
   }
   .asset-card:hover { transform: translateY(-2px); border-color: var(--gold); }
-  .asset-card img { width: 100%; aspect-ratio: 9/16; object-fit: cover; background: #000; }
-  .asset-card-h img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
-  .asset-card-1 img { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #000; }
+  .asset-card img, .asset-card video { width: 100%; aspect-ratio: 9/16; object-fit: cover; background: #000; }
+  .asset-card-h img, .asset-card-h video { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
+  .asset-card-1 img, .asset-card-1 video { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #000; }
 
   .badge {
     display: inline-flex; align-items: center; padding: 2px 8px;
@@ -144,6 +144,8 @@
   .modal-bg.active { display: flex; }
   .modal-content { background: var(--surface); border-radius: 12px; max-width: 1400px; max-height: 92vh; width: 100%; overflow: auto; padding: 24px; }
   .modal-img { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; background: #000; }
+  .modal-video { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; background: #000; }
+  .video-badge { position: absolute; top: 8px; right: 8px; background: rgba(245,158,11,0.95); color: #1c0a02; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; pointer-events: none; z-index: 5; }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -311,11 +313,19 @@ function renderWall() {
     let nowPlayingHTML = "";
     let dotsHTML = "";
     if (playlist.length > 0) {
-      // Render each slide as a layered img, will rotate via JS
-      bodyHTML = playlist.map((p, i) => `
-        <img class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}" alt="${p.filename}"
-             style="position: absolute; inset: 0; opacity: ${i === 0 ? 1 : 0};" />
-      `).join("");
+      // Render each slide as a layered img/video, rotate via JS opacity toggling
+      bodyHTML = playlist.map((p, i) => {
+        const isVid = p.isVideo || (p.ext && p.ext.toLowerCase() === ".mp4");
+        const opacity = i === 0 ? 1 : 0;
+        if (isVid) {
+          return `<video class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}"
+                  autoplay muted loop playsinline preload="auto"
+                  style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: ${opacity};"></video>
+                  ${i === 0 ? '<span class="video-badge">▶ VIDEO</span>' : ''}`;
+        }
+        return `<img class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}" alt="${p.filename}"
+                 style="position: absolute; inset: 0; opacity: ${opacity};" />`;
+      }).join("");
       nowPlayingHTML = `<div class="tv-now-playing" data-tv="${tvId}">
         <span class="np-name">${playlist[0]._id || playlist[0].filename}</span>
         ${stateBadge(playlist[0]._state)}
@@ -464,8 +474,12 @@ function renderAssetGrid() {
     if (a.state === "WIP") badgeCls = "badge-wip";
     if (a.state === "LIVE") badgeCls = "badge-live";
     if (a.state === "PRESENT") badgeCls = "badge-locked";
+    const isVidCard = a.isVideo || (a.ext && a.ext.toLowerCase() === ".mp4");
+    const mediaCard = isVidCard
+      ? `<div style="position: relative;"><video src="${a.url}" muted loop playsinline preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause(); this.currentTime=0;"></video><span class="video-badge">▶</span></div>`
+      : `<img loading="lazy" decoding="async" src="${a.url}" alt="${a.filename}" />`;
     card.innerHTML = `
-      <img loading="lazy" decoding="async" src="${a.url}" alt="${a.filename}" />
+      ${mediaCard}
       <div class="p-2">
         <div class="text-[10px] truncate text-cream/90">${a.id || a.stem}</div>
         <div class="flex items-center justify-between mt-1">
@@ -494,7 +508,10 @@ function openModal(url, filename, fullAsset) {
     if (fullAsset.kind) metaParts.push(fullAsset.kind);
   }
   document.getElementById("modal-meta").textContent = metaParts.join(" · ");
-  document.getElementById("modal-body").innerHTML = `<img class="modal-img mx-auto" src="${url}" alt="${filename}" />`;
+  const isVidModal = (fullAsset && fullAsset.isVideo) || /\.mp4$/i.test(filename);
+  document.getElementById("modal-body").innerHTML = isVidModal
+    ? `<video class="modal-video mx-auto" src="${url}" autoplay muted loop playsinline controls></video>`
+    : `<img class="modal-img mx-auto" src="${url}" alt="${filename}" />`;
   modal.classList.add("active");
 }
 function closeModal() {
