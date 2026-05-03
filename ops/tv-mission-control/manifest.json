@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T17:04:09.734991",
+  "_generated": "2026-05-03T17:15:40.173977",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -9,19 +9,62 @@
         "Biryani_Combo"
       ],
       "ip": "192.168.31.113",
-      "playlist": "Menu Page 1",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_TV-V1_GR_AllInOne.png",
+          "stem": "Final_TV-V1_GR_AllInOne",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2266762,
+          "mtime": 1777807979,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_TV-V1_GR_AllInOne"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_TV-V1_GR_ProteinPair.png",
+          "stem": "Final_TV-V1_GR_ProteinPair",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 4569101,
+          "mtime": 1777807986,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_ProteinPair.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_TV-V1_GR_ProteinPair"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_TV-V1_GR_VegPair.png",
+          "stem": "Final_TV-V1_GR_VegPair",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 4508274,
+          "mtime": 1777807983,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_TV-V1_GR_VegPair"
+        }
+      ],
       "deviceId": "69a0bd975b9a6c146ac9dfae",
       "playing": {
         "category": "GheeRice_Combo",
-        "filename": "Hero_C1_GheeRice_DalFry.jpg",
-        "stem": "Hero_C1_GheeRice_DalFry",
-        "ext": ".jpg",
+        "filename": "Final_TV-V1_GR_AllInOne.png",
+        "stem": "Final_TV-V1_GR_AllInOne",
+        "ext": ".png",
         "isImage": true,
         "isVideo": false,
-        "size": 8563693,
-        "mtime": 1777718745,
-        "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.jpg"
-      }
+        "size": 2266762,
+        "mtime": 1777807979,
+        "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_TV-V1_GR_AllInOne"
+      },
+      "playing_state": "WIP_FINAL"
     },
     "TV-V2": {
       "orient": "vertical",
@@ -29,9 +72,10 @@
         "Kathi"
       ],
       "ip": "192.168.31.81",
-      "playlist": "Menu Page 2",
+      "playlist": [],
       "deviceId": "69a0dd165b9a6c146ad84a85",
-      "playing": null
+      "playing": null,
+      "playing_state": null
     },
     "TV-V3": {
       "orient": "vertical",
@@ -39,9 +83,10 @@
         "Shawarma"
       ],
       "ip": "192.168.31.135",
-      "playlist": "Menu Page 3",
+      "playlist": [],
       "deviceId": "69a0dd165b9a6c146ad84a7d",
-      "playing": null
+      "playing": null,
+      "playing_state": null
     },
     "TV-V4": {
       "orient": "vertical",
@@ -49,9 +94,10 @@
         "Sheek"
       ],
       "ip": "192.168.31.164",
-      "playlist": "KDS Bain Marie",
+      "playlist": [],
       "deviceId": "69a060985b9a6c146a9dc94f",
-      "playing": null
+      "playing": null,
+      "playing_state": null
     },
     "TV-H1": {
       "orient": "horizontal",
@@ -59,9 +105,10 @@
         "Grill"
       ],
       "ip": "192.168.31.33",
-      "playlist": "KDS Kitchen Pass",
+      "playlist": [],
       "deviceId": "69a05aad5b9a6c146a9ae416",
-      "playing": null
+      "playing": null,
+      "playing_state": null
     },
     "TV-H2": {
       "orient": "horizontal",
@@ -69,10 +116,11 @@
         "Outdoor"
       ],
       "ip": "192.168.31.103",
-      "playlist": "(unpaired)",
+      "playlist": [],
       "deviceId": null,
       "blocker": "License",
-      "playing": null
+      "playing": null,
+      "playing_state": null
     }
   },
   "conveyances": {

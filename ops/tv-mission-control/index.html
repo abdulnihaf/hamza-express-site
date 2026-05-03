@@ -294,28 +294,69 @@ function renderWall() {
     const playing = tv.playing;
     const conveyances = (tv.primaryConveyances || []).join(" · ");
 
+    const playlist = tv.playlist || (playing ? [playing] : []);
+    const stateBadge = (state) => {
+      if (state === "LIVE") return `<span class="badge badge-live">DEPLOYED</span>`;
+      if (state === "WIP_FINAL") return `<span class="badge badge-wip">PREVIEW · WIP</span>`;
+      if (state === "HERO_PLACEHOLDER") return `<span class="badge badge-missing">HERO ONLY</span>`;
+      return "";
+    };
+
     let bodyHTML = `<div class="tv-empty-state">
       <div>
         <div class="text-lg mb-1 opacity-30">▣</div>
-        <div>No locked creative<br/>${tv.blocker || "Pending generation"}</div>
+        <div>No creative<br/>${tv.blocker || "Pending generation"}</div>
       </div>
     </div>`;
-    if (playing) {
-      bodyHTML = `<img class="tv-screen-content" src="${playing.url}" alt="${playing.filename}" onerror="this.style.display='none'" />`;
+    let nowPlayingHTML = "";
+    let dotsHTML = "";
+    if (playlist.length > 0) {
+      // Render each slide as a layered img, will rotate via JS
+      bodyHTML = playlist.map((p, i) => `
+        <img class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}" alt="${p.filename}"
+             style="position: absolute; inset: 0; opacity: ${i === 0 ? 1 : 0};" />
+      `).join("");
+      nowPlayingHTML = `<div class="tv-now-playing" data-tv="${tvId}">
+        <span class="np-name">${playlist[0]._id || playlist[0].filename}</span>
+        ${stateBadge(playlist[0]._state)}
+      </div>`;
+      if (playlist.length > 1) {
+        dotsHTML = `<div class="tv-slide-indicator">
+          ${playlist.map((p, i) => `<div class="tv-slide-dot ${i === 0 ? 'active' : ''}" data-i="${i}"></div>`).join("")}
+        </div>`;
+      }
     }
 
     mount.innerHTML = `
       <div class="tv-label">${tvId} · ${conveyances}</div>
-      <div class="${tvClass}">
+      <div class="${tvClass}" data-tv="${tvId}" data-slides="${playlist.length}">
         ${bodyHTML}
+        ${dotsHTML}
+        ${nowPlayingHTML}
         <span class="tv-status-dot" style="color: ${dotColor}; background: ${dotColor}"></span>
       </div>
       <div class="text-center mt-2 text-xs">
         <span class="font-mono text-slate">${tv.ip || "—"}</span>
-        ${tv.blocker ? `<span class="badge badge-blocked ml-2">${tv.blocker}</span>` : `<span class="badge badge-live ml-2">LIVE</span>`}
+        ${tv.blocker ? `<span class="badge badge-blocked ml-2">${tv.blocker}</span>` : `<span class="badge badge-live ml-2">${playlist.length} slide${playlist.length !== 1 ? 's' : ''}</span>`}
       </div>
     `;
   });
+
+  // Start slideshow rotation for any TV with multiple slides
+  if (window.__SLIDESHOW_TIMER) clearInterval(window.__SLIDESHOW_TIMER);
+  let tickCount = 0;
+  window.__SLIDESHOW_TIMER = setInterval(() => {
+    tickCount++;
+    document.querySelectorAll('[data-slides]').forEach(tv => {
+      const total = parseInt(tv.dataset.slides);
+      if (total <= 1) return;
+      const current = tickCount % total;
+      const slides = tv.querySelectorAll('.tv-slide');
+      slides.forEach(s => s.style.opacity = parseInt(s.dataset.slide) === current ? 1 : 0);
+      const dots = tv.querySelectorAll('.tv-slide-dot');
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    });
+  }, 4000);
 }
 
 function renderPipeline() {
