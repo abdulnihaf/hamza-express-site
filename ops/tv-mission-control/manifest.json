@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T18:50:49.065245",
+  "_generated": "2026-05-03T19:36:16.854357",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -12,96 +12,31 @@
       "playlist": [
         {
           "category": "GheeRice_Combo",
-          "filename": "Final_v2_TV-V1_GR_Single_C3.png",
-          "stem": "Final_v2_TV-V1_GR_Single_C3",
-          "ext": ".png",
-          "isImage": true,
-          "isVideo": false,
-          "size": 1961455,
-          "mtime": 1777814448,
-          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v2_TV-V1_GR_Single_C3.png",
-          "_state": "WIP_FINAL",
-          "_id": "Final_v2_TV-V1_GR_Single_C3"
-        },
-        {
-          "category": "GheeRice_Combo",
           "filename": "Final_v3_TV-V1_GR_Single_C2.png",
           "stem": "Final_v3_TV-V1_GR_Single_C2",
           "ext": ".png",
           "isImage": true,
           "isVideo": false,
           "size": 1995090,
-          "mtime": 1777814449,
+          "mtime": 1777817176,
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v3_TV-V1_GR_Single_C2.png",
           "_state": "WIP_FINAL",
           "_id": "Final_v3_TV-V1_GR_Single_C2"
-        },
-        {
-          "category": "GheeRice_Combo",
-          "filename": "Video_TV-V1_GR_C1.mp4",
-          "stem": "Video_TV-V1_GR_C1",
-          "ext": ".mp4",
-          "isImage": false,
-          "isVideo": true,
-          "size": 2050318,
-          "mtime": 1777809853,
-          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C1.mp4",
-          "_state": "WIP_FINAL",
-          "_id": "Video_TV-V1_GR_C1"
-        },
-        {
-          "category": "GheeRice_Combo",
-          "filename": "Video_TV-V1_GR_C2.mp4",
-          "stem": "Video_TV-V1_GR_C2",
-          "ext": ".mp4",
-          "isImage": false,
-          "isVideo": true,
-          "size": 1661381,
-          "mtime": 1777809841,
-          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C2.mp4",
-          "_state": "WIP_FINAL",
-          "_id": "Video_TV-V1_GR_C2"
-        },
-        {
-          "category": "GheeRice_Combo",
-          "filename": "Video_TV-V1_GR_C3.mp4",
-          "stem": "Video_TV-V1_GR_C3",
-          "ext": ".mp4",
-          "isImage": false,
-          "isVideo": true,
-          "size": 2756310,
-          "mtime": 1777809741,
-          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C3.mp4",
-          "_state": "WIP_FINAL",
-          "_id": "Video_TV-V1_GR_C3"
-        },
-        {
-          "category": "GheeRice_Combo",
-          "filename": "Video_TV-V1_GR_C4.mp4",
-          "stem": "Video_TV-V1_GR_C4",
-          "ext": ".mp4",
-          "isImage": false,
-          "isVideo": true,
-          "size": 2534672,
-          "mtime": 1777809845,
-          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C4.mp4",
-          "_state": "WIP_FINAL",
-          "_id": "Video_TV-V1_GR_C4"
         }
       ],
       "deviceId": "69a0bd975b9a6c146ac9dfae",
       "playing": {
         "category": "GheeRice_Combo",
-        "filename": "Final_v2_TV-V1_GR_Single_C3.png",
-        "stem": "Final_v2_TV-V1_GR_Single_C3",
+        "filename": "Final_v3_TV-V1_GR_Single_C2.png",
+        "stem": "Final_v3_TV-V1_GR_Single_C2",
         "ext": ".png",
         "isImage": true,
         "isVideo": false,
-        "size": 1961455,
-        "mtime": 1777814448,
-        "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v2_TV-V1_GR_Single_C3.png",
+        "size": 1995090,
+        "mtime": 1777817176,
+        "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v3_TV-V1_GR_Single_C2.png",
         "_state": "WIP_FINAL",
-        "_id": "Final_v2_TV-V1_GR_Single_C3"
+        "_id": "Final_v3_TV-V1_GR_Single_C2"
       },
       "playing_state": "WIP_FINAL"
     },
@@ -211,7 +146,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1414260,
-              "mtime": 1777814446,
+              "mtime": 1777817175,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Ghee_Rice.jpg"
             }
           },
@@ -226,7 +161,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1429522,
-              "mtime": 1777814446,
+              "mtime": 1777817174,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Dal_Fry.jpg"
             }
           },
@@ -241,7 +176,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1336203,
-              "mtime": 1777814446,
+              "mtime": 1777817174,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Butter_Chicken.jpg"
             }
           },
@@ -256,7 +191,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1479799,
-              "mtime": 1777814446,
+              "mtime": 1777817174,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Mutton_Chatpata.jpg"
             }
           },
@@ -271,7 +206,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1225393,
-              "mtime": 1777814446,
+              "mtime": 1777817174,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
             }
           }
@@ -294,7 +229,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 254132,
-              "mtime": 1777814448,
+              "mtime": 1777817176,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.jpg"
             },
             "state": "LOCKED"
@@ -312,7 +247,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 384816,
-              "mtime": 1777814448,
+              "mtime": 1777817176,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
             },
             "state": "LOCKED"
@@ -330,7 +265,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 419603,
-              "mtime": 1777814448,
+              "mtime": 1777817176,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
             },
             "state": "LOCKED"
@@ -348,7 +283,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 396124,
-              "mtime": 1777814448,
+              "mtime": 1777817176,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
             },
             "state": "LOCKED"
@@ -366,7 +301,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 283467,
-              "mtime": 1777814447,
+              "mtime": 1777817176,
               "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_AllInOne_FullSpread.jpg"
             },
             "state": "LOCKED"
@@ -440,7 +375,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1168628,
-              "mtime": 1777814444,
+              "mtime": 1777817172,
               "url": "assets/01_Reference_Images/Biryani_Combo/Item_Chicken_Biryani.jpg"
             }
           },
@@ -455,7 +390,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1167167,
-              "mtime": 1777814444,
+              "mtime": 1777817172,
               "url": "assets/01_Reference_Images/Biryani_Combo/Item_Mutton_Biryani.jpg"
             }
           },
@@ -470,7 +405,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1225393,
-              "mtime": 1777814446,
+              "mtime": 1777817174,
               "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
             }
           }
@@ -684,7 +619,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1511225,
-              "mtime": 1777814445,
+              "mtime": 1777817173,
               "url": "assets/01_Reference_Images/Sheek/Item_Mutton_Sheek.jpg"
             }
           }
@@ -748,7 +683,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1186267,
-              "mtime": 1777814444,
+              "mtime": 1777817172,
               "url": "assets/01_Reference_Images/Grill/Item_Tandoori_Chicken.jpg"
             }
           },
@@ -763,7 +698,7 @@
               "isImage": true,
               "isVideo": false,
               "size": 1454180,
-              "mtime": 1777814444,
+              "mtime": 1777817172,
               "url": "assets/01_Reference_Images/Grill/Item_Grilled_Chicken.jpg"
             }
           }
