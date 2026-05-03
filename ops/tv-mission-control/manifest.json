@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T16:54:05.222014",
+  "_generated": "2026-05-03T17:04:09.734991",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -294,25 +294,55 @@
             "id": "Final_TV-V1_GR_AllInOne",
             "desc": "All 4 combos in one decision-matrix view (high screen-time)",
             "scene": "S1",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_TV-V1_GR_AllInOne.png",
+              "stem": "Final_TV-V1_GR_AllInOne",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2266762,
+              "mtime": 1777807979,
+              "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_AllInOne.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           },
           {
             "id": "Final_TV-V1_GR_VegPair",
             "desc": "C1 + C2 side-by-side \u00b7 Veg ladder",
             "scene": "S2",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_TV-V1_GR_VegPair.png",
+              "stem": "Final_TV-V1_GR_VegPair",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 4508274,
+              "mtime": 1777807983,
+              "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           },
           {
             "id": "Final_TV-V1_GR_ProteinPair",
             "desc": "C3 + C4 side-by-side \u00b7 Protein ladder",
             "scene": "S3",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_TV-V1_GR_ProteinPair.png",
+              "stem": "Final_TV-V1_GR_ProteinPair",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 4569101,
+              "mtime": 1777807986,
+              "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_ProteinPair.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           }
         ],
         "done": 0,
