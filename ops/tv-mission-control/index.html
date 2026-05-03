@@ -408,7 +408,7 @@ function stageHTML(label, stage, kind) {
       badgeCls = state === "LOCKED" || state === "LIVE" ? "badge-locked" : (state === "WIP" ? "badge-wip" : "badge-missing");
     }
     const thumb = asset ?
-      `<img src="${asset.url}" class="w-10 h-10 object-cover rounded cursor-pointer" onclick="openModal('${asset.url}', '${asset.filename.replace(/'/g, "\\'")}')" />` :
+      `<img loading="lazy" decoding="async" src="${asset.url}" class="w-10 h-10 object-cover rounded cursor-pointer" onclick="openModal('${asset.url}', '${asset.filename.replace(/'/g, "\\'")}')" />` :
       `<div class="w-10 h-10 rounded surface flex items-center justify-center text-slate text-xs">—</div>`;
     return `
       <div class="flex items-center gap-2 py-1">
@@ -465,7 +465,7 @@ function renderAssetGrid() {
     if (a.state === "LIVE") badgeCls = "badge-live";
     if (a.state === "PRESENT") badgeCls = "badge-locked";
     card.innerHTML = `
-      <img src="${a.url}" alt="${a.filename}" />
+      <img loading="lazy" decoding="async" src="${a.url}" alt="${a.filename}" />
       <div class="p-2">
         <div class="text-[10px] truncate text-cream/90">${a.id || a.stem}</div>
         <div class="flex items-center justify-between mt-1">
