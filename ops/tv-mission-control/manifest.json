@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T17:35:26.585594",
+  "_generated": "2026-05-03T18:11:45.575657",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -100,6 +100,19 @@
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_VegPair"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v2_TV-V1_GR_Single_C3.png",
+          "stem": "Final_v2_TV-V1_GR_Single_C3",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 4594857,
+          "mtime": 1777812019,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_v2_TV-V1_GR_Single_C3.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v2_TV-V1_GR_Single_C3"
         },
         {
           "category": "GheeRice_Combo",
