@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T17:29:33.280661",
+  "_generated": "2026-05-03T17:35:26.585594",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -100,6 +100,58 @@
           "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Final_TV-V1_GR_VegPair.png",
           "_state": "WIP_FINAL",
           "_id": "Final_TV-V1_GR_VegPair"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_TV-V1_GR_C1.mp4",
+          "stem": "Video_TV-V1_GR_C1",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2050318,
+          "mtime": 1777809853,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C1.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_TV-V1_GR_C1"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_TV-V1_GR_C2.mp4",
+          "stem": "Video_TV-V1_GR_C2",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 1661381,
+          "mtime": 1777809841,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C2.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_TV-V1_GR_C2"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_TV-V1_GR_C3.mp4",
+          "stem": "Video_TV-V1_GR_C3",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2756310,
+          "mtime": 1777809741,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C3.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_TV-V1_GR_C3"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_TV-V1_GR_C4.mp4",
+          "stem": "Video_TV-V1_GR_C4",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2534672,
+          "mtime": 1777809845,
+          "url": "assets/03_Final_Creatives_WIP/GheeRice_Combo/Video_TV-V1_GR_C4.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_TV-V1_GR_C4"
         }
       ],
       "deviceId": "69a0bd975b9a6c146ac9dfae",
