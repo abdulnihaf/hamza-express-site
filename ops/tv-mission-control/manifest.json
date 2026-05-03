@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-05-03T16:42:04.010922",
+  "_generated": "2026-05-03T16:54:05.222014",
   "_environment": "production",
   "tvs": {
     "TV-V1": {
@@ -216,7 +216,8 @@
             "id": "Hero_C2_GheeRice_DalFry_Kebab",
             "desc": "Plated combo \u00b7 GR + Dal Fry + Kabab plate",
             "source": "ai-edit",
-            "wip": {
+            "wip": null,
+            "locked": {
               "category": "GheeRice_Combo",
               "filename": "Hero_C2_GheeRice_DalFry_Kebab.png",
               "stem": "Hero_C2_GheeRice_DalFry_Kebab",
@@ -225,16 +226,16 @@
               "isVideo": false,
               "size": 727014,
               "mtime": 1777806032,
-              "url": "assets/02_Hero_Images_WIP/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
             },
-            "locked": null,
-            "state": "WIP"
+            "state": "LOCKED"
           },
           {
             "id": "Hero_C3_GheeRice_ButterChicken_Kebab",
             "desc": "Plated combo \u00b7 GR + Butter Chicken + Kabab + Naan (SMART PICK)",
             "source": "ai-edit",
-            "wip": {
+            "wip": null,
+            "locked": {
               "category": "GheeRice_Combo",
               "filename": "Hero_C3_GheeRice_ButterChicken_Kebab.png",
               "stem": "Hero_C3_GheeRice_ButterChicken_Kebab",
@@ -243,16 +244,16 @@
               "isVideo": false,
               "size": 765234,
               "mtime": 1777806322,
-              "url": "assets/02_Hero_Images_WIP/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
             },
-            "locked": null,
-            "state": "WIP"
+            "state": "LOCKED"
           },
           {
             "id": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
             "desc": "Plated combo \u00b7 GR + Mutton Chatpata + Kabab",
             "source": "ai-edit",
-            "wip": {
+            "wip": null,
+            "locked": {
               "category": "GheeRice_Combo",
               "filename": "Hero_C4_GheeRice_MuttonChatpata_Kebab.png",
               "stem": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
@@ -261,10 +262,9 @@
               "isVideo": false,
               "size": 747890,
               "mtime": 1777806677,
-              "url": "assets/02_Hero_Images_WIP/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
             },
-            "locked": null,
-            "state": "WIP"
+            "state": "LOCKED"
           },
           {
             "id": "Hero_AllInOne_FullSpread",
@@ -285,7 +285,7 @@
             "state": "LOCKED"
           }
         ],
-        "done": 2,
+        "done": 5,
         "total": 5
       },
       "finals": {
@@ -318,7 +318,7 @@
         "done": 0,
         "total": 3
       },
-      "overallPct": 38
+      "overallPct": 62
     },
     "Biryani_Combo": {
       "tv": "TV-V1",
@@ -781,7 +781,7 @@
       "total": 13
     },
     "heroes": {
-      "done": 2,
+      "done": 5,
       "total": 14
     },
     "finals": {
