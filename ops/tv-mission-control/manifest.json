@@ -343,6 +343,82 @@
       },
       "playing_state": "WIP_FINAL"
     },
+    "TV-V8": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+          "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1678015,
+          "mtime": 1777950000,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V8_GR_VegPair_C1_C2"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+        "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1678015,
+        "mtime": 1777950000,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V8_GR_VegPair_C1_C2"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V9": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Biryani_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Biryani_Combo",
+          "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+          "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1669201,
+          "mtime": 1777950000,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V9_Biryani_Pair_C5_C6"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Biryani_Combo",
+        "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+        "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1669201,
+        "mtime": 1777950000,
+        "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V9_Biryani_Pair_C5_C6"
+      },
+      "playing_state": "WIP_FINAL"
+    },
     "TV-H1": {
       "orient": "horizontal",
       "primaryConveyances": [
@@ -594,9 +670,19 @@
             "id": "Final_TV-V1_GR_VegPair",
             "desc": "C1 + C2 side-by-side \u00b7 Veg ladder",
             "scene": "S2",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+              "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1678015,
+              "mtime": 1777950000,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           },
           {
             "id": "Final_TV-V1_GR_ProteinPair",
@@ -617,10 +703,10 @@
             "state": "WIP"
           }
         ],
-        "done": 1,
+        "done": 2,
         "total": 3
       },
-      "overallPct": 70
+      "overallPct": 78
     },
     "Biryani_Combo": {
       "tv": "TV-V5 \u00b7 TV-V6",
@@ -721,15 +807,25 @@
             "id": "Final_TV-V1_Biryani_Pair",
             "desc": "C5 + C6 side-by-side \u00b7 Biryani ladder",
             "scene": "S4",
-            "wip": null,
+            "wip": {
+              "category": "Biryani_Combo",
+              "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+              "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1669201,
+              "mtime": 1777950000,
+              "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           }
         ],
-        "done": 0,
+        "done": 1,
         "total": 1
       },
-      "overallPct": 30
+      "overallPct": 50
     },
     "Kathi": {
       "tv": "TV-V2",
@@ -1067,7 +1163,7 @@
       "total": 14
     },
     "finals": {
-      "done": 1,
+      "done": 3,
       "total": 9
     }
   }
