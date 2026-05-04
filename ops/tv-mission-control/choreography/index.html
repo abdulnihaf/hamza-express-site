@@ -601,7 +601,7 @@ python3 $ENGINE lan-sync            <span style="color:#94a3b8"># tighten drift 
   </div>
 
   <!-- Phase 2 grid -->
-  <h3 class="sub mb-3">The cross-mapping · Phase 2 · 17 cells (16 unique creatives)</h3>
+  <h3 class="sub mb-3">The cross-mapping · Phase 2 · 20 cells · 50s loop · DEPLOYED</h3>
   <div class="flex gap-6 mb-4">
     <div class="legend-pill"><span class="dot" style="background:#475569"></span>STATIC</div>
     <div class="legend-pill"><span class="dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444"></span>VIDEO (motion)</div>
@@ -718,17 +718,17 @@ python3 $ENGINE lan-sync            <span style="color:#94a3b8"># tighten drift 
     </div>
 
     <!-- ─── SLOT 3 ─── -->
-    <div style="display:grid; grid-template-columns: 110px repeat(4, 1fr); gap: 10px;">
+    <div style="display:grid; grid-template-columns: 110px repeat(4, 1fr); gap: 10px; margin-bottom: 14px;">
       <div class="slot-label">
         <div class="t">SLOT 3</div>
         <div>30–40s</div>
-        <div class="m">▶ V2 + V4</div>
+        <div class="m">▶ V4</div>
       </div>
       <div class="cell tv-vertical" style="border-color:#a855f7">
-        <video class="tv-screen" src="../assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4" autoplay loop muted playsinline></video>
-        <div class="cell-type video">▶ KATHI VIDEO</div>
+        <img class="tv-screen" src="../assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png" alt="KT">
+        <div class="cell-type pair">KATHI</div>
         <div class="cell-tag">KT</div>
-        <div class="cell-meta" style="color:#e9d5ff">KT cinemagraph · char glow</div>
+        <div class="cell-meta" style="color:#e9d5ff">Tikka Kathi · premium</div>
       </div>
       <div class="cell tv-vertical">
         <img class="tv-screen" src="../assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png" alt="ProteinPair">
@@ -749,109 +749,154 @@ python3 $ENGINE lan-sync            <span style="color:#94a3b8"># tighten drift 
         <div class="cell-meta">Ghee Rice · ₹149 motion</div>
       </div>
     </div>
+
+    <!-- ─── SLOT 4 ─── -->
+    <div style="display:grid; grid-template-columns: 110px repeat(4, 1fr); gap: 10px;">
+      <div class="slot-label">
+        <div class="t">SLOT 4</div>
+        <div>40–50s</div>
+        <div class="m">▶ V2 + V4</div>
+      </div>
+      <div class="cell tv-vertical" style="border-color:#a855f7">
+        <video class="tv-screen" src="../assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4" autoplay loop muted playsinline></video>
+        <div class="cell-type video">▶ KATHI VIDEO</div>
+        <div class="cell-tag">KT</div>
+        <div class="cell-meta" style="color:#e9d5ff">KT cinemagraph · char glow</div>
+      </div>
+      <div class="cell tv-vertical">
+        <img class="tv-screen" src="../assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V2_C1_GheeRice_DalFry.png" alt="C1">
+        <div class="cell-type static">STATIC</div>
+        <div class="cell-tag">C1</div>
+        <div class="cell-meta">Ghee Rice ₹149 · value pop</div>
+      </div>
+      <div class="cell tv-vertical">
+        <img class="tv-screen" src="../assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png" alt="VegPair">
+        <div class="cell-type pair">PAIR</div>
+        <div class="cell-tag">VEG</div>
+        <div class="cell-meta">VegPair · C1 vs C2</div>
+      </div>
+      <div class="cell tv-vertical">
+        <video class="tv-screen" src="../assets/DESKTOP_FINAL/GheeRice_Combo/Video_v3_TV-V1_C2_GheeRice_DalFry_Kabab.mp4" autoplay loop muted playsinline></video>
+        <div class="cell-type video">▶ VIDEO</div>
+        <div class="cell-tag">C2</div>
+        <div class="cell-meta">Ghee+Dal+Kabab ₹199 motion</div>
+      </div>
+    </div>
   </div>
 
   <!-- Motion rotation Phase 2 -->
-  <h3 class="sub mt-8 mb-3">Motion rotation · Phase 2</h3>
+  <h3 class="sub mt-8 mb-3">Motion rotation · Phase 2 · 50s loop</h3>
   <p class="text-sm text-cream/70 mb-4 max-w-3xl">
-    V2 now carries 2 videos (using both Kathi cinemagraphs). Slot 3 has dual motion (V2 + V4) instead of V4 alone — customer's gaze ends the loop on left + counter together, then resets.
+    Loop expanded from 4 slots × 10s (40s) to 5 slots × 10s (50s) to use 20 of 21 creatives in library.
+    8 motions per loop (was 6). New rhythm:
+    <span class="font-mono text-amber-400">V1+V3 → V2 → V1+V3 → V4 → V2+V4 → loop</span>.
   </p>
 
   <div class="surface rounded p-5 space-y-2">
-    <div class="motion-track">
+    <style>.motion-track-5 { display: grid; grid-template-columns: 110px repeat(5, 1fr); gap: 6px; align-items: center; }
+           .motion-track-5 .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cream); padding-left: 12px; }</style>
+    <div class="motion-track-5">
       <div class="label text-amber-400">SLOT</div>
       <div class="motion-cell" style="background:#000;color:#f59e0b;font-weight:700">SLOT 0 · 0–10s</div>
       <div class="motion-cell" style="background:#000;color:#f59e0b;font-weight:700">SLOT 1 · 10–20s</div>
       <div class="motion-cell" style="background:#000;color:#f59e0b;font-weight:700">SLOT 2 · 20–30s</div>
       <div class="motion-cell" style="background:#000;color:#f59e0b;font-weight:700">SLOT 3 · 30–40s</div>
+      <div class="motion-cell" style="background:#000;color:#f59e0b;font-weight:700">SLOT 4 · 40–50s</div>
     </div>
-    <div class="motion-track">
+    <div class="motion-track-5">
       <div class="label" style="color:#a855f7">V2 LEFT · KATHI</div>
-      <div class="motion-cell off">static</div>
+      <div class="motion-cell off">S_K1 anchor</div>
       <div class="motion-cell on" style="background:#a855f7;box-shadow:0 0 12px rgba(168,85,247,0.5)">▶ K1 video</div>
-      <div class="motion-cell off">static</div>
+      <div class="motion-cell off">KathiPair</div>
+      <div class="motion-cell off">S_KT premium</div>
       <div class="motion-cell on" style="background:#a855f7;box-shadow:0 0 12px rgba(168,85,247,0.5)">▶ KT video</div>
     </div>
-    <div class="motion-track">
+    <div class="motion-track-5">
       <div class="label">V1 CENTER</div>
-      <div class="motion-cell on">▶ video</div>
-      <div class="motion-cell off">static</div>
-      <div class="motion-cell on">▶ video</div>
-      <div class="motion-cell off">static</div>
+      <div class="motion-cell on">▶ V_C3</div>
+      <div class="motion-cell off">AllInOne</div>
+      <div class="motion-cell on">▶ V_C6</div>
+      <div class="motion-cell off">ProteinPair</div>
+      <div class="motion-cell off">S_C1 pop</div>
     </div>
-    <div class="motion-track">
+    <div class="motion-track-5">
       <div class="label">V3 RIGHT</div>
-      <div class="motion-cell on">▶ video</div>
-      <div class="motion-cell off">static</div>
-      <div class="motion-cell on">▶ video</div>
-      <div class="motion-cell off">static</div>
+      <div class="motion-cell on">▶ V_C5</div>
+      <div class="motion-cell off">S_C6</div>
+      <div class="motion-cell on">▶ V_C4</div>
+      <div class="motion-cell off">BiryaniPair</div>
+      <div class="motion-cell off">VegPair</div>
     </div>
-    <div class="motion-track">
+    <div class="motion-track-5">
       <div class="label">V4 BAIN MARIE</div>
-      <div class="motion-cell off">static</div>
-      <div class="motion-cell off">static</div>
-      <div class="motion-cell off">static</div>
-      <div class="motion-cell on">▶ video</div>
+      <div class="motion-cell off">S_C4</div>
+      <div class="motion-cell off">S_C5</div>
+      <div class="motion-cell off">S_C3</div>
+      <div class="motion-cell on">▶ V_C1</div>
+      <div class="motion-cell on">▶ V_C2</div>
     </div>
   </div>
 
   <!-- Phase 2 inventory -->
-  <h3 class="sub mt-8 mb-3">Inventory · Phase 2 · 21 creatives in library, 16 in active scene</h3>
+  <h3 class="sub mt-8 mb-3">Inventory · Phase 2 · 21 creatives in library · 20 in active scene · 1 reserved</h3>
   <div class="grid grid-cols-3 gap-6">
     <div class="surface p-5 rounded" style="border-left:3px solid #a855f7">
-      <h3 class="sub" style="color:#a855f7">5 KATHI · NEW</h3>
+      <h3 class="sub" style="color:#a855f7">5 KATHI · ALL USED ON V2</h3>
       <ol class="text-xs font-mono space-y-1 text-cream/85 list-decimal pl-5">
-        <li>Final_v3_TV-V11_K1_Chicken_Kathi.png</li>
-        <li>Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png</li>
-        <li>Final_v3_TV-V13_Kathi_Pair_K1_KT.png</li>
-        <li class="text-red-400">Video_v3_TV-V11_K1_Chicken_Kathi.mp4 (8s)</li>
-        <li class="text-red-400">Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4 (8s)</li>
+        <li>S_K1 Chicken Kathi (₹90 anchor) · slot 0</li>
+        <li class="text-red-400">V_K1 cinemagraph (steam wisps) · slot 1</li>
+        <li class="text-purple-400">S_KathiPair (K1 vs KT) · slot 2</li>
+        <li>S_KT Chicken Tikka Kathi (premium) · slot 3</li>
+        <li class="text-red-400">V_KT cinemagraph (char glow) · slot 4</li>
       </ol>
-      <div class="mt-3 text-xs text-cream/60">All 5 used on V2. Loop becomes 4×10s = 40s; videos fill 8s and last frame holds 2s.</div>
+      <div class="mt-3 text-xs text-cream/60">All 5 Kathi creatives used. Videos are 8s; in 10s slots, last frame holds 2s — natural cinemagraph pause.</div>
     </div>
     <div class="surface p-5 rounded">
       <h3 class="sub text-amber-400">10 STATICS · COMBOS</h3>
       <ol class="text-xs font-mono space-y-1 text-cream/85 list-decimal pl-5">
-        <li>C1 single (₹149)</li>
-        <li>C2 single (₹199) <span class="text-cream/40">· not used in P2</span></li>
-        <li>C3 single (₹249)</li>
-        <li>C4 single (₹289)</li>
-        <li>C5 single (₹229)</li>
-        <li>C6 single (₹309)</li>
-        <li class="text-purple-400">VegPair (C1+C2) <span class="text-cream/40">· not used in P2</span></li>
-        <li class="text-purple-400">ProteinPair (C3+C4)</li>
-        <li class="text-purple-400">BiryaniPair (C5+C6)</li>
-        <li class="text-purple-400">AllInOne (C1–C4)</li>
+        <li class="text-emerald-400">C1 single (₹149) · V1 slot 4 · V4 not used (was on V2)</li>
+        <li class="text-cream/40">C2 single (₹199) · RESERVED for daypart</li>
+        <li class="text-emerald-400">C3 single (₹249) · V4 slot 2</li>
+        <li class="text-emerald-400">C4 single (₹289) · V4 slot 0</li>
+        <li class="text-emerald-400">C5 single (₹229) · V4 slot 1</li>
+        <li class="text-emerald-400">C6 single (₹309) · V3 slot 1</li>
+        <li class="text-purple-400">VegPair (C1+C2) · V3 slot 4</li>
+        <li class="text-purple-400">ProteinPair (C3+C4) · V1 slot 3</li>
+        <li class="text-purple-400">BiryaniPair (C5+C6) · V3 slot 3</li>
+        <li class="text-purple-400">AllInOne (C1–C4) · V1 slot 1</li>
       </ol>
-      <div class="mt-3 text-xs text-cream/60">2 statics drop out (C1, C2 single, VegPair) when V2 leaves combos.</div>
+      <div class="mt-3 text-xs text-cream/60">9 of 10 combo statics used. C2 single reserved for daypart scenes (e.g. lunch_rush, iftar_hour).</div>
     </div>
     <div class="surface p-5 rounded">
-      <h3 class="sub text-red-400">6 VIDEOS · COMBOS</h3>
+      <h3 class="sub text-red-400">6 VIDEOS · COMBOS · ALL USED</h3>
       <ol class="text-xs font-mono space-y-1 text-cream/85 list-decimal pl-5">
-        <li class="text-red-400">V_C1 (Ghee Rice) · used on V4</li>
-        <li class="text-cream/40">V_C2 (Ghee+Dal+Kabab) · NOT USED in P2</li>
-        <li class="text-red-400">V_C3 (Smart Pick) · used on V1</li>
-        <li class="text-red-400">V_C4 (Mutton Chatpata) · used on V3</li>
-        <li class="text-red-400">V_C5 (Chicken Biryani) · used on V3</li>
-        <li class="text-red-400">V_C6 (Mutton Biryani) · used on V1</li>
+        <li class="text-red-400">V_C1 (Ghee Rice) · V4 slot 3</li>
+        <li class="text-red-400">V_C2 (Ghee+Dal+Kabab) · V4 slot 4 (motion close)</li>
+        <li class="text-red-400">V_C3 (Smart Pick) · V1 slot 0 (hero)</li>
+        <li class="text-red-400">V_C4 (Mutton Chatpata) · V3 slot 2</li>
+        <li class="text-red-400">V_C5 (Chicken Biryani) · V3 slot 0</li>
+        <li class="text-red-400">V_C6 (Mutton Biryani) · V1 slot 2 (premium)</li>
       </ol>
-      <div class="mt-3 text-xs text-cream/60">5 of 6 combo videos used. V_C2 reserves for future scenes (e.g. lunch_rush daypart).</div>
+      <div class="mt-3 text-xs text-cream/60">All 6 combo videos used. V_C2 added at V4 slot 4 (the new 5th slot) for the dual-motion close.</div>
     </div>
   </div>
 
   <!-- Phase 2 deploy commands -->
-  <h3 class="sub mt-8 mb-3">Deploy commands · Phase 2</h3>
+  <h3 class="sub mt-8 mb-3">Deploy commands · Phase 2 · DEPLOYED</h3>
+  <p class="text-sm text-cream/70 mb-3">
+    Last deploy: <span class="font-mono text-emerald-400">restart spread 4ms</span> across all 4 TVs (tightest cloud-mode sync recorded).
+  </p>
   <pre class="code">cd /Users/nihaf/Documents/Tech/HN-Hotels-Site/.claude/worktrees/optimistic-elion-2712b1
 ENGINE=projects/pisignage-hamza-express/engine/ps_engine.py
-SCENE=projects/pisignage-hamza-express/scenes/psychology_v3_kathi.json   <span style="color:#94a3b8"># to be authored once kathi assets land</span>
+SCENE=projects/pisignage-hamza-express/scenes/psychology_v3_kathi.json
 
-<span style="color:#a855f7"># 1. Confirm 5 Kathi creatives in PiSignage library:</span>
-python3 $ENGINE files | grep -E "Kathi|TV-V1[1-3]"
+<span style="color:#a855f7"># Verify all 21 creatives in PiSignage library:</span>
+python3 $ENGINE files | grep -E "Kathi|Video_v3_TV-V1[1-2]"
 
-<span style="color:#a855f7"># 2. Validate + dry-run + deploy:</span>
-python3 $ENGINE compile $SCENE
-python3 $ENGINE deploy  $SCENE
-python3 $ENGINE sync</pre>
+<span style="color:#a855f7"># Re-deploy (idempotent — playlists overwrite, hard-cut animation enforced, parallel resync):</span>
+python3 $ENGINE deploy $SCENE
+python3 $ENGINE sync                  <span style="color:#94a3b8"># gated coordinated restart, ~37s gate + 4-500ms restart</span>
+python3 $ENGINE audit                 <span style="color:#94a3b8"># confirm all 4 TVs on correct playlists</span></pre>
 </section>
 
 <footer class="text-center text-xs font-mono text-cream/50 pt-4 pb-12">
