@@ -457,6 +457,120 @@
       },
       "playing_state": "WIP_FINAL"
     },
+    "TV-V11": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+          "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1452477,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V11_K1_Chicken_Kathi"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+        "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1452477,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V11_K1_Chicken_Kathi"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V12": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+          "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1479164,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+        "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1479164,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V13": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+          "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1849588,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V13_Kathi_Pair_K1_KT"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+        "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1849588,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V13_Kathi_Pair_K1_KT"
+      },
+      "playing_state": "WIP_FINAL"
+    },
     "TV-H1": {
       "orient": "horizontal",
       "primaryConveyances": [
@@ -882,16 +996,16 @@
       "skus": [
         {
           "code": "K1",
-          "name": "Chicken Kathi",
+          "name": "Chicken Kathi Roll",
           "originalPrice": null,
-          "comboPrice": 139,
+          "comboPrice": 90,
           "save": null
         },
         {
-          "code": "K2",
-          "name": "Chicken Kathi + Egg",
+          "code": "KT",
+          "name": "Chicken Tikka Kathi Roll",
           "originalPrice": null,
-          "comboPrice": 159,
+          "comboPrice": 100,
           "save": null
         }
       ],
@@ -899,8 +1013,18 @@
         "items": [
           {
             "id": "Item_Chicken_Kathi",
-            "present": false,
-            "asset": null
+            "present": true,
+            "asset": {
+              "category": "Kathi",
+              "filename": "Item_Chicken_Kathi.jpg",
+              "stem": "Item_Chicken_Kathi",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 150992,
+              "mtime": 1777960000,
+              "url": "assets/01_Reference_Images/Kathi/Item_Chicken_Kathi.jpg"
+            }
           },
           {
             "id": "Item_Kathi_Egg",
@@ -908,46 +1032,112 @@
             "asset": null
           }
         ],
-        "done": 0,
+        "done": 1,
         "total": 2
       },
       "heroes": {
         "items": [
           {
             "id": "Hero_K1_Chicken_Kathi",
-            "desc": "Chicken Kathi roll cross-section",
+            "desc": "Branded wrapped chicken kathi roll",
             "source": "ai-edit",
             "wip": null,
-            "locked": null,
-            "state": "MISSING"
+            "locked": {
+              "category": "Kathi",
+              "filename": "Hero_K1_Chicken_Kathi.png",
+              "stem": "Hero_K1_Chicken_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 782865,
+              "mtime": 1777960000,
+              "url": "assets/02_Hero_Images_LOCKED/Kathi/Hero_K1_Chicken_Kathi.png"
+            },
+            "state": "LOCKED"
           },
           {
-            "id": "Hero_K2_Kathi_Egg",
-            "desc": "Chicken Kathi + Egg roll cross-section",
+            "id": "Hero_KT_Chicken_Tikka_Kathi",
+            "desc": "Branded wrapped chicken tikka kathi roll",
             "source": "ai-edit",
             "wip": null,
-            "locked": null,
-            "state": "MISSING"
+            "locked": {
+              "category": "Kathi",
+              "filename": "Hero_KT_Chicken_Tikka_Kathi.png",
+              "stem": "Hero_KT_Chicken_Tikka_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 815436,
+              "mtime": 1777960000,
+              "url": "assets/02_Hero_Images_LOCKED/Kathi/Hero_KT_Chicken_Tikka_Kathi.png"
+            },
+            "state": "LOCKED"
           }
         ],
-        "done": 0,
+        "done": 2,
         "total": 2
       },
       "finals": {
         "items": [
           {
-            "id": "Final_TV-V2_Kathi_Pair",
-            "desc": "K1 + K2 + 'First Bite' BUY 2 GET 1 FREE offer",
+            "id": "Final_TV-V11_K1_Chicken_Kathi",
+            "desc": "Single page \u00b7 Chicken Kathi Roll @ \u20b990",
             "scene": "S1",
-            "wip": null,
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+              "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1452477,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V12_KT_Chicken_Tikka_Kathi",
+            "desc": "Single page \u00b7 Chicken Tikka Kathi Roll @ \u20b9100",
+            "scene": "S2",
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+              "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1479164,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V13_Kathi_Pair_K1_KT",
+            "desc": "Pair \u00b7 K1 + KT side-by-side",
+            "scene": "S3",
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+              "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1849588,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png"
+            },
+            "locked": null,
+            "state": "WIP"
           }
         ],
-        "done": 0,
-        "total": 1
+        "done": 3,
+        "total": 3
       },
-      "overallPct": 0
+      "overallPct": 100
     },
     "Shawarma": {
       "tv": "TV-V3",
@@ -1203,15 +1393,15 @@
   },
   "totals": {
     "references": {
-      "done": 11,
+      "done": 12,
       "total": 13
     },
     "heroes": {
-      "done": 5,
+      "done": 7,
       "total": 14
     },
     "finals": {
-      "done": 4,
+      "done": 7,
       "total": 9
     }
   }
