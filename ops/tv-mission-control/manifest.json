@@ -305,6 +305,44 @@
       },
       "playing_state": "LIVE"
     },
+    "TV-V7": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+          "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1808335,
+          "mtime": 1777938031,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V7_GR_ProteinPair_C3_C4"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+        "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1808335,
+        "mtime": 1777938031,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V7_GR_ProteinPair_C3_C4"
+      },
+      "playing_state": "WIP_FINAL"
+    },
     "TV-H1": {
       "orient": "horizontal",
       "primaryConveyances": [
@@ -564,15 +602,25 @@
             "id": "Final_TV-V1_GR_ProteinPair",
             "desc": "C3 + C4 side-by-side \u00b7 Protein ladder",
             "scene": "S3",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+              "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 6585777,
+              "mtime": 1777938031,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           }
         ],
-        "done": 0,
+        "done": 1,
         "total": 3
       },
-      "overallPct": 62
+      "overallPct": 70
     },
     "Biryani_Combo": {
       "tv": "TV-V5 \u00b7 TV-V6",
@@ -1019,7 +1067,7 @@
       "total": 14
     },
     "finals": {
-      "done": 0,
+      "done": 1,
       "total": 9
     }
   }
