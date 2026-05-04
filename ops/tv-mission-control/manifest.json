@@ -476,6 +476,19 @@
           "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png",
           "_state": "WIP_FINAL",
           "_id": "Final_v3_TV-V11_K1_Chicken_Kathi"
+        },
+        {
+          "category": "Kathi",
+          "filename": "Video_v3_TV-V11_K1_Chicken_Kathi.mp4",
+          "stem": "Video_v3_TV-V11_K1_Chicken_Kathi",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2197970,
+          "mtime": 1777965000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V11_K1_Chicken_Kathi.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_v3_TV-V11_K1_Chicken_Kathi"
         }
       ],
       "deviceId": null,
@@ -514,6 +527,19 @@
           "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
           "_state": "WIP_FINAL",
           "_id": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+        },
+        {
+          "category": "Kathi",
+          "filename": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4",
+          "stem": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2633440,
+          "mtime": 1777965000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi"
         }
       ],
       "deviceId": null,
