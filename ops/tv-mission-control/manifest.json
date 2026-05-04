@@ -419,6 +419,44 @@
       },
       "playing_state": "WIP_FINAL"
     },
+    "TV-V10": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+          "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2209931,
+          "mtime": 1777951000,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+        "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 2209931,
+        "mtime": 1777951000,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4"
+      },
+      "playing_state": "WIP_FINAL"
+    },
     "TV-H1": {
       "orient": "horizontal",
       "primaryConveyances": [
@@ -662,9 +700,19 @@
             "id": "Final_TV-V1_GR_AllInOne",
             "desc": "All 4 combos in one decision-matrix view (high screen-time)",
             "scene": "S1",
-            "wip": null,
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+              "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 2209931,
+              "mtime": 1777951000,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png"
+            },
             "locked": null,
-            "state": "MISSING"
+            "state": "WIP"
           },
           {
             "id": "Final_TV-V1_GR_VegPair",
@@ -703,10 +751,10 @@
             "state": "WIP"
           }
         ],
-        "done": 2,
+        "done": 3,
         "total": 3
       },
-      "overallPct": 78
+      "overallPct": 95
     },
     "Biryani_Combo": {
       "tv": "TV-V5 \u00b7 TV-V6",
@@ -1163,7 +1211,7 @@
       "total": 14
     },
     "finals": {
-      "done": 3,
+      "done": 4,
       "total": 9
     }
   }
