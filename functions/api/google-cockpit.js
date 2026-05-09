@@ -61,7 +61,10 @@ export async function onRequest(context) {
     // NOTE: Campaign overview is split into 2 queries:
     //   - Basic metrics (impressions/clicks/spend) — reliable even with new campaigns
     //   - Position metrics (impression share) — may return null on new campaigns, handled gracefully
-    const [adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus, negativeData] = await Promise.all([
+    const [
+      adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus, negativeData,
+      allCampaignsData, userListsData, customAudData, sharedSetsData, sharedCritData
+    ] = await Promise.all([
 
       // 1. Ad group breakdown — source of truth for aggregate metrics
       query(`
@@ -153,7 +156,123 @@ export async function onRequest(context) {
           AND campaign_criterion.type = 'KEYWORD'
           AND campaign_criterion.negative = true
       `),
+
+      // 8. ALL campaigns on the account — shows old paused + new PMax + any others
+      query(`
+        SELECT
+          campaign.id, campaign.name, campaign.status, campaign.serving_status,
+          campaign.advertising_channel_type, campaign.advertising_channel_sub_type,
+          campaign.start_date, campaign.end_date,
+          campaign_budget.amount_micros
+        FROM campaign
+        ORDER BY campaign.id DESC
+      `),
+
+      // 9. Customer Match user lists (audience signals for PMax)
+      query(`
+        SELECT
+          user_list.id, user_list.name, user_list.description,
+          user_list.size_for_display, user_list.size_for_search,
+          user_list.membership_status, user_list.membership_life_span,
+          user_list.crm_based_user_list.upload_key_type,
+          user_list.read_only
+        FROM user_list
+        WHERE user_list.read_only = false
+        ORDER BY user_list.id DESC
+      `),
+
+      // 10. Custom audiences (keyword-based intent segments)
+      query(`
+        SELECT
+          custom_audience.id, custom_audience.name, custom_audience.description,
+          custom_audience.status, custom_audience.type
+        FROM custom_audience
+        WHERE custom_audience.status != 'REMOVED'
+      `),
+
+      // 11. Shared sets (negative keyword lists, etc.)
+      query(`
+        SELECT
+          shared_set.id, shared_set.name, shared_set.type,
+          shared_set.member_count, shared_set.reference_count, shared_set.status
+        FROM shared_set
+        WHERE shared_set.status != 'REMOVED'
+      `),
+
+      // 12. Shared criteria — actual keywords inside the shared sets
+      query(`
+        SELECT
+          shared_set.id, shared_set.name,
+          shared_criterion.keyword.text, shared_criterion.keyword.match_type,
+          shared_criterion.type
+        FROM shared_criterion
+        WHERE shared_set.status != 'REMOVED'
+        LIMIT 200
+      `),
     ]);
+
+    // Build the audience-layer view (PMax signals + lookalike seed + neg list)
+    const allCampaigns = allCampaignsData.map(r => {
+      const c = r.campaign || {};
+      const b = r.campaignBudget || {};
+      return {
+        id: c.id,
+        name: c.name,
+        status: c.status,
+        servingStatus: c.servingStatus,
+        channelType: c.advertisingChannelType,
+        channelSubType: c.advertisingChannelSubType,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        budgetINR: b.amountMicros ? +(parseInt(b.amountMicros) / 1e6).toFixed(0) : null,
+      };
+    });
+
+    const userLists = userListsData.map(r => {
+      const u = r.userList || {};
+      return {
+        id: u.id,
+        name: u.name,
+        description: u.description,
+        sizeForDisplay: parseInt(u.sizeForDisplay) || 0,
+        sizeForSearch: parseInt(u.sizeForSearch) || 0,
+        membershipStatus: u.membershipStatus,
+        membershipLifeSpan: u.membershipLifeSpan,
+        uploadKeyType: u.crmBasedUserList?.uploadKeyType,
+      };
+    });
+
+    const customAudiences = customAudData.map(r => {
+      const c = r.customAudience || {};
+      return {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        status: c.status,
+        type: c.type,
+      };
+    });
+
+    // Build shared sets with their criteria attached (group sharedCritData by sharedSet.id)
+    const critsBySetId = sharedCritData.reduce((acc, r) => {
+      const setId = r.sharedSet?.id;
+      const kw = r.sharedCriterion?.keyword?.text;
+      if (!setId || !kw) return acc;
+      if (!acc[setId]) acc[setId] = [];
+      acc[setId].push({ text: kw, matchType: r.sharedCriterion.keyword.matchType, type: r.sharedCriterion.type });
+      return acc;
+    }, {});
+    const sharedSets = sharedSetsData.map(r => {
+      const s = r.sharedSet || {};
+      return {
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        memberCount: parseInt(s.memberCount) || 0,
+        referenceCount: parseInt(s.referenceCount) || 0,
+        keywords: critsBySetId[s.id] || [],
+      };
+    });
 
     // Build overview by summing ad group data (reliable source)
     const aggImpressions = adGroupData.reduce((s, r) => s + int(r.metrics?.impressions), 0);
@@ -283,6 +402,13 @@ export async function onRequest(context) {
       daily,
       searchTerms,
       negatives,
+      // Layered intelligence — surfaces the PMax-readiness state
+      allCampaigns,
+      audiences: {
+        userLists,
+        customAudiences,
+      },
+      sharedSets,
     }, null, 2), { headers: CORS });
   } catch (err) {
     return new Response(JSON.stringify({ success: false, error: err.message }), { status: 500, headers: CORS });
