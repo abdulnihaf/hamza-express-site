@@ -443,23 +443,35 @@ async function createPmax(token, env, body) {
   imageAssets.logos.forEach(r => link(r, 'LOGO'));
   (body.videoAssets || []).forEach(r => link(r, 'YOUTUBE_VIDEO'));
 
-  // 6. AssetGroupSignal — audience signals (custom audiences + user lists)
+  // 6. AssetGroupSignal — audience signals
+  // v23 changed AssetGroupSignal.audience to AudienceInfo { audience: <resource> }
+  // (was: nested customAudiences/userLists arrays). To use custom audiences +
+  // user lists as PMax signals, we wrap them in a combined Audience resource
+  // first, then reference that Audience from AssetGroupSignal.
+  const audienceSegments = [];
   for (const audId of (signals.audienceIds || [])) {
+    audienceSegments.push({ customAudience: `customers/${CID}/customAudiences/${audId}` });
+  }
+  for (const ulId of (signals.userListIds || [])) {
+    audienceSegments.push({ userList: `customers/${CID}/userLists/${ulId}` });
+  }
+  if (audienceSegments.length) {
+    const audienceTmp = `customers/${CID}/audiences/-4`;
     ops.push({
-      assetGroupSignalOperation: {
+      audienceOperation: {
         create: {
-          assetGroup: agTmp,
-          audience: { customAudiences: [`customers/${CID}/customAudiences/${audId}`] },
+          resourceName: audienceTmp,
+          name: `${body.name} — Signal`,
+          description: 'Combined audience signal for PMax (custom audiences + user lists)',
+          dimensions: [{ audienceSegments: { segments: audienceSegments } }],
         }
       }
     });
-  }
-  for (const ulId of (signals.userListIds || [])) {
     ops.push({
       assetGroupSignalOperation: {
         create: {
           assetGroup: agTmp,
-          audience: { userLists: [`customers/${CID}/userLists/${ulId}`] },
+          audience: { audience: audienceTmp },
         }
       }
     });
