@@ -49,6 +49,28 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .section-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .section-title::before{content:'';width:3px;height:14px;background:var(--gblue);border-radius:2px}
 .section-title .tip{font-size:10px;color:var(--muted);font-weight:400;margin-left:4px}
+
+/* Layered Intelligence — campaign readiness + audience layer state */
+.layer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.layer-card{background:var(--bg2,#0d1117);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.layer-card .lc-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.layer-card .lc-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.layer-card .lc-count{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.layer-card .lc-row{font-size:11px;color:var(--text2);padding:3px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.layer-card .lc-row + .lc-row{border-top:1px dashed var(--border)}
+.layer-card .lc-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layer-card .lc-state{font-size:9px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0}
+.lc-state.lc-on{background:rgba(52,168,83,.18);color:var(--ggreen)}
+.lc-state.lc-warn{background:rgba(249,115,22,.18);color:var(--orange)}
+.lc-state.lc-off{background:rgba(100,116,139,.18);color:var(--muted)}
+.lc-state.lc-red{background:rgba(239,68,68,.18);color:var(--red,#ef4444)}
+.layer-card .lc-empty{font-size:11px;color:var(--muted);font-style:italic;padding:4px 0}
+.layer-card .lc-foot{margin-top:6px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.layer-bakrid{margin-top:10px;background:linear-gradient(90deg,rgba(249,115,22,.12),rgba(168,85,247,.12));border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.layer-bakrid:empty{display:none}
+.layer-bakrid .lb-label{font-size:11px;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.layer-bakrid .lb-msg{font-size:12px;color:var(--text2);flex:1;min-width:200px}
+.layer-bakrid .lb-day{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);font-weight:700}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 
 /* Tables */
@@ -267,6 +289,13 @@ tr:hover td{background:rgba(66,133,244,.04)}
   <!-- KPIs -->
   <div class="kpis" id="kpis"></div>
 
+  <!-- Layered Intelligence Status — surfaces full audience layer state -->
+  <div class="section" id="layerSection">
+    <div class="section-title">Layered Intelligence Status <span class="tip">— PMax campaign readiness · audience signals · negative-kw lists</span></div>
+    <div class="layer-grid" id="layerGrid"></div>
+    <div class="layer-bakrid" id="layerBakrid"></div>
+  </div>
+
   <!-- Ad Group + Position -->
   <div class="grid-2">
     <div class="section">
@@ -394,6 +423,9 @@ function render(data) {
       <div class="kpi-sub">Tracked actions</div>
     </div>
   `;
+
+  // Layered Intelligence — campaigns, audiences, neg list, Bakrid timing
+  renderLayer(data);
 
   // Ad Groups
   const ags = data.adGroups;
@@ -731,6 +763,135 @@ async function loadUrgency() {
     bar.classList.add('has-items');
   } catch (e) {
     bar.classList.remove('has-items');
+  }
+}
+
+// Layered Intelligence — campaigns + audiences + neg lists + Bakrid timing
+function renderLayer(data) {
+  const grid = document.getElementById('layerGrid');
+  if (!grid) return;
+  const camps = data.allCampaigns || [];
+  const userLists = (data.audiences && data.audiences.userLists) || [];
+  const customAuds = (data.audiences && data.audiences.customAudiences) || [];
+  const sharedSets = data.sharedSets || [];
+
+  // Group campaigns by serving state
+  const servingCount = camps.filter(c => c.servingStatus === 'SERVING' && c.status === 'ENABLED').length;
+  const pausedCount  = camps.filter(c => c.status === 'PAUSED').length;
+  const removedCount = camps.filter(c => c.status === 'REMOVED').length;
+
+  const escapeHTML = s => String(s || '').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+  const truncate = (s, n) => s && s.length > n ? s.slice(0, n-1) + '…' : (s || '');
+
+  // Campaign card
+  const campRows = camps.length === 0
+    ? '<div class="lc-empty">No campaigns yet — create PMax Store Goals via ads.google.com</div>'
+    : camps.slice(0, 5).map(c => {
+        const stateClass = c.status === 'ENABLED' && c.servingStatus === 'SERVING' ? 'lc-on'
+          : c.status === 'PAUSED' ? 'lc-warn'
+          : c.status === 'REMOVED' ? 'lc-off'
+          : 'lc-warn';
+        const stateLabel = c.servingStatus === 'SERVING' ? 'SERVING' : c.status || '?';
+        const sub = c.budgetINR ? `₹${c.budgetINR}/d · ${c.channelType||'?'}` : (c.channelType || '?');
+        return `<div class="lc-row">
+          <span class="lc-name" title="${escapeHTML(c.name)}">${escapeHTML(truncate(c.name, 30))}</span>
+          <span class="lc-state ${stateClass}">${stateLabel}</span>
+        </div>
+        <div class="lc-foot" style="margin-top:0;padding-bottom:4px">${sub}</div>`;
+      }).join('');
+  const campCard = `<div class="layer-card">
+    <div class="lc-head">
+      <span class="lc-title">Campaigns</span>
+      <span class="lc-count">${camps.length}</span>
+    </div>
+    ${campRows}
+    <div class="lc-foot">${servingCount} serving · ${pausedCount} paused · ${removedCount} removed</div>
+  </div>`;
+
+  // Customer Match cards (user lists)
+  const ulRows = userLists.length === 0
+    ? '<div class="lc-empty">No customer-match lists yet</div>'
+    : userLists.map(u => {
+        const isUploaded = u.sizeForDisplay > 0 || u.sizeForSearch > 0;
+        const stateClass = isUploaded ? 'lc-on' : 'lc-warn';
+        const stateLabel = isUploaded ? `${u.sizeForDisplay || u.sizeForSearch}+ MATCHED` : 'AWAITING UPLOAD';
+        return `<div class="lc-row">
+          <span class="lc-name" title="${escapeHTML(u.name)}">${escapeHTML(truncate(u.name, 26))}</span>
+          <span class="lc-state ${stateClass}">${stateLabel}</span>
+        </div>
+        <div class="lc-foot" style="margin-top:0;padding-bottom:4px">${u.uploadKeyType || '?'} · ${u.membershipLifeSpan || '?'}d TTL</div>`;
+      }).join('');
+  const ulCard = `<div class="layer-card">
+    <div class="lc-head">
+      <span class="lc-title">Customer Match</span>
+      <span class="lc-count">${userLists.length}</span>
+    </div>
+    ${ulRows}
+  </div>`;
+
+  // Custom Audiences card
+  const caRows = customAuds.length === 0
+    ? '<div class="lc-empty">No custom audiences</div>'
+    : customAuds.map(c => {
+        const stateClass = c.status === 'ENABLED' ? 'lc-on' : c.status === 'PAUSED' ? 'lc-warn' : 'lc-off';
+        return `<div class="lc-row">
+          <span class="lc-name" title="${escapeHTML(c.name)}">${escapeHTML(truncate(c.name, 28))}</span>
+          <span class="lc-state ${stateClass}">${c.status || '?'}</span>
+        </div>`;
+      }).join('');
+  const caCard = `<div class="layer-card">
+    <div class="lc-head">
+      <span class="lc-title">Custom Audiences</span>
+      <span class="lc-count">${customAuds.length}</span>
+    </div>
+    ${caRows}
+  </div>`;
+
+  // Negative Keyword Lists
+  const negSets = sharedSets.filter(s => s.type === 'NEGATIVE_KEYWORDS');
+  const nsRows = negSets.length === 0
+    ? '<div class="lc-empty">No shared negative lists</div>'
+    : negSets.map(s => {
+        const isAttached = s.referenceCount > 0;
+        const stateClass = isAttached ? 'lc-on' : 'lc-warn';
+        const stateLabel = isAttached ? `${s.referenceCount} CAMPAIGN${s.referenceCount > 1 ? 'S' : ''}` : 'NOT ATTACHED';
+        return `<div class="lc-row">
+          <span class="lc-name" title="${escapeHTML(s.name)}">${escapeHTML(truncate(s.name, 24))}</span>
+          <span class="lc-state ${stateClass}">${stateLabel}</span>
+        </div>
+        <div class="lc-foot" style="margin-top:0;padding-bottom:4px">${s.memberCount} keywords</div>`;
+      }).join('');
+  const nsCard = `<div class="layer-card">
+    <div class="lc-head">
+      <span class="lc-title">Negative Lists</span>
+      <span class="lc-count">${negSets.length}</span>
+    </div>
+    ${nsRows}
+  </div>`;
+
+  grid.innerHTML = campCard + ulCard + caCard + nsCard;
+
+  // Bakrid timing strip — only shows in May 2026
+  const bakridEl = document.getElementById('layerBakrid');
+  if (bakridEl) {
+    const today = new Date(Date.now() + 5.5 * 3600000);
+    const eid1 = new Date('2026-05-27T00:00:00+05:30');
+    const eid2 = new Date('2026-05-28T23:59:59+05:30');
+    const daysToEid = Math.ceil((eid1 - today) / 86400000);
+    if (today < eid2 && daysToEid <= 30 && daysToEid >= -2) {
+      const msg = daysToEid > 0
+        ? `Eid al-Adha ${daysToEid} day${daysToEid===1?'':'s'} away — +50% bid burst configured for May 27 + 28 (covers Saudi/India observance split)`
+        : daysToEid === 0
+          ? `Eid al-Adha is TODAY — +50% bid burst is live`
+          : `Eid al-Adha was ${Math.abs(daysToEid)} day${Math.abs(daysToEid)===1?'':'s'} ago — +50% bid burst still active for May 28`;
+      bakridEl.innerHTML = `
+        <span class="lb-label">Bakrid Burst</span>
+        <span class="lb-msg">${msg}</span>
+        <span class="lb-day">May 27 + 28 · +50% bid mod</span>
+      `;
+    } else {
+      bakridEl.innerHTML = '';
+    }
   }
 }
 
