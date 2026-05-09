@@ -429,19 +429,22 @@ async function createPmax(token, env, body) {
     }
   });
 
-  // 5. AssetGroupAsset bindings — every text + image + video asset goes here
+  // 5. AssetGroupAsset bindings.
+  // With Brand Guidelines enabled, BUSINESS_NAME, LOGO, and LANDSCAPE_LOGO
+  // must ONLY be linked at campaign level (CampaignAsset above) — adding them
+  // here too triggers BRAND_ASSETS_NOT_LINKED_AT_CAMPAIGN_LEVEL. So we skip
+  // those field types in the asset-group binding pass.
   const link = (asset, fieldType) => ops.push({
     assetGroupAssetOperation: { create: { assetGroup: agTmp, asset, fieldType } }
   });
   textAssets.headlines.forEach(r => link(r, 'HEADLINE'));
   textAssets.longHeadlines.forEach(r => link(r, 'LONG_HEADLINE'));
   textAssets.descriptions.forEach(r => link(r, 'DESCRIPTION'));
-  textAssets.businessNames.forEach(r => link(r, 'BUSINESS_NAME'));
   imageAssets.marketing.forEach(r => link(r, 'MARKETING_IMAGE'));
   imageAssets.squareMarketing.forEach(r => link(r, 'SQUARE_MARKETING_IMAGE'));
-  (imageAssets.landscapeLogos || []).forEach(r => link(r, 'LANDSCAPE_LOGO'));
-  imageAssets.logos.forEach(r => link(r, 'LOGO'));
   (body.videoAssets || []).forEach(r => link(r, 'YOUTUBE_VIDEO'));
+  // skipped (must stay campaign-level under Brand Guidelines):
+  //   BUSINESS_NAME, LOGO, LANDSCAPE_LOGO
 
   // 6. AssetGroupSignal — audience signals
   // v23 changed AssetGroupSignal.audience to AudienceInfo { audience: <resource> }
