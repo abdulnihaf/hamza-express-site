@@ -448,12 +448,18 @@ async function createPmax(token, env, body) {
   // (was: nested customAudiences/userLists arrays). To use custom audiences +
   // user lists as PMax signals, we wrap them in a combined Audience resource
   // first, then reference that Audience from AssetGroupSignal.
+  // v23: AudienceSegment.customAudience is a CustomAudienceSegment wrapper
+  // ({ customAudience: <resource> }), not a flat string. Same for userList.
   const audienceSegments = [];
   for (const audId of (signals.audienceIds || [])) {
-    audienceSegments.push({ customAudience: `customers/${CID}/customAudiences/${audId}` });
+    audienceSegments.push({
+      customAudience: { customAudience: `customers/${CID}/customAudiences/${audId}` }
+    });
   }
   for (const ulId of (signals.userListIds || [])) {
-    audienceSegments.push({ userList: `customers/${CID}/userLists/${ulId}` });
+    audienceSegments.push({
+      userList: { userList: `customers/${CID}/userLists/${ulId}` }
+    });
   }
   if (audienceSegments.length) {
     const audienceTmp = `customers/${CID}/audiences/-4`;
