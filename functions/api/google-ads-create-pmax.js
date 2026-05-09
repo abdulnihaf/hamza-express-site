@@ -535,13 +535,12 @@ async function createPmax(token, env, body) {
 }
 
 // ─── Remove PMax campaign ────────────────────────────────────────────────
+// v23 quirk: REMOVED is set via the `remove` operation (resource-name string),
+// NOT via update with status='REMOVED' (returns INVALID_ENUM_VALUE).
 async function removePmax(token, env, id) {
   if (!id) throw new Error('?id=<campaign_id> required');
   const r = await ads(token, env, `/customers/${CID}/campaigns:mutate`, {
-    operations: [{
-      update: { resourceName: `customers/${CID}/campaigns/${id}`, status: 'REMOVED' },
-      updateMask: 'status',
-    }],
+    operations: [{ remove: `customers/${CID}/campaigns/${id}` }],
   });
   return j({ ok: true, removed: r.results?.[0]?.resourceName });
 }
