@@ -75,9 +75,10 @@ export async function onRequest(context) {
       case 'create-text-assets':return await createTextAssets(token, env, body);
       case 'upload-image-asset':return await uploadImageAsset(token, env, body);
       case 'create':            return await createPmax(token, env, body);
+      case 'enrich-pmax':       return await enrichPmax(token, env, body);
       case 'remove-pmax':       return await removePmax(token, env, url.searchParams.get('id'));
       default:
-        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','remove-pmax'] }, 400);
+        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','remove-pmax'] }, 400);
     }
   } catch (err) {
     return j({ error: err.message, stack: env.DEBUG ? err.stack : undefined }, 500);
@@ -247,7 +248,11 @@ async function listAssets(token, env) {
            asset.text_asset.text,
            asset.image_asset.full_size.url, asset.image_asset.full_size.width_pixels,
            asset.image_asset.full_size.height_pixels, asset.image_asset.file_size,
-           asset.youtube_video_asset.youtube_video_id
+           asset.youtube_video_asset.youtube_video_id,
+           asset.call_asset.country_code, asset.call_asset.phone_number,
+           asset.callout_asset.callout_text,
+           asset.call_to_action_asset.call_to_action,
+           asset.location_asset.business_profile_locations
     FROM asset
     LIMIT 500
   `);
@@ -555,6 +560,106 @@ async function createPmax(token, env, body) {
       'Set status=ENABLED to start serving',
       `URL: https://ads.google.com/aw/campaigns/management?campaignId=${resources.campaignId}&ocid=${CID}`,
     ],
+  });
+}
+
+// ─── Enrich an existing PMax campaign atomically ─────────────────────────
+// Adds extra assets to a live PMax campaign post-creation. Supports:
+//   - createCallAsset: { phone, countryCode, callConversionActionId? }
+//                      creates a CallAsset and binds at campaign level
+//   - campaignAssetLinks: [{ asset, fieldType }]
+//                      bind existing asset resources at campaign level
+//                      (e.g., link a pre-existing CALL asset)
+//   - assetGroupAssetLinks: [{ asset, fieldType }]
+//                      bind existing image/video assets to the asset group
+//                      (e.g., extra MARKETING_IMAGE / SQUARE_MARKETING_IMAGE
+//                      / PORTRAIT_MARKETING_IMAGE / YOUTUBE_VIDEO)
+//
+// All operations are bundled into one atomic googleAds:mutate transaction.
+async function enrichPmax(token, env, body) {
+  const { campaignId, assetGroupId,
+          createCallAsset,
+          campaignAssetLinks = [],
+          assetGroupAssetLinks = [] } = body;
+
+  if (!campaignId)   return j({ error: 'body.campaignId required' }, 400);
+  if (!assetGroupId && assetGroupAssetLinks.length) return j({ error: 'body.assetGroupId required when assetGroupAssetLinks present' }, 400);
+
+  const campaignResource = `customers/${CID}/campaigns/${campaignId}`;
+  const assetGroupResource = assetGroupId ? `customers/${CID}/assetGroups/${assetGroupId}` : null;
+
+  const ops = [];
+
+  // 1. (Optional) create new CallAsset and bind it
+  if (createCallAsset) {
+    const { phone, countryCode = 'IN', callConversionActionId } = createCallAsset;
+    if (!phone) return j({ error: 'createCallAsset.phone required' }, 400);
+    const callAssetTmp = `customers/${CID}/assets/-1`;
+    const callAsset = {
+      countryCode,
+      phoneNumber: phone,
+      callConversionReportingState: callConversionActionId
+        ? 'USE_RESOURCE_LEVEL_CALL_CONVERSION_ACTION'
+        : 'USE_ACCOUNT_LEVEL_CALL_CONVERSION_ACTION',
+    };
+    if (callConversionActionId) {
+      callAsset.callConversionAction = `customers/${CID}/conversionActions/${callConversionActionId}`;
+    }
+    ops.push({
+      assetOperation: {
+        create: {
+          resourceName: callAssetTmp,
+          name: `Call ${phone} (${countryCode})`,
+          callAsset,
+        }
+      }
+    });
+    ops.push({
+      campaignAssetOperation: {
+        create: { campaign: campaignResource, asset: callAssetTmp, fieldType: 'CALL' }
+      }
+    });
+  }
+
+  // 2. Link existing assets to campaign
+  for (const { asset, fieldType } of campaignAssetLinks) {
+    ops.push({
+      campaignAssetOperation: {
+        create: { campaign: campaignResource, asset, fieldType }
+      }
+    });
+  }
+
+  // 3. Link existing assets to asset group
+  for (const { asset, fieldType } of assetGroupAssetLinks) {
+    ops.push({
+      assetGroupAssetOperation: {
+        create: { assetGroup: assetGroupResource, asset, fieldType }
+      }
+    });
+  }
+
+  if (ops.length === 0) return j({ ok: true, message: 'nothing to add', operations: 0 });
+
+  const r = await ads(token, env, `/customers/${CID}/googleAds:mutate`, {
+    mutateOperations: ops,
+  });
+
+  // Pull out the new call asset resource (if created)
+  let callAssetResource = null;
+  for (const resp of (r.mutateOperationResponses || [])) {
+    if (resp.assetResult) callAssetResource = resp.assetResult.resourceName;
+  }
+
+  return j({
+    ok: true,
+    operations: ops.length,
+    callAsset: callAssetResource,
+    summary: {
+      callAssetCreated: !!createCallAsset,
+      campaignAssetLinks: campaignAssetLinks.length + (createCallAsset ? 1 : 0),
+      assetGroupAssetLinks: assetGroupAssetLinks.length,
+    },
   });
 }
 
