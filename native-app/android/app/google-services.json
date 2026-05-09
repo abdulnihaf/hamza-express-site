@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17132062002",
+    "project_id": "hamza-express-8f004",
+    "storage_bucket": "hamza-express-8f004.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17132062002:android:4f13a2ef62aa19d38f032b",
+        "android_client_info": {
+          "package_name": "in.hamzaexpress.ops"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDP3AGbFp_NJsfCvykEcXsRmbv27mOcGg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

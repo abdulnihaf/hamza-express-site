@@ -1,0 +1,12 @@
+{
+  "name": "Hamza Express Ops",
+  "short_name": "HE Ops",
+  "start_url": "/ops/waiter/",
+  "display": "standalone",
+  "background_color": "#0a0f1a",
+  "theme_color": "#0a0f1a",
+  "icons": [
+    { "src": "/assets/brand/he-icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/assets/brand/he-emblem.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

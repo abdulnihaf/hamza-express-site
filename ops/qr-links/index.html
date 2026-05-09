@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HE QR Links</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--red:#ef4444;--orange:#f97316;--yellow:#f59e0b}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .container{max-width:720px;margin:0 auto;padding:20px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+    .header h1{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px}
+    .header h1::before{content:'';width:5px;height:24px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:3px}
+    .user-badge{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px}
+    .user-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .btn{padding:8px 16px;border:none;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+    .btn-primary{background:linear-gradient(135deg,var(--orange),var(--yellow));color:#fff}
+    .btn-ghost{background:var(--bg2);border:1px solid var(--border);color:var(--text2)}
+    .btn-ghost:hover{border-color:var(--orange);color:var(--text)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+
+    /* PIN Screen */
+    #pinScreen{display:flex;align-items:center;justify-content:center;min-height:80vh;flex-direction:column;gap:20px}
+    .pin-title{font-size:20px;font-weight:700}
+    .pin-dots{display:flex;gap:12px;margin:10px 0}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--orange);border-color:var(--orange)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:22px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .pin-key:hover{border-color:var(--orange)}
+    .pin-key.clear{font-size:14px;color:var(--muted)}
+    .pin-error{color:var(--red);font-size:13px;min-height:20px}
+
+    /* Dashboard */
+    #dashboard{display:none}
+
+    /* Station card */
+    .station-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+    .station-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .station-name{font-size:16px;font-weight:700}
+    .station-slug{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+    .station-field{margin-bottom:12px}
+    .station-field label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+    .station-field input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif}
+    .station-field input:focus{outline:none;border-color:var(--orange)}
+    .preview{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;word-break:break-all;padding:8px 10px;background:var(--bg);border-radius:4px;margin-bottom:12px}
+    .station-actions{display:flex;gap:8px;align-items:center}
+    .save-ok{font-size:12px;color:var(--green);margin-left:8px;opacity:0;transition:opacity .3s}
+    .save-ok.show{opacity:1}
+    .updated-at{font-size:11px;color:var(--muted);margin-left:auto}
+
+    /* Toast */
+    .toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:100;transform:translateY(-100px);transition:transform .3s;max-width:350px}
+    .toast.show{transform:translateY(0)}
+    .toast.success{background:var(--green);color:#fff}
+    .toast.error{background:var(--red);color:#fff}
+
+    @media(max-width:640px){.container{padding:14px}.pin-pad{grid-template-columns:repeat(3,64px)}.pin-key{width:64px;height:50px;font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+
+  <!-- PIN Screen -->
+  <div id="pinScreen">
+    <div class="pin-title">QR Link Manager</div>
+    <div class="pin-dots"><div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div><div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div></div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key clear" onclick="pinClear()">CLR</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key clear" onclick="pinBack()">DEL</div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="container">
+    <header class="header">
+      <h1>QR Links</h1>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="user-badge"><div class="dot"></div><span id="userName"></span></div>
+        <button class="btn btn-ghost" onclick="logout()">Logout</button>
+      </div>
+    </header>
+    <div id="stationList"></div>
+  </div>
+
+  <script>
+    const API = '/api/qr-links';
+    const WA_PHONE = '918008002049';
+    const STATION_NAMES = { bm: 'Bain Marie', juice: 'Juice', shawarma: 'Shawarma', grill: 'Grill', sheek: 'Sheek Kabab' };
+    let currentUser = null;
+    const $ = id => document.getElementById(id);
+
+    // ── PIN ──────────────────────────────────────────────────────────────────
+    let pinBuf = '';
+    function pinKey(d) {
+      if (pinBuf.length >= 4) return;
+      pinBuf += d;
+      updateDots();
+      if (pinBuf.length === 4) setTimeout(checkPin, 200);
+    }
+    function pinBack() { pinBuf = pinBuf.slice(0, -1); updateDots(); $('pinError').textContent = ''; }
+    function pinClear() { pinBuf = ''; updateDots(); $('pinError').textContent = ''; }
+    function updateDots() { for (let i = 0; i < 4; i++) $('d' + i).classList.toggle('filled', i < pinBuf.length); }
+
+    async function checkPin() {
+      try {
+        const res = await fetch(API + '?action=verify-pin&pin=' + pinBuf);
+        const data = await res.json();
+        if (!data.success) { $('pinError').textContent = 'Invalid PIN'; pinBuf = ''; updateDots(); return; }
+        currentUser = data.user;
+        $('userName').textContent = data.user;
+        $('pinScreen').style.display = 'none';
+        $('dashboard').style.display = 'block';
+        loadLinks();
+      } catch (e) { $('pinError').textContent = 'Network error'; pinBuf = ''; updateDots(); }
+    }
+
+    function logout() {
+      currentUser = null; pinBuf = '';
+      $('dashboard').style.display = 'none';
+      $('pinScreen').style.display = '';
+      updateDots();
+    }
+
+    // ── Dashboard ────────────────────────────────────────────────────────────
+    let links = [];
+
+    async function loadLinks() {
+      const res = await fetch(API + '?action=list');
+      const data = await res.json();
+      if (!data.success) { toast('Failed to load links', 'error'); return; }
+      links = data.links;
+      renderLinks();
+    }
+
+    function renderLinks() {
+      $('stationList').innerHTML = links.map(link => {
+        const name = STATION_NAMES[link.slug] || link.slug;
+        const waUrl = 'https://wa.me/' + WA_PHONE + '?text=' + encodeURIComponent(link.prefill_text);
+        const goUrl = '/go/' + link.slug;
+        const updated = link.updated_at ? new Date(link.updated_at + 'Z').toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+        return '<div class="station-card" id="card-' + link.slug + '">' +
+          '<div class="station-header">' +
+            '<div><div class="station-name">' + name + '</div><div class="station-slug">/go/' + link.slug + '</div></div>' +
+            '<div class="station-slug">' + link.counter_key + '</div>' +
+          '</div>' +
+          '<div class="station-field">' +
+            '<label>Pre-fill Text</label>' +
+            '<input type="text" id="input-' + link.slug + '" value="' + escHtml(link.prefill_text) + '" oninput="updatePreview(\'' + link.slug + '\')">' +
+          '</div>' +
+          '<div class="preview" id="preview-' + link.slug + '">' + escHtml(waUrl) + '</div>' +
+          '<div class="station-actions">' +
+            '<button class="btn btn-primary" onclick="saveLink(\'' + link.slug + '\')">Save</button>' +
+            '<a class="btn btn-ghost" href="' + goUrl + '" target="_blank" rel="noopener">Test</a>' +
+            '<span class="save-ok" id="ok-' + link.slug + '">Saved</span>' +
+            '<span class="updated-at">' + updated + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function updatePreview(slug) {
+      const input = $('input-' + slug);
+      const url = 'https://wa.me/' + WA_PHONE + '?text=' + encodeURIComponent(input.value);
+      $('preview-' + slug).textContent = url;
+    }
+
+    async function saveLink(slug) {
+      const input = $('input-' + slug);
+      const prefill_text = input.value.trim();
+      if (!prefill_text) { toast('Pre-fill text cannot be empty', 'error'); return; }
+
+      try {
+        const res = await fetch(API + '?action=update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug, prefill_text }),
+        });
+        const data = await res.json();
+        if (!data.success) { toast(data.error || 'Update failed', 'error'); return; }
+
+        // Update local state
+        const idx = links.findIndex(l => l.slug === slug);
+        if (idx >= 0) links[idx] = data.link;
+
+        // Flash confirmation
+        const ok = $('ok-' + slug);
+        ok.classList.add('show');
+        setTimeout(() => ok.classList.remove('show'), 2000);
+        toast('Updated ' + (STATION_NAMES[slug] || slug), 'success');
+
+        // Re-render to update timestamp
+        renderLinks();
+      } catch (e) {
+        toast('Network error', 'error');
+      }
+    }
+
+    function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function toast(msg, type) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type + ' show';
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+  </script>
+</body>
+</html>

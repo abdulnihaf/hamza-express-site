@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HE Kitchen Intel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--muted:#64748b;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;--cyan:#06b6d4;--orange:#f97316;--pink:#ec4899}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    .header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50}
+    .header h1{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .header h1::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--orange),var(--yellow));border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .status-text{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .btn-refresh{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text2);font-size:12px;cursor:pointer}
+    .btn-refresh:active{background:var(--card)}
+
+    .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 12px}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+    .tab-content{display:none;padding:14px 16px}
+    .tab-content.active{display:block}
+
+    .section-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:var(--text2)}
+    .section-title::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:2px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+    .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .stat-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
+    .stat-box .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+    .stat-box .val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:2px}
+    .stat-box .sub{font-size:10px;color:var(--text2);margin-top:2px}
+    .empty-msg{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+
+    .filter-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+    .filter-row input[type="date"]{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 8px;color:var(--text);font-size:12px;font-family:'JetBrains Mono',monospace}
+    .filter-row input:focus{outline:none;border-color:var(--orange)}
+    .filter-row input::-webkit-calendar-picker-indicator{filter:invert(1);cursor:pointer}
+    .quick-btn{padding:6px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer}
+    .quick-btn:active,.quick-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+    .btn-apply{padding:6px 12px;background:linear-gradient(135deg,var(--orange),var(--yellow));border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+
+    /* Command Center summary row */
+    .cmd-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+    .cmd-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .cmd-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .cmd-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
+    .alert-card{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+    .alert-card .alert-msg{color:var(--red);font-weight:600}
+    .alert-card .alert-meta{color:var(--muted);font-size:10px}
+
+    .health-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;-webkit-overflow-scrolling:touch}
+    .health-row::-webkit-scrollbar{display:none}
+    .health-chip{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:90px;text-align:center;flex-shrink:0;border-top:3px solid var(--green)}
+    .health-chip .hc-name{display:block;font-size:11px;font-weight:600;margin-bottom:2px}
+    .health-chip .hc-val{display:block;font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .health-chip .hc-items{display:block;font-size:9px;color:var(--muted)}
+
+    /* Mini table cards in Command Center */
+    .mini-tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+    .mini-table{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;border-left:3px solid var(--muted);transition:border-color .2s}
+    .mini-table:active{opacity:.8}
+    .mini-table.phase-ordering{border-left-color:var(--muted)}
+    .mini-table.phase-queued{border-left-color:var(--blue)}
+    .mini-table.phase-preparing{border-left-color:var(--yellow)}
+    .mini-table.phase-served{border-left-color:var(--green)}
+    .mt-name{font-size:13px;font-weight:700;margin-bottom:4px}
+    .mt-phase{font-size:10px;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+    .mt-progress{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden;margin-bottom:4px}
+    .mt-progress-fill{height:100%;border-radius:2px;background:var(--green);transition:width .3s}
+    .mt-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+    /* Mini queue cards in Command Center */
+    .mini-queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+    .mini-order{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;border-left:3px solid var(--yellow)}
+    .mini-order:active{opacity:.8}
+    .mini-order.status-queued{border-left-color:var(--muted)}
+    .mini-order.status-preparing{border-left-color:var(--yellow)}
+    .mo-name{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:2px}
+    .mo-meta{font-size:10px;color:var(--muted)}
+
+    /* Tables tab */
+    .tables-header{font-size:13px;color:var(--text2);margin-bottom:12px}
+    .table-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;border-left:4px solid var(--muted)}
+    .table-card.phase-ordering{border-left-color:var(--muted)}
+    .table-card.phase-queued{border-left-color:var(--blue)}
+    .table-card.phase-preparing{border-left-color:var(--yellow)}
+    .table-card.phase-served{border-left-color:var(--green)}
+    .tc-header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+    .tc-name{font-size:15px;font-weight:700}
+    .tc-phase{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px}
+    .tc-phase-ordering{background:rgba(100,116,139,.15);color:var(--muted)}
+    .tc-phase-queued{background:rgba(59,130,246,.15);color:var(--blue)}
+    .tc-phase-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .tc-phase-served{background:rgba(16,185,129,.15);color:var(--green)}
+    .tc-items{padding:10px 14px}
+    .tc-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+    .tc-item-qty{font-weight:700;font-family:'JetBrains Mono',monospace;min-width:24px;color:var(--text2)}
+    .tc-item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tc-item-station{font-size:10px;color:var(--muted);white-space:nowrap}
+    .tc-item-stage{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;white-space:nowrap}
+    .tc-footer{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--bg2);font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+    .dine-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .dine-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+    .dine-box .d-val{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .dine-box .d-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+    .dine-box .d-sub{font-size:9px;color:var(--text2);margin-top:2px}
+
+    /* Completed order rows (shared) */
+    .cr-card{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden;cursor:pointer}
+    .completed-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;font-size:12px}
+    .cr-name{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+    .cr-meta{color:var(--muted);font-size:10px;margin-left:6px}
+    .cr-right{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px}
+    .cr-prep{color:var(--cyan)}
+    .cr-dine{color:var(--purple)}
+    .cr-amount{color:var(--text2)}
+    .cr-items{display:none;padding:6px 10px;background:var(--bg2);border-top:1px solid var(--border)}
+    .cr-items.show{display:block}
+    .cr-item-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
+    .cr-item-left{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
+    .cr-item-left .iq{font-weight:700;color:var(--text2);font-family:'JetBrains Mono',monospace;min-width:22px}
+    .cr-item-left .in{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cr-item-left .is{font-size:10px;color:var(--muted);white-space:nowrap}
+    .cr-item-time{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;white-space:nowrap;margin-left:8px}
+    .cr-expand-hint{font-size:9px;color:var(--muted);text-align:right;padding:0 10px 4px}
+
+    /* Queue tab */
+    .queue-header{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+    .qh-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+    .qh-box .num{font-size:20px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .qh-box .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+
+    .order-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+    .order-header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)}
+    .order-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
+    .order-meta{display:flex;align-items:center;gap:8px}
+    .order-time{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .order-elapsed{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;padding:2px 6px;border-radius:4px}
+    .elapsed-ok{background:rgba(16,185,129,.15);color:var(--green)}
+    .elapsed-warn{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .elapsed-late{background:rgba(239,68,68,.15);color:var(--red)}
+    .order-badge{font-size:9px;font-weight:600;text-transform:uppercase;padding:2px 6px;border-radius:4px;letter-spacing:.3px}
+    .badge-takeaway{background:rgba(59,130,246,.15);color:var(--blue)}
+    .badge-dinein{background:rgba(139,92,246,.15);color:var(--purple)}
+    .badge-whatsapp{background:rgba(16,185,129,.15);color:var(--green)}
+    .badge-counter{background:rgba(100,116,139,.15);color:var(--muted)}
+    .order-items{padding:8px 12px}
+    .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px}
+    .item-qty{font-weight:700;font-family:'JetBrains Mono',monospace;min-width:20px;color:var(--text2)}
+    .item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .item-station{font-size:10px;color:var(--muted);white-space:nowrap}
+    .item-stage{font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;white-space:nowrap}
+    .item-time{font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;white-space:nowrap;min-width:36px;text-align:right}
+    .stage-queued{background:rgba(100,116,139,.15);color:var(--muted)}
+    .stage-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .stage-done{background:rgba(16,185,129,.15);color:var(--green)}
+    .order-footer{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:var(--bg2);font-size:11px;color:var(--text2)}
+    .kp-badge{padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600}
+    .kp-preparing{background:rgba(245,158,11,.15);color:var(--yellow)}
+    .kp-ready{background:rgba(59,130,246,.15);color:var(--blue)}
+    .kp-packed{background:rgba(6,182,212,.15);color:var(--cyan)}
+    .kp-completed{background:rgba(16,185,129,.15);color:var(--green)}
+    .kp-queued{background:rgba(100,116,139,.15);color:var(--muted)}
+    .kp-n\/a{background:rgba(100,116,139,.08);color:var(--muted)}
+
+    .timing-bar{display:flex;height:14px;border-radius:3px;overflow:hidden;background:var(--bg2);margin-top:4px}
+    .tb-seg{display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.85);min-width:4px}
+    .tb-station{background:rgba(245,158,11,.45)}
+    .tb-gap{background:rgba(239,68,68,.25)}
+    .tb-kp{background:rgba(59,130,246,.45)}
+    .tb-active{animation:pulse-seg 1.5s ease-in-out infinite}
+    @keyframes pulse-seg{0%,100%{opacity:1}50%{opacity:.5}}
+    .timing-split{display:flex;gap:8px;font-size:10px;font-family:'JetBrains Mono',monospace}
+    .ts-station{color:var(--yellow)}
+    .ts-gap{color:var(--red)}
+    .ts-kp{color:var(--blue)}
+
+    /* Kitchen (stations) tab */
+    .station-group-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-left:4px}
+    .station-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--orange)}
+    .station-name{font-size:14px;font-weight:700;margin-bottom:6px}
+    .station-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .ss-item{text-align:center}
+    .ss-item .ss-val{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+    .ss-item .ss-lbl{font-size:9px;color:var(--muted);text-transform:uppercase}
+    .perf-bar{height:6px;background:var(--bg2);border-radius:3px;margin-top:8px;overflow:hidden}
+    .perf-fill{height:100%;border-radius:3px;transition:width .3s}
+
+    .sc-indian{border-left-color:#ef4444}
+    .sc-biryani{border-left-color:#f59e0b}
+    .sc-tandoor{border-left-color:#f97316}
+    .sc-chinese{border-left-color:#3b82f6}
+    .sc-fc{border-left-color:#8b5cf6}
+    .sc-juice{border-left-color:#10b981}
+    .sc-bm{border-left-color:#ec4899}
+    .sc-shawarma{border-left-color:#06b6d4}
+    .sc-grill{border-left-color:#f59e0b}
+
+    /* Flow tab (KP + Timeline merged) */
+    .kp-flow-visual{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0;flex-wrap:wrap}
+    .kp-node{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;text-align:center;min-width:80px}
+    .kp-node .kp-stage-name{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase}
+    .kp-arrow{color:var(--muted);font-size:12px;padding:0 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .kp-arrow .kp-dur{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--orange)}
+
+    .tl-order{margin-bottom:16px}
+    .tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .tl-id{font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace}
+    .tl-meta{font-size:11px;color:var(--text2)}
+    .tl-item{margin-bottom:8px;padding-left:12px;border-left:2px solid var(--border)}
+    .tl-item-header{font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+    .tl-item-station{font-size:10px;color:var(--muted)}
+    .tl-bar-container{display:flex;align-items:center;gap:4px;height:20px}
+    .tl-bar{height:14px;border-radius:3px;min-width:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.8)}
+    .tl-bar.preparing{background:rgba(245,158,11,.4)}
+    .tl-bar.done{background:rgba(16,185,129,.4)}
+    .tl-bar.waiting{background:rgba(100,116,139,.2)}
+
+    /* Trends charts */
+    .chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+    .chart-container{height:140px;display:flex;align-items:flex-end;gap:3px;padding-top:10px}
+    .chart-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:all .2s;cursor:pointer;position:relative}
+    .chart-bar:active::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);padding:3px 6px;border-radius:4px;font-size:9px;white-space:nowrap;z-index:10;font-family:'JetBrains Mono',monospace}
+    .chart-labels{display:flex;gap:3px;margin-top:4px}
+    .chart-labels span{flex:1;text-align:center;font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+    /* Loading */
+    .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,15,26,.95);display:flex;align-items:center;justify-content:center;z-index:100}
+    .loading.hidden{display:none}
+    .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .error-bar{background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;padding:10px;margin:10px 16px;font-size:12px;display:none}
+    .error-bar.show{display:block}
+
+    @media(max-width:400px){
+      .cmd-summary{grid-template-columns:repeat(2,1fr)}
+      .queue-header{grid-template-columns:repeat(2,1fr)}
+      .station-stats{grid-template-columns:repeat(2,1fr)}
+      .stat-grid{grid-template-columns:1fr}
+      .dine-grid{grid-template-columns:1fr}
+      .mini-tables{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading"><div class="spinner"></div></div>
+  <div class="error-bar" id="error"></div>
+
+  <header class="header">
+    <h1>Kitchen Intel</h1>
+    <div class="header-right">
+      <div class="status-dot" id="dot"></div>
+      <span class="status-text" id="statusText">--</span>
+      <button class="btn-refresh" onclick="generateDailyReport()" style="background:linear-gradient(135deg,var(--orange),var(--yellow));color:#fff;border-color:transparent;font-weight:600">Report</button>
+      <button class="btn-refresh" onclick="manualRefresh()">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabBar">
+    <div class="tab active" onclick="switchTab('command',this)">Command</div>
+    <div class="tab" onclick="switchTab('tables',this)">Tables</div>
+    <div class="tab" onclick="switchTab('queue',this)">Queue</div>
+    <div class="tab" onclick="switchTab('kitchen',this)">Kitchen</div>
+    <div class="tab" onclick="switchTab('flow',this)">Flow</div>
+    <div class="tab" onclick="switchTab('trends',this)">Trends</div>
+  </nav>
+
+  <!-- ====== COMMAND CENTER TAB (default) ====== -->
+  <div class="tab-content active" id="tab-command">
+    <div class="cmd-summary" id="cmdSummary">
+      <div class="cmd-box"><div class="num" id="cmdDining">-</div><div class="lbl">Dining</div></div>
+      <div class="cmd-box"><div class="num" id="cmdCounter">-</div><div class="lbl">Counter</div></div>
+      <div class="cmd-box"><div class="num" id="cmdDone">-</div><div class="lbl">Done</div></div>
+      <div class="cmd-box"><div class="num" id="cmdAvgPrep">-</div><div class="lbl">Avg Prep</div></div>
+    </div>
+    <div id="cmdAlerts"></div>
+    <div id="cmdTablesSection"></div>
+    <div id="cmdQueueSection"></div>
+    <div class="section-title">Station Health</div>
+    <div class="health-row" id="cmdStationHealth"></div>
+    <div class="section-title">Recent Completed</div>
+    <div id="cmdCompletedList"></div>
+  </div>
+
+  <!-- ====== TABLES TAB (Dine-in Focus) ====== -->
+  <div class="tab-content" id="tab-tables">
+    <div class="tables-header" id="tablesHeader">ACTIVE TABLES</div>
+    <div id="tablesActive"></div>
+    <div id="tablesDineStats"></div>
+    <div class="section-title">Completed Tables</div>
+    <div id="tablesCompleted"></div>
+  </div>
+
+  <!-- ====== QUEUE TAB (Takeaway Focus) ====== -->
+  <div class="tab-content" id="tab-queue">
+    <div class="queue-header" id="queueHeader">
+      <div class="qh-box"><div class="num" id="qhActive">-</div><div class="lbl">Active</div></div>
+      <div class="qh-box"><div class="num" id="qhReady">-</div><div class="lbl">Ready</div></div>
+      <div class="qh-box"><div class="num" id="qhAvgWait">-</div><div class="lbl">Avg Wait</div></div>
+    </div>
+    <div id="queueActive"></div>
+    <div id="queueCounterStats"></div>
+    <div class="section-title">Completed</div>
+    <div id="queueCompleted"></div>
+  </div>
+
+  <!-- ====== KITCHEN TAB (Stations) ====== -->
+  <div class="tab-content" id="tab-kitchen">
+    <div class="filter-row">
+      <input type="date" id="stFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this)">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this)">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this)">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="stat-grid" id="stSummary">
+      <div class="stat-box"><div class="label">Orders</div><div class="val" id="stOrders">-</div></div>
+      <div class="stat-box"><div class="label">Avg Prep</div><div class="val" id="stAvgPrep">-</div><div class="sub">per order</div></div>
+      <div class="stat-box"><div class="label">90th %ile</div><div class="val" id="stP90">-</div><div class="sub">90th percentile</div></div>
+      <div class="stat-box"><div class="label">Items</div><div class="val" id="stItems">-</div></div>
+    </div>
+    <div id="stDineStats"></div>
+    <div id="stationCards"></div>
+  </div>
+
+  <!-- ====== FLOW TAB (KP Flow + Timeline merged) ====== -->
+  <div class="tab-content" id="tab-flow">
+    <div class="filter-row">
+      <input type="date" id="flFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'fl')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'fl')">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this,'fl')">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="section-title">Kitchen Pass Pipeline</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Average time between each Kitchen Pass stage</p>
+    <div class="kp-flow-visual" id="kpFlowVis"></div>
+    <div class="stat-grid" style="margin-top:16px" id="kpStats">
+      <div class="stat-box"><div class="label">Preparing &rarr; Ready</div><div class="val" id="kpPR">-</div><div class="sub" id="kpPRn">0 orders</div></div>
+      <div class="stat-box"><div class="label">Ready &rarr; Packed</div><div class="val" id="kpRP">-</div><div class="sub" id="kpRPn">0 orders</div></div>
+      <div class="stat-box"><div class="label">Packed &rarr; Done</div><div class="val" id="kpPD">-</div><div class="sub" id="kpPDn">0 orders</div></div>
+      <div class="stat-box"><div class="label">Total KP Time</div><div class="val" id="kpTotal">-</div><div class="sub">end to end</div></div>
+    </div>
+    <div class="section-title" style="margin-top:20px">Order Timelines</div>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:12px">Visual breakdown of each item's journey through the kitchen</p>
+    <div id="timelineContent"></div>
+  </div>
+
+  <!-- ====== TRENDS TAB ====== -->
+  <div class="tab-content" id="tab-trends">
+    <div class="filter-row">
+      <input type="date" id="trFromDate">
+      <button class="quick-btn active" onclick="quickRange('today',this,'tr')">Today</button>
+      <button class="quick-btn" onclick="quickRange('yesterday',this,'tr')">Yesterday</button>
+      <button class="quick-btn" onclick="quickRange('week',this,'tr')">7d</button>
+      <button class="btn-apply" onclick="loadStats()">Go</button>
+    </div>
+    <div class="stat-grid" id="trSummary">
+      <div class="stat-box"><div class="label">Total Orders</div><div class="val" id="trOrders">-</div></div>
+      <div class="stat-box"><div class="label">Avg Prep</div><div class="val" id="trAvgPrep">-</div></div>
+      <div class="stat-box"><div class="label">Counter</div><div class="val" id="trCounter">-</div></div>
+      <div class="stat-box"><div class="label">Captain</div><div class="val" id="trCaptain">-</div></div>
+    </div>
+    <div id="trDineVsTakeaway"></div>
+    <div class="section-title">Orders Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trOrderChart"></div>
+      <div class="chart-labels" id="trOrderLabels"></div>
+    </div>
+    <div class="section-title">Avg Prep Time Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trPrepChart"></div>
+      <div class="chart-labels" id="trPrepLabels"></div>
+    </div>
+    <div class="section-title">Items Per Hour</div>
+    <div class="chart-wrap">
+      <div class="chart-container" id="trItemChart"></div>
+      <div class="chart-labels" id="trItemLabels"></div>
+    </div>
+  </div>
+
+<script>
+const API = '/api/kitchen-intel';
+const $ = id => document.getElementById(id);
+let liveTimer = null;
+let liveData = null;
+let statsData = null;
+let currentTab = 'command';
+let isLoading = false;
+
+const DINING_STATUSES = new Set(['dining_ordering', 'dining_queued', 'dining_preparing', 'dining_served']);
+const COUNTER_ACTIVE = new Set(['queued', 'preparing']);
+const DONE_STATUSES = new Set(['completed', 'no_prep']);
+
+// --- Init ---
+(async function init() {
+  setTodayDefaults();
+  await loadLive();
+  $('loading').classList.add('hidden');
+  liveTimer = setInterval(loadLive, 30000);
+})();
+
+function setTodayDefaults() {
+  const today = todayIST();
+  ['stFromDate','flFromDate','trFromDate'].forEach(id => {
+    $(id).value = today;
+  });
+}
+
+function todayIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  return ist.toISOString().slice(0, 10);
+}
+function yesterdayIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 86400000);
+  return ist.toISOString().slice(0, 10);
+}
+function weekAgoIST() {
+  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 - 7 * 86400000);
+  return ist.toISOString().slice(0, 10);
+}
+
+// --- Tab switching ---
+function switchTab(name, el) {
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  $('tab-' + name).classList.add('active');
+
+  if (['command', 'tables', 'queue'].includes(name)) {
+    if (liveData) renderTab(name, liveData);
+  } else if (['kitchen', 'flow', 'trends'].includes(name) && !statsData) {
+    loadStats();
+  } else if (statsData) {
+    renderStatsTab(name, statsData);
+  }
+}
+
+function quickRange(range, btn, prefix) {
+  let dateVal;
+  if (range === 'today') dateVal = todayIST();
+  else if (range === 'yesterday') dateVal = yesterdayIST();
+  else if (range === 'week') dateVal = weekAgoIST();
+
+  ['st', 'fl', 'tr'].forEach(p => {
+    const input = $(p + 'FromDate');
+    if (input) input.value = dateVal;
+  });
+
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadStats();
+}
+
+function manualRefresh() {
+  if (['command', 'tables', 'queue'].includes(currentTab)) loadLive();
+  else loadStats();
+}
+
+// --- Live data (feeds Command + Tables + Queue) ---
+async function loadLive() {
+  try {
+    const res = await fetch(API + '?action=live');
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    liveData = data;
+    renderTab(currentTab, data);
+    $('statusText').textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    $('dot').style.background = 'var(--green)';
+    $('error').classList.remove('show');
+  } catch (e) {
+    $('error').textContent = 'Error loading live data: ' + e.message;
+    $('error').classList.add('show');
+    $('dot').style.background = 'var(--red)';
+  }
+}
+
+function renderTab(name, data) {
+  if (name === 'command') renderCommand(data);
+  else if (name === 'tables') renderTables(data);
+  else if (name === 'queue') renderQueue(data);
+}
+
+// =============================================
+// COMMAND CENTER TAB
+// =============================================
+function renderCommand(data) {
+  const summary = data.todaySummary || {};
+  const orders = data.orders || [];
+  const stations = data.stations || {};
+  const dining = summary.dining || {};
+  const counter = summary.counter || {};
+
+  // Summary stats
+  const diningCount = dining.activeTables || 0;
+  const counterCount = counter.activeCount || 0;
+  const doneCount = (dining.completedCount || 0) + (counter.completedCount || 0);
+
+  $('cmdDining').textContent = diningCount > 0 ? diningCount + ' tables' : '0';
+  $('cmdDining').style.color = diningCount > 0 ? 'var(--purple)' : 'var(--green)';
+  $('cmdCounter').textContent = counterCount;
+  $('cmdCounter').style.color = counterCount > 0 ? 'var(--yellow)' : 'var(--green)';
+  $('cmdDone').textContent = doneCount;
+  $('cmdAvgPrep').textContent = fmtSec(counter.avgPrepSec);
+  $('cmdAvgPrep').style.color = counter.avgPrepSec > 600 ? 'var(--red)' : counter.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
+
+  // Alerts
+  const alerts = summary.alerts || [];
+  if (alerts.length > 0) {
+    $('cmdAlerts').innerHTML = '<div class="section-title" style="color:var(--red)">Alerts</div>' +
+      alerts.map(a => `<div class="alert-card">
+        <div><span class="alert-msg">${esc(a.name)}</span> <span class="alert-meta">${esc(a.config)}</span></div>
+        <span class="alert-meta">${esc(a.message)}</span>
+      </div>`).join('');
+  } else {
+    $('cmdAlerts').innerHTML = '';
+  }
+
+  // Active Tables mini-cards
+  const diningTables = dining.tables || [];
+  if (diningTables.length > 0) {
+    $('cmdTablesSection').innerHTML = '<div class="section-title">Active Tables</div>' +
+      '<div class="mini-tables">' + diningTables.map(t => {
+        const phaseClass = getPhaseClass(t.status);
+        const phaseLabel = getPhaseLabel(t.status, t);
+        const progressPct = t.itemsTotal > 0 ? Math.round((t.itemsDone / t.itemsTotal) * 100) : 0;
+        return `<div class="mini-table ${phaseClass}" onclick="goToTab('tables')">
+          <div class="mt-name">${esc(t.shortName)}</div>
+          <div class="mt-phase" style="color:${getPhaseColor(t.status)}">${phaseLabel}</div>
+          ${t.itemsTotal > 0 ? `<div class="mt-progress"><div class="mt-progress-fill" style="width:${progressPct}%"></div></div>` : ''}
+          <div class="mt-meta">
+            <span>${t.seatedMin || 0}m</span>
+            <span>${t.itemsDone}/${t.itemsTotal}</span>
+            <span>&#8377;${t.amount}</span>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+  } else {
+    $('cmdTablesSection').innerHTML = '';
+  }
+
+  // Counter Queue mini-cards
+  const counterOrders = orders.filter(o => COUNTER_ACTIVE.has(o.status));
+  if (counterOrders.length > 0) {
+    $('cmdQueueSection').innerHTML = '<div class="section-title">Counter Queue</div>' +
+      '<div class="mini-queue">' + counterOrders.map(o => {
+        const statusClass = o.status === 'queued' ? 'status-queued' : 'status-preparing';
+        return `<div class="mini-order ${statusClass}" onclick="goToTab('queue')">
+          <div class="mo-name">${esc(o.shortName)}</div>
+          <div class="mo-meta">${o.elapsed}m &middot; ${o.itemCount} items &middot; ${o.config}</div>
+        </div>`;
+      }).join('') + '</div>';
+  } else {
+    $('cmdQueueSection').innerHTML = '';
+  }
+
+  // Station health (exclude 0-sample stations)
+  const stationNames = Object.keys(stations).filter(n => stations[n].samplesCount > 0 || stations[n].itemsProcessed > 0);
+  if (stationNames.length > 0) {
+    let chipHtml = stationNames.map(name => {
+      const s = stations[name];
+      const hasData = s.samplesCount > 0;
+      const color = !hasData ? 'var(--muted)' : s.avgPrepMin > 15 ? 'var(--red)' : s.avgPrepMin > 8 ? 'var(--yellow)' : 'var(--green)';
+      const valText = hasData ? s.avgPrepMin + 'm' : '--';
+      return `<div class="health-chip" style="border-top-color:${color}">
+        <span class="hc-name">${esc(name)}</span>
+        <span class="hc-val" style="color:${color}">${valText}</span>
+        <span class="hc-items">${s.itemsProcessed} items</span>
+      </div>`;
+    }).join('');
+
+    // KP Pass and Handoff chips
+    const kp = data.kpMetrics || {};
+    if (kp.samples > 0) {
+      const kpColor = kp.avgSec > 300 ? 'var(--red)' : kp.avgSec > 120 ? 'var(--yellow)' : 'var(--green)';
+      chipHtml += `<div class="health-chip" style="border-top-color:${kpColor}">
+        <span class="hc-name">KP Pass</span>
+        <span class="hc-val" style="color:${kpColor}">${fmtSec(kp.avgSec)}</span>
+        <span class="hc-items">${kp.samples} items</span>
+      </div>`;
+      if (kp.avgGapSec > 0) {
+        const gapColor = kp.avgGapSec > 120 ? 'var(--red)' : kp.avgGapSec > 60 ? 'var(--yellow)' : 'var(--green)';
+        chipHtml += `<div class="health-chip" style="border-top-color:${gapColor}">
+          <span class="hc-name">Handoff</span>
+          <span class="hc-val" style="color:${gapColor}">${fmtSec(kp.avgGapSec)}</span>
+          <span class="hc-items">${kp.gapSamples} items</span>
+        </div>`;
+      }
+    }
+
+    $('cmdStationHealth').innerHTML = chipHtml;
+  } else {
+    $('cmdStationHealth').innerHTML = '<span style="color:var(--muted);font-size:12px">No station data yet</span>';
+  }
+
+  // Recent completed (last 10)
+  const completed = orders.filter(o => DONE_STATUSES.has(o.status)).slice(0, 10);
+  $('cmdCompletedList').innerHTML = completed.length > 0
+    ? completed.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed orders yet</div>';
+}
+
+// =============================================
+// TABLES TAB (Dine-in Focus)
+// =============================================
+function renderTables(data) {
+  const orders = data.orders || [];
+  const summary = data.todaySummary || {};
+  const dining = summary.dining || {};
+
+  // Active dine-in tables
+  const activeTables = orders.filter(o => DINING_STATUSES.has(o.status));
+  $('tablesHeader').textContent = `ACTIVE TABLES \u2014 ${activeTables.length} occupied`;
+
+  if (activeTables.length > 0) {
+    $('tablesActive').innerHTML = activeTables.map(o => {
+      const phaseClass = getPhaseClass(o.status);
+      const phaseLabel = getPhaseLabel(o.status, o);
+      const phaseCssClass = 'tc-phase-' + o.status.replace('dining_', '');
+      const itemsDone = o.items.filter(i => ['Completed', 'Packed', 'Ready', 'Prepared'].includes(i.stage)).length;
+
+      const itemsHtml = o.items.map(item => {
+        let stageClass = 'stage-queued';
+        let stageLabel = item.stage;
+        if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
+        else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
+        else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) { stageClass = 'stage-done'; }
+        const timePart = item.doneAt ? item.doneAt : (item.sentAt || '');
+        return `<div class="tc-item">
+          <span class="tc-item-qty">${item.qty}x</span>
+          <span class="tc-item-name">${esc(item.product)}</span>
+          <span class="tc-item-station">${esc(item.station)}</span>
+          <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap">${timePart}</span>
+          <span class="tc-item-stage ${stageClass}">${stageLabel}</span>
+        </div>${renderTimingBar(item)}`;
+      }).join('');
+
+      const footerParts = [];
+      if (o.kitchenSec) footerParts.push('Kitchen: ' + fmtSec(o.kitchenSec));
+      if (o.atTableSec) footerParts.push('At table: ' + fmtSec(o.atTableSec));
+      footerParts.push('\u20B9' + o.amount);
+
+      const ts = o.timestamps || {};
+      const tsLine = ts.placed ? `Placed ${ts.placed}${ts.foodReady ? ' \u2192 Ready ' + ts.foodReady : ''}` : '';
+
+      return `<div class="table-card ${phaseClass}">
+        <div class="tc-header">
+          <span class="tc-name">${esc(o.shortName)}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="tc-phase ${phaseCssClass}">${phaseLabel}</span>
+            <span style="font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--text2)">${o.seatedMin || o.elapsed}m</span>
+          </div>
+        </div>
+        ${o.items.length > 0 ? `<div class="tc-items">${itemsHtml}</div>` : '<div style="padding:12px 14px;color:var(--muted);font-size:12px">No items yet</div>'}
+        <div class="tc-footer"><span>${footerParts.join(' \u00B7 ')}</span><span>${itemsDone}/${o.items.length} ready</span></div>
+        ${tsLine ? `<div style="padding:4px 14px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-top:1px solid var(--border)">${tsLine}</div>` : ''}
+      </div>`;
+    }).join('');
+  } else {
+    $('tablesActive').innerHTML = '<div class="empty-msg">No active dine-in tables</div>';
+  }
+
+  // Dine-in stats
+  if (dining.completedCount > 0) {
+    $('tablesDineStats').innerHTML = `
+      <div class="section-title">Today's Dine-in Stats</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${dining.completedCount}</div><div class="d-lbl">Tables Served</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgKitchenSec)}</div><div class="d-lbl">Avg Kitchen</div><div class="d-sub">order to food ready</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">order to settle</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dining.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
+      </div>`;
+  } else {
+    $('tablesDineStats').innerHTML = '';
+  }
+
+  // Completed Captain dine-in orders
+  const completedDining = orders.filter(o => DONE_STATUSES.has(o.status) && o.config === 'Captain' && o.type === 'dine-in').slice(0, 10);
+  $('tablesCompleted').innerHTML = completedDining.length > 0
+    ? completedDining.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed dine-in orders yet</div>';
+}
+
+// =============================================
+// QUEUE TAB (Takeaway/Counter Focus)
+// =============================================
+function renderQueue(data) {
+  const orders = data.orders || [];
+  const summary = data.todaySummary || {};
+  const counter = summary.counter || {};
+
+  // Separate active and recently completed counter orders
+  const activeOrders = orders.filter(o => COUNTER_ACTIVE.has(o.status));
+  const recentlyCompleted = orders.filter(o => o.status === 'completed' && o.config !== 'Captain').slice(0, 5);
+  const allCounterDone = orders.filter(o => DONE_STATUSES.has(o.status) && !(o.config === 'Captain' && o.type === 'dine-in')).slice(0, 10);
+
+  const avgWait = activeOrders.length > 0
+    ? Math.round(activeOrders.reduce((s, o) => s + o.elapsed, 0) / activeOrders.length) : 0;
+
+  $('qhActive').textContent = activeOrders.length;
+  $('qhActive').style.color = activeOrders.length > 3 ? 'var(--red)' : activeOrders.length > 0 ? 'var(--yellow)' : 'var(--green)';
+  $('qhReady').textContent = recentlyCompleted.length;
+  $('qhAvgWait').textContent = avgWait + 'm';
+  $('qhAvgWait').style.color = avgWait > 20 ? 'var(--red)' : avgWait > 10 ? 'var(--yellow)' : 'var(--green)';
+
+  // Active orders
+  if (activeOrders.length > 0) {
+    const sorted = [...activeOrders].sort((a, b) => b.elapsed - a.elapsed);
+    $('queueActive').innerHTML = '<div class="section-title">Active Orders</div>' +
+      sorted.map(order => renderOrderCard(order)).join('');
+  } else {
+    $('queueActive').innerHTML = '<div class="empty-msg">All orders fulfilled \u2014 counter clear</div>';
+  }
+
+  // Counter stats
+  if (counter.completedCount > 0) {
+    $('queueCounterStats').innerHTML = `
+      <div class="section-title">Today's Counter Stats</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${counter.completedCount}</div><div class="d-lbl">Orders Done</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(counter.avgPrepSec)}</div><div class="d-lbl">Avg Prep</div></div>
+      </div>`;
+  } else {
+    $('queueCounterStats').innerHTML = '';
+  }
+
+  // Completed counter orders
+  $('queueCompleted').innerHTML = allCounterDone.length > 0
+    ? allCounterDone.map(o => renderCompletedCard(o)).join('')
+    : '<div class="empty-msg">No completed counter orders yet</div>';
+}
+
+// =============================================
+// SHARED: Order card renderer (for Queue active)
+// =============================================
+function renderOrderCard(order) {
+  const elClass = order.elapsed > 20 ? 'elapsed-late' : order.elapsed > 10 ? 'elapsed-warn' : 'elapsed-ok';
+  const displayName = order.shortName || order.name;
+  const typeLabel = order.type === 'dine-in' ? 'Dine-in' : 'T/A';
+  const typeClass = order.type === 'dine-in' ? 'badge-dinein' : 'badge-takeaway';
+
+  const itemsHtml = order.items.map(item => {
+    let stageClass = 'stage-queued';
+    let stageLabel = item.stage;
+    if (item.stage === 'To prepare') { stageClass = 'stage-queued'; stageLabel = 'Queued'; }
+    else if (item.stage === 'Preparing') stageClass = 'stage-preparing';
+    else if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(item.stage)) stageClass = 'stage-done';
+    const timeSec = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
+    const timeStr = timeSec > 0 ? fmtSec(timeSec) : '';
+    const timeColor = timeSec > 600 ? 'var(--red)' : timeSec > 300 ? 'var(--yellow)' : 'var(--text2)';
+    return `<div class="item-row">
+      <span class="item-qty">${item.qty}x</span>
+      <span class="item-name">${esc(item.product)}</span>
+      <span class="item-station">${esc(item.station)}</span>
+      <span class="item-time" style="color:${timeColor}">${timeStr}</span>
+      <span class="item-stage ${stageClass}">${stageLabel}</span>
+      ${item.kpStage ? `<span class="item-stage ${getKPBadgeClass(item.kpStage)}">KP:${item.kpStage}</span>` : ''}
+    </div>${renderTimingBar(item)}`;
+  }).join('');
+
+  const kpClass = 'kp-' + order.kpStatus.toLowerCase().replace(/ /g, '');
+  const tableInfo = order.table ? ' \u00B7 ' + esc(order.table.name || '') : '';
+  const ts = order.timestamps || {};
+
+  return `<div class="order-card">
+    <div class="order-header">
+      <div>
+        <span class="order-id">${esc(displayName)}</span>
+        <span class="order-badge ${typeClass}" style="margin-left:6px">${typeLabel}</span>
+        <span class="order-badge badge-counter" style="margin-left:4px">${esc(order.config)}</span>
+      </div>
+      <div class="order-meta">
+        <span class="order-time">${order.time}</span>
+        <span class="order-elapsed ${elClass}">${order.elapsed}m</span>
+      </div>
+    </div>
+    <div class="order-items">${itemsHtml}</div>
+    <div class="order-footer">
+      <span>${(() => {
+        const fp = [];
+        if (order.stationAvgSec) fp.push('Stn:' + fmtSec(order.stationAvgSec));
+        if (order.gapAvgSec) fp.push('Wait:' + fmtSec(order.gapAvgSec));
+        if (order.kpAvgSec) fp.push('KP:' + fmtSec(order.kpAvgSec));
+        const timingStr = fp.length > 0 ? fp.join(' \u00B7 ') + ' \u00B7 ' : '';
+        return timingStr + order.itemCount + ' items \u00B7 \u20B9' + order.amount + tableInfo;
+      })()}</span>
+      <span class="kp-badge ${kpClass}">KP: ${esc(order.kpStatus)}</span>
+    </div>
+    ${ts.placed ? `<div style="padding:4px 12px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-top:1px solid var(--border)">Placed ${ts.placed}${ts.foodReady ? ' \u2192 Ready ' + ts.foodReady : ''}</div>` : ''}
+  </div>`;
+}
+
+// =============================================
+// SHARED: Completed card renderer
+// =============================================
+function renderCompletedCard(o) {
+  const displayName = o.shortName || o.name;
+  const stationStr = o.stationAvgSec ? fmtSec(o.stationAvgSec) : (o.prepCompleteSec ? fmtSec(o.prepCompleteSec) : '-');
+  const kpStr = o.kpAvgSec ? fmtSec(o.kpAvgSec) : '';
+  const dineStr = o.dineTimeSec ? fmtSec(o.dineTimeSec) : '';
+  const isNoPrep = o.status === 'no_prep';
+  const ts = o.timestamps || {};
+
+  const itemRows = (o.items || []).map(item => {
+    const t = item.prepDuration > 0 ? item.prepDuration : item.elapsed;
+    const tStr = t > 0 ? fmtSec(t) : '-';
+    const tColor = t > 600 ? 'var(--red)' : t > 300 ? 'var(--yellow)' : 'var(--cyan)';
+    return `<div class="cr-item-row">
+      <div class="cr-item-left">
+        <span class="iq">${item.qty}x</span>
+        <span class="in">${esc(item.product)}</span>
+        <span class="is">${esc(item.station)}</span>
+      </div>
+      <span class="cr-item-time" style="color:${tColor}">${tStr}</span>
+    </div>${renderTimingSplit(item)}`;
+  }).join('');
+
+  // Timestamps row
+  const tsParts = [];
+  if (ts.placed) tsParts.push(`Placed ${ts.placed}`);
+  if (ts.foodReady) tsParts.push(`Ready ${ts.foodReady}`);
+  if (ts.settled) tsParts.push(`Settled ${ts.settled}`);
+  const tsRow = tsParts.length > 0 ? `<div style="padding:4px 10px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border)">${tsParts.join(' \u2192 ')}</div>` : '';
+
+  return `<div class="cr-card" onclick="toggleItems(this)">
+    <div class="completed-row">
+      <div>
+        <span class="cr-name">${esc(displayName)}</span>
+        <span class="cr-meta">${esc(o.config)}${isNoPrep ? ' (no KDS)' : ''}</span>
+      </div>
+      <div class="cr-right">
+        ${!isNoPrep ? `<span class="cr-prep">${stationStr}</span>` : ''}
+        ${kpStr ? `<span style="color:var(--blue)">${kpStr}</span>` : ''}
+        ${dineStr ? `<span class="cr-dine">${dineStr}</span>` : ''}
+        <span class="cr-amount">\u20B9${o.amount}</span>
+      </div>
+    </div>
+    ${tsRow}
+    ${o.items && o.items.length > 0 ? `<div class="cr-expand-hint">${o.items.length} items \u2014 tap to expand</div><div class="cr-items">${itemRows}</div>` : ''}
+  </div>`;
+}
+
+// =============================================
+// STATS: Load + render Kitchen/Flow/Trends
+// =============================================
+async function loadStats() {
+  if (isLoading) return;
+  isLoading = true;
+
+  const fromDate = $('stFromDate').value || todayIST();
+  const from = fromDate + 'T00:00:00';
+  const today = todayIST();
+  const to = fromDate === today ? '' : today + 'T23:59:59';
+
+  try {
+    const url = API + '?action=stats&from=' + encodeURIComponent(from) + (to ? '&to=' + encodeURIComponent(to) : '');
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    statsData = data;
+    renderStatsTab(currentTab, data);
+    $('error').classList.remove('show');
+  } catch (e) {
+    $('error').textContent = 'Error loading stats: ' + e.message;
+    $('error').classList.add('show');
+  }
+  isLoading = false;
+}
+
+function renderStatsTab(name, data) {
+  if (name === 'kitchen') renderKitchen(data);
+  else if (name === 'flow') { renderKPFlow(data); renderTimeline(data); }
+  else if (name === 'trends') renderTrends(data);
+}
+
+// --- Kitchen tab (Stations) ---
+function renderKitchen(data) {
+  const s = data.summary;
+  $('stOrders').textContent = s.totalOrders;
+  $('stAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
+  $('stP90').textContent = fmtSec(s.p90OrderPrepSec);
+  $('stItems').textContent = s.totalItems;
+
+  const dineIn = s.dineIn || {};
+  if (dineIn.count > 0) {
+    $('stDineStats').innerHTML = `
+      <div class="section-title">Dine-in Performance</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgDineTimeSec)}</div><div class="d-lbl">Avg Dine Time</div><div class="d-sub">${dineIn.count} orders</div></div>
+        <div class="dine-box"><div class="d-val">${fmtSec(dineIn.avgPostPrepSec)}</div><div class="d-lbl">Post-Prep Wait</div><div class="d-sub">food ready to bill</div></div>
+      </div>`;
+  } else {
+    $('stDineStats').innerHTML = '';
+  }
+
+  const stations = data.stationPerf || [];
+  if (stations.length === 0) {
+    $('stationCards').innerHTML = '<div class="empty-msg">No station data for this period</div>';
+    return;
+  }
+
+  // Separate cooking stations from counter stations
+  const COOKING = new Set(['Indian', 'Chinese', 'Tandoor', 'Fried Chicken']);
+  const cookingStations = stations.filter(st => COOKING.has(st.station));
+  const counterStations = stations.filter(st => !COOKING.has(st.station));
+
+  const maxAvg = Math.max(...stations.map(s => s.avgPrepSec), 1);
+  const renderGroup = (label, list) => {
+    if (list.length === 0) return '';
+    return `<div class="station-group-label">${label}</div>` + list.map(st => {
+      const colorClass = getStationColorClass(st.station);
+      const pct = Math.round((st.avgPrepSec / maxAvg) * 100);
+      const barColor = st.avgPrepSec > 600 ? 'var(--red)' : st.avgPrepSec > 300 ? 'var(--yellow)' : 'var(--green)';
+      return `<div class="station-card ${colorClass}">
+        <div class="station-name">${esc(st.station)}</div>
+        <div class="station-stats">
+          <div class="ss-item"><div class="ss-val">${fmtSec(st.avgPrepSec)}</div><div class="ss-lbl">Avg Prep</div></div>
+          <div class="ss-item"><div class="ss-val">${st.items}</div><div class="ss-lbl">Items</div></div>
+          <div class="ss-item"><div class="ss-val">${st.orders}</div><div class="ss-lbl">Orders</div></div>
+        </div>
+        <div class="perf-bar"><div class="perf-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--muted)">
+          <span>Median: ${fmtSec(st.medianPrepSec)}</span>
+          <span>90th: ${fmtSec(st.p90PrepSec)}</span>
+          <span>Max: ${fmtSec(st.maxPrepSec)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  $('stationCards').innerHTML = renderGroup('Cooking Stations', cookingStations) + renderGroup('Counter Stations', counterStations);
+}
+
+// --- KP Flow ---
+function renderKPFlow(data) {
+  const kp = data.kpFlow;
+  if (!kp) return;
+
+  $('kpPR').textContent = fmtSec(kp.preparingToReady);
+  $('kpPRn').textContent = kp.samples.preparing + ' orders';
+  $('kpRP').textContent = fmtSec(kp.readyToPacked);
+  $('kpRPn').textContent = kp.samples.ready + ' orders';
+  $('kpPD').textContent = fmtSec(kp.packedToCompleted);
+  $('kpPDn').textContent = kp.samples.packed + ' orders';
+  $('kpTotal').textContent = fmtSec(kp.preparingToReady + kp.readyToPacked + kp.packedToCompleted);
+
+  $('kpFlowVis').innerHTML = `
+    <div class="kp-node"><div class="kp-stage-name">Preparing</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.preparingToReady)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Ready</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.readyToPacked)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Packed</div></div>
+    <div class="kp-arrow"><span>&rarr;</span><span class="kp-dur">${fmtSec(kp.packedToCompleted)}</span></div>
+    <div class="kp-node"><div class="kp-stage-name">Done</div></div>
+  `;
+}
+
+// --- Timeline ---
+function renderTimeline(data) {
+  const orders = data.orderTimelines || [];
+  if (orders.length === 0) {
+    $('timelineContent').innerHTML = '<div class="empty-msg">No orders with timeline data</div>';
+    return;
+  }
+
+  $('timelineContent').innerHTML = orders.map(order => {
+    let maxOffset = 1;
+    for (const item of order.timeline) {
+      for (const ev of item.events) {
+        if (ev.offsetSec > maxOffset) maxOffset = ev.offsetSec;
+      }
+    }
+
+    const itemsHtml = order.timeline.map(item => {
+      const bars = [];
+      for (let i = 0; i < item.events.length; i++) {
+        const ev = item.events[i];
+        const next = item.events[i + 1];
+        const dur = next ? next.offsetSec - ev.offsetSec : 0;
+        const widthPct = maxOffset > 0 ? Math.max((dur / maxOffset) * 100, 2) : 2;
+        let barClass = 'waiting';
+        if (ev.stage === 'Preparing') barClass = 'preparing';
+        if (['Prepared', 'Ready', 'Packed', 'Completed'].includes(ev.stage)) barClass = 'done';
+        if (dur > 0) {
+          bars.push(`<div class="tl-bar ${barClass}" style="width:${widthPct}%" title="${ev.stage}: ${fmtSec(dur)}">${dur > 30 ? fmtSec(dur) : ''}</div>`);
+        }
+      }
+      return `<div class="tl-item">
+        <div class="tl-item-header">
+          <span>${item.qty}x ${esc(item.product)}</span>
+          <span class="tl-item-station">${esc(item.station)}</span>
+        </div>
+        <div class="tl-bar-container">${bars.join('')}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="tl-order card">
+      <div class="tl-header">
+        <span class="tl-id">${esc(order.name)}</span>
+        <span class="tl-meta">${order.time} \u00B7 ${order.type} \u00B7 \u20B9${order.amount}</span>
+      </div>
+      ${itemsHtml}
+      <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:4px">
+        Total: ${maxOffset > 0 ? fmtSec(maxOffset) : '-'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- Trends tab ---
+function renderTrends(data) {
+  const s = data.summary;
+  $('trOrders').textContent = s.totalOrders;
+  $('trAvgPrep').textContent = fmtSec(s.avgOrderPrepSec);
+  $('trCounter').textContent = s.counterOrders;
+  $('trCaptain').textContent = s.captainOrders;
+
+  // Dine-in vs takeaway split
+  const dineIn = s.dineIn || {};
+  const takeaway = s.totalOrders - (dineIn.count || 0);
+  if (s.totalOrders > 0) {
+    const dinePct = Math.round(((dineIn.count || 0) / s.totalOrders) * 100);
+    $('trDineVsTakeaway').innerHTML = `
+      <div class="section-title">Dine-in vs Takeaway</div>
+      <div class="dine-grid">
+        <div class="dine-box"><div class="d-val">${dineIn.count || 0}</div><div class="d-lbl">Dine-in</div><div class="d-sub">${dinePct}%</div></div>
+        <div class="dine-box"><div class="d-val">${takeaway}</div><div class="d-lbl">Takeaway</div><div class="d-sub">${100 - dinePct}%</div></div>
+      </div>`;
+  } else {
+    $('trDineVsTakeaway').innerHTML = '';
+  }
+
+  const hourly = data.hourly || [];
+  const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23);
+  renderBarChart('trOrderChart', 'trOrderLabels', opHours, 'orders', 'var(--orange)', h => h.orders + ' orders');
+  renderBarChart('trPrepChart', 'trPrepLabels', opHours, 'avgPrepSec', 'var(--cyan)', h => fmtSec(h.avgPrepSec));
+  renderBarChart('trItemChart', 'trItemLabels', opHours, 'items', 'var(--green)', h => h.items + ' items');
+}
+
+function renderBarChart(containerId, labelsId, hours, field, color, tipFn) {
+  const maxVal = Math.max(...hours.map(h => h[field] || 0), 1);
+  $(containerId).innerHTML = hours.map(h => {
+    const val = h[field] || 0;
+    const pct = (val / maxVal) * 100;
+    const opacity = val > 0 ? 1 : 0.2;
+    return `<div class="chart-bar" style="height:${Math.max(pct, 2)}%;background:${color};opacity:${opacity}" data-tip="${tipFn(h)}"></div>`;
+  }).join('');
+  $(labelsId).innerHTML = hours.map(h => `<span>${h.label.replace(' AM','a').replace(' PM','p')}</span>`).join('');
+}
+
+// --- Navigation helper ---
+function goToTab(name) {
+  const tabEls = document.querySelectorAll('.tab');
+  for (const el of tabEls) {
+    if (el.textContent.toLowerCase() === name.toLowerCase() ||
+        (name === 'tables' && el.textContent === 'Tables') ||
+        (name === 'queue' && el.textContent === 'Queue')) {
+      switchTab(name, el);
+      return;
+    }
+  }
+}
+
+// --- Toggle expand for completed order items ---
+function toggleItems(card) {
+  const items = card.querySelector('.cr-items');
+  if (items) items.classList.toggle('show');
+}
+
+// --- Phase helpers ---
+function getPhaseClass(status) {
+  if (status === 'dining_ordering') return 'phase-ordering';
+  if (status === 'dining_queued') return 'phase-queued';
+  if (status === 'dining_preparing') return 'phase-preparing';
+  if (status === 'dining_served') return 'phase-served';
+  return '';
+}
+
+function getPhaseColor(status) {
+  if (status === 'dining_ordering') return 'var(--muted)';
+  if (status === 'dining_queued') return 'var(--blue)';
+  if (status === 'dining_preparing') return 'var(--yellow)';
+  if (status === 'dining_served') return 'var(--green)';
+  return 'var(--text2)';
+}
+
+function getPhaseLabel(status, o) {
+  if (status === 'dining_ordering') return 'ORDERING';
+  if (status === 'dining_queued') return 'SENT TO KITCHEN';
+  if (status === 'dining_preparing') {
+    const done = (o.itemsDone !== undefined) ? o.itemsDone : (o.items || []).filter(i => ['Completed', 'Packed', 'Ready', 'Prepared'].includes(i.stage)).length;
+    const total = (o.itemsTotal !== undefined) ? o.itemsTotal : (o.items || []).length;
+    return `PREPARING (${done}/${total})`;
+  }
+  if (status === 'dining_served') {
+    const atTable = o.atTableSec || 0;
+    return atTable > 0 ? `SERVED \u2014 ${fmtSec(atTable)}` : 'SERVED';
+  }
+  return status;
+}
+
+// --- Timing bar helpers ---
+function renderTimingBar(item) {
+  const station = item.prepDuration || 0;
+  const gap = item.gapSec || 0;
+  const kp = item.kpSec || 0;
+  const total = station + gap + kp;
+  if (total === 0) return '';
+
+  const pct = v => Math.max((v / total) * 100, v > 0 ? 8 : 0);
+  const label = v => v > 30 ? fmtSec(v) : '';
+
+  const stationDone = ['Completed','Packed','Ready','Prepared'].includes(item.stage);
+  const kpDone = item.kpStage && ['Packed','Completed'].includes(item.kpStage);
+
+  const stationActive = !stationDone ? ' tb-active' : '';
+  const gapActive = (stationDone && !item.kpStage) ? ' tb-active' : '';
+  const kpActive = (stationDone && item.kpStage && !kpDone) ? ' tb-active' : '';
+
+  let html = '<div class="timing-bar">';
+  if (station > 0) html += `<div class="tb-seg tb-station${stationActive}" style="width:${pct(station)}%" title="Stn: ${fmtSec(station)}">${label(station)}</div>`;
+  if (gap > 0) html += `<div class="tb-seg tb-gap${gapActive}" style="width:${pct(gap)}%" title="Wait: ${fmtSec(gap)}">${label(gap)}</div>`;
+  if (kp > 0) html += `<div class="tb-seg tb-kp${kpActive}" style="width:${pct(kp)}%" title="KP: ${fmtSec(kp)}">${label(kp)}</div>`;
+  html += '</div>';
+  return html;
+}
+
+function renderTimingSplit(item) {
+  const parts = [];
+  if (item.prepDuration > 0) parts.push(`<span class="ts-station">Stn:${fmtSec(item.prepDuration)}</span>`);
+  if (item.gapSec > 0) parts.push(`<span class="ts-gap">Wait:${fmtSec(item.gapSec)}</span>`);
+  if (item.kpSec > 0) parts.push(`<span class="ts-kp">KP:${fmtSec(item.kpSec)}</span>`);
+  return parts.length > 0 ? `<div class="timing-split">${parts.join('')}</div>` : '';
+}
+
+function getKPBadgeClass(kpStage) {
+  if (!kpStage) return '';
+  const lower = kpStage.toLowerCase();
+  if (lower === 'preparing') return 'kp-preparing';
+  if (lower === 'ready') return 'kp-ready';
+  if (lower === 'packed') return 'kp-packed';
+  if (lower === 'completed') return 'kp-completed';
+  return 'kp-queued';
+}
+
+// --- Utilities ---
+function fmtSec(sec) {
+  if (!sec || sec <= 0) return '-';
+  if (sec < 60) return sec + 's';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return h + 'h ' + (m % 60) + 'm';
+  }
+  return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================
+// PDF DAILY REPORT
+// =============================================
+async function generateDailyReport() {
+  // Ensure stats are loaded
+  if (!statsData) {
+    await loadStats();
+  }
+  if (!statsData) {
+    alert('Unable to load data for report. Please try again.');
+    return;
+  }
+
+  // Load jsPDF on demand
+  if (!window.jspdf) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const W = 210, H = 297;
+  const ML = 14, MR = 14, MT = 14;
+  const PW = W - ML - MR; // printable width
+  let y = MT;
+
+  const fromDate = $('stFromDate').value || todayIST();
+  const dateLabel = new Date(fromDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Colors
+  const C = {
+    dark: [15, 23, 42],
+    text: [30, 41, 59],
+    muted: [100, 116, 139],
+    orange: [249, 115, 22],
+    green: [16, 185, 129],
+    red: [239, 68, 68],
+    yellow: [245, 158, 11],
+    blue: [59, 130, 246],
+    cyan: [6, 182, 212],
+    white: [255, 255, 255],
+    lightBg: [248, 250, 252],
+    cardBg: [241, 245, 249],
+  };
+
+  function checkPage(needed) {
+    if (y + needed > H - 16) {
+      doc.addPage();
+      y = MT;
+      return true;
+    }
+    return false;
+  }
+
+  function setFont(style, size) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+  }
+
+  function drawLine(x1, yy, x2) {
+    doc.setDrawColor(...C.muted);
+    doc.setLineWidth(0.3);
+    doc.line(x1, yy, x2, yy);
+  }
+
+  // ---------- HEADER ----------
+  doc.setFillColor(...C.dark);
+  doc.rect(0, 0, W, 32, 'F');
+  setFont('bold', 18);
+  doc.setTextColor(...C.white);
+  doc.text('Kitchen Intel', ML, 14);
+  setFont('normal', 11);
+  doc.setTextColor(200, 210, 225);
+  doc.text('Daily Operations Report', ML, 21);
+  setFont('normal', 9);
+  doc.text(dateLabel, ML, 27);
+  doc.text('Generated: ' + new Date().toLocaleString('en-IN'), W - MR, 27, { align: 'right' });
+
+  // Orange accent bar
+  doc.setFillColor(...C.orange);
+  doc.rect(0, 32, W, 1.5, 'F');
+  y = 40;
+
+  const s = statsData.summary;
+  const stations = statsData.stationPerf || [];
+  const kp = statsData.kpFlow;
+  const hourly = statsData.hourly || [];
+  const dineIn = s.dineIn || {};
+
+  // ---------- EXECUTIVE SUMMARY ----------
+  setFont('bold', 13);
+  doc.setTextColor(...C.dark);
+  doc.text('Executive Summary', ML, y);
+  y += 7;
+
+  // Summary boxes in a 3x2 grid
+  const boxW = (PW - 6) / 3;
+  const boxH = 18;
+  const summaryBoxes = [
+    { label: 'Total Orders', value: String(s.totalOrders), color: C.orange },
+    { label: 'Avg Prep Time', value: fmtSec(s.avgOrderPrepSec), color: s.avgOrderPrepSec > 600 ? C.red : s.avgOrderPrepSec > 300 ? C.yellow : C.green },
+    { label: '90th Percentile', value: fmtSec(s.p90OrderPrepSec), color: s.p90OrderPrepSec > 900 ? C.red : C.yellow },
+    { label: 'Counter Orders', value: String(s.counterOrders), color: C.blue },
+    { label: 'Captain Orders', value: String(s.captainOrders), color: C.cyan },
+    { label: 'Total Items', value: String(s.totalItems), color: C.muted },
+  ];
+
+  summaryBoxes.forEach((b, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const bx = ML + col * (boxW + 3);
+    const by = y + row * (boxH + 3);
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(bx, by, boxW, boxH, 2, 2, 'F');
+    // Color accent stripe on left
+    doc.setFillColor(...b.color);
+    doc.rect(bx, by + 2, 1.5, boxH - 4, 'F');
+    setFont('normal', 7);
+    doc.setTextColor(...C.muted);
+    doc.text(b.label.toUpperCase(), bx + 5, by + 6);
+    setFont('bold', 14);
+    doc.setTextColor(...b.color);
+    doc.text(b.value, bx + 5, by + 14);
+  });
+
+  y += 2 * (boxH + 3) + 6;
+
+  // Dine-in vs Takeaway split
+  if (dineIn.count > 0) {
+    const dinePct = Math.round((dineIn.count / s.totalOrders) * 100);
+    const takeaway = s.totalOrders - dineIn.count;
+
+    // Progress bar showing split
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(ML, y, PW, 10, 2, 2, 'F');
+    const dineW = (dinePct / 100) * PW;
+    doc.setFillColor(139, 92, 246); // purple for dine-in
+    if (dineW > 2) doc.roundedRect(ML, y, Math.max(dineW, 4), 10, 2, 2, 'F');
+
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    if (dineW > 30) doc.text(`Dine-in: ${dineIn.count} (${dinePct}%)`, ML + 4, y + 6.5);
+    doc.setTextColor(...C.dark);
+    if (PW - dineW > 35) doc.text(`Takeaway: ${takeaway} (${100 - dinePct}%)`, ML + dineW + 4, y + 6.5);
+    y += 14;
+  }
+
+  // ---------- DINE-IN PERFORMANCE ----------
+  if (dineIn.count > 0) {
+    checkPage(30);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Dine-in Performance', ML, y);
+    y += 7;
+
+    const dineBoxes = [
+      { label: 'Avg Kitchen Time', value: fmtSec(dineIn.avgDineTimeSec), sub: 'order to food ready' },
+      { label: 'Post-Prep Wait', value: fmtSec(dineIn.avgPostPrepSec), sub: 'food ready to bill' },
+    ];
+
+    dineBoxes.forEach((b, i) => {
+      const bx = ML + i * (PW / 2 + 1.5);
+      const bw = PW / 2 - 1.5;
+      doc.setFillColor(...C.cardBg);
+      doc.roundedRect(bx, y, bw, 16, 2, 2, 'F');
+      setFont('normal', 7);
+      doc.setTextColor(...C.muted);
+      doc.text(b.label.toUpperCase(), bx + 4, y + 5);
+      setFont('bold', 12);
+      doc.setTextColor(...C.dark);
+      doc.text(b.value, bx + 4, y + 12);
+    });
+    y += 22;
+  }
+
+  // ---------- STATION PERFORMANCE TABLE ----------
+  if (stations.length > 0) {
+    checkPage(20 + stations.length * 7);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Station Performance', ML, y);
+    y += 7;
+
+    // Table header
+    const cols = [
+      { label: 'Station', x: ML, w: 36 },
+      { label: 'Avg Prep', x: ML + 38, w: 22 },
+      { label: 'Median', x: ML + 62, w: 22 },
+      { label: '90th %', x: ML + 86, w: 22 },
+      { label: 'Max', x: ML + 110, w: 22 },
+      { label: 'Items', x: ML + 134, w: 18 },
+      { label: 'Orders', x: ML + 154, w: 18 },
+      { label: 'Status', x: ML + 174, w: 12 },
+    ];
+
+    doc.setFillColor(...C.dark);
+    doc.roundedRect(ML, y, PW, 7, 1, 1, 'F');
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    cols.forEach(c => doc.text(c.label, c.x + 2, y + 5));
+    y += 8;
+
+    stations.forEach((st, i) => {
+      checkPage(8);
+      if (i % 2 === 0) {
+        doc.setFillColor(...C.lightBg);
+        doc.rect(ML, y - 1, PW, 7, 'F');
+      }
+
+      setFont('normal', 7.5);
+      doc.setTextColor(...C.text);
+      doc.text(st.station, cols[0].x + 2, y + 4);
+      doc.text(fmtSec(st.avgPrepSec), cols[1].x + 2, y + 4);
+      doc.text(fmtSec(st.medianPrepSec), cols[2].x + 2, y + 4);
+      doc.text(fmtSec(st.p90PrepSec), cols[3].x + 2, y + 4);
+      doc.text(fmtSec(st.maxPrepSec), cols[4].x + 2, y + 4);
+      doc.text(String(st.items), cols[5].x + 2, y + 4);
+      doc.text(String(st.orders), cols[6].x + 2, y + 4);
+
+      // Status dot
+      const dotColor = st.avgPrepSec > 600 ? C.red : st.avgPrepSec > 300 ? C.yellow : C.green;
+      doc.setFillColor(...dotColor);
+      doc.circle(cols[7].x + 6, y + 3, 2.5, 'F');
+
+      y += 7;
+    });
+    y += 4;
+  }
+
+  // ---------- KITCHEN PASS PIPELINE ----------
+  if (kp) {
+    checkPage(40);
+    setFont('bold', 13);
+    doc.setTextColor(...C.dark);
+    doc.text('Kitchen Pass Pipeline', ML, y);
+    y += 8;
+
+    const stages = [
+      { from: 'Preparing', to: 'Ready', dur: kp.preparingToReady, samples: kp.samples.preparing },
+      { from: 'Ready', to: 'Packed', dur: kp.readyToPacked, samples: kp.samples.ready },
+      { from: 'Packed', to: 'Done', dur: kp.packedToCompleted, samples: kp.samples.packed },
+    ];
+    const totalKP = stages.reduce((s, st) => s + st.dur, 0);
+
+    // Visual pipeline
+    const nodeW = 28, arrowW = (PW - 4 * nodeW) / 3;
+    const pipeY = y;
+    const stageColors = [C.yellow, C.blue, C.green, C.cyan];
+
+    stages.forEach((st, i) => {
+      const nx = ML + i * (nodeW + arrowW);
+      // From node
+      doc.setFillColor(...stageColors[i]);
+      doc.roundedRect(nx, pipeY, nodeW, 14, 3, 3, 'F');
+      setFont('bold', 7);
+      doc.setTextColor(...C.white);
+      doc.text(st.from, nx + nodeW / 2, pipeY + 6, { align: 'center' });
+      setFont('normal', 6);
+      doc.text(st.samples + ' ord', nx + nodeW / 2, pipeY + 11, { align: 'center' });
+
+      // Arrow with duration
+      if (i < stages.length) {
+        const ax = nx + nodeW;
+        doc.setDrawColor(...C.muted);
+        doc.setLineWidth(0.5);
+        doc.line(ax + 2, pipeY + 7, ax + arrowW - 2, pipeY + 7);
+        // arrowhead
+        doc.line(ax + arrowW - 5, pipeY + 5, ax + arrowW - 2, pipeY + 7);
+        doc.line(ax + arrowW - 5, pipeY + 9, ax + arrowW - 2, pipeY + 7);
+        setFont('bold', 8);
+        doc.setTextColor(...C.orange);
+        doc.text(fmtSec(st.dur), ax + arrowW / 2, pipeY + 4, { align: 'center' });
+      }
+    });
+    // Final "Done" node
+    const lastX = ML + 3 * (nodeW + arrowW);
+    doc.setFillColor(...stageColors[3]);
+    doc.roundedRect(lastX, pipeY, nodeW, 14, 3, 3, 'F');
+    setFont('bold', 7);
+    doc.setTextColor(...C.white);
+    doc.text('Done', lastX + nodeW / 2, pipeY + 8, { align: 'center' });
+
+    y = pipeY + 20;
+
+    // Total KP time
+    doc.setFillColor(...C.cardBg);
+    doc.roundedRect(ML, y, PW, 10, 2, 2, 'F');
+    setFont('bold', 9);
+    doc.setTextColor(...C.dark);
+    doc.text('Total Kitchen Pass Time: ' + fmtSec(totalKP), ML + 4, y + 7);
+    y += 16;
+  }
+
+  // ---------- HOURLY BREAKDOWN TABLE ----------
+  if (hourly.length > 0) {
+    const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23 && h.orders > 0);
+    if (opHours.length > 0) {
+      checkPage(16 + opHours.length * 6);
+      setFont('bold', 13);
+      doc.setTextColor(...C.dark);
+      doc.text('Hourly Breakdown', ML, y);
+      y += 7;
+
+      // Simple bar chart representation
+      const maxOrders = Math.max(...opHours.map(h => h.orders), 1);
+      const barMaxW = PW - 60;
+
+      // Table header
+      doc.setFillColor(...C.dark);
+      doc.roundedRect(ML, y, PW, 6, 1, 1, 'F');
+      setFont('bold', 6.5);
+      doc.setTextColor(...C.white);
+      doc.text('Hour', ML + 2, y + 4);
+      doc.text('Orders', ML + 18, y + 4);
+      doc.text('Avg Prep', ML + 34, y + 4);
+      doc.text('Volume', ML + 56, y + 4);
+      y += 7;
+
+      opHours.forEach((h, i) => {
+        checkPage(7);
+        if (i % 2 === 0) {
+          doc.setFillColor(...C.lightBg);
+          doc.rect(ML, y - 1, PW, 6, 'F');
+        }
+
+        setFont('normal', 7);
+        doc.setTextColor(...C.text);
+        doc.text(h.label, ML + 2, y + 3.5);
+        doc.text(String(h.orders), ML + 20, y + 3.5);
+
+        const prepColor = h.avgPrepSec > 600 ? C.red : h.avgPrepSec > 300 ? C.yellow : C.green;
+        doc.setTextColor(...prepColor);
+        doc.text(fmtSec(h.avgPrepSec), ML + 34, y + 3.5);
+
+        // Mini bar
+        const barW = Math.max((h.orders / maxOrders) * barMaxW, 2);
+        const barColor = h.orders === maxOrders ? C.orange : C.blue;
+        doc.setFillColor(...barColor);
+        doc.roundedRect(ML + 55, y, barW, 4, 1, 1, 'F');
+
+        y += 6;
+      });
+      y += 4;
+    }
+  }
+
+  // ---------- ACTIONABLE INSIGHTS ----------
+  checkPage(50);
+  setFont('bold', 13);
+  doc.setTextColor(...C.dark);
+  doc.text('Actionable Insights', ML, y);
+  y += 3;
+
+  const insights = [];
+
+  // 1. Slow stations
+  stations.filter(st => st.avgPrepSec > 600).forEach(st => {
+    insights.push({
+      type: 'critical',
+      icon: 'SLOW',
+      text: `${st.station} station averaging ${fmtSec(st.avgPrepSec)} prep time (${st.items} items). Investigate bottleneck — target under 10 min.`,
+    });
+  });
+
+  // 2. 90th percentile warnings
+  stations.filter(st => st.p90PrepSec > 900).forEach(st => {
+    insights.push({
+      type: 'warning',
+      icon: 'P90',
+      text: `${st.station} 90th percentile at ${fmtSec(st.p90PrepSec)}. 10% of orders taking too long — check during peak hours.`,
+    });
+  });
+
+  // 3. KP bottlenecks
+  if (kp) {
+    if (kp.readyToPacked > 120) {
+      insights.push({
+        type: 'critical',
+        icon: 'KP',
+        text: `Ready-to-Packed averaging ${fmtSec(kp.readyToPacked)}. Food sitting at pass too long — tighten packing coordination.`,
+      });
+    }
+    if (kp.packedToCompleted > 180) {
+      insights.push({
+        type: 'warning',
+        icon: 'KP',
+        text: `Packed-to-Done averaging ${fmtSec(kp.packedToCompleted)}. Delivery/handoff delay — review runner availability.`,
+      });
+    }
+  }
+
+  // 4. Dine-in post-prep wait
+  if (dineIn.avgPostPrepSec > 300) {
+    insights.push({
+      type: 'warning',
+      icon: 'DINE',
+      text: `Post-prep wait averaging ${fmtSec(dineIn.avgPostPrepSec)}. Food ready but tables not billing — improve table turnover.`,
+    });
+  }
+
+  // 5. Peak hour detection
+  if (hourly.length > 0) {
+    const opHours = hourly.filter(h => h.hour >= 8 && h.hour <= 23 && h.orders > 0);
+    const peakHour = opHours.reduce((max, h) => h.orders > max.orders ? h : max, { orders: 0 });
+    if (peakHour.orders > 0) {
+      insights.push({
+        type: 'info',
+        icon: 'PEAK',
+        text: `Peak hour: ${peakHour.label} with ${peakHour.orders} orders. Ensure full staffing at all stations during this window.`,
+      });
+
+      // Slow peak
+      if (peakHour.avgPrepSec > 480) {
+        insights.push({
+          type: 'warning',
+          icon: 'PEAK',
+          text: `Peak hour avg prep ${fmtSec(peakHour.avgPrepSec)} — significantly slower. Add prep support during rush.`,
+        });
+      }
+    }
+
+    // Dead hours
+    const deadHours = opHours.filter(h => h.orders <= 2 && h.hour >= 11 && h.hour <= 21);
+    if (deadHours.length > 0) {
+      insights.push({
+        type: 'info',
+        icon: 'LOW',
+        text: `Low-volume hours: ${deadHours.map(h => h.label).join(', ')}. Consider reduced staffing or prep-ahead tasks.`,
+      });
+    }
+  }
+
+  // 6. Overall performance
+  if (s.avgOrderPrepSec <= 300 && s.totalOrders > 10) {
+    insights.push({
+      type: 'good',
+      icon: 'OK',
+      text: `Overall avg prep ${fmtSec(s.avgOrderPrepSec)} — excellent performance across ${s.totalOrders} orders today.`,
+    });
+  } else if (s.avgOrderPrepSec > 600) {
+    insights.push({
+      type: 'critical',
+      icon: 'SLOW',
+      text: `Overall avg prep ${fmtSec(s.avgOrderPrepSec)} — above 10 min target. Review station allocation and staffing.`,
+    });
+  }
+
+  // 7. High-variance stations
+  stations.filter(st => st.maxPrepSec > st.avgPrepSec * 3 && st.orders > 3).forEach(st => {
+    insights.push({
+      type: 'warning',
+      icon: 'VAR',
+      text: `${st.station} has high variance: avg ${fmtSec(st.avgPrepSec)} but max ${fmtSec(st.maxPrepSec)}. Inconsistent — check specific orders.`,
+    });
+  });
+
+  if (insights.length === 0) {
+    insights.push({
+      type: 'good',
+      icon: 'OK',
+      text: 'All metrics within acceptable ranges. Keep up the good work!',
+    });
+  }
+
+  // Render insights
+  const typeColors = {
+    critical: C.red,
+    warning: C.yellow,
+    info: C.blue,
+    good: C.green,
+  };
+
+  const typeBg = {
+    critical: [254, 242, 242],
+    warning: [255, 251, 235],
+    info: [239, 246, 255],
+    good: [236, 253, 245],
+  };
+
+  insights.forEach(insight => {
+    const lines = doc.splitTextToSize(insight.text, PW - 22);
+    const cardH = Math.max(lines.length * 4 + 6, 12);
+    checkPage(cardH + 4);
+
+    y += 4;
+    doc.setFillColor(...typeBg[insight.type]);
+    doc.roundedRect(ML, y, PW, cardH, 2, 2, 'F');
+    // Left accent
+    doc.setFillColor(...typeColors[insight.type]);
+    doc.rect(ML, y + 2, 2, cardH - 4, 'F');
+
+    // Icon badge
+    setFont('bold', 6);
+    doc.setTextColor(...typeColors[insight.type]);
+    doc.text(insight.icon, ML + 5, y + 5);
+
+    // Text
+    setFont('normal', 7.5);
+    doc.setTextColor(...C.text);
+    doc.text(lines, ML + 18, y + 5);
+
+    y += cardH + 1;
+  });
+
+  // ---------- FOOTER ----------
+  y += 6;
+  drawLine(ML, y, W - MR);
+  y += 4;
+  setFont('normal', 7);
+  doc.setTextColor(...C.muted);
+  doc.text('Kitchen Intel Report — Hamza Express', ML, y);
+  doc.text('Confidential — Internal Use Only', W - MR, y, { align: 'right' });
+
+  // Save
+  const filename = `kitchen-intel-${fromDate}.pdf`;
+  doc.save(filename);
+}
+
+function getStationColorClass(name) {
+  const lower = name.toLowerCase();
+  if (lower.includes('indian')) return 'sc-indian';
+  if (lower.includes('biryani')) return 'sc-biryani';
+  if (lower.includes('tandoor')) return 'sc-tandoor';
+  if (lower.includes('chinese')) return 'sc-chinese';
+  if (lower.includes('fried') || lower.includes('chicken')) return 'sc-fc';
+  if (lower.includes('juice')) return 'sc-juice';
+  if (lower.includes('bain') || lower.includes('bm')) return 'sc-bm';
+  if (lower.includes('shawarma')) return 'sc-shawarma';
+  if (lower.includes('grill')) return 'sc-grill';
+  return '';
+}
+</script>
+</body>
+</html>

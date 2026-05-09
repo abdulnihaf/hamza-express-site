@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a; --bg2: #111827; --card: #1a2234; --border: #2d3a4f;
+      --text: #f1f5f9; --text2: #94a3b8; --muted: #64748b;
+      --green: #10b981; --red: #ef4444; --orange: #f97316; --yellow: #f59e0b;
+      --blue: #3b82f6; --purple: #8b5cf6; --cyan: #06b6d4; --pink: #ec4899;
+      --tan: #D2B48C; --burnt-sienna: #713520;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 5px; height: 24px; background: var(--brand-grad); border-radius: 3px; }
+    .back-link { color: var(--tan); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+    .refresh-time { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+    /* Section Title */
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* KPI Row */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .kpi-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .kpi-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+    .kpi-icon.ig { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .kpi-icon.fb { background: #1877F2; }
+    .kpi-icon.gb { background: #4285F4; }
+    .kpi-icon.total { background: var(--burnt-sienna); }
+    .kpi-name { font-size: 13px; font-weight: 600; }
+    .kpi-metrics { display: flex; flex-direction: column; gap: 6px; }
+    .kpi-metric { display: flex; justify-content: space-between; align-items: center; }
+    .kpi-label { font-size: 11px; color: var(--muted); }
+    .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; }
+    .kpi-value.up { color: var(--green); }
+    .kpi-value.down { color: var(--red); }
+    .kpi-value.neutral { color: var(--text2); }
+    .kpi-value.warn { color: var(--yellow); }
+
+    /* Performance Grid */
+    .perf-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .perf-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+    .perf-panel h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; }
+    .format-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(45,58,79,.3); }
+    .format-row:last-child { border-bottom: none; }
+    .format-type { font-size: 12px; font-weight: 600; }
+    .format-stats { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+    .trend-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .trend-bar-row { display: flex; align-items: center; gap: 8px; }
+    .trend-bar-label { font-size: 11px; color: var(--text2); min-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trend-bar { height: 18px; border-radius: 4px; min-width: 4px; transition: width .3s; display: flex; align-items: center; padding: 0 6px; }
+    .trend-bar span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: white; white-space: nowrap; }
+    .trend-bar.good { background: var(--green); }
+    .trend-bar.avg { background: var(--yellow); }
+    .trend-bar.low { background: var(--red); }
+    .trend-arrow { font-size: 13px; font-weight: 700; margin-top: 8px; text-align: right; }
+    .trend-arrow.declining { color: var(--red); }
+    .trend-arrow.rising { color: var(--green); }
+    .trend-arrow.stable { color: var(--text2); }
+
+    /* Recent Posts Table */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 8px 12px; border-bottom: 1px solid rgba(45,58,79,.3); }
+    .platform-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+    .platform-pill.ig { background: rgba(225,48,108,.15); color: #e1306c; }
+    .platform-pill.fb { background: rgba(24,119,242,.15); color: #1877F2; }
+
+    /* Insight Card */
+    .insight-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--tan); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .insight-section { margin-bottom: 10px; }
+    .insight-section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 600; }
+    .insight-section-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .insight-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; text-decoration: none; display: inline-block; }
+    .btn:hover { border-color: var(--tan); }
+    .btn-primary { background: var(--brand-grad); border: none; color: white; }
+    .btn-primary:hover { opacity: .9; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+    .toast.error { border-color: var(--red); color: var(--red); }
+
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .perf-grid { grid-template-columns: 1fr; }
+      .table-wrap { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Analytics</h1>
+      <div>
+        <a href="/ops/marketing/" class="back-link">Marketing Hub</a>
+        <div class="refresh-time" id="refreshTime"></div>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card" id="kpiIg">
+        <div class="kpi-header"><div class="kpi-icon ig">IG</div><div class="kpi-name">Instagram</div></div>
+        <div class="kpi-metrics" id="igMetrics"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card" id="kpiFb">
+        <div class="kpi-header"><div class="kpi-icon fb">FB</div><div class="kpi-name">Facebook</div></div>
+        <div class="kpi-metrics" id="fbMetrics"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-icon gb">G</div><div class="kpi-name">Google</div></div>
+        <div class="kpi-metrics">
+          <div class="kpi-metric"><span class="kpi-label">Rating</span><span class="kpi-value up">4.9</span></div>
+          <div class="kpi-metric"><span class="kpi-label">Reviews</span><span class="kpi-value">--</span></div>
+          <div class="kpi-metric"><span class="kpi-label">API</span><span class="kpi-value warn">Pending</span></div>
+        </div>
+      </div>
+      <div class="kpi-card" id="kpiTotal">
+        <div class="kpi-header"><div class="kpi-icon total">T</div><div class="kpi-name">Totals</div></div>
+        <div class="kpi-metrics" id="totalMetrics"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- Content Performance -->
+    <div class="section-title">Content Performance</div>
+    <div class="perf-wrap">
+      <div class="perf-grid">
+        <div class="perf-panel">
+          <h4>Format Breakdown (Instagram)</h4>
+          <div id="formatBreakdown"><div class="loading">Loading...</div></div>
+        </div>
+        <div class="perf-panel">
+          <h4>Engagement Trend</h4>
+          <div id="engagementTrend"><div class="loading">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="section-title">Recent Posts (All Platforms)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Post</th><th>Platform</th><th>Date</th><th>Type</th><th>Likes</th><th>Comments</th><th>Eng%</th></tr></thead>
+        <tbody id="postsBody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- Strategy Insight -->
+    <div class="section-title">Strategy Insight</div>
+    <div class="insight-card" id="insightCard">
+      <div class="loading">Analyzing cross-platform data...</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const META_TOKEN = 'EAAdjKyLVeusBQ5W4XrV2JNvYmUJXAnXYkPNwsu3oZBoTp3u3ETjRdC41dX4frN3xtiRtSrUP9X0eGLSPAKxxuuSxWQL20ffMZBA4PMdVAdmix1JFk9TmqFdGeMZBiZAZAJq32HE4lAslCqclCIl4swEBi9Ov9DdqThN2QJezGzj4zH05a0ky14caD2KEPJCs3SrnmlvbgGZCbLfZBHKVBy4yFZB6';
+const FB_PAGE_ID = '886791574518359';
+let IG_ACCOUNT_ID = null;
+
+let igData = { followers: null, mediaCount: null, avgEng: null, allPosts: [] };
+let fbData = { likes: null, followers: null, allPosts: [] };
+
+async function init() {
+  document.getElementById('refreshTime').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  try {
+    [igData, fbData] = await Promise.all([fetchIgData(), fetchFbData()]);
+    renderKpis();
+    renderFormatBreakdown();
+    renderEngagementTrend();
+    renderRecentPosts();
+    renderInsight();
+  } catch (err) {
+    console.error('Analytics error:', err);
+  }
+}
+
+// ── Meta Graph API ──
+async function getIgAccountId() {
+  if (IG_ACCOUNT_ID) return IG_ACCOUNT_ID;
+  try {
+    const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=instagram_business_account&access_token=${META_TOKEN}`);
+    const data = await resp.json();
+    if (data.instagram_business_account) IG_ACCOUNT_ID = data.instagram_business_account.id;
+    return IG_ACCOUNT_ID;
+  } catch { return null; }
+}
+
+async function fetchIgData() {
+  const result = { followers: null, mediaCount: null, avgEng: null, allPosts: [] };
+  try {
+    const igId = await getIgAccountId();
+    if (!igId) return result;
+
+    const profileResp = await fetch(`https://graph.facebook.com/v24.0/${igId}?fields=followers_count,media_count&access_token=${META_TOKEN}`);
+    const profile = await profileResp.json();
+    result.followers = profile.followers_count || 0;
+    result.mediaCount = profile.media_count || 0;
+
+    const mediaResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media?fields=caption,like_count,comments_count,timestamp,media_type&limit=25&access_token=${META_TOKEN}`);
+    const media = await mediaResp.json();
+
+    if (media.data) {
+      let totalEng = 0;
+      result.allPosts = media.data.map(m => {
+        const likes = m.like_count || 0;
+        const comments = m.comments_count || 0;
+        totalEng += likes + comments;
+        return {
+          caption: m.caption || 'No caption',
+          captionShort: (m.caption || 'No caption').substring(0, 40) + (m.caption?.length > 40 ? '...' : ''),
+          likes, comments,
+          engagement: likes + comments,
+          type: m.media_type || 'IMAGE',
+          date: m.timestamp,
+          platform: 'ig'
+        };
+      });
+      if (result.followers > 0 && result.allPosts.length > 0) {
+        result.avgEng = Math.round((totalEng / result.allPosts.length / result.followers) * 1000) / 10;
+      }
+    }
+  } catch (e) { console.error('IG error:', e); }
+  return result;
+}
+
+async function fetchFbData() {
+  const result = { likes: null, followers: null, allPosts: [] };
+  try {
+    const pageResp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=fan_count,followers_count&access_token=${META_TOKEN}`);
+    const page = await pageResp.json();
+    result.likes = page.fan_count || 0;
+    result.followers = page.followers_count || 0;
+
+    const postsResp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/posts?fields=message,created_time,likes.limit(0).summary(true),comments.limit(0).summary(true),shares,type&limit=25&access_token=${META_TOKEN}`);
+    const posts = await postsResp.json();
+
+    if (posts.data) {
+      result.allPosts = posts.data.map(p => {
+        const likes = p.likes?.summary?.total_count || 0;
+        const comments = p.comments?.summary?.total_count || 0;
+        const shares = p.shares?.count || 0;
+        return {
+          caption: p.message || 'No text',
+          captionShort: (p.message || 'No text').substring(0, 40) + (p.message?.length > 40 ? '...' : ''),
+          likes, comments, shares,
+          engagement: likes + comments + shares,
+          type: (p.type || 'photo').toUpperCase(),
+          date: p.created_time,
+          platform: 'fb'
+        };
+      });
+    }
+  } catch (e) { console.error('FB error:', e); }
+  return result;
+}
+
+// ── KPI Cards ──
+function renderKpis() {
+  const engClass = igData.avgEng > 5 ? 'up' : igData.avgEng > 2 ? 'neutral' : igData.avgEng !== null ? 'down' : '';
+  document.getElementById('igMetrics').innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${igData.followers ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${igData.mediaCount ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Avg Eng</span><span class="kpi-value ${engClass}">${igData.avgEng !== null ? igData.avgEng + '%' : '--'}</span></div>
+  `;
+
+  document.getElementById('fbMetrics').innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Page Likes</span><span class="kpi-value">${fbData.likes ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${fbData.followers ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${fbData.allPosts.length || '--'}</span></div>
+  `;
+
+  const totalFollowers = (igData.followers || 0) + (fbData.followers || 0);
+  const totalPosts = igData.allPosts.length + fbData.allPosts.length;
+  const totalEngagement = [...igData.allPosts, ...fbData.allPosts].reduce((s, p) => s + p.engagement, 0);
+  document.getElementById('totalMetrics').innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${totalFollowers}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${totalPosts}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Total Eng</span><span class="kpi-value">${totalEngagement}</span></div>
+  `;
+}
+
+// ── Format Breakdown ──
+function renderFormatBreakdown() {
+  const el = document.getElementById('formatBreakdown');
+  const posts = igData.allPosts;
+  if (posts.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-size:13px">No IG posts to analyze</div>'; return; }
+
+  const formats = {};
+  posts.forEach(p => {
+    const type = p.type === 'CAROUSEL_ALBUM' ? 'CAROUSEL' : p.type;
+    if (!formats[type]) formats[type] = { count: 0, totalEng: 0 };
+    formats[type].count++;
+    formats[type].totalEng += p.engagement;
+  });
+
+  const allFormats = ['IMAGE', 'VIDEO', 'CAROUSEL', 'REEL'];
+  el.innerHTML = allFormats.map(f => {
+    const data = formats[f] || { count: 0, totalEng: 0 };
+    const avgEng = data.count > 0 && igData.followers > 0
+      ? Math.round((data.totalEng / data.count / igData.followers) * 1000) / 10 + '%' : '--';
+    const color = data.count > 0 ? 'var(--text)' : 'var(--muted)';
+    return `<div class="format-row"><span class="format-type" style="color:${color}">${f}</span><span class="format-stats">${data.count} posts${data.count > 0 ? ' · ' + avgEng + ' eng' : ''}</span></div>`;
+  }).join('');
+
+  if (!formats['VIDEO'] && !formats['REEL']) {
+    el.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--orange);font-weight:600">No video/reel content yet — first reel gets algorithm boost</div>';
+  }
+}
+
+// ── Engagement Trend ──
+function renderEngagementTrend() {
+  const el = document.getElementById('engagementTrend');
+  const trendPosts = igData.allPosts.slice(0, 10).reverse();
+  if (trendPosts.length === 0) { el.innerHTML = '<div style="color:var(--muted);font-size:13px">No posts to show trend</div>'; return; }
+
+  const maxEng = Math.max(...trendPosts.map(p => p.engagement), 1);
+  const engValues = trendPosts.map(p => p.engagement);
+
+  let trendDir = 'stable';
+  if (engValues.length >= 3) {
+    const firstHalf = engValues.slice(0, Math.floor(engValues.length / 2));
+    const secondHalf = engValues.slice(Math.floor(engValues.length / 2));
+    const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+    if (avgSecond > avgFirst * 1.15) trendDir = 'rising';
+    else if (avgSecond < avgFirst * 0.85) trendDir = 'declining';
+  }
+
+  const avgEng = engValues.reduce((a, b) => a + b, 0) / engValues.length;
+  el.innerHTML = '<div class="trend-bar-wrap">' + trendPosts.map(p => {
+    const pct = Math.round((p.engagement / maxEng) * 100);
+    const cls = p.engagement >= avgEng * 1.2 ? 'good' : p.engagement >= avgEng * 0.7 ? 'avg' : 'low';
+    return `<div class="trend-bar-row"><span class="trend-bar-label">${p.captionShort.substring(0, 18)}...</span><div class="trend-bar ${cls}" style="width:${Math.max(pct, 8)}%"><span>${p.engagement}</span></div></div>`;
+  }).join('') + '</div>' +
+  `<div class="trend-arrow ${trendDir}">${trendDir === 'rising' ? 'Trending Up' : trendDir === 'declining' ? 'Declining — format change needed' : 'Stable'}</div>`;
+}
+
+// ── Recent Posts Table ──
+function renderRecentPosts() {
+  const tbody = document.getElementById('postsBody');
+  const allRecent = [...igData.allPosts, ...fbData.allPosts]
+    .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+
+  if (allRecent.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">No posts found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = allRecent.map(p => {
+    const dateStr = p.date ? new Date(p.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
+    const followers = p.platform === 'ig' ? igData.followers : fbData.followers;
+    const engPct = followers > 0 ? Math.round((p.engagement / followers) * 1000) / 10 + '%' : '--';
+    const engClass = followers > 0 ? ((p.engagement / followers) > 0.05 ? 'up' : (p.engagement / followers) > 0.02 ? 'neutral' : 'down') : '';
+    return `<tr>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.captionShort}</td>
+      <td><span class="platform-pill ${p.platform}">${p.platform === 'ig' ? 'IG' : 'FB'}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${dateStr}</td>
+      <td style="font-size:12px">${p.type}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.likes}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${p.comments}</td>
+      <td><span class="kpi-value ${engClass}" style="font-size:12px">${engPct}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Strategy Insight ──
+function renderInsight() {
+  const card = document.getElementById('insightCard');
+  const insights = [];
+  const actions = [];
+
+  // Audience stage
+  const followers = igData.followers || 0;
+  let stage = 'Discovery (<50)';
+  if (followers >= 500) stage = 'Engagement (500+)';
+  else if (followers >= 50) stage = 'Growth (50-500)';
+
+  insights.push({ label: 'Audience Stage', text: `${stage} — ${followers} IG followers, ${fbData.followers || 0} FB followers` });
+
+  // Format analysis
+  const hasVideo = igData.allPosts.some(p => p.type === 'VIDEO' || p.type === 'REEL');
+  if (!hasVideo && igData.allPosts.length > 0) {
+    insights.push({ label: 'Format Gap', text: 'Zero video/reel content. All posts are static images. Instagram heavily boosts accounts that publish their first reel — this is the single highest-leverage action right now.' });
+    actions.push({ text: 'Build First Reel', href: '/ops/marketing/reels/' });
+  } else if (hasVideo) {
+    const videoCount = igData.allPosts.filter(p => p.type === 'VIDEO' || p.type === 'REEL').length;
+    const imageCount = igData.allPosts.filter(p => p.type === 'IMAGE').length;
+    insights.push({ label: 'Format Mix', text: `${videoCount} video/reels vs ${imageCount} images. ${videoCount < imageCount ? 'Increase video ratio — reels get 2-3x the reach of static posts.' : 'Good video mix.'}` });
+  }
+
+  // Engagement trend
+  if (igData.allPosts.length >= 4) {
+    const recent = igData.allPosts.slice(0, 4).map(p => p.engagement);
+    const older = igData.allPosts.slice(4, 8).map(p => p.engagement);
+    if (older.length >= 2) {
+      const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const avgOlder = older.reduce((a, b) => a + b, 0) / older.length;
+      if (avgRecent < avgOlder * 0.8) {
+        insights.push({ label: 'Engagement Declining', text: `Recent 4 posts avg ${Math.round(avgRecent)} interactions vs older avg ${Math.round(avgOlder)}. Content format change or posting time shift needed.` });
+      } else if (avgRecent > avgOlder * 1.2) {
+        insights.push({ label: 'Engagement Rising', text: `Recent 4 posts avg ${Math.round(avgRecent)} interactions vs older avg ${Math.round(avgOlder)}. Current content strategy is working — maintain consistency.` });
+      }
+    }
+  }
+
+  // Cross-platform
+  if (fbData.followers > 0 && followers > 0) {
+    if (fbData.followers > followers * 2) {
+      insights.push({ label: 'FB Advantage', text: `Facebook audience (${fbData.followers}) is ${Math.round(fbData.followers / followers)}x larger than Instagram (${followers}). Cross-post all reels to FB for guaranteed views while building IG.` });
+    } else if (followers > fbData.followers * 2) {
+      insights.push({ label: 'IG Advantage', text: `Instagram audience (${followers}) is larger. Focus creative effort on IG-native formats (Reels, Carousels) and use FB for cross-posts.` });
+    }
+  }
+
+  // Discovery stage advice
+  if (followers < 50) {
+    insights.push({ label: 'Discovery Playbook', text: 'Under 50 followers = pure discovery mode. Prioritize: (1) ASMR/fire reels for shares, (2) Location tags on every post, (3) Food hashtags trending in Bangalore, (4) Post between 12-1pm and 7-9pm IST.' });
+  }
+
+  // Posting frequency
+  if (igData.allPosts.length >= 2) {
+    const dates = igData.allPosts.map(p => new Date(p.date)).sort((a, b) => b - a);
+    const daysSinceLastPost = Math.floor((Date.now() - dates[0]) / 86400000);
+    if (daysSinceLastPost > 3) {
+      insights.push({ label: 'Posting Gap', text: `Last post was ${daysSinceLastPost} days ago. Consistency matters more than perfection — aim for 3-4 posts per week minimum during the growth phase.` });
+      actions.push({ text: 'Create Next Post', href: '/ops/marketing/posts/' });
+    }
+  }
+
+  if (insights.length === 0) {
+    card.innerHTML = '<div class="loading">Not enough data for insights. Post more content to unlock strategy intelligence.</div>';
+    return;
+  }
+
+  card.innerHTML = insights.map(i => `
+    <div class="insight-section">
+      <div class="insight-section-label">${i.label}</div>
+      <div class="insight-section-text">${i.text}</div>
+    </div>
+  `).join('') + (actions.length > 0 ? `
+    <div class="insight-actions">
+      ${actions.map(a => `<a class="btn btn-primary" href="${a.href}">${a.text}</a>`).join('')}
+    </div>
+  ` : '');
+}
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+init();
+</script>
+</body>
+</html>

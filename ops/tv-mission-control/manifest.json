@@ -1,0 +1,1434 @@
+{
+  "_generated": "2026-05-03T23:11:43.088700",
+  "_environment": "production",
+  "tvs": {
+    "TV-V1": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo",
+        "Biryani_Combo"
+      ],
+      "ip": "192.168.31.113",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab.png",
+          "stem": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1995090,
+          "mtime": 1777830102,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_v3_TV-V1_C2_GheeRice_DalFry_Kabab.mp4",
+          "stem": "Video_v3_TV-V1_C2_GheeRice_DalFry_Kabab",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 1623293,
+          "mtime": 1777825152,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Video_v3_TV-V1_C2_GheeRice_DalFry_Kabab.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V1_C2_GheeRice_DalFry_Kabab"
+        }
+      ],
+      "deviceId": "69a0bd975b9a6c146ac9dfae",
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab.png",
+        "stem": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1995090,
+        "mtime": 1777830102,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V1_C2_GheeRice_DalFry_Kabab"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V2": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "192.168.31.81",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V2_C1_GheeRice_DalFry.png",
+          "stem": "Final_v3_TV-V2_C1_GheeRice_DalFry",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1858249,
+          "mtime": 1777830102,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V2_C1_GheeRice_DalFry.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V2_C1_GheeRice_DalFry"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_v3_TV-V2_C1_GheeRice_DalFry.mp4",
+          "stem": "Video_v3_TV-V2_C1_GheeRice_DalFry",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2305945,
+          "mtime": 1777825152,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Video_v3_TV-V2_C1_GheeRice_DalFry.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V2_C1_GheeRice_DalFry"
+        }
+      ],
+      "deviceId": "69a0dd165b9a6c146ad84a85",
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V2_C1_GheeRice_DalFry.png",
+        "stem": "Final_v3_TV-V2_C1_GheeRice_DalFry",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1858249,
+        "mtime": 1777830102,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V2_C1_GheeRice_DalFry.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V2_C1_GheeRice_DalFry"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V3": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Shawarma"
+      ],
+      "ip": "192.168.31.135",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.png",
+          "stem": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2078382,
+          "mtime": 1777830103,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.mp4",
+          "stem": "Video_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2473618,
+          "mtime": 1777825152,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Video_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab"
+        }
+      ],
+      "deviceId": "69a0dd165b9a6c146ad84a7d",
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.png",
+        "stem": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 2078382,
+        "mtime": 1777830103,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V3_C3_GheeRice_ButterChicken_Kabab"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V4": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Sheek"
+      ],
+      "ip": "192.168.31.164",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.png",
+          "stem": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2022347,
+          "mtime": 1777830102,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab"
+        },
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Video_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.mp4",
+          "stem": "Video_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2235603,
+          "mtime": 1777825152,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Video_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab"
+        }
+      ],
+      "deviceId": "69a060985b9a6c146a9dc94f",
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.png",
+        "stem": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 2022347,
+        "mtime": 1777830102,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V4_C4_GheeRice_MuttonChatpata_Kabab"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V5": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Biryani_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Biryani_Combo",
+          "filename": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab.png",
+          "stem": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2144130,
+          "mtime": 1777830101,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V5_C5_ChickenBiryani_Kabab.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab"
+        },
+        {
+          "category": "Biryani_Combo",
+          "filename": "Video_v3_TV-V5_C5_ChickenBiryani_Kabab.mp4",
+          "stem": "Video_v3_TV-V5_C5_ChickenBiryani_Kabab",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2839346,
+          "mtime": 1777826254,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Video_v3_TV-V5_C5_ChickenBiryani_Kabab.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V5_C5_ChickenBiryani_Kabab"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Biryani_Combo",
+        "filename": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab.png",
+        "stem": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 2144130,
+        "mtime": 1777830101,
+        "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V5_C5_ChickenBiryani_Kabab.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V5_C5_ChickenBiryani_Kabab"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V6": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Biryani_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Biryani_Combo",
+          "filename": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab.png",
+          "stem": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 2018942,
+          "mtime": 1777830101,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V6_C6_MuttonBiryani_Kabab.png",
+          "_state": "LIVE",
+          "_id": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab"
+        },
+        {
+          "category": "Biryani_Combo",
+          "filename": "Video_v3_TV-V6_C6_MuttonBiryani_Kabab.mp4",
+          "stem": "Video_v3_TV-V6_C6_MuttonBiryani_Kabab",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 1632959,
+          "mtime": 1777826254,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Video_v3_TV-V6_C6_MuttonBiryani_Kabab.mp4",
+          "_state": "LIVE",
+          "_id": "Video_v3_TV-V6_C6_MuttonBiryani_Kabab"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Biryani_Combo",
+        "filename": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab.png",
+        "stem": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 2018942,
+        "mtime": 1777830101,
+        "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V6_C6_MuttonBiryani_Kabab.png",
+        "_state": "LIVE",
+        "_id": "Final_v3_TV-V6_C6_MuttonBiryani_Kabab"
+      },
+      "playing_state": "LIVE"
+    },
+    "TV-V7": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+          "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1612689,
+          "mtime": 1777893016,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V7_GR_ProteinPair_C3_C4"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+        "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1612689,
+        "mtime": 1777893016,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V7_GR_ProteinPair_C3_C4"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V8": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+          "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1678015,
+          "mtime": 1777950000,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V8_GR_VegPair_C1_C2"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+        "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1678015,
+        "mtime": 1777950000,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V8_GR_VegPair_C1_C2"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V9": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Biryani_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Biryani_Combo",
+          "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+          "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1669201,
+          "mtime": 1777950000,
+          "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V9_Biryani_Pair_C5_C6"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Biryani_Combo",
+        "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+        "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1669201,
+        "mtime": 1777950000,
+        "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V9_Biryani_Pair_C5_C6"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V10": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "GheeRice_Combo"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "GheeRice_Combo",
+          "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+          "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 4450997,
+          "mtime": 1777951000,
+          "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "GheeRice_Combo",
+        "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+        "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 4450997,
+        "mtime": 1777951000,
+        "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V11": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+          "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1452477,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V11_K1_Chicken_Kathi"
+        },
+        {
+          "category": "Kathi",
+          "filename": "Video_v3_TV-V11_K1_Chicken_Kathi.mp4",
+          "stem": "Video_v3_TV-V11_K1_Chicken_Kathi",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2197970,
+          "mtime": 1777965000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V11_K1_Chicken_Kathi.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_v3_TV-V11_K1_Chicken_Kathi"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+        "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1452477,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V11_K1_Chicken_Kathi"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V12": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+          "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1479164,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+        },
+        {
+          "category": "Kathi",
+          "filename": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4",
+          "stem": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 2633440,
+          "mtime": 1777965000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V12_KT_Chicken_Tikka_Kathi.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+        "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1479164,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-V13": {
+      "orient": "vertical",
+      "primaryConveyances": [
+        "Kathi"
+      ],
+      "ip": "preview-only",
+      "playlist": [
+        {
+          "category": "Kathi",
+          "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+          "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+          "ext": ".png",
+          "isImage": true,
+          "isVideo": false,
+          "size": 1849588,
+          "mtime": 1777960000,
+          "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+          "_state": "WIP_FINAL",
+          "_id": "Final_v3_TV-V13_Kathi_Pair_K1_KT"
+        }
+      ],
+      "deviceId": null,
+      "virtual": true,
+      "playing": {
+        "category": "Kathi",
+        "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+        "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+        "ext": ".png",
+        "isImage": true,
+        "isVideo": false,
+        "size": 1849588,
+        "mtime": 1777960000,
+        "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+        "_state": "WIP_FINAL",
+        "_id": "Final_v3_TV-V13_Kathi_Pair_K1_KT"
+      },
+      "playing_state": "WIP_FINAL"
+    },
+    "TV-H1": {
+      "orient": "horizontal",
+      "primaryConveyances": [
+        "Grill"
+      ],
+      "ip": "192.168.31.33",
+      "playlist": [],
+      "deviceId": "69a05aad5b9a6c146a9ae416",
+      "playing": null,
+      "playing_state": null
+    },
+    "TV-H2": {
+      "orient": "horizontal",
+      "primaryConveyances": [
+        "Outdoor"
+      ],
+      "ip": "192.168.31.103",
+      "playlist": [],
+      "deviceId": null,
+      "blocker": "License",
+      "playing": null,
+      "playing_state": null
+    }
+  },
+  "conveyances": {
+    "GheeRice_Combo": {
+      "tv": "TV-V1",
+      "color": "#f59e0b",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "C1",
+          "name": "Ghee Rice + Dal Fry",
+          "originalPrice": 210,
+          "comboPrice": 149,
+          "save": 61
+        },
+        {
+          "code": "C2",
+          "name": "Ghee Rice + Dal Fry + 2pc Kabab",
+          "originalPrice": 280,
+          "comboPrice": 199,
+          "save": 81
+        },
+        {
+          "code": "C3",
+          "name": "Ghee Rice + Butter Chicken + 2pc Kabab",
+          "originalPrice": 380,
+          "comboPrice": 249,
+          "save": 131,
+          "smartPick": true
+        },
+        {
+          "code": "C4",
+          "name": "Ghee Rice + Mutton Chatpata + 2pc Kabab",
+          "originalPrice": 420,
+          "comboPrice": 289,
+          "save": 131
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Ghee_Rice",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Ghee_Rice.jpg",
+              "stem": "Item_Ghee_Rice",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1414260,
+              "mtime": 1777830099,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Ghee_Rice.jpg"
+            }
+          },
+          {
+            "id": "Item_Dal_Fry",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Dal_Fry.jpg",
+              "stem": "Item_Dal_Fry",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1429522,
+              "mtime": 1777830099,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Dal_Fry.jpg"
+            }
+          },
+          {
+            "id": "Item_Butter_Chicken",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Butter_Chicken.jpg",
+              "stem": "Item_Butter_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1336203,
+              "mtime": 1777830098,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Butter_Chicken.jpg"
+            }
+          },
+          {
+            "id": "Item_Mutton_Chatpata",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Mutton_Chatpata.jpg",
+              "stem": "Item_Mutton_Chatpata",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1479799,
+              "mtime": 1777830098,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Mutton_Chatpata.jpg"
+            }
+          },
+          {
+            "id": "Item_Chicken_Kebab",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Chicken_Kebab.jpg",
+              "stem": "Item_Chicken_Kebab",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1225393,
+              "mtime": 1777830099,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
+            }
+          }
+        ],
+        "done": 5,
+        "total": 5
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_C1_GheeRice_DalFry",
+            "desc": "Plated combo \u00b7 GR + Dal Fry + Salad",
+            "source": "real-photo",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C1_GheeRice_DalFry.png",
+              "stem": "Hero_C1_GheeRice_DalFry",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 347523,
+              "mtime": 1777830100,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C1_GheeRice_DalFry.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_C2_GheeRice_DalFry_Kebab",
+            "desc": "Plated combo \u00b7 GR + Dal Fry + Kabab plate",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C2_GheeRice_DalFry_Kebab.png",
+              "stem": "Hero_C2_GheeRice_DalFry_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 384816,
+              "mtime": 1777830100,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C2_GheeRice_DalFry_Kebab.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_C3_GheeRice_ButterChicken_Kebab",
+            "desc": "Plated combo \u00b7 GR + Butter Chicken + Kabab + Naan (SMART PICK)",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C3_GheeRice_ButterChicken_Kebab.png",
+              "stem": "Hero_C3_GheeRice_ButterChicken_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 419603,
+              "mtime": 1777830100,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C3_GheeRice_ButterChicken_Kebab.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
+            "desc": "Plated combo \u00b7 GR + Mutton Chatpata + Kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_C4_GheeRice_MuttonChatpata_Kebab.png",
+              "stem": "Hero_C4_GheeRice_MuttonChatpata_Kebab",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 396124,
+              "mtime": 1777830100,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_C4_GheeRice_MuttonChatpata_Kebab.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_AllInOne_FullSpread",
+            "desc": "Hero spread for all-in-one creative",
+            "source": "real-photo",
+            "wip": null,
+            "locked": {
+              "category": "GheeRice_Combo",
+              "filename": "Hero_AllInOne_FullSpread.jpg",
+              "stem": "Hero_AllInOne_FullSpread",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 283467,
+              "mtime": 1777830100,
+              "url": "assets/02_Hero_Images_LOCKED/GheeRice_Combo/Hero_AllInOne_FullSpread.jpg"
+            },
+            "state": "LOCKED"
+          }
+        ],
+        "done": 5,
+        "total": 5
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V1_GR_AllInOne",
+            "desc": "All 4 combos in one decision-matrix view (high screen-time)",
+            "scene": "S1",
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png",
+              "stem": "Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 4450997,
+              "mtime": 1777951000,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V10_GR_AllInOne_C1_C2_C3_C4.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V1_GR_VegPair",
+            "desc": "C1 + C2 side-by-side \u00b7 Veg ladder",
+            "scene": "S2",
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V8_GR_VegPair_C1_C2.png",
+              "stem": "Final_v3_TV-V8_GR_VegPair_C1_C2",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1678015,
+              "mtime": 1777950000,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V8_GR_VegPair_C1_C2.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V1_GR_ProteinPair",
+            "desc": "C3 + C4 side-by-side \u00b7 Protein ladder",
+            "scene": "S3",
+            "wip": {
+              "category": "GheeRice_Combo",
+              "filename": "Final_v3_TV-V7_GR_ProteinPair_C3_C4.png",
+              "stem": "Final_v3_TV-V7_GR_ProteinPair_C3_C4",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1612689,
+              "mtime": 1777893016,
+              "url": "assets/DESKTOP_FINAL/GheeRice_Combo/Final_v3_TV-V7_GR_ProteinPair_C3_C4.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          }
+        ],
+        "done": 3,
+        "total": 3
+      },
+      "overallPct": 95
+    },
+    "Biryani_Combo": {
+      "tv": "TV-V5 \u00b7 TV-V6",
+      "color": "#dc2626",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "C5",
+          "name": "Chicken Biryani + 2pc Kabab",
+          "originalPrice": 320,
+          "comboPrice": 229,
+          "save": 91
+        },
+        {
+          "code": "C6",
+          "name": "Mutton Biryani + 2pc Kabab",
+          "originalPrice": 410,
+          "comboPrice": 309,
+          "save": 101
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Chicken_Biryani",
+            "present": true,
+            "asset": {
+              "category": "Biryani_Combo",
+              "filename": "Item_Chicken_Biryani.jpg",
+              "stem": "Item_Chicken_Biryani",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1168628,
+              "mtime": 1777830096,
+              "url": "assets/01_Reference_Images/Biryani_Combo/Item_Chicken_Biryani.jpg"
+            }
+          },
+          {
+            "id": "Item_Mutton_Biryani",
+            "present": true,
+            "asset": {
+              "category": "Biryani_Combo",
+              "filename": "Item_Mutton_Biryani.jpg",
+              "stem": "Item_Mutton_Biryani",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1167167,
+              "mtime": 1777830096,
+              "url": "assets/01_Reference_Images/Biryani_Combo/Item_Mutton_Biryani.jpg"
+            }
+          },
+          {
+            "id": "Item_Chicken_Kebab",
+            "present": true,
+            "asset": {
+              "category": "GheeRice_Combo",
+              "filename": "Item_Chicken_Kebab.jpg",
+              "stem": "Item_Chicken_Kebab",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1225393,
+              "mtime": 1777830099,
+              "url": "assets/01_Reference_Images/GheeRice_Combo/Item_Chicken_Kebab.jpg"
+            }
+          }
+        ],
+        "done": 3,
+        "total": 3
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_C5_ChickenBiryani_Kebab",
+            "desc": "Chicken Biryani plated with kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_C6_MuttonBiryani_Kebab",
+            "desc": "Mutton Biryani plated with kabab",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V1_Biryani_Pair",
+            "desc": "C5 + C6 side-by-side \u00b7 Biryani ladder",
+            "scene": "S4",
+            "wip": {
+              "category": "Biryani_Combo",
+              "filename": "Final_v3_TV-V9_Biryani_Pair_C5_C6.png",
+              "stem": "Final_v3_TV-V9_Biryani_Pair_C5_C6",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1669201,
+              "mtime": 1777950000,
+              "url": "assets/DESKTOP_FINAL/Biryani_Combo/Final_v3_TV-V9_Biryani_Pair_C5_C6.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          }
+        ],
+        "done": 1,
+        "total": 1
+      },
+      "overallPct": 50
+    },
+    "Kathi": {
+      "tv": "TV-V2",
+      "color": "#16a34a",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "K1",
+          "name": "Chicken Kathi Roll",
+          "originalPrice": null,
+          "comboPrice": 90,
+          "save": null
+        },
+        {
+          "code": "KT",
+          "name": "Chicken Tikka Kathi Roll",
+          "originalPrice": null,
+          "comboPrice": 100,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Chicken_Kathi",
+            "present": true,
+            "asset": {
+              "category": "Kathi",
+              "filename": "Item_Chicken_Kathi.jpg",
+              "stem": "Item_Chicken_Kathi",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 150992,
+              "mtime": 1777960000,
+              "url": "assets/01_Reference_Images/Kathi/Item_Chicken_Kathi.jpg"
+            }
+          },
+          {
+            "id": "Item_Kathi_Egg",
+            "present": false,
+            "asset": null
+          }
+        ],
+        "done": 1,
+        "total": 2
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_K1_Chicken_Kathi",
+            "desc": "Branded wrapped chicken kathi roll",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "Kathi",
+              "filename": "Hero_K1_Chicken_Kathi.png",
+              "stem": "Hero_K1_Chicken_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 782865,
+              "mtime": 1777960000,
+              "url": "assets/02_Hero_Images_LOCKED/Kathi/Hero_K1_Chicken_Kathi.png"
+            },
+            "state": "LOCKED"
+          },
+          {
+            "id": "Hero_KT_Chicken_Tikka_Kathi",
+            "desc": "Branded wrapped chicken tikka kathi roll",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": {
+              "category": "Kathi",
+              "filename": "Hero_KT_Chicken_Tikka_Kathi.png",
+              "stem": "Hero_KT_Chicken_Tikka_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 815436,
+              "mtime": 1777960000,
+              "url": "assets/02_Hero_Images_LOCKED/Kathi/Hero_KT_Chicken_Tikka_Kathi.png"
+            },
+            "state": "LOCKED"
+          }
+        ],
+        "done": 2,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V11_K1_Chicken_Kathi",
+            "desc": "Single page \u00b7 Chicken Kathi Roll @ \u20b990",
+            "scene": "S1",
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V11_K1_Chicken_Kathi.png",
+              "stem": "Final_v3_TV-V11_K1_Chicken_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1452477,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V11_K1_Chicken_Kathi.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V12_KT_Chicken_Tikka_Kathi",
+            "desc": "Single page \u00b7 Chicken Tikka Kathi Roll @ \u20b9100",
+            "scene": "S2",
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png",
+              "stem": "Final_v3_TV-V12_KT_Chicken_Tikka_Kathi",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1479164,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V12_KT_Chicken_Tikka_Kathi.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          },
+          {
+            "id": "Final_TV-V13_Kathi_Pair_K1_KT",
+            "desc": "Pair \u00b7 K1 + KT side-by-side",
+            "scene": "S3",
+            "wip": {
+              "category": "Kathi",
+              "filename": "Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
+              "stem": "Final_v3_TV-V13_Kathi_Pair_K1_KT",
+              "ext": ".png",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1849588,
+              "mtime": 1777960000,
+              "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png"
+            },
+            "locked": null,
+            "state": "WIP"
+          }
+        ],
+        "done": 3,
+        "total": 3
+      },
+      "overallPct": 100
+    },
+    "Shawarma": {
+      "tv": "TV-V3",
+      "color": "#0ea5e9",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "SH1",
+          "name": "Arabic Chicken Shawarma (roll)",
+          "originalPrice": null,
+          "comboPrice": 139,
+          "save": null
+        },
+        {
+          "code": "SH2",
+          "name": "Shawarma Plate",
+          "originalPrice": null,
+          "comboPrice": 219,
+          "save": null
+        },
+        {
+          "code": "SH-OFFER",
+          "name": "Office Lunch Power \u00b7 Plate + Drink",
+          "comboPrice": 249
+        }
+      ],
+      "references": {
+        "items": [],
+        "done": 0,
+        "total": 0
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_SH1_Shawarma_Roll",
+            "desc": "Levantine spit-roasted chicken shawarma roll cross-section",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          },
+          {
+            "id": "Hero_SH2_Shawarma_Plate",
+            "desc": "Shawarma plate with toum + pickles",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 2
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V3_Shawarma_Lunch",
+            "desc": "Shawarma + Office Lunch Power offer",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 0
+    },
+    "Sheek": {
+      "tv": "TV-V4",
+      "color": "#9333ea",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "SK1",
+          "name": "Mutton Sheekh Kabab Plate",
+          "originalPrice": null,
+          "comboPrice": 150,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Mutton_Sheek",
+            "present": true,
+            "asset": {
+              "category": "Sheek",
+              "filename": "Item_Mutton_Sheek.jpg",
+              "stem": "Item_Mutton_Sheek",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1511225,
+              "mtime": 1777830098,
+              "url": "assets/01_Reference_Images/Sheek/Item_Mutton_Sheek.jpg"
+            }
+          }
+        ],
+        "done": 1,
+        "total": 1
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_SK1_Mutton_Sheek_Plate",
+            "desc": "Cylindrical charcoal-grilled mutton sheekh on a plate",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-V4_Sheek_Iftar",
+            "desc": "Iftar Hour \u00b7 Mutton Sheekh BUY 1 GET 1 FREE \u00b7 5-7pm",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 17
+    },
+    "Grill": {
+      "tv": "TV-H1",
+      "color": "#ea580c",
+      "blocker": null,
+      "skus": [
+        {
+          "code": "GR1",
+          "name": "Grilled Chicken (Half)",
+          "originalPrice": null,
+          "comboPrice": 229,
+          "save": null
+        }
+      ],
+      "references": {
+        "items": [
+          {
+            "id": "Item_Tandoori_Chicken",
+            "present": true,
+            "asset": {
+              "category": "Grill",
+              "filename": "Item_Tandoori_Chicken.jpg",
+              "stem": "Item_Tandoori_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1186267,
+              "mtime": 1777830097,
+              "url": "assets/01_Reference_Images/Grill/Item_Tandoori_Chicken.jpg"
+            }
+          },
+          {
+            "id": "Item_Grilled_Chicken",
+            "present": true,
+            "asset": {
+              "category": "Grill",
+              "filename": "Item_Grilled_Chicken.jpg",
+              "stem": "Item_Grilled_Chicken",
+              "ext": ".jpg",
+              "isImage": true,
+              "isVideo": false,
+              "size": 1454180,
+              "mtime": 1777830097,
+              "url": "assets/01_Reference_Images/Grill/Item_Grilled_Chicken.jpg"
+            }
+          }
+        ],
+        "done": 2,
+        "total": 2
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_GR1_Grilled_Chicken_Horizontal",
+            "desc": "Whole bird charcoal-grilled, family setting",
+            "source": "ai-edit",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-H1_Grill_FamilyHour",
+            "desc": "Family Power Hour \u00b7 BUY 1 GET 1 \u00b7 8-10pm",
+            "scene": "S1",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 29
+    },
+    "Outdoor": {
+      "tv": "TV-H2",
+      "color": "#64748b",
+      "blocker": "License blocked \u00b7 awaiting PiSignage support",
+      "skus": [],
+      "references": {
+        "items": [],
+        "done": 0,
+        "total": 0
+      },
+      "heroes": {
+        "items": [
+          {
+            "id": "Hero_Outdoor_Hook",
+            "desc": "First-glance hook \u00b7 combo + 'NOW OPEN' for street traffic",
+            "source": "ai-prompt",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "finals": {
+        "items": [
+          {
+            "id": "Final_TV-H2_Outdoor_Hook",
+            "desc": "Outdoor facade hook \u00b7 Combo Meals from \u20b9149 \u00b7 INSIDE \u2192",
+            "scene": "static",
+            "wip": null,
+            "locked": null,
+            "state": "MISSING"
+          }
+        ],
+        "done": 0,
+        "total": 1
+      },
+      "overallPct": 0
+    }
+  },
+  "totals": {
+    "references": {
+      "done": 12,
+      "total": 13
+    },
+    "heroes": {
+      "done": 7,
+      "total": 14
+    },
+    "finals": {
+      "done": 7,
+      "total": 9
+    }
+  }
+}

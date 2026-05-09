@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Waiter [TEST]</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:34px;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:var(--green);border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* Tabs */
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:87px;z-index:99}
+    .tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--green);border-bottom-color:var(--green)}
+    .tab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--green);color:#000;border-radius:9px;font-size:11px;font-weight:700;margin-left:4px;padding:0 5px}
+    .tab .badge.urgent{background:var(--red);color:#fff}
+    .tab .badge.blue{background:var(--blue);color:#fff}
+
+    /* Screens */
+    .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:100px}
+    .screen.active{display:block}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    #pin-screen .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    #pin-screen .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--green);border-color:var(--green)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Shift Screen */
+    #shift-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .shift-greeting{font-size:24px;font-weight:700;margin-bottom:8px}
+    .shift-sub{color:var(--text2);font-size:15px;margin-bottom:40px;text-align:center}
+    .shift-btn{width:200px;height:200px;border-radius:50%;border:3px solid var(--green);background:var(--green-dim);color:var(--green);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .shift-btn:active{transform:scale(.95);background:var(--green);color:#000}
+    .shift-btn .shift-icon{font-size:48px}
+    .shift-btn.end{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+    .shift-btn.end:active{background:var(--red);color:#fff}
+    .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
+    .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
+
+    /* Status summary bar */
+    .status-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .stat-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-shrink:0;text-align:center}
+    .stat-chip .num{font-size:20px;font-weight:700}
+    .stat-chip .label{font-size:10px;color:var(--text2);margin-top:2px}
+    .stat-chip.orange .num{color:var(--orange)}
+    .stat-chip.green .num{color:var(--green)}
+    .stat-chip.blue .num{color:var(--blue)}
+
+    /* ── Table card (one per table) ── */
+    .table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
+    .table-card-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+    .table-card-header .tbl{font-size:18px;font-weight:700}
+    .table-card-header .ord{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .table-card-body{padding:6px 0}
+
+    /* Station section inside table card */
+    .station-section{padding:0 14px 8px}
+    .station-section:last-child{padding-bottom:12px}
+    .station-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:6px 0 4px;display:flex;align-items:center;gap:6px}
+    .station-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+    /* Item row inside station */
+    .stn-item{display:flex;justify-content:space-between;align-items:center;padding:7px 8px;margin:3px 0;border-radius:8px;background:var(--bg2);border:1px solid transparent}
+    .stn-item .item-name{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .stn-item .item-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:4px;flex-shrink:0;margin-left:8px}
+
+    /* Strikethrough states (at_counter and beyond) */
+    .stn-item.struck .item-name{text-decoration:line-through;color:var(--text2)}
+    .stn-item.struck{border-color:var(--border)}
+    .stn-item.collected .item-name{text-decoration:line-through;color:var(--blue);opacity:.6}
+    .stn-item.served-item .item-name{text-decoration:line-through;color:var(--text2);opacity:.35}
+    .stn-item.served-item .item-status{opacity:.35}
+
+    /* Status colors */
+    .st-cooking{color:var(--orange);background:var(--orange-dim)}
+    .st-ready{color:var(--amber);background:var(--amber-dim)}
+    .st-done{color:var(--green);background:var(--green-dim)}
+    .st-collected{color:var(--blue);background:var(--blue-dim)}
+    .st-served{color:var(--text2);background:var(--bg)}
+
+    /* Deliver cards */
+    .deliver-card{background:var(--card);border:2px solid var(--blue);border-radius:14px;padding:16px;margin-bottom:12px}
+    .deliver-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .deliver-table{font-size:22px;font-weight:700}
+    .deliver-count{font-size:14px;color:var(--text2)}
+    .deliver-items{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
+    .deliver-item{font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+    .served-btn{width:100%;padding:16px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+    .served-btn:active{opacity:.8;transform:scale(.98)}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:40px 20px}
+    .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+    .empty-state p{color:var(--text2);font-size:14px}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    .toast.show{opacity:1}
+    .toast.error{border-color:var(--red);color:var(--red)}
+    .toast.success{border-color:var(--green);color:var(--green)}
+  </style>
+</head>
+<body>
+<div style="background:#ef4444;color:#fff;text-align:center;padding:6px;font-weight:700;font-size:13px;letter-spacing:1px;position:sticky;top:0;z-index:999">TEST MODE — test.hamzahotel.com</div>
+
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <div class="pin-title">Waiter Login</div>
+  <div class="pin-sub">Enter your 4-digit PIN</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key del" data-key="del">DEL</button>
+  </div>
+</div>
+
+<!-- Shift Screen (shown after login if not on shift) -->
+<div id="shift-screen">
+  <div class="shift-greeting" id="shift-greeting">Hello!</div>
+  <div class="shift-sub">Tap the button to start your shift<br>and begin receiving orders</div>
+  <button class="shift-btn" id="shift-btn" onclick="toggleShift()">
+    <span class="shift-icon">&#x25B6;</span>
+    Start Shift
+  </button>
+  <div class="shift-time" id="shift-time"></div>
+  <div class="shift-logout" onclick="logout()">Logout</div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="header">
+    <h1><span class="accent"></span>Waiter</h1>
+    <div class="header-right">
+      <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="icon-btn" onclick="refresh()" title="Refresh">&#x21bb;</button>
+      <button class="icon-btn" onclick="showEndShift()" title="End Shift" style="color:var(--red)">&#x23F9;</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="tables" onclick="switchTab('tables')">My Tables<span class="badge" id="tables-badge" style="display:none">0</span></div>
+    <div class="tab" data-tab="deliver" onclick="switchTab('deliver')">Deliver<span class="badge blue" id="deliver-badge" style="display:none">0</span></div>
+  </div>
+
+  <!-- My Tables Screen (default) -->
+  <div class="screen active" id="screen-tables">
+    <div id="tables-content"></div>
+  </div>
+
+  <!-- Deliver Screen -->
+  <div class="screen" id="screen-deliver">
+    <div id="deliver-content"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+const ENV_SUFFIX = '&env=test';
+let token = localStorage.getItem('floor_waiter_test_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_waiter_test_staff') || 'null');
+let myData = null;
+let prevAtCounterIds = new Set();   // track item IDs at_counter for vibration
+let prevPickedUpCount = 0;
+let pollInterval = null;
+let currentTab = 'tables';
+
+// ── Counter display names & colors ──
+const COUNTER_DISPLAY = {
+  'Kitchen Pass': 'Kitchen Counter',
+  'Bain Marie': 'Bain Marie Counter'
+};
+const COUNTER_COLOR = {
+  'Kitchen Pass': 'amber',
+  'Bain Marie': 'blue',
+  'Juice Counter': 'green',
+  'Shawarma Counter': 'orange',
+  'Grill Counter': 'red'
+};
+// Fixed display order for stations
+const COUNTER_ORDER = ['Kitchen Pass', 'Bain Marie', 'Juice Counter', 'Shawarma Counter', 'Grill Counter'];
+
+// ── Status labels: simple — Preparing → Ready/Prepared ──
+function getStatusLabel(counter, status) {
+  if (status === 'cooking')    return 'Preparing';
+  if (status === 'at_counter') return counter === 'Bain Marie' ? 'Prepared' : 'Ready';
+  if (status === 'picked_up')  return 'Collected';
+  if (status === 'delivered')  return 'Served';
+  return status;
+}
+
+function getStatusClass(status) {
+  switch (status) {
+    case 'cooking':    return 'st-cooking';
+    case 'cooked':     return 'st-ready';
+    case 'at_counter': return 'st-done';
+    case 'picked_up':  return 'st-collected';
+    case 'delivered':  return 'st-served';
+    default:           return '';
+  }
+}
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── Vibrate ──
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ── API helper ──
+async function api(action, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  try {
+    const res = await fetch(`${API_BASE}?action=${action}${ENV_SUFFIX}`, opts);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { toast('Session expired — please log in again', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    document.getElementById('conn-dot').className = 'conn-dot';
+    return data;
+  } catch (e) {
+    if (e.message !== 'Session expired') {
+      const dot = document.getElementById('conn-dot');
+      if (dot) dot.className = 'conn-dot offline';
+    }
+    throw e;
+  }
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const data = await fetch(`${API_BASE}?action=floor-login${ENV_SUFFIX}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      }).then(r => r.json());
+
+      if (data.error) throw new Error(data.error);
+      if (!data.can_waiter) throw new Error('Waiter access required');
+
+      token = data.token;
+      staffInfo = data;
+      localStorage.setItem('floor_waiter_test_token', token);
+      localStorage.setItem('floor_waiter_test_staff', JSON.stringify(data));
+      afterLogin();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+function logout() {
+  token = '';
+  staffInfo = null;
+  localStorage.removeItem('floor_waiter_test_token');
+  localStorage.removeItem('floor_waiter_test_staff');
+  clearInterval(pollInterval);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+  pinBuffer = '';
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+}
+
+// ── After Login: check shift state ──
+function afterLogin() {
+  document.getElementById('pin-screen').style.display = 'none';
+  if (staffInfo.on_shift) {
+    enterApp();
+  } else {
+    showShiftScreen();
+  }
+}
+
+// ── Shift Screen ──
+function showShiftScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'flex';
+  document.getElementById('shift-greeting').textContent = `Hello, ${staffInfo.name}!`;
+  document.getElementById('shift-time').textContent = '';
+  const btn = document.getElementById('shift-btn');
+  btn.className = 'shift-btn';
+  btn.innerHTML = '<span class="shift-icon">&#x25B6;</span>Start Shift';
+}
+
+async function toggleShift() {
+  try {
+    const r = await api('floor-start-shift', 'POST');
+    staffInfo.on_shift = true;
+    localStorage.setItem('floor_waiter_test_staff', JSON.stringify(staffInfo));
+    vibrate([200]);
+    toast('Shift started!');
+    enterApp();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showEndShift() {
+  if (confirm('End your shift? You will stop receiving new orders.')) {
+    endShift();
+  }
+}
+
+async function endShift() {
+  try {
+    await api('floor-end-shift', 'POST');
+    staffInfo.on_shift = false;
+    localStorage.setItem('floor_waiter_test_staff', JSON.stringify(staffInfo));
+    clearInterval(pollInterval);
+    vibrate([100]);
+    toast('Shift ended');
+    showShiftScreen();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Enter Main App ──
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('staff-name').textContent = staffInfo.name;
+  refresh();
+  pollInterval = setInterval(refresh, 5000);
+}
+
+// ── Tab switching ──
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + tab).classList.add('active');
+}
+
+// ── Main refresh ──
+async function refresh() {
+  try {
+    myData = await api('floor-my-orders');
+    renderTables();
+    renderDeliver();
+    checkNotifications();
+  } catch (e) { console.error('Refresh error:', e); }
+}
+
+// ── Notifications: per-item vibration tracking ──
+function checkNotifications() {
+  if (!myData) return;
+
+  // Build current set of at_counter item IDs
+  const currentAtCounter = new Set();
+  for (const order of myData.orders) {
+    for (const item of (order.items || [])) {
+      if (item.status === 'at_counter') currentAtCounter.add(item.id);
+    }
+  }
+
+  // Check for NEW items reaching at_counter (not seen before)
+  let newReady = false;
+  for (const id of currentAtCounter) {
+    if (!prevAtCounterIds.has(id)) { newReady = true; break; }
+  }
+  if (newReady && prevAtCounterIds.size > 0) {
+    // Only vibrate after first load (not on initial page load)
+    vibrate([200, 100, 200]);
+  }
+  prevAtCounterIds = currentAtCounter;
+
+  // Check for new picked_up items (counter confirmed collection → needs delivery)
+  const newPickedUp = myData.picked_up_count || 0;
+  if (newPickedUp > prevPickedUpCount && prevPickedUpCount > 0) {
+    vibrate([300, 100, 300]);
+    if (currentTab !== 'deliver') {
+      toast('Items ready to deliver!');
+    }
+  }
+  prevPickedUpCount = newPickedUp;
+}
+
+// ── My Tables Screen ──
+function renderTables() {
+  const d = myData;
+  if (!d) return;
+
+  // Group orders by table_number → one card per table
+  const tableMap = {};
+  for (const o of d.orders) {
+    const tbl = o.table_number || 'none';
+    if (!tableMap[tbl]) tableMap[tbl] = { table_number: o.table_number, orders: [], allItems: [] };
+    tableMap[tbl].orders.push(o);
+    for (const item of (o.items || [])) {
+      tableMap[tbl].allItems.push(item);
+    }
+  }
+  const tables = Object.values(tableMap);
+
+  // Update badges (count unique tables, not orders)
+  const tBadge = document.getElementById('tables-badge');
+  if (tables.length > 0) {
+    tBadge.style.display = '';
+    tBadge.textContent = tables.length;
+  } else {
+    tBadge.style.display = 'none';
+  }
+
+  const dBadge = document.getElementById('deliver-badge');
+  const deliverCount = d.deliver_batches.reduce((s, b) => s + b.item_count, 0);
+  if (deliverCount > 0) {
+    dBadge.style.display = '';
+    dBadge.textContent = deliverCount;
+  } else {
+    dBadge.style.display = 'none';
+  }
+
+  const div = document.getElementById('tables-content');
+
+  if (tables.length === 0) {
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x2615;</div><p>No tables assigned to you</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">New orders will appear here automatically</p></div>';
+    return;
+  }
+
+  // Status summary bar
+  let html = '<div class="status-bar">';
+  html += `<div class="stat-chip orange"><div class="num">${d.cooking_count}</div><div class="label">Preparing</div></div>`;
+  html += `<div class="stat-chip green"><div class="num">${d.ready_count}</div><div class="label">Ready</div></div>`;
+  html += `<div class="stat-chip blue"><div class="num">${d.picked_up_count}</div><div class="label">Collected</div></div>`;
+  html += '</div>';
+
+  // One card per table (merged orders)
+  html += tables.map(tbl => {
+    const items = tbl.allItems;
+    const orderNames = tbl.orders.map(o => o.odoo_order_name).filter(Boolean).join(', ');
+
+    // Group items by counter
+    const byCounter = {};
+    for (const item of items) {
+      const counter = item.counter || 'Other';
+      if (!byCounter[counter]) byCounter[counter] = [];
+      byCounter[counter].push(item);
+    }
+
+    // Build card
+    let card = '<div class="table-card">';
+    card += `<div class="table-card-header">
+      <span class="tbl">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}</span>
+      <span class="ord">${orderNames}</span>
+    </div>`;
+    card += '<div class="table-card-body">';
+
+    // Render stations in fixed order, then any remaining
+    const rendered = new Set();
+    for (const counterKey of COUNTER_ORDER) {
+      if (!byCounter[counterKey]) continue;
+      card += renderStation(counterKey, byCounter[counterKey]);
+      rendered.add(counterKey);
+    }
+    // Render any counter not in the fixed order (future-proof)
+    for (const counterKey of Object.keys(byCounter)) {
+      if (rendered.has(counterKey)) continue;
+      card += renderStation(counterKey, byCounter[counterKey]);
+    }
+
+    card += '</div></div>';
+    return card;
+  }).join('');
+
+  div.innerHTML = html;
+}
+
+function renderStation(counterKey, items) {
+  const displayName = COUNTER_DISPLAY[counterKey] || counterKey;
+  const color = COUNTER_COLOR[counterKey] || 'text2';
+
+  let html = '<div class="station-section">';
+  html += `<div class="station-label" style="color:var(--${color})"><span class="station-dot" style="background:var(--${color})"></span>${displayName}</div>`;
+
+  for (const item of items) {
+    const isStruck = item.status === 'at_counter' || item.status === 'picked_up' || item.status === 'delivered';
+    const isCollected = item.status === 'picked_up';
+    const isServed = item.status === 'delivered';
+    const label = getStatusLabel(counterKey, item.status);
+    const stClass = getStatusClass(item.status);
+    const rowClass = isServed ? 'stn-item served-item' : isCollected ? 'stn-item collected' : isStruck ? 'stn-item struck' : 'stn-item';
+
+    html += `<div class="${rowClass}">
+      <span class="item-name">${item.quantity > 1 ? item.quantity + 'x ' : ''}${item.product_name}</span>
+      <span class="item-status ${stClass}">${isStruck && !isCollected && !isServed ? '&#x2713; ' : ''}${label}</span>
+    </div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ── Deliver Screen ──
+function renderDeliver() {
+  const d = myData;
+  if (!d) return;
+  const div = document.getElementById('deliver-content');
+
+  if (d.deliver_batches.length === 0) {
+    div.innerHTML = '<div class="empty-state"><div class="icon">&#x1F6CD;</div><p>No items to deliver</p><p style="margin-top:8px;font-size:12px;color:var(--text2)">When the counter confirms pickup,<br>items will appear here for delivery</p></div>';
+    return;
+  }
+
+  let html = d.deliver_batches.map(batch => {
+    return `<div class="deliver-card">
+      <div class="deliver-top">
+        <span class="deliver-table">Table ${batch.table_number}</span>
+        <span class="deliver-count">${batch.item_count} item${batch.item_count > 1 ? 's' : ''}</span>
+      </div>
+      <div class="deliver-items">${batch.items.map(i =>
+        `<span class="deliver-item">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('')}</div>
+      <button class="served-btn" onclick="serveTable('${batch.table_number}')">
+        &#x2713; Served to Table ${batch.table_number}
+      </button>
+    </div>`;
+  }).join('');
+
+  div.innerHTML = html;
+}
+
+// ── Serve Table (one-tap) ──
+async function serveTable(tableNumber) {
+  try {
+    const r = await api('floor-deliver', 'POST', { table_number: tableNumber });
+    vibrate([100]);
+    toast(`Delivered to Table ${tableNumber}!`);
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Init ──
+if (token && staffInfo) {
+  afterLogin();
+} else {
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

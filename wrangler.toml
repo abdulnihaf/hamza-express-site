@@ -1,0 +1,41 @@
+name = "hamza-express-site"
+pages_build_output_dir = "."
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ODOO_URL = "https://ops.hamzahotel.com/jsonrpc"
+ODOO_DB = "main"
+ODOO_UID = "2"
+VAPID_PUBLIC_KEY = "BPpmu5i8gica_zlVUgKHD7Tk81biJSviatNFuL23Y66htjsjYtly4sHm_y-e9wOloubbbeH0DxCll6P_RjtYi1w"
+
+# Secrets (set via: wrangler pages secret put <NAME>)
+# VAPID_PRIVATE_KEY      — Web Push ECDSA P-256 private key (JWK JSON string)
+# WA_ACCESS_TOKEN       — Meta WhatsApp Cloud API bearer token
+# WA_PHONE_ID           — HE phone number ID (987158291152067)
+# WA_VERIFY_TOKEN       — Webhook verification token
+# ODOO_API_KEY          — Odoo JSON-RPC API key
+# RAZORPAY_KEY_ID       — Razorpay live key
+# RAZORPAY_KEY_SECRET   — Razorpay live secret
+# RAZORPAY_WEBHOOK_SECRET — Razorpay webhook HMAC secret
+# DASHBOARD_API_KEY     — Dashboard API authentication key
+# KDS_WEBHOOK_SECRET    — KDS webhook shared secret
+
+[[d1_databases]]
+binding = "DB"
+database_name = "he-whatsapp"
+database_id = "679aeb00-5afa-42a3-b24a-66821db05360"
+
+[[d1_databases]]
+binding = "HIRING_DB"
+database_name = "hn-hiring"
+database_id = "a0107321-790a-4d46-ac3c-a54a676c6bcb"
+
+# Wave 3.0 Phase 2 — WhatsApp media vault.
+# Meta's media URLs die in ~5 minutes. whatsapp.js downloads every
+# inbound image/video/audio/document/sticker from Meta and PUTs to
+# this bucket (keyed wa-media/YYYY/MM/DD/{media_id}.{ext}).
+# Served back via /api/media/{media_id} with auth.
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "he-waba-media"

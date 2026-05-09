@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mission Control · Hamza Express</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1c0a02;
+    --surface: #2a1810;
+    --surface-2: #3a2418;
+    --cream: #fef3c7;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --slate: #64748b;
+  }
+  body { background: var(--bg); color: var(--cream); font-family: Inter, system-ui, sans-serif; }
+  .font-brand { font-family: 'Playfair Display', serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .surface { background: var(--surface); }
+  .surface-2 { background: var(--surface-2); }
+  .border-gold { border-color: var(--gold); }
+  .text-gold { color: var(--gold); }
+  .text-cream { color: var(--cream); }
+  .bg-gold { background: var(--gold); color: var(--bg); }
+  .bg-green { background: var(--green); }
+  .bg-amber { background: var(--amber); }
+  .bg-red { background: var(--red); }
+  .bg-slate { background: var(--slate); }
+  .text-green { color: var(--green); }
+  .text-amber { color: var(--amber); }
+  .text-red { color: var(--red); }
+  .text-slate { color: #94a3b8; }
+
+  /* TV mockup styling */
+  .tv-vertical {
+    aspect-ratio: 1080 / 1920;
+    background: #000;
+    border: 4px solid #0f0a08;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px rgba(245,158,11,0.15), 0 4px 20px rgba(0,0,0,0.6);
+    overflow: hidden;
+    position: relative;
+  }
+  .tv-horizontal {
+    aspect-ratio: 1920 / 1080;
+    background: #000;
+    border: 4px solid #0f0a08;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px rgba(245,158,11,0.15), 0 4px 20px rgba(0,0,0,0.6);
+    overflow: hidden;
+    position: relative;
+  }
+  .tv-screen-content { width: 100%; height: 100%; object-fit: cover; }
+  .tv-label {
+    position: absolute; top: -22px; left: 0; right: 0; text-align: center;
+    font-size: 11px; color: var(--cream); opacity: 0.7;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tv-status-dot {
+    position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .tv-empty-state {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    color: rgba(254,243,199,0.4); font-size: 11px; text-align: center; padding: 8px;
+  }
+
+  /* Wall canvas BG: dark navy + subtle awning */
+  .wall-canvas {
+    background: linear-gradient(to bottom, #0a1530 0%, #0f1d3d 30%, #1a0f08 70%, #0d0805 100%);
+    border-radius: 8px;
+    padding: 32px 24px 16px;
+    position: relative;
+  }
+  .wall-canvas::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 16px;
+    background: repeating-linear-gradient(45deg, #4a2818 0 8px, #2a1410 8px 16px);
+    opacity: 0.4; border-radius: 8px 8px 0 0;
+  }
+
+  /* Asset card */
+  .asset-card {
+    background: var(--surface-2);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(245,158,11,0.1);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+  }
+  .asset-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+  .asset-card img, .asset-card video { width: 100%; aspect-ratio: 9/16; object-fit: cover; background: #000; }
+  .asset-card-h img, .asset-card-h video { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: #000; }
+  .asset-card-1 img, .asset-card-1 video { width: 100%; aspect-ratio: 1/1; object-fit: cover; background: #000; }
+
+  .badge {
+    display: inline-flex; align-items: center; padding: 2px 8px;
+    border-radius: 999px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-locked { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid var(--green); }
+  .badge-wip { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid var(--amber); }
+  .badge-missing { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid #475569; }
+  .badge-live { background: rgba(16,185,129,0.25); color: var(--green); border: 1px solid var(--green); animation: pulse-live 2s infinite; }
+  .badge-blocked { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  @keyframes pulse-live {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+  }
+
+  /* Pipeline progress */
+  .pipeline-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+    padding: 16px;
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 4px solid;
+  }
+  .pipeline-stage {
+    background: var(--surface-2);
+    padding: 12px;
+    border-radius: 6px;
+    min-height: 80px;
+  }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; background: var(--gold); transition: width 0.3s ease; }
+
+  /* Modal/lightbox */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+    backdrop-filter: blur(8px);
+  }
+  .modal-bg.active { display: flex; }
+  .modal-content { background: var(--surface); border-radius: 12px; max-width: 1400px; max-height: 92vh; width: 100%; overflow: auto; padding: 24px; }
+  .modal-img { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; background: #000; }
+  .modal-video { max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; background: #000; }
+  .video-badge { position: absolute; top: 8px; right: 8px; background: rgba(245,158,11,0.95); color: #1c0a02; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; pointer-events: none; z-index: 5; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before { content: "▶"; display: inline-block; margin-right: 8px; transition: transform 0.15s; }
+  details[open] > summary::before { transform: rotate(90deg); }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ========== TOP STATUS BAR ========== -->
+<header class="surface border-b border-gold/20 sticky top-0 z-50">
+  <div class="max-w-[1800px] mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <div>
+        <div class="font-brand text-2xl text-gold leading-none">Hamza Express</div>
+        <div class="text-xs text-slate uppercase tracking-wider mt-0.5">Mission Control · TV Fleet</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-6">
+      <div class="text-right">
+        <div class="text-xs text-slate uppercase tracking-wider">Refs</div>
+        <div class="font-mono text-sm" id="totals-refs">–/–</div>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-slate uppercase tracking-wider">Heroes</div>
+        <div class="font-mono text-sm" id="totals-heroes">–/–</div>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-slate uppercase tracking-wider">Finals</div>
+        <div class="font-mono text-sm" id="totals-finals">–/–</div>
+      </div>
+      <div class="text-right border-l border-gold/20 pl-6">
+        <div class="text-xs text-slate uppercase tracking-wider">Last refresh</div>
+        <div class="font-mono text-xs text-cream/80" id="last-refresh">–</div>
+      </div>
+      <button onclick="refreshManifest()" class="bg-gold rounded px-3 py-1.5 text-xs font-semibold hover:opacity-90">⟳ Refresh</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-[1800px] mx-auto px-6 py-6 space-y-8">
+
+<!-- ========== TOP NAV · CHOREOGRAPHY LINK ========== -->
+<section>
+  <a href="choreography/" class="block surface rounded-lg p-4 border border-gold/20 hover:border-gold transition" style="background: linear-gradient(90deg, rgba(245,158,11,0.08) 0%, rgba(168,85,247,0.08) 100%);">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="text-2xl">🎬</div>
+        <div>
+          <div class="font-brand text-lg text-gold">Choreography · psychology_v2</div>
+          <div class="text-xs text-cream/70 mt-0.5">16 creatives · 4 TVs · 40s loop · attention-rotation cross-mapping</div>
+        </div>
+      </div>
+      <div class="text-xs font-mono text-amber-400">View deployment map →</div>
+    </div>
+  </a>
+</section>
+
+<!-- ========== ZONE A · WALL CANVAS ========== -->
+<section>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-brand text-2xl text-gold">The Wall · Live Preview</h2>
+    <div class="text-xs text-slate font-mono">Physical layout · TVs scaled to actual ratio</div>
+  </div>
+
+  <div class="wall-canvas">
+    <!-- Row 1 · Indoor vertical wall · GheeRice combos -->
+    <div class="grid grid-cols-4 gap-3 mb-6">
+      <div class="relative pt-6" id="tv-mount-TV-V1"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V2"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V3"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V4"></div>
+    </div>
+
+    <!-- Row 2 · Indoor vertical · Biryani C5/C6 + Pair previews -->
+    <div class="grid grid-cols-4 gap-3 mb-6">
+      <div class="relative pt-6" id="tv-mount-TV-V5"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V6"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V7"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V8"></div>
+    </div>
+
+    <!-- Row 2.5 · Pair previews + AllInOne + Kathi singles -->
+    <div class="grid grid-cols-4 gap-3 mb-6">
+      <div class="relative pt-6" id="tv-mount-TV-V9"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V10"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V11"></div>
+      <div class="relative pt-6" id="tv-mount-TV-V12"></div>
+    </div>
+
+    <!-- Row 2.6 · Kathi pair preview -->
+    <div class="grid grid-cols-4 gap-3 mb-6">
+      <div class="relative pt-6" id="tv-mount-TV-V13"></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+
+    <!-- Row 3 · Indoor horizontal + outdoor: side by side -->
+    <div class="grid grid-cols-2 gap-3 mt-8">
+      <div class="relative pt-6" id="tv-mount-TV-H1"></div>
+      <div class="relative pt-6" id="tv-mount-TV-H2"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ZONE B · PIPELINE PER CONVEYANCE ========== -->
+<section>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-brand text-2xl text-gold">Production Pipeline · 7 Conveyances</h2>
+    <div class="text-xs text-slate font-mono">References → Heroes → Finals</div>
+  </div>
+  <div id="conveyances-list"></div>
+</section>
+
+<!-- ========== ZONE C · ALL ASSETS BROWSE ========== -->
+<section>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-brand text-2xl text-gold">Asset Library</h2>
+    <div class="flex gap-2">
+      <button class="filter-btn surface-2 px-3 py-1 rounded text-xs" data-filter="all">All</button>
+      <button class="filter-btn surface-2 px-3 py-1 rounded text-xs" data-filter="LOCKED">Locked</button>
+      <button class="filter-btn surface-2 px-3 py-1 rounded text-xs" data-filter="WIP">WIP</button>
+      <button class="filter-btn surface-2 px-3 py-1 rounded text-xs" data-filter="MISSING">Missing</button>
+      <button class="filter-btn surface-2 px-3 py-1 rounded text-xs" data-filter="REF">References</button>
+    </div>
+  </div>
+  <div id="asset-grid" class="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3"></div>
+</section>
+
+</main>
+
+<!-- ========== MODAL ========== -->
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-content">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <div class="font-brand text-xl text-gold" id="modal-title">–</div>
+        <div class="text-xs text-slate font-mono mt-1" id="modal-meta">–</div>
+      </div>
+      <button onclick="closeModal()" class="text-slate hover:text-cream text-2xl">×</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let MANIFEST = null;
+let CURRENT_FILTER = "all";
+
+async function refreshManifest() {
+  document.getElementById("last-refresh").textContent = "Refreshing...";
+  try {
+    const res = await fetch("manifest.json?t=" + Date.now());
+    MANIFEST = await res.json();
+    render();
+    document.getElementById("last-refresh").textContent = new Date(MANIFEST._generated).toLocaleTimeString();
+  } catch (e) {
+    document.getElementById("last-refresh").textContent = "ERROR: " + e.message;
+  }
+}
+
+function render() {
+  // Top totals
+  document.getElementById("totals-refs").textContent = `${MANIFEST.totals.references.done}/${MANIFEST.totals.references.total}`;
+  document.getElementById("totals-heroes").innerHTML = `${MANIFEST.totals.heroes.done}/${MANIFEST.totals.heroes.total}`;
+  document.getElementById("totals-finals").innerHTML = `${MANIFEST.totals.finals.done}/${MANIFEST.totals.finals.total}`;
+
+  renderWall();
+  renderPipeline();
+  renderAssetGrid();
+}
+
+function renderWall() {
+  Object.entries(MANIFEST.tvs).forEach(([tvId, tv]) => {
+    const mount = document.getElementById("tv-mount-" + tvId);
+    if (!mount) return;
+    const isVert = tv.orient === "vertical";
+    const tvClass = isVert ? "tv-vertical" : "tv-horizontal";
+    const isOnline = !tv.blocker && tvId !== "TV-V4-OFFLINE-MARK"; // simplified
+    const dotColor = tv.blocker ? "var(--red)" : "var(--green)";
+    const playing = tv.playing;
+    const conveyances = (tv.primaryConveyances || []).join(" · ");
+
+    const playlist = tv.playlist || (playing ? [playing] : []);
+    const stateBadge = (state) => {
+      if (state === "LIVE") return `<span class="badge badge-live">DEPLOYED</span>`;
+      if (state === "WIP_FINAL") return `<span class="badge badge-wip">PREVIEW · WIP</span>`;
+      if (state === "HERO_PLACEHOLDER") return `<span class="badge badge-missing">HERO ONLY</span>`;
+      return "";
+    };
+
+    let bodyHTML = `<div class="tv-empty-state">
+      <div>
+        <div class="text-lg mb-1 opacity-30">▣</div>
+        <div>No creative<br/>${tv.blocker || "Pending generation"}</div>
+      </div>
+    </div>`;
+    let nowPlayingHTML = "";
+    let dotsHTML = "";
+    if (playlist.length > 0) {
+      // Render each slide as a layered img/video, rotate via JS opacity toggling
+      bodyHTML = playlist.map((p, i) => {
+        const isVid = p.isVideo || (p.ext && p.ext.toLowerCase() === ".mp4");
+        const opacity = i === 0 ? 1 : 0;
+        if (isVid) {
+          return `<video class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}"
+                  autoplay muted loop playsinline preload="auto"
+                  style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: ${opacity};"></video>
+                  ${i === 0 ? '<span class="video-badge">▶ VIDEO</span>' : ''}`;
+        }
+        return `<img class="tv-screen-content tv-slide" data-slide="${i}" src="${p.url}" alt="${p.filename}"
+                 style="position: absolute; inset: 0; opacity: ${opacity};" />`;
+      }).join("");
+      nowPlayingHTML = `<div class="tv-now-playing" data-tv="${tvId}">
+        <span class="np-name">${playlist[0]._id || playlist[0].filename}</span>
+        ${stateBadge(playlist[0]._state)}
+      </div>`;
+      if (playlist.length > 1) {
+        dotsHTML = `<div class="tv-slide-indicator">
+          ${playlist.map((p, i) => `<div class="tv-slide-dot ${i === 0 ? 'active' : ''}" data-i="${i}"></div>`).join("")}
+        </div>`;
+      }
+    }
+
+    mount.innerHTML = `
+      <div class="tv-label">${tvId} · ${conveyances}</div>
+      <div class="${tvClass}" data-tv="${tvId}" data-slides="${playlist.length}">
+        ${bodyHTML}
+        ${dotsHTML}
+        ${nowPlayingHTML}
+        <span class="tv-status-dot" style="color: ${dotColor}; background: ${dotColor}"></span>
+      </div>
+      <div class="text-center mt-2 text-xs">
+        <span class="font-mono text-slate">${tv.ip || "—"}</span>
+        ${tv.blocker ? `<span class="badge badge-blocked ml-2">${tv.blocker}</span>` : `<span class="badge badge-live ml-2">${playlist.length} slide${playlist.length !== 1 ? 's' : ''}</span>`}
+      </div>
+    `;
+  });
+
+  // Start slideshow rotation for any TV with multiple slides
+  if (window.__SLIDESHOW_TIMER) clearInterval(window.__SLIDESHOW_TIMER);
+  let tickCount = 0;
+  window.__SLIDESHOW_TIMER = setInterval(() => {
+    tickCount++;
+    document.querySelectorAll('[data-slides]').forEach(tv => {
+      const total = parseInt(tv.dataset.slides);
+      if (total <= 1) return;
+      const current = tickCount % total;
+      const slides = tv.querySelectorAll('.tv-slide');
+      slides.forEach(s => s.style.opacity = parseInt(s.dataset.slide) === current ? 1 : 0);
+      const dots = tv.querySelectorAll('.tv-slide-dot');
+      dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    });
+  }, 4000);
+}
+
+function renderPipeline() {
+  const container = document.getElementById("conveyances-list");
+  container.innerHTML = "";
+  Object.entries(MANIFEST.conveyances).forEach(([cname, c]) => {
+    const blocked = c.blocker;
+    const wrap = document.createElement("div");
+    wrap.className = "pipeline-row";
+    wrap.style.borderLeftColor = c.color;
+
+    // Header column
+    const headerHTML = `
+      <div>
+        <div class="text-base font-semibold text-cream">${cname}</div>
+        <div class="text-xs text-slate font-mono mt-0.5">${c.tv}</div>
+        <div class="mt-3 flex items-baseline gap-2">
+          <span class="text-2xl font-mono" style="color:${c.color}">${c.overallPct}%</span>
+          <span class="text-xs text-slate">complete</span>
+        </div>
+        <div class="progress-bar mt-1"><div class="progress-fill" style="width:${c.overallPct}%; background:${c.color}"></div></div>
+        ${blocked ? `<div class="mt-3"><span class="badge badge-blocked">${blocked}</span></div>` : ""}
+        <div class="mt-3 space-y-1">
+          ${c.skus.map(s => `<div class="text-xs"><span class="font-mono text-gold">${s.code}</span> ${s.name} <span class="text-slate">${s.comboPrice ? "₹" + s.comboPrice : ""}</span></div>`).join("")}
+        </div>
+      </div>
+    `;
+
+    // References column
+    const refsHTML = stageHTML("Refs", c.references, "REF");
+    const heroesHTML = stageHTML("Heroes", c.heroes, "HERO");
+    const finalsHTML = stageHTML("Finals", c.finals, "FINAL");
+
+    wrap.innerHTML = headerHTML + refsHTML + heroesHTML + finalsHTML;
+    container.appendChild(wrap);
+  });
+}
+
+function stageHTML(label, stage, kind) {
+  const items = stage.items.map(it => {
+    let state, asset, badgeCls;
+    if (kind === "REF") {
+      state = it.present ? "PRESENT" : "MISSING";
+      asset = it.asset;
+      badgeCls = it.present ? "badge-locked" : "badge-missing";
+    } else {
+      state = it.state;
+      asset = it.locked || it.wip;
+      badgeCls = state === "LOCKED" || state === "LIVE" ? "badge-locked" : (state === "WIP" ? "badge-wip" : "badge-missing");
+    }
+    const thumb = asset ?
+      `<img loading="lazy" decoding="async" src="${asset.url}" class="w-10 h-10 object-cover rounded cursor-pointer" onclick="openModal('${asset.url}', '${asset.filename.replace(/'/g, "\\'")}')" />` :
+      `<div class="w-10 h-10 rounded surface flex items-center justify-center text-slate text-xs">—</div>`;
+    return `
+      <div class="flex items-center gap-2 py-1">
+        ${thumb}
+        <div class="flex-1 min-w-0">
+          <div class="text-xs truncate text-cream/90">${it.id}</div>
+          ${it.desc ? `<div class="text-[10px] text-slate truncate">${it.desc}</div>` : ""}
+        </div>
+        <span class="badge ${badgeCls}">${state}</span>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="pipeline-stage">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-xs uppercase tracking-wider text-gold font-semibold">${label}</div>
+        <div class="text-xs font-mono text-slate">${stage.done}/${stage.total}</div>
+      </div>
+      ${items}
+    </div>
+  `;
+}
+
+function renderAssetGrid() {
+  const container = document.getElementById("asset-grid");
+  container.innerHTML = "";
+  // Collect every visible asset based on filter
+  const all = [];
+  Object.entries(MANIFEST.conveyances).forEach(([cname, c]) => {
+    c.references.items.forEach(r => {
+      if (r.asset) all.push({...r.asset, conveyance: cname, kind: "REF", state: "PRESENT"});
+    });
+    c.heroes.items.forEach(h => {
+      const a = h.locked || h.wip;
+      if (a) all.push({...a, conveyance: cname, kind: "HERO", state: h.state, id: h.id, desc: h.desc});
+    });
+    c.finals.items.forEach(f => {
+      const a = f.locked || f.wip;
+      if (a) all.push({...a, conveyance: cname, kind: "FINAL", state: f.state, id: f.id, desc: f.desc});
+    });
+  });
+  // Apply filter
+  const filtered = all.filter(a => {
+    if (CURRENT_FILTER === "all") return true;
+    if (CURRENT_FILTER === "REF") return a.kind === "REF";
+    return a.state === CURRENT_FILTER;
+  });
+  filtered.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "asset-card";
+    let badgeCls = "badge-locked";
+    if (a.state === "WIP") badgeCls = "badge-wip";
+    if (a.state === "LIVE") badgeCls = "badge-live";
+    if (a.state === "PRESENT") badgeCls = "badge-locked";
+    const isVidCard = a.isVideo || (a.ext && a.ext.toLowerCase() === ".mp4");
+    const mediaCard = isVidCard
+      ? `<div style="position: relative;"><video src="${a.url}" muted loop playsinline preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause(); this.currentTime=0;"></video><span class="video-badge">▶</span></div>`
+      : `<img loading="lazy" decoding="async" src="${a.url}" alt="${a.filename}" />`;
+    card.innerHTML = `
+      ${mediaCard}
+      <div class="p-2">
+        <div class="text-[10px] truncate text-cream/90">${a.id || a.stem}</div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-[9px] text-slate">${a.conveyance}</span>
+          <span class="badge ${badgeCls}">${a.state}</span>
+        </div>
+      </div>
+    `;
+    card.onclick = () => openModal(a.url, a.filename, a);
+    container.appendChild(card);
+  });
+  // Empty state
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="col-span-full text-center text-slate py-12">No assets match this filter</div>`;
+  }
+}
+
+function openModal(url, filename, fullAsset) {
+  const modal = document.getElementById("modal");
+  document.getElementById("modal-title").textContent = filename;
+  let metaParts = [];
+  if (fullAsset) {
+    if (fullAsset.size) metaParts.push(`${(fullAsset.size/1024/1024).toFixed(2)} MB`);
+    if (fullAsset.mtime) metaParts.push(new Date(fullAsset.mtime * 1000).toLocaleString());
+    if (fullAsset.conveyance) metaParts.push(fullAsset.conveyance);
+    if (fullAsset.kind) metaParts.push(fullAsset.kind);
+  }
+  document.getElementById("modal-meta").textContent = metaParts.join(" · ");
+  const isVidModal = (fullAsset && fullAsset.isVideo) || /\.mp4$/i.test(filename);
+  document.getElementById("modal-body").innerHTML = isVidModal
+    ? `<video class="modal-video mx-auto" src="${url}" autoplay muted loop playsinline controls></video>`
+    : `<img class="modal-img mx-auto" src="${url}" alt="${filename}" />`;
+  modal.classList.add("active");
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("active");
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+// Filter buttons
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.onclick = () => {
+    CURRENT_FILTER = btn.dataset.filter;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("bg-gold"));
+    btn.classList.add("bg-gold");
+    renderAssetGrid();
+  };
+});
+
+// Auto-refresh every 60s
+refreshManifest();
+setInterval(refreshManifest, 60000);
+</script>
+
+</body>
+</html>

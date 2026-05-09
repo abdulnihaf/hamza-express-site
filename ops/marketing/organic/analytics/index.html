@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a; --bg2: #111827; --card: #1a2234; --border: #2d3a4f;
+      --text: #f1f5f9; --text2: #94a3b8; --muted: #64748b;
+      --green: #10b981; --green-dim: rgba(16,185,129,.12);
+      --red: #ef4444; --red-dim: rgba(239,68,68,.12);
+      --orange: #f97316; --yellow: #f59e0b; --blue: #3b82f6;
+      --purple: #8b5cf6; --pink: #ec4899; --cyan: #06b6d4;
+      --burnt-sienna: #713520; --tan: #D2B48C; --golden: #D4A44C;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+      --fb: #1877F2; --goog: #34A853;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+    .container { max-width:1280px; margin:0 auto; padding:16px; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+    .header h1 { font-size:20px; font-weight:700; display:flex; align-items:center; gap:10px; }
+    .header h1::before { content:''; width:5px; height:24px; background:var(--brand-grad); border-radius:3px; }
+    .hdr-right { display:flex; align-items:center; gap:8px; }
+    .btn-sm { padding:5px 12px; background:var(--card); border:1px solid var(--border); border-radius:8px; font-size:12px; color:var(--muted); text-decoration:none; cursor:pointer; }
+    .btn-sm:hover { border-color:var(--burnt-sienna); color:var(--text2); }
+    .period-bar { display:flex; align-items:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .pbtn { padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text2); font-size:12px; font-weight:600; cursor:pointer; font-family:'JetBrains Mono',monospace; }
+    .pbtn.on { background:var(--burnt-sienna); color:#fff; border-color:var(--burnt-sienna); }
+    .pbtn:hover:not(.on) { border-color:var(--burnt-sienna); }
+    .refresh-area { margin-left:auto; display:flex; align-items:center; gap:8px; font-size:11px; color:var(--muted); }
+    .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); display:inline-block; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:18px; margin-bottom:14px; }
+    .card-head { display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .card-icon { font-size:18px; }
+    .card-title { font-size:14px; font-weight:700; }
+    .card-badge { font-size:11px; color:var(--muted); background:var(--bg); padding:3px 8px; border-radius:6px; }
+    .card-q { font-size:11px; color:var(--tan); font-style:italic; margin-left:auto; }
+    .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .kpi { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .kpi-top { display:flex; justify-content:space-between; align-items:flex-start; }
+    .kpi-val { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+    .kpi-chg { font-size:10px; font-weight:600; padding:2px 5px; border-radius:4px; white-space:nowrap; }
+    .kpi-chg.up { background:var(--green-dim); color:var(--green); }
+    .kpi-chg.down { background:var(--red-dim); color:var(--red); }
+    .kpi-chg.flat { background:rgba(100,116,139,.12); color:var(--muted); }
+    .kpi-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:4px 0 6px; }
+    .kpi svg { display:block; width:100%; height:26px; }
+    .kpi svg polyline { fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .health { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+    .health-score { width:90px; height:90px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-direction:column; flex-shrink:0; border:3px solid var(--border); }
+    .health-num { font-size:32px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+    .health-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; }
+    .health-right { flex:1; min-width:200px; }
+    .health-msg { font-size:14px; font-weight:600; margin-bottom:10px; }
+    .health-bars { display:grid; gap:6px; }
+    .hbar { display:flex; align-items:center; gap:8px; font-size:11px; }
+    .hbar-label { width:75px; color:var(--text2); }
+    .hbar-track { flex:1; height:6px; background:var(--bg); border-radius:3px; overflow:hidden; }
+    .hbar-fill { height:100%; border-radius:3px; transition:width .6s; }
+    .hbar-val { width:28px; text-align:right; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+    .mgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .mbox { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; }
+    .mbox-val { font-size:18px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .mbox-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin:2px 0; }
+    .mbox-sub { font-size:11px; color:var(--text2); }
+    .mbox svg { display:block; width:100%; height:22px; margin-top:4px; }
+    .mbox svg polyline { fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+    .bars { display:flex; align-items:flex-end; gap:2px; height:70px; }
+    .bars .b { flex:1; border-radius:2px 2px 0 0; min-height:2px; position:relative; cursor:crosshair; }
+    .bars .b:hover { opacity:.8; }
+    .bars .b .bt { display:none; position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); background:var(--card); border:1px solid var(--border); padding:2px 6px; border-radius:4px; font-size:10px; white-space:nowrap; color:var(--text); z-index:2; }
+    .bars .b:hover .bt { display:block; }
+    .bar-dates { display:flex; gap:2px; margin-top:3px; }
+    .bar-dates span { flex:1; text-align:center; font-size:8px; color:var(--muted); }
+    .pgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .pcard { background:var(--bg); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .pcard img { width:100%; height:120px; object-fit:cover; display:block; }
+    .pcard .pbody { padding:8px 10px; }
+    .pcard .pcap { font-size:11px; color:var(--text2); line-height:1.3; max-height:32px; overflow:hidden; }
+    .pcard .pstats { display:flex; gap:8px; font-size:11px; color:var(--muted); margin-top:4px; }
+    .rev-grid { display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:center; }
+    .rev-big { text-align:center; }
+    .rev-num { font-size:38px; font-weight:700; color:var(--golden); line-height:1; }
+    .rev-stars { font-size:14px; color:var(--golden); margin:4px 0; }
+    .rev-total { font-size:12px; color:var(--text2); }
+    .sbar { display:flex; align-items:center; gap:6px; margin-bottom:3px; font-size:11px; }
+    .sbar-n { width:14px; text-align:right; color:var(--muted); }
+    .sbar-track { flex:1; height:7px; background:var(--bg2); border-radius:4px; overflow:hidden; }
+    .sbar-fill { height:100%; border-radius:4px; }
+    .sbar-c { width:24px; text-align:right; color:var(--text2); }
+    .disc-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .disc { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center; }
+    .disc-val { font-size:18px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .disc-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; margin-top:2px; }
+    .details-card { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:14px; }
+    .details-card summary { padding:14px 18px; cursor:pointer; font-size:13px; font-weight:600; color:var(--text2); list-style:none; display:flex; align-items:center; gap:8px; }
+    .details-card summary::after { content:'▸'; margin-left:auto; font-size:12px; color:var(--muted); }
+    .details-card[open] summary::after { content:'▾'; }
+    .details-card .detail-body { padding:0 18px 18px; }
+    .rec { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .rec:last-child { border-bottom:none; }
+    .rec-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+    .rec-body { flex:1; }
+    .rec-title { font-size:13px; font-weight:600; }
+    .rec-sub { font-size:12px; color:var(--text2); margin-top:2px; }
+    .setup-box { text-align:center; padding:24px; }
+    .setup-box p { font-size:13px; color:var(--text2); margin-bottom:12px; }
+    .setup-steps { text-align:left; font-size:12px; color:var(--text2); background:var(--bg); border-radius:8px; padding:14px; line-height:1.8; margin-top:12px; }
+    .setup-steps code { background:rgba(113,53,32,.15); color:var(--tan); padding:1px 5px; border-radius:3px; font-size:11px; }
+    .insight { background:rgba(113,53,32,.08); border:1px solid rgba(113,53,32,.25); border-radius:8px; padding:10px 14px; margin-top:12px; font-size:12px; color:var(--tan); line-height:1.5; }
+    .insight strong { color:var(--text); }
+    .corr-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+    .loading { color:var(--muted); font-size:13px; text-align:center; padding:20px; }
+    .loading::after { content:''; display:inline-block; width:12px; height:12px; border:2px solid var(--muted); border-top-color:var(--burnt-sienna); border-radius:50%; margin-left:8px; animation:spin .6s linear infinite; vertical-align:middle; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .slbl { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin:16px 0 6px; }
+    .side { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    /* Ads section */
+    .ads-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .ads-card { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center; }
+    .ads-val { font-size:20px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .ads-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; margin-top:2px; }
+    .ads-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+    @media(max-width:1024px) { .kpi-row{grid-template-columns:repeat(2,1fr)} .pgrid{grid-template-columns:repeat(2,1fr)} .disc-grid{grid-template-columns:repeat(2,1fr)} .ads-grid{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:768px) { .kpi-row{grid-template-columns:1fr 1fr} .mgrid{grid-template-columns:1fr 1fr} .side{grid-template-columns:1fr} .pgrid{grid-template-columns:1fr 1fr} .rev-grid{grid-template-columns:1fr} .health{flex-direction:column;text-align:center} }
+    @media(max-width:480px) { .container{padding:10px} .kpi-row{grid-template-columns:1fr 1fr} .mgrid{grid-template-columns:1fr} .pgrid{grid-template-columns:1fr} .disc-grid{grid-template-columns:1fr 1fr} .kpi-val{font-size:18px} .ads-grid{grid-template-columns:1fr 1fr} }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <h1>HE Organic Analytics</h1>
+    <div class="hdr-right">
+      <a class="btn-sm" href="/ops/marketing/organic/">&larr; Content</a>
+      <a class="btn-sm" href="/ops/marketing/">&larr; Hub</a>
+    </div>
+  </header>
+  <div class="period-bar">
+    <button class="pbtn on" data-d="7" onclick="setPeriod(7)">7D</button>
+    <button class="pbtn" data-d="28" onclick="setPeriod(28)">28D</button>
+    <button class="pbtn" data-d="90" onclick="setPeriod(90)">90D</button>
+    <div class="refresh-area">
+      <span class="live-dot"></span>
+      <span id="updatedAt">Loading...</span>
+      <button class="btn-sm" onclick="refreshAll()">Refresh</button>
+    </div>
+  </div>
+  <div class="card" id="healthCard"><div class="loading">Calculating marketing health</div></div>
+  <div class="slbl">Discovery</div>
+  <div class="kpi-row" id="discoveryKpis"></div>
+  <div class="card" id="funnelCard"><div class="loading">Loading funnel</div></div>
+  <div class="slbl">Google Ads Performance</div>
+  <div class="card" id="adsCard"><div class="loading">Loading Google Ads</div></div>
+  <div class="slbl">Content Performance</div>
+  <div class="card" id="contentCard"><div class="loading">Loading content</div></div>
+  <div class="slbl">Audience Growth</div>
+  <div class="card" id="audienceCard"><div class="loading">Loading audience</div></div>
+  <div class="slbl">Social vs Sales</div>
+  <div class="card" id="salesCard"><div class="loading">Loading sales correlation</div></div>
+  <div class="slbl">Google Presence</div>
+  <div class="card" id="googleCard"><div class="loading">Loading Google data</div></div>
+  <div class="slbl">Platform Details</div>
+  <details class="details-card" id="igDetails"><summary>Instagram Details</summary><div class="detail-body"><div class="loading">Loading</div></div></details>
+  <details class="details-card" id="fbDetails"><summary>Facebook Details</summary><div class="detail-body"><div class="loading">Loading</div></div></details>
+  <details class="details-card" id="gmbDetails"><summary>Google Business Profile Details</summary><div class="detail-body"><div class="loading">Loading</div></div></details>
+  <div class="slbl">This Week's Priorities</div>
+  <div class="card" id="recsCard"><div class="loading">Generating recommendations</div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// HAMZA EXPRESS — Dakhni Biryani Restaurant, Shivajinagar
+// Est. 1918 | 110+ Google Reviews | Google Ads active
+// ═══════════════════════════════════════════════════════════════
+const B = {
+  name: 'Hamza Express', short: 'HE',
+  igId: '17841478543111221',
+  fbId: '886791574518359',
+  token: 'EAAdjKyLVeusBRIyxncg4m7y5E0G5FxRd2VpSZCZB5DMz6g3f639nXabvOEibhqQoCZCU5JZCtjjeq6UwUZBHOiUNZBiYb0ZBPcm2cNnryynWkM1VcDF4vCUWstZAlPtBZAT289EzejMCMBoNKSTKhv38vdM5ueKzr2zXpSdU5JAsZCh9UKK6Fagjf0dVuIZABy2vCyX4z0zuBQqxRHoaVawHn5N', // Permanent HE Page Token (never expires)
+  placeId: 'ChIJ-QQjtHEXrjsR-Z1RIEm2arg',
+  igHandle: '@hamzaexpress1918',
+  // HE-specific: established business benchmarks
+  reviewTarget: 150, // next milestone (currently ~110)
+  followerTarget: 1000,
+};
+
+const META = 'https://graph.facebook.com/v24.0';
+const ORGANIC_API = '/api/organic'; // HE reviews endpoint
+const SALES_API = '/api/sales-insights'; // HE sales endpoint
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let days = 7;
+let igAcct = null, igM = {}, igMprev = {}, igMedia = [];
+let fbPage = null, fbM = {}, fbMprev = {};
+let gmbData = null, reviewData = null, calendarData = [];
+let salesDays = [];
+let adsData = null; // Google Ads metrics
+
+// ═══════════════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════════════
+async function mget(path, params = {}) {
+  if (!B.token) throw new Error('Token not configured');
+  const u = new URL(META + path);
+  u.searchParams.set('access_token', B.token);
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, String(v));
+  const r = await fetch(u);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d;
+}
+
+function drange(n) {
+  const until = new Date(); until.setHours(0,0,0,0);
+  const since = new Date(until); since.setDate(since.getDate() - n);
+  return { since: Math.floor(since/1000), until: Math.floor(until/1000), sinceDate: since, untilDate: until };
+}
+
+function procInsights(data) {
+  const out = {};
+  if (!data?.data) return out;
+  for (const item of data.data) {
+    const vals = (item.values||[]).map(v => ({ date: (v.end_time||'').split('T')[0], value: typeof v.value === 'number' ? v.value : 0 }));
+    out[item.name] = { values: vals, total: vals.reduce((s,v) => s + v.value, 0) };
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════════════════════════
+async function fetchIG() {
+  if (!B.token) return;
+  const { since, until } = drange(days);
+  const prev = drange(days * 2);
+  const [acct, ins, media, pins] = await Promise.allSettled([
+    mget(`/${B.igId}`, { fields: 'followers_count,follows_count,media_count,username,profile_picture_url' }),
+    mget(`/${B.igId}/insights`, { metric: 'impressions,reach,total_interactions,accounts_engaged,follows_and_unfollows,profile_views', period: 'day', metric_type: 'time_series', since, until }),
+    mget(`/${B.igId}/media`, { fields: 'id,caption,media_type,timestamp,like_count,comments_count,media_url,permalink,thumbnail_url', limit: 25 }),
+    mget(`/${B.igId}/insights`, { metric: 'impressions,reach,total_interactions,accounts_engaged,follows_and_unfollows,profile_views', period: 'day', metric_type: 'time_series', since: prev.since, until: since }),
+  ]);
+  igAcct = acct.status === 'fulfilled' ? acct.value : null;
+  igM = ins.status === 'fulfilled' ? procInsights(ins.value) : {};
+  igMedia = media.status === 'fulfilled' ? (media.value.data || []) : [];
+  igMprev = pins.status === 'fulfilled' ? procInsights(pins.value) : {};
+}
+
+async function fetchFB() {
+  if (!B.token) return;
+  const { since, until } = drange(days);
+  const prev = drange(days * 2);
+  const [pg, ins, pins] = await Promise.allSettled([
+    mget(`/${B.fbId}`, { fields: 'name,fan_count,followers_count' }),
+    mget(`/${B.fbId}/insights`, { metric: 'page_impressions,page_impressions_unique,page_engaged_users,page_post_engagements,page_views_total,page_fan_adds', period: 'day', since, until }),
+    mget(`/${B.fbId}/insights`, { metric: 'page_impressions,page_impressions_unique,page_engaged_users,page_post_engagements,page_views_total,page_fan_adds', period: 'day', since: prev.since, until: since }),
+  ]);
+  fbPage = pg.status === 'fulfilled' ? pg.value : null;
+  fbM = ins.status === 'fulfilled' ? procInsights(ins.value) : {};
+  fbMprev = pins.status === 'fulfilled' ? procInsights(pins.value) : {};
+}
+
+async function fetchReviews() {
+  try {
+    const r = await fetch(`${ORGANIC_API}?action=get-reviews`);
+    const d = await r.json();
+    reviewData = d.success ? d : null;
+  } catch { reviewData = null; }
+}
+
+async function fetchGMB() {
+  // HE GMB performance — same pattern as NCH but through organic API if available
+  try {
+    const r = await fetch(`${ORGANIC_API}?action=gmb-performance&days=${days}`);
+    const d = await r.json();
+    gmbData = d.success ? d.data : (d.needsAuth ? { needsAuth: true } : null);
+  } catch { gmbData = null; }
+}
+
+async function fetchAds() {
+  try {
+    // Google Ads metrics for the period — uses HE's existing google-ads API
+    const { sinceDate, untilDate } = drange(days);
+    const from = sinceDate.toISOString().slice(0,10);
+    const to = untilDate.toISOString().slice(0,10);
+    const r = await fetch(`/api/google-ads?action=metrics&from=${from}&to=${to}&key=${getApiKey()}`);
+    const d = await r.json();
+    adsData = d.error ? null : d;
+  } catch { adsData = null; }
+}
+
+function getApiKey() {
+  // Dashboard API key from localStorage (set during HE marketing hub login)
+  return localStorage.getItem('he_dashboard_key') || '';
+}
+
+async function fetchSales() {
+  salesDays = [];
+  const { sinceDate } = drange(days);
+  const calls = [];
+  for (let i = 0; i < Math.min(days, 14); i++) {
+    const d = new Date(sinceDate);
+    d.setDate(d.getDate() + i);
+    const ds = d.toISOString().slice(0,10);
+    const from = ds + ' 00:00:00';
+    const to = ds + ' 23:59:59';
+    calls.push(
+      fetch(`${SALES_API}?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+        .then(r => r.json())
+        .then(j => ({ date: ds, revenue: j.data?.totalSales || j.totalSales || 0, orders: j.data?.totalOrders || j.totalOrders || 0, aov: j.data?.averageOrderValue || j.averageOrderValue || 0 }))
+        .catch(() => ({ date: ds, revenue: 0, orders: 0, aov: 0 }))
+    );
+  }
+  salesDays = await Promise.all(calls);
+  salesDays.sort((a,b) => a.date.localeCompare(b.date));
+}
+
+function getMonday(d) { const dt = new Date(d); const day = dt.getDay(); dt.setDate(dt.getDate() - day + (day === 0 ? -6 : 1)); dt.setHours(0,0,0,0); return dt; }
+
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function fmt(n) { if (n == null || isNaN(n)) return '--'; if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1)+'M'; if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(1)+'K'; return String(Math.round(n)); }
+function fmtX(n) { return n == null || isNaN(n) ? '--' : n.toLocaleString('en-IN'); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function chg(cur, prev) {
+  if (cur == null) return { text: '--', cls: 'flat' };
+  if (!prev || prev === 0) return cur > 0 ? { text: '+' + fmt(cur), cls: 'up' } : { text: '0', cls: 'flat' };
+  const pct = ((cur - prev) / prev * 100).toFixed(0);
+  return pct > 0 ? { text: '+' + pct + '%', cls: 'up' } : pct < 0 ? { text: pct + '%', cls: 'down' } : { text: '0%', cls: 'flat' };
+}
+
+function spark(vals, color = 'var(--burnt-sienna)', w = 110, h = 26) {
+  if (!vals || !vals.length) return '';
+  const nums = vals.map(v => typeof v === 'object' ? v.value : v);
+  const max = Math.max(...nums, 1);
+  const pts = nums.map((v, i) => {
+    const x = nums.length === 1 ? w/2 : (i/(nums.length-1)) * w;
+    const y = h - 2 - (v/max)*(h-4);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" style="stroke:${color}"/></svg>`;
+}
+
+function barChart(vals, color = 'var(--burnt-sienna)') {
+  if (!vals || !vals.length) return '<div style="text-align:center;padding:12px;color:var(--muted);font-size:12px">No data yet</div>';
+  const max = Math.max(...vals.map(v => v.value), 1);
+  const bars = vals.map(v => {
+    const h = Math.max(2, (v.value/max)*100);
+    return `<div class="b" style="height:${h}%;background:${color}"><div class="bt mono">${fmtX(v.value)} &middot; ${v.date.slice(5)}</div></div>`;
+  }).join('');
+  const lbls = vals.map((v,i) => { const show = vals.length <= 7 || i % Math.ceil(vals.length/7) === 0; return `<span>${show ? v.date.slice(8) : ''}</span>`; }).join('');
+  return `<div class="bars">${bars}</div><div class="bar-dates">${lbls}</div>`;
+}
+
+function pearson(x, y) {
+  const n = Math.min(x.length, y.length);
+  if (n < 3) return null;
+  const mx = x.slice(0,n).reduce((s,v)=>s+v,0)/n;
+  const my = y.slice(0,n).reduce((s,v)=>s+v,0)/n;
+  let num=0, dx=0, dy=0;
+  for (let i=0; i<n; i++) { const a=x[i]-mx, b=y[i]-my; num+=a*b; dx+=a*a; dy+=b*b; }
+  const den = Math.sqrt(dx*dy);
+  return den === 0 ? 0 : num/den;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: HEALTH SCORE (HE benchmarks — established business)
+// ═══════════════════════════════════════════════════════════════
+function renderHealth() {
+  const el = document.getElementById('healthCard');
+  const totalReach = (igM.reach?.total||0) + (fbM.page_impressions_unique?.total||0);
+  const gmbViews = gmbData && !gmbData?.needsAuth ? ((gmbData.desktop_search||0)+(gmbData.mobile_search||0)+(gmbData.desktop_maps||0)+(gmbData.mobile_maps||0)) : 0;
+  // HE benchmark: 200/day reach = good for established local restaurant
+  const discScore = Math.min(100, Math.round((totalReach + gmbViews) / (days * 200) * 100));
+  const interactions = (igM.total_interactions?.total||0) + (fbM.page_post_engagements?.total||0);
+  const engRate = totalReach > 0 ? (interactions / totalReach * 100) : 0;
+  const engScore = Math.min(100, Math.round(engRate / 5 * 100));
+  const followGrowth = (igM.follows_and_unfollows?.total||0) + (fbM.page_fan_adds?.total||0);
+  const growthPerDay = followGrowth / Math.max(days, 1);
+  // HE benchmark: 10/day = great for established biz
+  const growthScore = Math.min(100, Math.round(growthPerDay / 10 * 100));
+  const rating = reviewData?.rating || 0;
+  const revWeek = reviewData?.thisWeek || 0;
+  const repScore = Math.min(100, Math.round((rating/5*50) + (revWeek/5*50)));
+  // Google Ads score — are ads running and performing?
+  const adsScore = adsData ? Math.min(100, Math.round((adsData.clicks || 0) / Math.max(days * 10, 1) * 100)) : 0;
+  const score = Math.round(discScore*.20 + engScore*.15 + growthScore*.15 + repScore*.15 + adsScore*.15 + (adsData ? 20 : 0));
+
+  let scoreColor, msg;
+  if (score >= 70) { scoreColor = 'var(--green)'; msg = 'Strong performance. Focus on converting online reach into dine-in and WhatsApp orders.'; }
+  else if (score >= 45) { scoreColor = 'var(--yellow)'; msg = 'Steady growth. Push biryani content during lunch hours (11am-1pm) to maximize orders.'; }
+  else { scoreColor = 'var(--orange)'; msg = 'Marketing needs attention. Consistent posting + review collection will accelerate discovery.'; }
+
+  const bars = [
+    { label: 'Discovery', val: discScore, color: 'var(--blue)' },
+    { label: 'Engagement', val: engScore, color: 'var(--green)' },
+    { label: 'Growth', val: growthScore, color: 'var(--purple)' },
+    { label: 'Reputation', val: repScore, color: 'var(--golden)' },
+    { label: 'Paid Ads', val: adsScore, color: 'var(--cyan)' },
+  ];
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#9889;</span><span class="card-title">Marketing Health</span><span class="card-q">"Is my marketing working?"</span></div>
+    <div class="health">
+      <div class="health-score" style="border-color:${scoreColor}"><div class="health-num" style="color:${scoreColor}">${score}</div><div class="health-lbl">Score</div></div>
+      <div class="health-right">
+        <div class="health-msg">${msg}</div>
+        <div class="health-bars">${bars.map(b => `<div class="hbar"><span class="hbar-label">${b.label}</span><div class="hbar-track"><div class="hbar-fill" style="width:${b.val}%;background:${b.color}"></div></div><span class="hbar-val mono">${b.val}</span></div>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: DISCOVERY FUNNEL
+// ═══════════════════════════════════════════════════════════════
+function renderDiscovery() {
+  const igReach = igM.reach?.total || 0;
+  const fbReach = fbM.page_impressions_unique?.total || 0;
+  const gmbViews = gmbData && !gmbData?.needsAuth ? ((gmbData.desktop_search||0)+(gmbData.mobile_search||0)+(gmbData.desktop_maps||0)+(gmbData.mobile_maps||0)) : 0;
+  const adsImpressions = adsData?.impressions || 0;
+  const totalDisc = igReach + fbReach + gmbViews + adsImpressions;
+  const socialReach = igReach + fbReach;
+  const profileViews = (igM.profile_views?.total||0) + (fbM.page_views_total?.total||0);
+  const gmbActions = gmbData && !gmbData?.needsAuth ? ((gmbData.calls||0)+(gmbData.directions||0)+(gmbData.website_clicks||0)) : 0;
+  const interactions = (igM.total_interactions?.total||0) + (fbM.page_post_engagements?.total||0);
+  const adsClicks = adsData?.clicks || 0;
+  const prevDisc = (igMprev.reach?.total||0) + (fbMprev.page_impressions_unique?.total||0);
+
+  const kpis = [
+    { val: totalDisc, label: 'Total Discovery', prev: prevDisc, color: 'var(--burnt-sienna)', vals: igM.reach?.values },
+    { val: socialReach, label: 'Organic Reach', prev: prevDisc, color: 'var(--blue)', vals: igM.reach?.values },
+    { val: adsImpressions, label: 'Paid Impressions', prev: null, color: 'var(--cyan)', vals: null },
+    { val: gmbViews + profileViews, label: 'Profile/GMB Views', prev: null, color: 'var(--orange)', vals: igM.profile_views?.values },
+  ];
+
+  document.getElementById('discoveryKpis').innerHTML = kpis.map(k => {
+    const c = chg(k.val, k.prev);
+    return `<div class="kpi"><div class="kpi-top"><div class="kpi-val">${fmt(k.val)}</div><span class="kpi-chg ${c.cls}">${c.text}</span></div><div class="kpi-label">${k.label}</div>${spark(k.vals, k.color)}</div>`;
+  }).join('');
+
+  // Funnel: Total Discovery → Engaged → Profile Visits → Actions (calls/directions/orders)
+  const funnelSteps = [
+    { label: 'Discovered', val: totalDisc, color: 'var(--blue)' },
+    { label: 'Engaged', val: interactions + adsClicks, color: 'var(--green)' },
+    { label: 'Visited', val: profileViews + gmbActions, color: 'var(--orange)' },
+    { label: 'Ordered/Called', val: gmbActions + Math.round(adsClicks * 0.15), color: 'var(--burnt-sienna)' },
+  ];
+  const maxF = funnelSteps[0].val || 1;
+
+  let insightText = '';
+  if (totalDisc > 500) insightText = `<strong>${fmt(totalDisc)} people discovered Hamza Express</strong> in the last ${days} days. ${adsImpressions > 0 ? fmt(adsImpressions) + ' from Google Ads, ' : ''}${fmt(socialReach)} from organic social.`;
+  else if (totalDisc > 0) insightText = `${fmt(totalDisc)} total discovery. Biryani posts during lunch hours and Google Ads targeting "biryani near me" will accelerate this.`;
+  else insightText = 'Discovery data will populate as you publish content and run Google Ads consistently.';
+
+  document.getElementById('funnelCard').innerHTML = `
+    <div class="card-head"><span class="card-icon">&#128269;</span><span class="card-title">Discovery Funnel</span><span class="card-q">"How are people finding us?"</span></div>
+    <div style="display:flex;gap:8px;height:60px;align-items:flex-end;margin:8px 0">
+      ${funnelSteps.map(s => { const h = Math.max(6, (s.val/maxF)*100); return `<div style="flex:1;text-align:center"><div style="background:${s.color};height:${h}%;border-radius:4px 4px 0 0;min-height:6px;margin:0 auto;width:80%"></div></div>`; }).join('')}
+    </div>
+    <div style="display:flex;gap:8px">
+      ${funnelSteps.map(s => `<div style="flex:1;text-align:center"><div class="mono" style="font-size:13px;font-weight:700">${fmt(s.val)}</div><div style="font-size:9px;color:var(--muted)">${s.label}</div>${totalDisc > 0 ? `<div style="font-size:10px;color:var(--text2)">${(s.val/totalDisc*100).toFixed(1)}%</div>` : ''}</div>`).join('')}
+    </div>
+    <div class="insight">${insightText}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: GOOGLE ADS (HE-specific — NCH doesn't have this)
+// ═══════════════════════════════════════════════════════════════
+function renderAds() {
+  const el = document.getElementById('adsCard');
+  if (!adsData) {
+    el.innerHTML = `
+      <div class="card-head"><span class="card-icon">&#128176;</span><span class="card-title">Google Ads</span><span class="card-q">"Are paid ads driving orders?"</span></div>
+      <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">
+        ${getApiKey() ? 'Could not load Google Ads data. Check API key.' : 'Enter your Dashboard API key in the <a href="/ops/marketing/" style="color:var(--tan)">Marketing Hub</a> to see Google Ads metrics.'}
+      </div>`;
+    return;
+  }
+  const impressions = adsData.impressions || 0;
+  const clicks = adsData.clicks || 0;
+  const spend = adsData.cost_micros ? (adsData.cost_micros / 1e6) : (adsData.spend || 0);
+  const conversions = adsData.conversions || 0;
+  const ctr = impressions > 0 ? (clicks / impressions * 100).toFixed(2) : '0.00';
+  const cpc = clicks > 0 ? (spend / clicks).toFixed(0) : '--';
+  const roas = spend > 0 && conversions > 0 ? ((conversions * 250) / spend).toFixed(1) : '--'; // est ₹250 AOV
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#128176;</span><span class="card-title">Google Ads</span><span class="card-q">"Are paid ads driving orders?"</span><span class="card-badge">Last ${days} days</span></div>
+    <div class="ads-grid">
+      <div class="ads-card"><div class="ads-val" style="color:var(--blue)">${fmt(impressions)}</div><div class="ads-lbl">Impressions</div><div class="ads-sub">People who saw ads</div></div>
+      <div class="ads-card"><div class="ads-val" style="color:var(--green)">${fmt(clicks)}</div><div class="ads-lbl">Clicks</div><div class="ads-sub">${ctr}% CTR</div></div>
+      <div class="ads-card"><div class="ads-val" style="color:var(--orange)">${B.short === 'HE' ? '₹' : '₹'}${fmt(spend)}</div><div class="ads-lbl">Spend</div><div class="ads-sub">₹${cpc} per click</div></div>
+      <div class="ads-card"><div class="ads-val" style="color:var(--purple)">${fmt(conversions)}</div><div class="ads-lbl">Conversions</div><div class="ads-sub">${roas !== '--' ? roas + 'x ROAS' : 'Tracking setup needed'}</div></div>
+    </div>
+    <div class="insight">${clicks > 50 ? `<strong>${fmt(clicks)} clicks at ₹${cpc}/click.</strong> ${ctr > 3 ? 'CTR is above average for food delivery ads.' : 'CTR is below 3% — test new ad copy with biryani photos.'}` : 'Limited ad data. Run campaigns for at least 7 days to see meaningful trends.'}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: CONTENT PERFORMANCE
+// ═══════════════════════════════════════════════════════════════
+function renderContent() {
+  const el = document.getElementById('contentCard');
+  const media = igMedia || [];
+  const typeStats = {};
+  media.forEach(p => { const t = p.media_type || 'IMAGE'; if (!typeStats[t]) typeStats[t] = { count: 0, eng: 0 }; typeStats[t].count++; typeStats[t].eng += (p.like_count||0) + (p.comments_count||0); });
+  const types = Object.entries(typeStats).map(([t,s]) => ({ type: t, avg: s.count > 0 ? s.eng/s.count : 0, count: s.count })).sort((a,b) => b.avg - a.avg);
+  const bestType = types[0]?.type || '--';
+  const dayStats = {};
+  media.forEach(p => { const d = new Date(p.timestamp); const day = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]; if (!dayStats[day]) dayStats[day] = { count: 0, eng: 0 }; dayStats[day].count++; dayStats[day].eng += (p.like_count||0) + (p.comments_count||0); });
+  const bestDay = Object.entries(dayStats).sort((a,b) => (b[1].eng/b[1].count) - (a[1].eng/a[1].count))[0]?.[0] || '--';
+  const totalEng = media.reduce((s,p) => s + (p.like_count||0) + (p.comments_count||0), 0);
+  const avgEng = media.length > 0 ? (totalEng/media.length).toFixed(1) : '--';
+  const sorted = [...media].sort((a,b) => ((b.like_count||0)+(b.comments_count||0)) - ((a.like_count||0)+(a.comments_count||0)));
+  const top = sorted.slice(0, 4);
+  const typeLabel = { IMAGE: 'Photo', VIDEO: 'Reel', CAROUSEL_ALBUM: 'Carousel' };
+  // HE has reels engine — check reel vs photo performance
+  let insight = '';
+  if (types.length > 1 && types[0].avg > types[1].avg * 1.5) insight = `<strong>${typeLabel[bestType]||bestType}s get ${(types[0].avg/Math.max(types[1].avg,1)).toFixed(1)}x more engagement.</strong> Use the Reels Engine to produce more ${typeLabel[bestType]?.toLowerCase()||bestType} content.`;
+  else if (media.length > 3) insight = `Avg <strong>${avgEng} interactions per post</strong>. ${bestDay} posts perform best. Biryani content at lunch hour drives highest engagement.`;
+  else insight = 'Post more content to generate meaningful insights. Use the Reels Engine for video content.';
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#128200;</span><span class="card-title">Content Performance</span><span class="card-q">"Is my content resonating?"</span></div>
+    <div class="side">
+      <div>
+        <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px">
+          <div class="mbox"><div class="mbox-val">${avgEng}</div><div class="mbox-label">Avg Engagement</div><div class="mbox-sub">per post</div></div>
+          <div class="mbox"><div class="mbox-val">${bestDay}</div><div class="mbox-label">Best Day</div><div class="mbox-sub">highest engagement</div></div>
+          <div class="mbox"><div class="mbox-val">${typeLabel[bestType] || bestType}</div><div class="mbox-label">Best Format</div><div class="mbox-sub">${types[0] ? types[0].avg.toFixed(1)+' avg' : '--'}</div></div>
+          <div class="mbox"><div class="mbox-val">${media.length}</div><div class="mbox-label">Total Posts</div><div class="mbox-sub">on Instagram</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">TOP POSTS BY ENGAGEMENT</div>
+        <div class="pgrid" style="grid-template-columns:1fr 1fr">
+          ${top.length === 0 ? '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:12px">No posts yet</div>' :
+            top.map(p => { const img = p.thumbnail_url || p.media_url || ''; return `<div class="pcard">${img ? `<img src="${img}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<div style="height:80px;background:var(--bg2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px">${typeLabel[p.media_type]||'Post'}</div>`}<div class="pbody"><div class="pstats"><span>&#10084; ${p.like_count||0}</span><span>&#128172; ${p.comments_count||0}</span></div></div></div>`; }).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="insight">${insight}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: AUDIENCE GROWTH
+// ═══════════════════════════════════════════════════════════════
+function renderAudience() {
+  const el = document.getElementById('audienceCard');
+  const igFollowers = igAcct?.followers_count ?? 0;
+  const fbFans = fbPage?.fan_count ?? 0;
+  const igGrowthVals = igM.follows_and_unfollows?.values || [];
+  const igGrowthTotal = igM.follows_and_unfollows?.total || 0;
+  const fbGrowthTotal = fbM.page_fan_adds?.total || 0;
+  const velocity = ((igGrowthTotal + fbGrowthTotal) / Math.max(days, 1)).toFixed(1);
+  const target = B.followerTarget;
+  const weeksTo = igFollowers < target && parseFloat(velocity) > 0 ? Math.ceil((target - igFollowers) / (parseFloat(velocity) * 7)) : 0;
+  let milestone = '';
+  if (igFollowers < target && parseFloat(velocity) > 0) milestone = `At this rate: <strong>${fmtX(target)} followers in ~${weeksTo} weeks</strong>`;
+  else if (parseFloat(velocity) <= 0) milestone = 'Growth is flat. Push Reels content and run "Follow us" campaigns to accelerate.';
+  else milestone = `Growing at <strong>${velocity}/day</strong>. Strong momentum for Hamza Express!`;
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#128200;</span><span class="card-title">Audience Growth</span><span class="card-q">"Are we building an audience?"</span></div>
+    <div class="side">
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">DAILY NET FOLLOWERS (IG)</div>${barChart(igGrowthVals, 'var(--purple)')}</div>
+      <div>
+        <div class="mgrid" style="grid-template-columns:1fr 1fr;gap:8px">
+          <div class="mbox"><div class="mbox-val">${fmtX(igFollowers)}</div><div class="mbox-label">IG Followers</div><div class="mbox-sub">${igGrowthTotal >= 0 ? '+' : ''}${igGrowthTotal} this period</div></div>
+          <div class="mbox"><div class="mbox-val">${fmtX(fbFans)}</div><div class="mbox-label">FB Fans</div><div class="mbox-sub">${fbGrowthTotal >= 0 ? '+' : ''}${fbGrowthTotal} this period</div></div>
+          <div class="mbox"><div class="mbox-val">${velocity}</div><div class="mbox-label">Per Day</div><div class="mbox-sub">growth velocity</div></div>
+          <div class="mbox"><div class="mbox-val">${igMedia.length}</div><div class="mbox-label">Posts</div><div class="mbox-sub">on Instagram</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="insight">${milestone}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: SOCIAL vs SALES (HE context — biryani restaurant)
+// ═══════════════════════════════════════════════════════════════
+function renderSales() {
+  const el = document.getElementById('salesCard');
+  const reachVals = igM.reach?.values || [];
+  if (salesDays.length === 0 && reachVals.length === 0) {
+    el.innerHTML = `<div class="card-head"><span class="card-icon">&#127858;</span><span class="card-title">Social vs Sales</span><span class="card-q">"Does social activity drive orders?"</span></div>
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sales data will appear once both social and POS data are available.</div>`;
+    return;
+  }
+  const reachByDate = {}; reachVals.forEach(v => { reachByDate[v.date] = v.value; });
+  const matched = salesDays.filter(s => reachByDate[s.date] != null).map(s => ({ date: s.date, revenue: s.revenue, reach: reachByDate[s.date] || 0, orders: s.orders }));
+  const r = matched.length >= 3 ? pearson(matched.map(m => m.reach), matched.map(m => m.revenue)) : null;
+  let corrLabel = '', corrColor = '', corrMsg = '';
+  if (r == null) { corrLabel = 'Insufficient data'; corrColor = 'var(--muted)'; corrMsg = 'Need at least 3 days of overlapping social + sales data.'; }
+  else if (r > 0.6) { corrLabel = `Strong (r=${r.toFixed(2)})`; corrColor = 'var(--green)'; corrMsg = 'Days with higher social reach tend to have higher biryani sales. <strong>Post consistently, especially before lunch rush.</strong>'; }
+  else if (r > 0.3) { corrLabel = `Moderate (r=${r.toFixed(2)})`; corrColor = 'var(--yellow)'; corrMsg = 'Some correlation. <strong>Try posting biryani Reels at 10:30am</strong> to prime the lunch crowd.'; }
+  else { corrLabel = `Weak (r=${r?.toFixed(2) || '--'})`; corrColor = 'var(--orange)'; corrMsg = 'Weak correlation. Most HE orders come through WhatsApp and walk-ins. Focus on Google Ads + reviews for attribution.'; }
+
+  const maxRev = Math.max(...matched.map(m => m.revenue), 1);
+  const maxReach = Math.max(...matched.map(m => m.reach), 1);
+  const chartBars = matched.map(m => {
+    const revH = Math.max(3, (m.revenue/maxRev)*100);
+    const reachH = Math.max(3, (m.reach/maxReach)*100);
+    return `<div style="flex:1;display:flex;gap:1px;align-items:flex-end;height:70px"><div class="b" style="flex:1;height:${revH}%;background:var(--blue);border-radius:2px 0 0 0"><div class="bt mono">₹${fmtX(m.revenue)}</div></div><div class="b" style="flex:1;height:${reachH}%;background:var(--orange);border-radius:0 2px 0 0"><div class="bt mono">${fmtX(m.reach)} reach</div></div></div>`;
+  }).join('');
+  const chartLabels = matched.map(m => `<span>${m.date.slice(8)}</span>`).join('');
+  const today = salesDays[salesDays.length - 1];
+  const todayReach = reachVals[reachVals.length - 1]?.value || 0;
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#127858;</span><span class="card-title">Social vs Sales</span><span class="card-q">"Does social activity drive orders?"</span>
+      <span class="corr-badge" style="background:${corrColor}22;color:${corrColor}">${corrLabel}</span>
+    </div>
+    <div style="display:flex;gap:4px;align-items:flex-end;height:70px">${chartBars}</div>
+    <div class="bar-dates" style="display:flex;gap:4px">${chartLabels}</div>
+    <div style="display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--muted)"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--blue)"></span> Revenue</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--orange)"></span> Social Reach</span></div>
+    ${today ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <div class="mbox"><div class="mbox-val" style="color:var(--blue)">₹${fmtX(today.revenue)}</div><div class="mbox-label">Today's Revenue</div><div class="mbox-sub">${today.orders} orders &middot; ₹${Math.round(today.aov)} AOV</div></div>
+      <div class="mbox"><div class="mbox-val" style="color:var(--orange)">${fmtX(todayReach)}</div><div class="mbox-label">Today's Reach</div><div class="mbox-sub">${fmtX(igM.total_interactions?.values?.slice(-1)[0]?.value || 0)} interactions</div></div>
+    </div>` : ''}
+    <div class="insight">${corrMsg}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: GOOGLE PRESENCE (Reviews + GMB — HE has 110+ reviews)
+// ═══════════════════════════════════════════════════════════════
+function renderGoogle() {
+  const el = document.getElementById('googleCard');
+  const rv = reviewData;
+  const rating = rv?.rating || '--';
+  const total = rv?.totalReviews || 0;
+  const newToday = rv?.newToday ?? 0;
+  const thisWeek = rv?.thisWeek ?? 0;
+  const stars = rv?.stars || {};
+  const totalStars = Object.values(stars).reduce((s,v) => s + v, 0) || 1;
+  const target = B.reviewTarget;
+  let milestone = '';
+  if (total < target) milestone = `<strong>${target - total} more reviews</strong> to hit ${target} — dominates "biryani Shivajinagar" and "biryani near me" searches.`;
+  else milestone = `<strong>${total} reviews</strong> at ${rating}★ — dominant in local search. Keep the velocity going.`;
+
+  const g = gmbData;
+  let gmbHtml = '';
+  if (g && !g.needsAuth) {
+    const totalSearch = (g.desktop_search||0) + (g.mobile_search||0);
+    const totalMaps = (g.desktop_maps||0) + (g.mobile_maps||0);
+    const totalAct = (g.calls||0) + (g.directions||0) + (g.website_clicks||0);
+    const convRate = (totalSearch + totalMaps) > 0 ? (totalAct / (totalSearch + totalMaps) * 100).toFixed(1) : 0;
+    gmbHtml = `
+      <div style="font-size:11px;color:var(--muted);margin:16px 0 6px">HOW PEOPLE FIND HAMZA EXPRESS ON GOOGLE</div>
+      <div class="disc-grid">
+        <div class="disc"><div class="disc-val" style="color:var(--blue)">${fmt(totalSearch)}</div><div class="disc-lbl">Search Views</div></div>
+        <div class="disc"><div class="disc-val" style="color:var(--goog)">${fmt(totalMaps)}</div><div class="disc-lbl">Map Views</div></div>
+        <div class="disc"><div class="disc-val" style="color:var(--green)">${fmt(g.calls||0)}</div><div class="disc-lbl">Calls</div></div>
+        <div class="disc"><div class="disc-val" style="color:var(--orange)">${fmt(g.directions||0)}</div><div class="disc-lbl">Directions</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text2);padding:8px;background:var(--bg);border-radius:6px">
+        <span>Website: <strong>${fmt(g.website_clicks||0)}</strong></span>
+        <span>Discovery &rarr; Action: <strong>${convRate}%</strong></span>
+      </div>`;
+  } else {
+    gmbHtml = `<div style="font-size:11px;color:var(--muted);margin:16px 0 6px">GOOGLE BUSINESS PROFILE</div>
+      <div class="setup-box"><p>Connect GMB to see search views, map views, calls &amp; directions.</p>
+      <div class="setup-steps"><strong>Setup:</strong> Add GMB OAuth endpoints to <code>/api/organic</code> (same pattern as NCH).</div></div>`;
+  }
+
+  const sColors = { 5:'var(--green)', 4:'var(--green)', 3:'var(--yellow)', 2:'var(--orange)', 1:'var(--red)' };
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#127760;</span><span class="card-title">Google Presence</span><span class="card-q">"What does Google think of us?"</span><span class="card-badge" style="color:var(--green)">+${thisWeek} this week</span></div>
+    <div class="rev-grid">
+      <div class="rev-big"><div class="rev-num mono">${rating}</div><div class="rev-stars">${typeof rating === 'number' ? '&#9733;'.repeat(Math.round(rating)) + '&#9734;'.repeat(5 - Math.round(rating)) : ''}</div><div class="rev-total">${fmtX(total)} reviews</div></div>
+      <div class="stars-dist">${[5,4,3,2,1].map(s => { const c = stars[s] || 0; const pct = (c/totalStars*100).toFixed(0); return `<div class="sbar"><span class="sbar-n mono">${s}</span><div class="sbar-track"><div class="sbar-fill" style="width:${pct}%;background:${sColors[s]}"></div></div><span class="sbar-c mono">${c}</span></div>`; }).join('')}</div>
+    </div>
+    <div class="insight">${milestone}</div>
+    ${gmbHtml}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: PLATFORM DEEP DIVES
+// ═══════════════════════════════════════════════════════════════
+function renderPlatformDetails() {
+  const igBody = document.querySelector('#igDetails .detail-body');
+  const m = igM;
+  igBody.innerHTML = `<div class="mgrid">
+    <div class="mbox"><div class="mbox-val">${fmt(m.reach?.total)}</div><div class="mbox-label">Reach</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(m.impressions?.total)}</div><div class="mbox-label">Impressions</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(m.total_interactions?.total)}</div><div class="mbox-label">Interactions</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(m.accounts_engaged?.total)}</div><div class="mbox-label">Engaged Accounts</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(m.profile_views?.total)}</div><div class="mbox-label">Profile Views</div></div>
+    <div class="mbox"><div class="mbox-val">${(m.follows_and_unfollows?.total||0) >= 0 ? '+' : ''}${fmt(m.follows_and_unfollows?.total)}</div><div class="mbox-label">Net Followers</div></div>
+  </div><div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">DAILY REACH</div>${barChart(m.reach?.values || [], 'var(--blue)')}</div>`;
+
+  const fbBody = document.querySelector('#fbDetails .detail-body');
+  const f = fbM;
+  fbBody.innerHTML = `<div class="mgrid">
+    <div class="mbox"><div class="mbox-val">${fmt(f.page_impressions_unique?.total)}</div><div class="mbox-label">Page Reach</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(f.page_impressions?.total)}</div><div class="mbox-label">Page Impressions</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(f.page_engaged_users?.total)}</div><div class="mbox-label">Engaged Users</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(f.page_post_engagements?.total)}</div><div class="mbox-label">Post Engagements</div></div>
+    <div class="mbox"><div class="mbox-val">${fmt(f.page_views_total?.total)}</div><div class="mbox-label">Page Views</div></div>
+    <div class="mbox"><div class="mbox-val">${(f.page_fan_adds?.total||0) >= 0 ? '+' : ''}${fmt(f.page_fan_adds?.total)}</div><div class="mbox-label">New Fans</div></div>
+  </div><div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">DAILY PAGE REACH</div>${barChart(f.page_impressions_unique?.values || [], 'var(--fb)')}</div>`;
+
+  const gmbBody = document.querySelector('#gmbDetails .detail-body');
+  const g = gmbData;
+  if (g && !g.needsAuth) {
+    gmbBody.innerHTML = `<div class="mgrid">
+      <div class="mbox"><div class="mbox-val">${fmt(g.mobile_search||0)}</div><div class="mbox-label">Mobile Search</div></div>
+      <div class="mbox"><div class="mbox-val">${fmt(g.desktop_search||0)}</div><div class="mbox-label">Desktop Search</div></div>
+      <div class="mbox"><div class="mbox-val">${fmt(g.mobile_maps||0)}</div><div class="mbox-label">Mobile Maps</div></div>
+      <div class="mbox"><div class="mbox-val">${fmt(g.desktop_maps||0)}</div><div class="mbox-label">Desktop Maps</div></div>
+      <div class="mbox"><div class="mbox-val">${fmt(g.calls||0)}</div><div class="mbox-label">Calls</div></div>
+      <div class="mbox"><div class="mbox-val">${fmt(g.website_clicks||0)}</div><div class="mbox-label">Website Clicks</div></div>
+    </div>`;
+  } else {
+    gmbBody.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px">GMB not connected yet.</div>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: RECOMMENDATIONS (HE-specific)
+// ═══════════════════════════════════════════════════════════════
+function renderRecs() {
+  const el = document.getElementById('recsCard');
+  const recs = [];
+
+  // Review milestone
+  const total = reviewData?.totalReviews || 0;
+  if (total < B.reviewTarget) {
+    recs.push({ icon: '&#11088;', color: 'var(--golden)22', title: `Get ${Math.min(5, B.reviewTarget - total)} more Google reviews this week`, sub: `At ${total} reviews, ${B.reviewTarget - total} more to hit ${B.reviewTarget}. Ask dine-in customers after their biryani.` });
+  }
+
+  // Reels content
+  const videoCount = igMedia.filter(p => p.media_type === 'VIDEO').length;
+  const photoCount = igMedia.filter(p => p.media_type === 'IMAGE').length;
+  if (videoCount < photoCount && igMedia.length > 3) {
+    recs.push({ icon: '&#127909;', color: 'var(--purple)22', title: 'Create more Reels using the Reels Engine', sub: `Only ${videoCount} Reels vs ${photoCount} photos. Biryani Reels get 2-5x more reach than photos. Use the Reels Engine at /ops/marketing/reels/.` });
+  }
+
+  // Google Ads
+  if (!adsData) {
+    recs.push({ icon: '&#128176;', color: 'var(--blue)22', title: 'Check Google Ads performance', sub: 'Ads data not loading. Verify API key in Marketing Hub and ensure campaigns are active.' });
+  } else if ((adsData.clicks || 0) < days * 5) {
+    recs.push({ icon: '&#128176;', color: 'var(--blue)22', title: 'Increase Google Ads budget for "biryani near me"', sub: `Only ${adsData.clicks || 0} clicks in ${days} days. Target 10+ clicks/day for meaningful order volume.` });
+  }
+
+  // Engagement
+  const totalReach = (igM.reach?.total||0) + (fbM.page_impressions_unique?.total||0);
+  const interactions = (igM.total_interactions?.total||0) + (fbM.page_post_engagements?.total||0);
+  if (totalReach > 100 && interactions/totalReach < 0.03) {
+    recs.push({ icon: '&#128172;', color: 'var(--green-dim)', title: 'Boost engagement with behind-the-scenes content', sub: `${(interactions/totalReach*100).toFixed(1)}% engagement rate. Try kitchen prep Reels, biryani close-ups, and customer testimonials.` });
+  }
+
+  // Lunch timing
+  recs.push({ icon: '&#9200;', color: 'var(--orange)22', title: 'Schedule biryani posts at 10:30 AM', sub: 'Biryani craving peaks at lunch. Post 30 min before to prime the audience for orders.' });
+
+  if (recs.length === 0) {
+    recs.push({ icon: '&#9989;', color: 'var(--green-dim)', title: 'Looking good!', sub: 'Keep the content engine running and monitor weekly.' });
+  }
+
+  el.innerHTML = `
+    <div class="card-head"><span class="card-icon">&#127919;</span><span class="card-title">This Week's Priorities</span><span class="card-badge">Auto-generated</span></div>
+    ${recs.map(r => `<div class="rec"><div class="rec-icon" style="background:${r.color}">${r.icon}</div><div class="rec-body"><div class="rec-title">${r.title}</div><div class="rec-sub">${r.sub}</div></div></div>`).join('')}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MASTER RENDER + REFRESH
+// ═══════════════════════════════════════════════════════════════
+function renderAll() {
+  renderHealth();
+  renderDiscovery();
+  renderAds();
+  renderContent();
+  renderAudience();
+  renderSales();
+  renderGoogle();
+  renderPlatformDetails();
+  renderRecs();
+  document.getElementById('updatedAt').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function setPeriod(d) {
+  days = d;
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.toggle('on', parseInt(b.dataset.d) === d));
+  refreshAll();
+}
+
+async function refreshAll() {
+  ['healthCard','funnelCard','adsCard','contentCard','audienceCard','salesCard','googleCard','recsCard'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading">Loading</div>';
+  });
+  document.getElementById('discoveryKpis').innerHTML = '<div class="kpi"><div class="loading">Loading</div></div>'.repeat(4);
+  await Promise.allSettled([fetchIG(), fetchFB(), fetchReviews(), fetchGMB(), fetchAds(), fetchSales()]);
+  renderAll();
+}
+
+(async function init() {
+  await refreshAll();
+  setInterval(refreshAll, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

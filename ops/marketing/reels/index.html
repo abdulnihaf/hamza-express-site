@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Reels Engine</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1a;
+      --bg2: #111827;
+      --card: #1a2234;
+      --border: #2d3a4f;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --muted: #64748b;
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,.12);
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      --burnt-sienna: #713520;
+      --tan: #D2B48C;
+      --cream: #FFF8F0;
+      --brand-grad: linear-gradient(135deg, #713520, #D2B48C);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .header h1::before { content: ''; width: 5px; height: 24px; background: var(--brand-grad); border-radius: 3px; }
+    .back-link { color: var(--tan); text-decoration: none; font-size: 13px; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* KPI Row */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .kpi-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .kpi-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+    .kpi-icon.ig { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .kpi-icon.fb { background: #1877F2; }
+    .kpi-icon.gb { background: #4285F4; }
+    .kpi-icon.lib { background: var(--burnt-sienna); }
+    .kpi-name { font-size: 13px; font-weight: 600; }
+    .kpi-metrics { display: flex; flex-direction: column; gap: 6px; }
+    .kpi-metric { display: flex; justify-content: space-between; align-items: center; }
+    .kpi-label { font-size: 11px; color: var(--muted); }
+    .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; }
+    .kpi-value.up { color: var(--green); }
+    .kpi-value.down { color: var(--red); }
+    .kpi-value.neutral { color: var(--text2); }
+    .kpi-value.warn { color: var(--yellow); }
+
+
+    /* Recommendation Card */
+    .rec-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--tan); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .rec-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .rec-title { font-size: 16px; font-weight: 700; }
+    .rec-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; background: rgba(212,164,76,.15); color: var(--tan); text-transform: uppercase; letter-spacing: .5px; }
+    .rec-section { margin-bottom: 10px; }
+    .rec-section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; font-weight: 600; }
+    .rec-section-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .rec-clips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .rec-clip-pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--tan); }
+    .rec-action { margin-top: 12px; }
+    .rec-loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+    /* Section Title */
+    .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* Filter Bar */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+    .filter-bar input { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; width: 200px; }
+    .filter-bar input::placeholder { color: var(--muted); }
+    .filter-bar input:focus { outline: none; border-color: var(--tan); }
+    .filter-bar select { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px; font-family: inherit; cursor: pointer; }
+    .filter-bar select:focus { outline: none; border-color: var(--tan); }
+
+    /* Tag Pills */
+    .tag-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .tag-pill { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text2); transition: all .15s; text-transform: uppercase; letter-spacing: .5px; }
+    .tag-pill:hover { border-color: var(--tan); }
+    .tag-pill.active { background: var(--burnt-sienna); border-color: var(--tan); color: var(--cream); }
+    .tag-pill .count { font-weight: 400; opacity: .6; margin-left: 4px; }
+
+    /* Clip Grid */
+    .clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .clip-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all .15s; position: relative; }
+    .clip-card:hover { border-color: var(--tan); transform: translateY(-2px); }
+    .clip-card.selected { border-color: var(--green); background: rgba(16,185,129,.06); }
+    .clip-card .clip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .clip-id { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--tan); }
+    .clip-filename { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .clip-score { display: flex; align-items: center; gap: 4px; }
+    .clip-score .score-num { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; }
+    .clip-score .score-label { font-size: 10px; color: var(--muted); }
+    .score-high { color: var(--green); }
+    .score-mid { color: var(--yellow); }
+    .score-low { color: var(--muted); }
+    .clip-desc { font-size: 13px; color: var(--text2); line-height: 1.4; margin-bottom: 10px; min-height: 36px; }
+    .clip-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+    .clip-meta span { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 2px 8px; background: var(--bg2); border-radius: 4px; color: var(--text2); }
+    .clip-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .clip-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .clip-tag-FIRE { background: rgba(239,68,68,.15); color: var(--red); }
+    .clip-tag-COOK { background: rgba(249,115,22,.15); color: var(--orange); }
+    .clip-tag-FOOD { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .clip-tag-VENUE { background: rgba(139,92,246,.15); color: var(--purple); }
+    .clip-tag-EXTERIOR { background: rgba(6,182,212,.15); color: var(--cyan); }
+    .clip-tag-STREET { background: rgba(236,72,153,.15); color: var(--pink); }
+    .clip-tag-PEOPLE { background: rgba(59,130,246,.15); color: var(--blue); }
+    .clip-tag-BRAND { background: rgba(212,164,76,.15); color: var(--tan); }
+    .clip-tag-TANDOOR { background: rgba(239,68,68,.15); color: #f87171; }
+    .clip-tag-GRILL { background: rgba(249,115,22,.15); color: #fb923c; }
+    .clip-tag-TESTIMONIAL { background: rgba(16,185,129,.15); color: var(--green); }
+    .clip-add-btn { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--green); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+    .clip-card:hover .clip-add-btn { opacity: 1; }
+    .clip-card.selected .clip-add-btn { opacity: 1; background: var(--green); color: var(--bg); }
+
+    /* Clip Intelligence Row */
+    .clip-intel { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .clip-intel-item { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 6px; border-radius: 3px; background: var(--bg2); display: flex; align-items: center; gap: 3px; }
+    .crop-arrow { font-weight: 700; font-size: 12px; }
+    .crop-left { color: var(--orange); }
+    .crop-center { color: var(--text2); }
+    .crop-right { color: var(--cyan); }
+    .brightness-bar { width: 40px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .brightness-fill { height: 100%; border-radius: 3px; transition: width .2s; }
+    .audio-icon { font-size: 11px; }
+    .audio-good { color: var(--green); }
+    .audio-noise { color: var(--muted); }
+    .quality-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; letter-spacing: .3px; }
+    .quality-dark { background: rgba(239,68,68,.2); color: var(--red); }
+    .quality-shaky { background: rgba(245,158,11,.2); color: var(--yellow); }
+    .quality-ok { display: none; }
+    .seq-warn { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: rgba(245,158,11,.15); color: var(--yellow); margin-left: 2px; }
+    .analyze-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
+    .analyze-bar .analyze-progress { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .builder-selectors { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+    .builder-selectors label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+    .builder-selectors select { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: 12px; font-family: inherit; cursor: pointer; }
+    .builder-selectors select:focus { outline: none; border-color: var(--tan); }
+
+    /* Reel Builder */
+    .builder-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .builder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .builder-header h3 { font-size: 15px; font-weight: 700; }
+    .builder-meta { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--tan); }
+    .builder-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; border: 2px dashed var(--border); border-radius: 8px; }
+    .builder-seq { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
+    .seq-chip { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: grab; }
+    .seq-chip .seq-id { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--tan); }
+    .seq-chip .seq-dur { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .seq-chip .seq-remove { color: var(--red); cursor: pointer; font-size: 14px; margin-left: 4px; opacity: .6; }
+    .seq-chip .seq-remove:hover { opacity: 1; }
+    .seq-num { width: 20px; height: 20px; border-radius: 50%; background: var(--burnt-sienna); color: var(--cream); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .builder-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; }
+    .btn:hover { border-color: var(--tan); }
+    .btn-primary { background: var(--brand-grad); border: none; color: white; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-danger { color: var(--red); border-color: rgba(239,68,68,.3); }
+    .btn-danger:hover { border-color: var(--red); }
+
+    /* Reel Templates */
+    .templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .template-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; transition: all .15s; }
+    .template-card:hover { border-color: var(--tan); }
+    .template-card h4 { font-size: 14px; margin-bottom: 4px; }
+    .template-card p { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+    .template-card .template-clips { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    /* Saved Reels */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { text-align: left; padding: 10px 12px; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid rgba(45,58,79,.5); }
+    .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .status-draft { background: rgba(59,130,246,.15); color: var(--blue); }
+    .status-exported { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .status-published { background: rgba(16,185,129,.15); color: var(--green); }
+
+    /* Reel name input */
+    .reel-name-input { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 14px; font-weight: 600; font-family: inherit; width: 200px; }
+    .reel-name-input:focus { outline: none; border-color: var(--tan); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
+    .toast.show { opacity: 1; }
+    .toast.error { border-color: var(--red); color: var(--red); }
+    .toast.success { border-color: var(--green); }
+
+    /* Empty state */
+    .empty-state { padding: 40px; text-align: center; color: var(--muted); }
+
+    /* Analytics Loading */
+    .analytics-loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+
+    /* Music & Export Workflow */
+    .workflow-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    .workflow-steps { display: flex; flex-direction: column; gap: 16px; }
+    .wf-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; position: relative; }
+    .wf-step.active { border-color: var(--tan); }
+    .wf-step.done { border-color: var(--green); opacity: .7; }
+    .wf-step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .wf-step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--burnt-sienna); color: var(--cream); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .wf-step.done .wf-step-num { background: var(--green); }
+    .wf-step-title { font-size: 14px; font-weight: 700; }
+    .wf-step-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-left: auto; }
+    .wf-step-badge.dashboard { background: rgba(59,130,246,.15); color: var(--blue); }
+    .wf-step-badge.claude { background: rgba(139,92,246,.15); color: var(--purple); }
+    .wf-step-badge.manual { background: rgba(245,158,11,.15); color: var(--yellow); }
+    .wf-step-body { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .wf-step-body code { font-family: 'JetBrains Mono', monospace; font-size: 11px; background: var(--bg); padding: 1px 5px; border-radius: 3px; color: var(--tan); }
+    .wf-music-brief { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; margin-top: 8px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text2); line-height: 1.5; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    .wf-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .wf-music-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .wf-music-tag { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; text-align: center; }
+    .wf-music-tag .tag-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+    .wf-music-tag .tag-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .wf-checklist { list-style: none; margin-top: 8px; }
+    .wf-checklist li { padding: 4px 0; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+    .wf-checklist li::before { content: ''; width: 14px; height: 14px; border: 1.5px solid var(--border); border-radius: 3px; flex-shrink: 0; }
+    .wf-checklist li.checked::before { background: var(--green); border-color: var(--green); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .clip-grid { grid-template-columns: 1fr; }
+      .templates { grid-template-columns: 1fr; }
+      .filter-bar input { width: 100%; }
+      .wf-music-meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Reels Engine</h1>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn" onclick="copyAnalyzeCommand()" style="font-size:11px;padding:5px 10px">Analyze Clips</button>
+        <span id="analyzeProgress" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)"></span>
+        <a href="/ops/marketing/" class="back-link">Marketing Hub</a>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi-card" id="kpiContent">
+        <div class="kpi-header"><div class="kpi-icon lib">C</div><div class="kpi-name">Clip Library</div></div>
+        <div class="kpi-metrics" id="kpiContentMetrics"><div class="analytics-loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-icon ig">IG</div><div class="kpi-name">Instagram</div></div>
+        <div class="kpi-metrics" id="kpiIgMini"><div class="analytics-loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header"><div class="kpi-icon fb">FB</div><div class="kpi-name">Facebook</div></div>
+        <div class="kpi-metrics" id="kpiFbMini"><div class="analytics-loading">Loading...</div></div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;justify-content:center">
+        <a href="/ops/marketing/analytics/" style="color:var(--tan);text-decoration:none;font-size:13px;font-weight:600;text-align:center">Full Analytics<br><span style="font-size:11px;color:var(--muted);font-weight:400">All platforms</span></a>
+      </div>
+    </div>
+
+    <!-- Next Reel Recommendation -->
+    <div class="section-title">Next Reel Recommendation</div>
+    <div class="rec-card" id="recCard">
+      <div class="rec-loading">Analyzing your content data...</div>
+    </div>
+
+    <!-- Reel Builder -->
+    <div class="section-title">Reel Builder</div>
+    <div class="builder-wrap">
+      <div class="builder-header">
+        <input type="text" class="reel-name-input" id="reelName" placeholder="Reel name..." value="Untitled Reel">
+        <div class="builder-meta"><span id="seqCount">0</span> clips &middot; <span id="seqDuration">0.0</span>s</div>
+      </div>
+      <div class="builder-seq" id="builderSeq">
+        <div class="builder-empty" id="builderEmpty">Click clips below to add them to the sequence</div>
+      </div>
+      <div class="builder-selectors">
+        <label>Audio</label>
+        <select id="audioProfileSelect" onchange="onProfileChange()">
+          <option value="default">Default (70/25)</option>
+          <option value="high_energy">High Energy (80/15)</option>
+          <option value="asmr">ASMR (20/75)</option>
+          <option value="testimonial">Testimonial (10/85)</option>
+        </select>
+        <label style="margin-left:8px">Color</label>
+        <select id="colorPresetSelect" onchange="onProfileChange()">
+          <option value="warm_restaurant">Warm Restaurant</option>
+          <option value="cinematic">Cinematic</option>
+          <option value="raw">Raw (no grade)</option>
+        </select>
+      </div>
+      <div class="builder-actions">
+        <button class="btn btn-primary" onclick="saveReel()">Save Draft</button>
+        <button class="btn" onclick="copyFFmpeg()">Copy FFmpeg</button>
+        <button class="btn btn-danger" onclick="clearSequence()">Clear</button>
+      </div>
+    </div>
+
+    <!-- Music & Export Workflow -->
+    <div class="section-title">Music &amp; Export</div>
+    <div class="workflow-wrap" id="workflowWrap">
+      <div class="workflow-steps" id="workflowSteps">
+        <div class="wf-step" id="wfStep1">
+          <div class="wf-step-header">
+            <div class="wf-step-num">1</div>
+            <div class="wf-step-title">Build Sequence</div>
+            <span class="wf-step-badge dashboard">Dashboard</span>
+          </div>
+          <div class="wf-step-body">
+            Select clips above or load a template. The music brief auto-generates based on your clip selection.
+            <div id="wfClipSummary" style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">No clips selected</div>
+          </div>
+        </div>
+
+        <div class="wf-step" id="wfStep2">
+          <div class="wf-step-header">
+            <div class="wf-step-num">2</div>
+            <div class="wf-step-title">Music Selection</div>
+            <span class="wf-step-badge claude">Claude Code</span>
+          </div>
+          <div class="wf-step-body">
+            Music is matched to your reel's mood using Epidemic Sound. Copy the command below and paste into Claude Code terminal.
+            <div class="wf-music-meta" id="wfMusicMeta">
+              <div class="wf-music-tag"><div class="tag-label">Mood</div><div class="tag-value" id="wfMood">--</div></div>
+              <div class="wf-music-tag"><div class="tag-label">BPM</div><div class="tag-value" id="wfBpm">--</div></div>
+              <div class="wf-music-tag"><div class="tag-label">Genre</div><div class="tag-value" id="wfGenre">--</div></div>
+            </div>
+            <div class="wf-music-brief" id="wfMusicBrief">Select clips to generate music brief...</div>
+            <div class="wf-actions">
+              <button class="btn btn-primary" onclick="copyMusicCommand()">Copy Claude Command</button>
+              <button class="btn" onclick="copyFFmpegWithMusic()">Copy FFmpeg (No Music)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="wf-step" id="wfStep3">
+          <div class="wf-step-header">
+            <div class="wf-step-num">3</div>
+            <div class="wf-step-title">Review &amp; Publish</div>
+            <span class="wf-step-badge manual">Manual</span>
+          </div>
+          <div class="wf-step-body">
+            After Claude Code finishes, the reel is saved to the Saved Reels table automatically (step 5 in the command). Then:
+            <ul class="wf-checklist">
+              <li>Watch the exported reel in ~/Documents/HE-Raw-Clips/Exports/</li>
+              <li>Check per-clip crops (subjects centered, not walls)</li>
+              <li>Check audio mix (profile-matched levels)</li>
+              <li>Upload to Instagram as Reel</li>
+              <li>Cross-post to Facebook</li>
+            </ul>
+            <div class="wf-actions">
+              <button class="btn" onclick="loadReels().then(loadStats); toast('Refreshed!','success')">Refresh Saved Reels</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reel Templates -->
+    <div class="section-title">Quick Templates</div>
+    <div class="templates" id="templates"></div>
+
+    <!-- Tag Filter -->
+    <div class="section-title">Clip Library</div>
+    <div class="tag-pills" id="tagPills"></div>
+    <div class="filter-bar">
+      <input type="text" id="searchInput" placeholder="Search descriptions...">
+      <select id="sourceFilter">
+        <option value="">All Sources</option>
+        <option value="hanin">Hanin</option>
+        <option value="hamza">Hamza</option>
+      </select>
+      <select id="sortSelect">
+        <option value="viral_score">Viral Score</option>
+        <option value="duration_s">Duration</option>
+        <option value="id">ID</option>
+      </select>
+    </div>
+
+    <!-- Clip Grid -->
+    <div class="clip-grid" id="clipGrid"></div>
+
+    <!-- Saved Reels -->
+    <div class="section-title">Saved Reels</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Clips</th><th>Duration</th><th>Status</th><th>Created</th><th></th></tr></thead>
+        <tbody id="reelsBody"><tr><td colspan="6" class="empty-state">No saved reels yet</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = localStorage.getItem('he_api_key') || '';
+const API_BASE = '/api/clips';
+const META_TOKEN = 'EAAdjKyLVeusBQ5W4XrV2JNvYmUJXAnXYkPNwsu3oZBoTp3u3ETjRdC41dX4frN3xtiRtSrUP9X0eGLSPAKxxuuSxWQL20ffMZBA4PMdVAdmix1JFk9TmqFdGeMZBiZAZAJq32HE4lAslCqclCIl4swEBi9Ov9DdqThN2QJezGzj4zH05a0ky14caD2KEPJCs3SrnmlvbgGZCbLfZBHKVBy4yFZB6';
+const FB_PAGE_ID = '886791574518359';
+let IG_ACCOUNT_ID = null;
+
+let allClips = [];
+let allTags = [];
+let sequence = [];
+let activeTagFilter = '';
+let savedReels = [];
+
+// ── Intelligence Constants ──
+const AUDIO_PROFILES = {
+  high_energy: { music: 0.80, ambient: 0.15, label: 'High Energy', when: 'FIRE/COOK dominant' },
+  asmr:        { music: 0.20, ambient: 0.75, label: 'ASMR', when: 'TANDOOR dominant — sizzle IS the content' },
+  testimonial: { music: 0.10, ambient: 0.85, label: 'Testimonial', when: 'PEOPLE dominant — voice is primary' },
+  default:     { music: 0.70, ambient: 0.25, label: 'Default', when: 'Music-forward with atmosphere' },
+};
+const COLOR_PRESETS = {
+  warm_restaurant: { filter: 'eq=contrast=1.15:brightness=0.02:saturation=1.3,colorbalance=rs=0.05:gs=0.02:bs=-0.03', label: 'Warm Restaurant' },
+  cinematic:       { filter: 'eq=contrast=1.25:brightness=-0.02:saturation=1.1,colorbalance=rs=0.03:gs=-0.01:bs=0.02', label: 'Cinematic' },
+  raw:             { filter: '', label: 'Raw' },
+};
+
+// ── Init ──
+async function init() {
+  if (!API_KEY) {
+    promptApiKey();
+    return;
+  }
+  await Promise.all([loadClips(), loadTags(), loadStats(), loadReels(), loadIntelligence()]);
+  renderTemplates();
+}
+
+function promptApiKey() {
+  const key = prompt('Enter your Dashboard API Key:');
+  if (key) {
+    localStorage.setItem('he_api_key', key);
+    location.reload();
+  }
+}
+
+// ── API helpers ──
+async function api(action, params = {}, method = 'GET', body = null) {
+  const url = new URL(API_BASE, location.origin);
+  url.searchParams.set('action', action);
+  url.searchParams.set('key', API_KEY);
+  for (const [k, v] of Object.entries(params)) {
+    if (v) url.searchParams.set(k, v);
+  }
+  const opts = { method };
+  if (body) {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem('he_api_key');
+    toast('Invalid API key — reloading...', 'error');
+    setTimeout(() => location.reload(), 1000);
+    throw new Error('Unauthorized');
+  }
+  return res.json();
+}
+
+// ── Load data ──
+async function loadClips() {
+  const data = await api('list', { sort: 'viral_score', order: 'DESC' });
+  allClips = data.clips || [];
+  renderClips();
+}
+
+async function loadTags() {
+  const data = await api('tags');
+  allTags = data.tags || [];
+  renderTagPills();
+}
+
+async function loadStats() {
+  const data = await api('stats');
+  const analyzed = allClips.filter(c => c.analyzed_at).length;
+  const total = allClips.length;
+  document.getElementById('kpiContentMetrics').innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Clips</span><span class="kpi-value">${data.total_clips || 0}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Reels</span><span class="kpi-value">${data.total_reels || 0}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Analyzed</span><span class="kpi-value">${analyzed}/${total}</span></div>
+  `;
+  const prog = document.getElementById('analyzeProgress');
+  if (prog) prog.textContent = analyzed < total ? `${analyzed}/${total} analyzed` : '';
+}
+
+async function loadReels() {
+  const data = await api('reels');
+  savedReels = data.reels || [];
+  renderReels();
+}
+
+// ── Render tag pills ──
+function renderTagPills() {
+  const el = document.getElementById('tagPills');
+  el.innerHTML = '<div class="tag-pill ' + (!activeTagFilter ? 'active' : '') + '" onclick="filterTag(\'\')">ALL<span class="count">' + allClips.length + '</span></div>' +
+    allTags.map(t =>
+      '<div class="tag-pill ' + (activeTagFilter === t.tag ? 'active' : '') + '" onclick="filterTag(\'' + t.tag + '\')">' + t.tag + '<span class="count">' + t.count + '</span></div>'
+    ).join('');
+}
+
+function filterTag(tag) {
+  activeTagFilter = tag;
+  renderTagPills();
+  renderClips();
+}
+
+// ── Render clips ──
+function renderClips() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const source = document.getElementById('sourceFilter').value;
+  const sort = document.getElementById('sortSelect').value;
+
+  let filtered = allClips.filter(c => {
+    if (activeTagFilter && !c.tags.toUpperCase().includes(activeTagFilter)) return false;
+    if (source && c.source !== source) return false;
+    if (search && !c.description?.toLowerCase().includes(search) && !c.id.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Sort
+  filtered.sort((a, b) => {
+    if (sort === 'viral_score') return (b.viral_score || 0) - (a.viral_score || 0);
+    if (sort === 'duration_s') return (b.duration_s || 0) - (a.duration_s || 0);
+    return a.id.localeCompare(b.id);
+  });
+
+  const grid = document.getElementById('clipGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No clips match filters</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const inSeq = sequence.includes(c.id);
+    const scoreClass = c.viral_score >= 9 ? 'score-high' : c.viral_score >= 7 ? 'score-mid' : 'score-low';
+    const tags = c.tags.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
+    const isAnalyzed = !!c.analyzed_at;
+
+    // Intelligence metadata
+    const cropArrow = c.crop_gravity === 'left' ? '<span class="crop-arrow crop-left">&larr;</span>' :
+                      c.crop_gravity === 'right' ? '<span class="crop-arrow crop-right">&rarr;</span>' :
+                      '<span class="crop-arrow crop-center">&harr;</span>';
+    const bri = c.brightness ?? 50;
+    const briColor = bri < 20 ? 'var(--red)' : bri < 40 ? 'var(--yellow)' : 'var(--green)';
+    const audioIcon = c.has_good_audio ? '<span class="audio-icon audio-good" title="' + (c.audio_type || 'good') + '">&#9835;</span>' :
+                                          '<span class="audio-icon audio-noise" title="noise">&#9836;</span>';
+    const qualBadge = c.quality_flag === 'dark' ? '<span class="quality-badge quality-dark">DARK</span>' :
+                      c.quality_flag === 'shaky' ? '<span class="quality-badge quality-shaky">SHAKY</span>' : '';
+
+    const intelRow = isAnalyzed ? `<div class="clip-intel">
+      <span class="clip-intel-item">${cropArrow} ${(c.crop_gravity || 'center').toUpperCase()}</span>
+      <span class="clip-intel-item"><span class="brightness-bar"><span class="brightness-fill" style="width:${bri}%;background:${briColor}"></span></span> ${bri}</span>
+      <span class="clip-intel-item">${audioIcon} ${(c.audio_type || 'noise').toUpperCase()}</span>
+      ${qualBadge}
+    </div>` : '';
+
+    return `<div class="clip-card ${inSeq ? 'selected' : ''}" onclick="toggleClip('${c.id}')">
+      <button class="clip-add-btn">${inSeq ? '&#10003;' : '+'}</button>
+      <div class="clip-header">
+        <div>
+          <div class="clip-id">${c.id}</div>
+          <div class="clip-filename">${c.filename}</div>
+        </div>
+        <div class="clip-score">
+          <span class="score-num ${scoreClass}">${c.viral_score || '?'}</span>
+          <span class="score-label">/10</span>
+        </div>
+      </div>
+      <div class="clip-desc">${c.description || 'No description'}</div>
+      ${intelRow}
+      <div class="clip-meta">
+        <span>${c.duration_s ? c.duration_s + 's' : '?s'}</span>
+        <span>${c.resolution || '?'}</span>
+        <span>${c.source}</span>
+      </div>
+      <div class="clip-tags">${tags.map(t => '<span class="clip-tag clip-tag-' + t + '">' + t + '</span>').join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Sequence management ──
+function toggleClip(id) {
+  const idx = sequence.indexOf(id);
+  if (idx >= 0) {
+    sequence.splice(idx, 1);
+  } else {
+    sequence.push(id);
+  }
+  renderSequence();
+  renderClips();
+}
+
+function removeFromSequence(idx) {
+  sequence.splice(idx, 1);
+  renderSequence();
+  renderClips();
+}
+
+function renderSequence() {
+  const el = document.getElementById('builderSeq');
+  const emptyEl = document.getElementById('builderEmpty');
+
+  // Update music brief when sequence changes
+  const matchedTemplate = TEMPLATES.find(t => t.clips.length === sequence.length && t.clips.every((c, i) => c === sequence[i]));
+  updateMusicBrief(matchedTemplate || null);
+
+  if (sequence.length === 0) {
+    el.innerHTML = '<div class="builder-empty">Click clips below to add them to the sequence</div>';
+    document.getElementById('seqCount').textContent = '0';
+    document.getElementById('seqDuration').textContent = '0.0';
+    return;
+  }
+
+  let totalDur = 0;
+  el.innerHTML = sequence.map((id, i) => {
+    const clip = allClips.find(c => c.id === id);
+    const dur = clip?.duration_s || 0;
+    totalDur += dur;
+    const warn = clip?.quality_flag === 'dark' ? '<span class="seq-warn">DARK</span>' :
+                 clip?.quality_flag === 'shaky' ? '<span class="seq-warn">SHAKY</span>' : '';
+    const cropIcon = clip?.crop_gravity === 'left' ? '&larr;' : clip?.crop_gravity === 'right' ? '&rarr;' : '';
+    return `<div class="seq-chip" draggable="true" ondragstart="dragStart(event, ${i})" ondragover="event.preventDefault()" ondrop="drop(event, ${i})">
+      <span class="seq-num">${i + 1}</span>
+      <span class="seq-id">${id}</span>
+      <span class="seq-dur">${dur}s ${cropIcon}</span>
+      ${warn}
+      <span class="seq-remove" onclick="event.stopPropagation(); removeFromSequence(${i})">x</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('seqCount').textContent = sequence.length;
+  document.getElementById('seqDuration').textContent = totalDur.toFixed(1);
+}
+
+// ── Drag-and-drop reorder ──
+let dragIdx = null;
+function dragStart(e, idx) { dragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function drop(e, idx) {
+  e.preventDefault();
+  if (dragIdx === null || dragIdx === idx) return;
+  const item = sequence.splice(dragIdx, 1)[0];
+  sequence.splice(idx, 0, item);
+  dragIdx = null;
+  renderSequence();
+}
+
+// ── Clear sequence ──
+function clearSequence() {
+  sequence = [];
+  document.getElementById('reelName').value = 'Untitled Reel';
+  renderSequence();
+  renderClips();
+}
+
+// ── Save reel ──
+async function saveReel() {
+  if (sequence.length === 0) return toast('Add clips to the sequence first', 'error');
+  const name = document.getElementById('reelName').value.trim() || 'Untitled Reel';
+  let totalDur = 0;
+  sequence.forEach(id => { const c = allClips.find(cl => cl.id === id); totalDur += c?.duration_s || 0; });
+
+  await api('reel-save', {}, 'POST', {
+    name,
+    clip_sequence: sequence,
+    duration_s: Math.round(totalDur * 10) / 10,
+    audio_profile: document.getElementById('audioProfileSelect').value,
+    color_preset: document.getElementById('colorPresetSelect').value,
+  });
+
+  toast('Reel saved!', 'success');
+  await Promise.all([loadReels(), loadStats()]);
+}
+
+// ── Copy FFmpeg command ──
+function copyFFmpeg() {
+  if (sequence.length === 0) return toast('Add clips first', 'error');
+
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+
+  const lines = sequence.map(id => {
+    const clip = allClips.find(c => c.id === id);
+    if (!clip) return '';
+    const dir = clip.source === 'hanin' ? HANIN : HAMZA;
+    return `file '${dir}/${clip.filename}'`;
+  }).filter(Boolean);
+
+  const concatList = lines.join('\n');
+  const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
+  const cmd = `# Write concat list\ncat > /tmp/${name}_concat.txt << 'EOF'\n${concatList}\nEOF\n\n# Concatenate and export\nffmpeg -y -f concat -safe 0 -i /tmp/${name}_concat.txt \\\n  -vf "crop=ih*9/16:ih:iw/2-ih*9/32:0,scale=1080:1920" \\\n  -c:v libx264 -preset fast -crf 18 \\\n  -c:a aac -b:a 128k -ar 44100 \\\n  -movflags +faststart \\\n  ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4`;
+
+  navigator.clipboard.writeText(cmd).then(() => toast('FFmpeg command copied!', 'success'));
+}
+
+// ── Render saved reels ──
+function renderReels() {
+  const tbody = document.getElementById('reelsBody');
+  if (savedReels.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No saved reels yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = savedReels.map(r => {
+    const clips = JSON.parse(r.clip_sequence || '[]');
+    const date = r.created_at ? new Date(r.created_at + 'Z').toLocaleDateString() : '';
+    return `<tr>
+      <td><strong>${r.name}</strong>${r.concept ? '<br><span style="font-size:11px;color:var(--muted)">' + r.concept + '</span>' : ''}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px">${clips.length} clips</span></td>
+      <td><span style="font-family:'JetBrains Mono',monospace">${r.duration_s || '?'}s</span></td>
+      <td><span class="status-badge status-${r.status}">${r.status}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${date}</td>
+      <td>
+        <button class="btn" style="padding:4px 10px;font-size:11px" onclick="loadReel(${r.id})">Load</button>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteReel(${r.id})">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Load reel into builder ──
+function loadReel(id) {
+  const reel = savedReels.find(r => r.id === id);
+  if (!reel) return;
+  sequence = JSON.parse(reel.clip_sequence || '[]');
+  document.getElementById('reelName').value = reel.name;
+  renderSequence();
+  renderClips();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Loaded: ' + reel.name, 'success');
+}
+
+// ── Delete reel ──
+async function deleteReel(id) {
+  if (!confirm('Delete this reel?')) return;
+  await api('reel-delete', { id });
+  toast('Reel deleted', 'success');
+  await Promise.all([loadReels(), loadStats()]);
+}
+
+// ── Templates (with music intelligence) ──
+const TEMPLATES = [
+  { name: 'The Kitchen', concept: 'Fire/cooking montage', clips: ['H10','H32','Z08','H05','H15','H14','H01','H17'], dur: '15-20s',
+    music: { mood: 'High Energy', bpm: '120-140', genre: 'Dhol/Percussion', search: 'indian dhol percussion energetic', style: 'Fast cuts need driving beat — dhol/tabla at 120+ BPM, raw percussive. Start 8s in to skip intros.' } },
+  { name: 'The Taste', concept: 'Food hero shots', clips: ['H25','H26','Z07','H11','H03','Z02'], dur: '12-15s',
+    music: { mood: 'Warm & Inviting', bpm: '80-95', genre: 'Lo-fi/Acoustic', search: 'warm acoustic food cozy', style: 'Slow food close-ups need warm, minimal backing — acoustic guitar or lo-fi keys. Light and airy.' } },
+  { name: '108 Years', concept: 'Heritage story', clips: ['Z09','Z06','H29','Z04','H27','H28'], dur: '15-20s',
+    music: { mood: 'Cinematic & Heritage', bpm: '70-85', genre: 'Sitar/Strings', search: 'indian sitar cinematic heritage', style: 'Dark/dreamy cinematic — sitar or strings drone at 70-80 BPM. Builds slowly. Heritage feel.' } },
+  { name: 'Shivajinagar Nights', concept: 'Street energy', clips: ['H27','Z03','H31','Z04','Z05','H28'], dur: '15-20s',
+    music: { mood: 'Raw Street', bpm: '100-120', genre: 'Hip-hop/Trap', search: 'indian street night raw beats', style: 'Night street energy — bass-heavy, trap-influenced, raw vibe. Not polished — gritty and real.' } },
+  { name: 'The Place', concept: 'Venue reveal', clips: ['H18','H20','H19','Z05','Z06','H12'], dur: '12-15s',
+    music: { mood: 'Ambient & Moody', bpm: '85-100', genre: 'Ambient/Electronic', search: 'ambient moody restaurant reveal', style: 'Venue reveal needs atmospheric build — ambient synths, subtle bass, then payoff.' } },
+  { name: 'Real People', concept: 'Testimonials', clips: ['Z01','Z02','Z10','H23','H24'], dur: '15-20s',
+    music: { mood: 'Feel-good', bpm: '90-110', genre: 'Acoustic/Pop', search: 'feel good acoustic happy community', style: 'People-focused — light acoustic or feel-good pop. Keep low in mix, voices are primary.' } },
+  { name: 'Tandoor', concept: 'Skewer close-ups', clips: ['Z08','Z07','H01','H02','H06','H32'], dur: '12-15s',
+    music: { mood: 'ASMR/Minimal', bpm: '70-90', genre: 'Minimal/Percussion', search: 'asmr cooking fire minimal', style: 'ASMR fire content — very minimal music, let sizzle/flames dominate. Just subtle percussion undertone.' } },
+  { name: 'Full Spread', concept: 'Thali/table shots', clips: ['H25','H26','Z02','Z07','H17'], dur: '10-12s',
+    music: { mood: 'Upbeat & Appetizing', bpm: '100-115', genre: 'World/Fusion', search: 'indian food upbeat celebration feast', style: 'Feast/spread shots — upbeat world music, celebratory. Think "come eat with us" energy.' } },
+];
+
+function renderTemplates() {
+  document.getElementById('templates').innerHTML = TEMPLATES.map((t, i) =>
+    `<div class="template-card" onclick="loadTemplate(${i})">
+      <h4>${t.name}</h4>
+      <p>${t.concept}</p>
+      <div class="template-clips">${t.clips.length} clips &middot; ~${t.dur}</div>
+    </div>`
+  ).join('');
+}
+
+function loadTemplate(idx) {
+  const t = TEMPLATES[idx];
+  sequence = t.clips.filter(id => allClips.some(c => c.id === id));
+  document.getElementById('reelName').value = t.name;
+  renderSequence();
+  renderClips();
+  updateMusicBrief(t);
+  toast('Template loaded: ' + t.name, 'success');
+}
+
+// ── Music Brief & Workflow ──
+function getClipTags() {
+  const tagCounts = {};
+  sequence.forEach(id => {
+    const clip = allClips.find(c => c.id === id);
+    if (clip) clip.tags.split(',').forEach(t => { const tag = t.trim().toUpperCase(); if (tag) tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+  });
+  return Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+}
+
+function inferMusicFromClips() {
+  const tags = getClipTags();
+  const dominant = tags.slice(0, 3);
+  if (dominant.includes('FIRE') || dominant.includes('TANDOOR')) return { mood: 'High Energy / ASMR', bpm: '100-130', genre: 'Dhol/Percussion', search: 'indian fire cooking percussion', style: 'Fire-heavy clips — driving dhol or minimal ASMR percussion depending on cut speed.' };
+  if (dominant.includes('FOOD')) return { mood: 'Warm & Appetizing', bpm: '85-100', genre: 'Acoustic/World', search: 'warm food acoustic indian', style: 'Food close-ups need warm, inviting backing — acoustic or world fusion.' };
+  if (dominant.includes('STREET') || dominant.includes('EXTERIOR')) return { mood: 'Raw Street Energy', bpm: '100-120', genre: 'Hip-hop/Trap', search: 'indian street night urban', style: 'Street/exterior clips — raw, bass-heavy beats. Gritty not polished.' };
+  if (dominant.includes('VENUE') || dominant.includes('BRAND')) return { mood: 'Ambient & Moody', bpm: '80-95', genre: 'Ambient/Electronic', search: 'ambient moody restaurant cinematic', style: 'Venue/brand clips — atmospheric build, subtle and cinematic.' };
+  if (dominant.includes('PEOPLE') || dominant.includes('TESTIMONIAL')) return { mood: 'Feel-good', bpm: '90-110', genre: 'Acoustic/Pop', search: 'feel good community happy', style: 'People-focused — light acoustic, keep low so voices come through.' };
+  return { mood: 'Cinematic', bpm: '85-100', genre: 'World/Fusion', search: 'cinematic indian fusion', style: 'Mixed content — versatile cinematic backing works best.' };
+}
+
+function inferAudioProfile() {
+  const tags = getClipTags();
+  const dominant = tags.slice(0, 3);
+  if (dominant.includes('PEOPLE') || dominant.includes('TESTIMONIAL')) return 'testimonial';
+  if (dominant.includes('TANDOOR')) return 'asmr';
+  if (dominant.includes('FIRE') || dominant.includes('COOK')) return 'high_energy';
+  return 'default';
+}
+
+function onProfileChange() {
+  const matchedTemplate = TEMPLATES.find(t => t.clips.length === sequence.length && t.clips.every((c, i) => c === sequence[i]));
+  updateMusicBrief(matchedTemplate || null);
+}
+
+function updateMusicBrief(template) {
+  const music = template?.music || inferMusicFromClips();
+  document.getElementById('wfMood').textContent = music.mood;
+  document.getElementById('wfBpm').textContent = music.bpm;
+  document.getElementById('wfGenre').textContent = music.genre;
+
+  // Auto-select audio profile from template or tags
+  const autoProfile = template ? inferAudioProfile() : inferAudioProfile();
+  const profileEl = document.getElementById('audioProfileSelect');
+  if (profileEl && !profileEl._userChanged) profileEl.value = autoProfile;
+
+  // Update clip summary in step 1
+  if (sequence.length > 0) {
+    let totalDur = 0;
+    sequence.forEach(id => { const c = allClips.find(cl => cl.id === id); totalDur += c?.duration_s || 0; });
+    const analyzed = sequence.filter(id => { const c = allClips.find(cl => cl.id === id); return c?.analyzed_at; }).length;
+    document.getElementById('wfClipSummary').textContent = sequence.length + ' clips · ' + totalDur.toFixed(1) + 's · ' + analyzed + '/' + sequence.length + ' analyzed · Tags: ' + getClipTags().slice(0, 4).join(', ');
+    document.getElementById('wfStep1').classList.add('done');
+  } else {
+    document.getElementById('wfClipSummary').textContent = 'No clips selected';
+    document.getElementById('wfStep1').classList.remove('done');
+  }
+
+  // Generate intelligent Claude command with per-clip spec sheet
+  const name = document.getElementById('reelName').value.trim().replace(/\s+/g, '_') || 'reel';
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+
+  const audioProfile = document.getElementById('audioProfileSelect').value;
+  const colorPreset = document.getElementById('colorPresetSelect').value;
+  const profile = AUDIO_PROFILES[audioProfile];
+  const colorGrade = COLOR_PRESETS[colorPreset];
+
+  const totalDur = sequence.reduce((s, id) => { const c = allClips.find(cl => cl.id === id); return s + (c?.duration_s || 0); }, 0).toFixed(1);
+  const reelNameClean = document.getElementById('reelName').value.trim() || 'Untitled Reel';
+  const concept = music.mood + ' — ' + music.genre;
+  const apiDomain = location.origin;
+
+  // Build per-clip spec lines
+  const clipSpecs = sequence.map((id, i) => {
+    const c = allClips.find(cl => cl.id === id);
+    if (!c) return '';
+    const path = (c.source === 'hanin' ? HANIN : HAMZA) + '/' + c.filename;
+    const sx = c.subject_x ?? 0.5;
+    const gravity = (c.crop_gravity || 'center').toUpperCase();
+    const bri = c.brightness ?? 50;
+    const audioAction = c.has_good_audio ? 'KEEP (' + (c.audio_type || 'good') + ')' : 'MUTE';
+    const warn = c.quality_flag === 'dark' ? ' !! DARK — consider brightness boost !!' : '';
+    return `${i + 1}. ${id} — ${path} | subject_x=${sx} | crop=${gravity} | brightness=${bri} | audio=${audioAction}${warn}`;
+  }).filter(Boolean).join('\n');
+
+  const musicPct = Math.round(profile.music * 100);
+  const ambientPct = Math.round(profile.ambient * 100);
+  const colorFilterLine = colorGrade.filter ? `COLOR GRADE: ${colorGrade.filter}` : 'COLOR GRADE: none (raw)';
+
+  const brief = `Search Epidemic Sound for a track matching:
+- Mood: ${music.mood}
+- BPM: ${music.bpm}
+- Genre: ${music.genre}
+- Search keywords: "${music.search}"
+- Style notes: ${music.style}
+
+Then build the reel using the per-clip intelligence below.
+
+CLIPS:
+${clipSpecs}
+
+AUDIO PROFILE: ${audioProfile} (music ${musicPct}%, ambient ${ambientPct}%)
+${colorFilterLine}
+
+Per-clip crop formula: crop=ih*9/16:ih:max(0,min(iw-ih*9/16,iw*SUBJECT_X-ih*9/32)):0
+  (Replace SUBJECT_X with the clip's subject_x value for each input)
+Per-clip audio: MUTE clips → volume=0.03, KEEP clips → volume=${profile.ambient.toFixed(2)}
+
+Reel name: ${name}
+Total duration: ~${totalDur}s
+Output: ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4
+
+Steps:
+1. Use Epidemic Sound MCP to search for "${music.search}" and download the best match
+2. For EACH clip, apply its specific crop using the subject_x value (not center-crop!)
+3. Apply color grade to all clips: ${colorGrade.filter || '(none)'}
+4. Mix audio: music at ${musicPct}% volume, KEEP clips ambient at ${ambientPct}%, MUTE clips ambient at 3%
+5. Add 1s fade-in, 1.5s fade-out on music track
+6. Export to ~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4
+7. Save reel to dashboard:
+   curl -X POST "${apiDomain}/api/clips?action=reel-save&key=${API_KEY}" -H "Content-Type: application/json" -d '{"name":"${reelNameClean}","concept":"${concept}","clip_sequence":${JSON.stringify(sequence)},"duration_s":${totalDur},"audio_profile":"${audioProfile}","color_preset":"${colorPreset}"}'
+8. Mark as exported:
+   curl -X POST "${apiDomain}/api/clips?action=reel-update-status&id=REEL_ID&key=${API_KEY}" -H "Content-Type: application/json" -d '{"status":"exported","export_path":"~/Documents/HE-Raw-Clips/Exports/HE_${name}.mp4"}'
+   (Replace REEL_ID with the id returned from step 7)`;
+
+  document.getElementById('wfMusicBrief').textContent = brief;
+}
+
+function copyMusicCommand() {
+  const brief = document.getElementById('wfMusicBrief').textContent;
+  if (!brief || brief.includes('Select clips')) return toast('Select clips first', 'error');
+  navigator.clipboard.writeText(brief).then(() => toast('Claude command copied! Paste in Claude Code terminal.', 'success'));
+}
+
+function copyFFmpegWithMusic() {
+  copyFFmpeg(); // reuse existing function
+}
+
+// ── Live Intelligence System ──
+let igData = { followers: null, mediaCount: null, avgEng: null, recentPosts: [], allPosts: [] };
+let fbData = { likes: null, followers: null, postCount: null, recentPosts: [], allPosts: [] };
+
+async function getIgAccountId() {
+  if (IG_ACCOUNT_ID) return IG_ACCOUNT_ID;
+  try {
+    const resp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=instagram_business_account&access_token=${META_TOKEN}`);
+    const data = await resp.json();
+    if (data.instagram_business_account) IG_ACCOUNT_ID = data.instagram_business_account.id;
+    return IG_ACCOUNT_ID;
+  } catch { return null; }
+}
+
+async function loadIntelligence() {
+  try {
+    [igData, fbData] = await Promise.all([fetchIgData(), fetchFbData()]);
+    renderKpiCards();
+    generateRecommendation();
+  } catch (err) {
+    console.error('Intelligence load error:', err);
+  }
+}
+
+async function fetchIgData() {
+  const result = { followers: null, mediaCount: null, avgEng: null, recentPosts: [], allPosts: [] };
+  try {
+    const igId = await getIgAccountId();
+    if (!igId) return result;
+
+    const profileResp = await fetch(`https://graph.facebook.com/v24.0/${igId}?fields=followers_count,media_count&access_token=${META_TOKEN}`);
+    const profile = await profileResp.json();
+    result.followers = profile.followers_count || 0;
+    result.mediaCount = profile.media_count || 0;
+
+    const mediaResp = await fetch(`https://graph.facebook.com/v24.0/${igId}/media?fields=caption,like_count,comments_count,timestamp,media_type&limit=25&access_token=${META_TOKEN}`);
+    const media = await mediaResp.json();
+
+    if (media.data) {
+      let totalEng = 0;
+      result.allPosts = media.data.map(m => {
+        const likes = m.like_count || 0;
+        const comments = m.comments_count || 0;
+        totalEng += likes + comments;
+        return {
+          caption: m.caption || 'No caption',
+          captionShort: (m.caption || 'No caption').substring(0, 40) + (m.caption?.length > 40 ? '...' : ''),
+          likes, comments,
+          engagement: likes + comments,
+          type: m.media_type || 'IMAGE',
+          date: m.timestamp,
+          platform: 'ig'
+        };
+      });
+      result.recentPosts = result.allPosts.slice(0, 5);
+      if (result.followers > 0 && result.allPosts.length > 0) {
+        const avgInteractions = totalEng / result.allPosts.length;
+        result.avgEng = Math.round((avgInteractions / result.followers) * 1000) / 10;
+      }
+    }
+  } catch (e) { console.error('IG fetch error:', e); }
+  return result;
+}
+
+async function fetchFbData() {
+  const result = { likes: null, followers: null, postCount: null, recentPosts: [], allPosts: [] };
+  try {
+    const pageResp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}?fields=fan_count,followers_count&access_token=${META_TOKEN}`);
+    const page = await pageResp.json();
+    result.likes = page.fan_count || 0;
+    result.followers = page.followers_count || 0;
+
+    const postsResp = await fetch(`https://graph.facebook.com/v24.0/${FB_PAGE_ID}/posts?fields=message,created_time,likes.limit(0).summary(true),comments.limit(0).summary(true),shares,type&limit=25&access_token=${META_TOKEN}`);
+    const posts = await postsResp.json();
+
+    if (posts.data) {
+      result.postCount = posts.data.length;
+      result.allPosts = posts.data.map(p => {
+        const likes = p.likes?.summary?.total_count || 0;
+        const comments = p.comments?.summary?.total_count || 0;
+        const shares = p.shares?.count || 0;
+        return {
+          caption: p.message || 'No text',
+          captionShort: (p.message || 'No text').substring(0, 40) + (p.message?.length > 40 ? '...' : ''),
+          likes, comments, shares,
+          engagement: likes + comments + shares,
+          type: (p.type || 'photo').toUpperCase(),
+          date: p.created_time,
+          platform: 'fb'
+        };
+      });
+      result.recentPosts = result.allPosts.slice(0, 5);
+    }
+  } catch (e) { console.error('FB fetch error:', e); }
+  return result;
+}
+
+// ── Render Mini KPI Cards ──
+function renderKpiCards() {
+  const igEl = document.getElementById('kpiIgMini');
+  const engClass = igData.avgEng > 5 ? 'up' : igData.avgEng > 2 ? 'neutral' : igData.avgEng !== null ? 'down' : '';
+  igEl.innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${igData.followers ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Avg Eng</span><span class="kpi-value ${engClass}">${igData.avgEng !== null ? igData.avgEng + '%' : '--'}</span></div>
+  `;
+
+  const fbEl = document.getElementById('kpiFbMini');
+  fbEl.innerHTML = `
+    <div class="kpi-metric"><span class="kpi-label">Followers</span><span class="kpi-value">${fbData.followers ?? '--'}</span></div>
+    <div class="kpi-metric"><span class="kpi-label">Posts</span><span class="kpi-value">${fbData.postCount ?? '--'}</span></div>
+  `;
+}
+
+// ── Data-Driven Recommendation Engine ──
+function generateRecommendation() {
+  const recCard = document.getElementById('recCard');
+  const posts = igData.allPosts;
+
+  // 1. Analyze format gap
+  const hasVideo = posts.some(p => p.type === 'VIDEO' || p.type === 'REEL');
+  const hasCarousel = posts.some(p => p.type === 'CAROUSEL_ALBUM');
+  const imageOnly = posts.length > 0 && !hasVideo;
+
+  // 2. Analyze engagement trend
+  const engValues = posts.slice(0, 8).map(p => p.engagement);
+  let trendSlope = 0;
+  if (engValues.length >= 3) {
+    const firstHalf = engValues.slice(Math.floor(engValues.length / 2));
+    const secondHalf = engValues.slice(0, Math.floor(engValues.length / 2));
+    const avgOlder = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+    const avgNewer = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+    trendSlope = avgOlder > 0 ? (avgNewer - avgOlder) / avgOlder : 0;
+  }
+  const declining = trendSlope < -0.15;
+
+  // 3. Audience stage
+  const followers = igData.followers || 0;
+  let stage = 'discovery'; // < 50
+  if (followers >= 500) stage = 'engagement';
+  else if (followers >= 50) stage = 'growth';
+
+  // 4. Score templates
+  const templateScores = TEMPLATES.map((t, idx) => {
+    let score = 0;
+    const reasons = [];
+
+    // Format gap bonus — if no video, fire/cooking reels score highest
+    if (imageOnly) {
+      if (['The Kitchen', 'Tandoor'].includes(t.name)) {
+        score += 40;
+        reasons.push('No video content yet — first reel gets Instagram algorithm boost');
+      } else {
+        score += 20;
+        reasons.push('Video format needed to break static-image pattern');
+      }
+    }
+
+    // Declining engagement — high-energy content
+    if (declining) {
+      if (['The Kitchen', 'Shivajinagar Nights', 'Tandoor'].includes(t.name)) {
+        score += 25;
+        reasons.push('Engagement declining (' + engValues.slice(0, 4).join(' → ') + ') — high-energy content breaks the pattern');
+      }
+    }
+
+    // Discovery stage — shareable ASMR/fire content
+    if (stage === 'discovery') {
+      if (['The Kitchen', 'Tandoor', 'Shivajinagar Nights'].includes(t.name)) {
+        score += 20;
+        reasons.push('Under ' + followers + ' followers (discovery phase) — ASMR/fire content has highest share rate for new food accounts');
+      }
+    }
+
+    // Growth stage — consistency + community
+    if (stage === 'growth') {
+      if (['Real People', '108 Years', 'The Place'].includes(t.name)) {
+        score += 15;
+        reasons.push('Growth phase — community/story content builds loyalty');
+      }
+    }
+
+    // Engagement stage — save-worthy food porn
+    if (stage === 'engagement') {
+      if (['The Taste', 'Full Spread'].includes(t.name)) {
+        score += 20;
+        reasons.push('500+ followers — food close-ups drive saves and shares');
+      }
+    }
+
+    // FB audience leverage
+    if (fbData.followers > 0 && followers > 0 && fbData.followers > followers * 2) {
+      if (['The Kitchen', 'The Taste', 'Full Spread'].includes(t.name)) {
+        score += 10;
+        reasons.push('FB audience (' + fbData.followers + ') is larger — cross-post reels for guaranteed views');
+      }
+    }
+
+    // Base engagement potential from viral scores
+    const clipObjs = t.clips.map(id => allClips.find(c => c.id === id)).filter(Boolean);
+    const avgViral = clipObjs.length > 0 ? clipObjs.reduce((s, c) => s + (c.viral_score || 5), 0) / clipObjs.length : 5;
+    score += avgViral * 2;
+
+    // Quality gate penalty — dark clips reduce template score
+    const darkClips = clipObjs.filter(c => c.quality_flag === 'dark');
+    if (darkClips.length > 0) {
+      score -= darkClips.length * 20;
+      reasons.push(darkClips.length + ' dark clip(s) (' + darkClips.map(c => c.id).join(', ') + ') — may need brightness boost or replacement');
+    }
+
+    return { template: t, idx, score, reasons, avgViral, clipCount: clipObjs.length };
+  });
+
+  // Sort by score descending
+  templateScores.sort((a, b) => b.score - a.score);
+  const top = templateScores[0];
+
+  if (!top || top.score === 0) {
+    recCard.innerHTML = '<div class="rec-loading">Not enough data for a recommendation yet. Post more content to unlock intelligence.</div>';
+    return;
+  }
+
+  // Determine optimal posting time
+  const now = new Date();
+  const day = now.getDay();
+  let timing = 'Tuesday or Friday 12-1pm / 7-9pm';
+  if (day >= 1 && day <= 5) timing = 'Today 12-1pm or 7-9pm (weekday peak)';
+  if (day === 5) timing = 'Today 7-9pm (Friday prime time)';
+  if (day === 0 || day === 6) timing = 'Next weekday 12-1pm (lunch discovery peak)';
+
+  // Total duration
+  const clipObjs = top.template.clips.map(id => allClips.find(c => c.id === id)).filter(Boolean);
+  const totalDur = clipObjs.reduce((s, c) => s + (c.duration_s || 0), 0);
+
+  recCard.innerHTML = `
+    <div class="rec-header">
+      <div class="rec-title">${top.template.name} — ${top.template.concept}</div>
+      <div class="rec-badge">Score: ${top.score}</div>
+    </div>
+    <div class="rec-section">
+      <div class="rec-section-label">Why This Reel</div>
+      <div class="rec-section-text">${top.reasons.map(r => '&bull; ' + r).join('<br>')}</div>
+    </div>
+    <div class="rec-section">
+      <div class="rec-section-label">Clips (${top.clipCount} clips, ~${totalDur}s)</div>
+      <div class="rec-clips">${top.template.clips.map(id => '<span class="rec-clip-pill">' + id + '</span>').join('')}</div>
+    </div>
+    <div class="rec-section">
+      <div class="rec-section-label">Optimal Timing</div>
+      <div class="rec-section-text">${timing}</div>
+    </div>
+    <div class="rec-action">
+      <button class="btn btn-primary" onclick="loadRecommendation(${top.idx})">Load into Builder</button>
+    </div>
+  `;
+}
+
+function loadRecommendation(idx) {
+  loadTemplate(idx);
+  document.querySelector('.builder-wrap').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Analyze Clips Command ──
+function copyAnalyzeCommand() {
+  const HANIN = '/Users/nihaf/Documents/HE-Raw-Clips/Hanin';
+  const HAMZA = '/Users/nihaf/Documents/HE-Raw-Clips/Hamza';
+  const apiDomain = location.origin;
+  const unanalyzed = allClips.filter(c => !c.analyzed_at);
+  const target = unanalyzed.length > 0 ? unanalyzed : allClips;
+  const label = unanalyzed.length > 0 ? `${unanalyzed.length} unanalyzed clips` : `all ${allClips.length} clips (re-analyze)`;
+
+  const clipLines = target.map(c => {
+    const path = (c.source === 'hanin' ? HANIN : HAMZA) + '/' + c.filename;
+    return `  ${c.id}: ${path}`;
+  }).join('\n');
+
+  const cmd = `Analyze ${label} for the Hamza Express reel pipeline. For each clip:
+
+CLIPS:
+${clipLines}
+
+For EACH clip, run these steps:
+
+1. ffprobe to get width_px, height_px, duration_s
+2. ffmpeg signalstats (first 3 seconds) to get average brightness (lavfi.signalstats.YAVG), normalize to 0-100 scale
+3. Extract one keyframe and visually inspect it — determine subject_x (0.0=left edge, 1.0=right edge, where is the main subject/food/fire/action?)
+4. Set crop_gravity: if subject_x < 0.35 → "left", if > 0.65 → "right", else "center"
+5. Classify audio_type from tags: FIRE/TANDOOR→"fire", COOK→"sizzle", PEOPLE/TESTIMONIAL→"voice", VENUE/BRAND→"ambient", else→"noise"
+6. Set has_good_audio=1 if audio_type is fire/sizzle/voice, else 0
+7. Set quality_flag="dark" if brightness < 20, else "ok"
+
+After analyzing ALL clips, bulk-update results:
+curl -X POST "${apiDomain}/api/clips?action=bulk-update&key=${API_KEY}" -H "Content-Type: application/json" -d '{"clips":[ARRAY_OF_CLIP_OBJECTS]}'
+
+Each clip object: {"id":"H01","subject_x":0.35,"subject_y":0.5,"crop_gravity":"left","brightness":42,"has_good_audio":1,"audio_type":"fire","width_px":1920,"height_px":1080,"quality_flag":"ok","analyzed_at":"2026-03-23T12:00:00"}`;
+
+  navigator.clipboard.writeText(cmd).then(() => toast('Analyze command copied! Paste in Claude Code.', 'success'));
+}
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── Event listeners ──
+document.getElementById('searchInput').addEventListener('input', renderClips);
+document.getElementById('sourceFilter').addEventListener('change', renderClips);
+document.getElementById('sortSelect').addEventListener('change', () => {
+  const sort = document.getElementById('sortSelect').value;
+  allClips.sort((a, b) => {
+    if (sort === 'viral_score') return (b.viral_score || 0) - (a.viral_score || 0);
+    if (sort === 'duration_s') return (b.duration_s || 0) - (a.duration_s || 0);
+    return a.id.localeCompare(b.id);
+  });
+  renderClips();
+});
+
+// ── Go ──
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>HE Captain</title>
+  <link rel="manifest" href="/ops/captain/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0a0f1a;--bg2:#111827;--card:#1a2234;--border:#2d3a4f;--text:#f1f5f9;--text2:#94a3b8;--green:#22c55e;--green-dim:rgba(34,197,94,.12);--red:#ef4444;--red-dim:rgba(239,68,68,.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);--purple:#a855f7;--purple-dim:rgba(168,85,247,.12);--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12);--orange:#f97316;--orange-dim:rgba(249,115,22,.12);--amber:#f59e0b;--amber-dim:rgba(245,158,11,.12)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+    .mono{font-family:'JetBrains Mono',monospace}
+
+    /* Header */
+    .header{background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+    .header h1{font-size:16px;display:flex;align-items:center;gap:8px}
+    .header h1 .accent{width:4px;height:20px;background:var(--amber);border-radius:2px}
+    .header-right{display:flex;align-items:center;gap:8px}
+    .icon-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+    .icon-btn:active{background:var(--border)}
+
+    /* Tabs */
+    .tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:53px;z-index:99}
+    .tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+    .tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+    .tab .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;background:var(--red);color:#fff;border-radius:9px;font-size:11px;margin-left:4px;padding:0 5px}
+
+    /* Screens */
+    .screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:80px}
+    .screen.active{display:block}
+
+    /* PIN Screen */
+    #pin-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    #pin-screen .pin-title{font-size:22px;font-weight:700;margin-bottom:6px}
+    #pin-screen .pin-sub{color:var(--text2);font-size:14px;margin-bottom:30px}
+    .pin-dots{display:flex;gap:12px;margin-bottom:30px}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
+    .pin-dot.filled{background:var(--amber);border-color:var(--amber)}
+    .pin-dot.error{background:var(--red);border-color:var(--red)}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+    .pin-key{width:72px;height:56px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
+    .pin-key:active{background:var(--border)}
+    .pin-key.del{font-size:14px;color:var(--text2)}
+
+    /* Stats bar */
+    .stats-bar{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+    .stat-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;white-space:nowrap;font-size:12px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .stat-chip .val{font-weight:700;font-size:14px}
+    .stat-chip.alert{border-color:var(--red);background:var(--red-dim)}
+
+    /* Section titles */
+    .section-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;margin-top:20px}
+    .section-title:first-child{margin-top:0}
+
+    /* Waiter cards */
+    .waiter-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+    .waiter-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 14px;min-width:150px;flex-shrink:0;position:relative}
+    .waiter-card .waiter-name{font-size:14px;font-weight:600;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+    .waiter-card .waiter-stats{font-size:11px;color:var(--text2);line-height:1.5}
+    .waiter-card .shift-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .waiter-card .shift-dot.on{background:var(--green)}
+    .waiter-card .shift-dot.off{background:var(--text2);opacity:.4}
+    .waiter-card .shift-toggle{position:absolute;top:6px;right:6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:10px;cursor:pointer;color:var(--text2);font-family:inherit}
+    .waiter-card .shift-toggle:active{background:var(--border)}
+    .waiter-card.on-shift{border-color:var(--green)}
+    .waiter-card.off-shift{opacity:.5}
+
+    /* Order cards */
+    .order-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;position:relative;transition:all .15s}
+    .order-card.unassigned{border-color:var(--red);animation:pulse-border 2s infinite}
+    @keyframes pulse-border{0%,100%{border-color:var(--red)}50%{border-color:rgba(239,68,68,.4)}}
+    .order-card .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .order-card .table-num{font-size:18px;font-weight:700}
+    .order-card .order-name{color:var(--text2);font-size:12px;font-family:'JetBrains Mono',monospace}
+    .order-card .order-meta{display:flex;gap:8px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+    .order-card .order-meta span{display:flex;align-items:center;gap:3px}
+    .order-card .waiter-tag{background:var(--blue-dim);color:var(--blue);font-size:11px;padding:2px 8px;border-radius:6px}
+    .order-card .auto-tag{background:var(--green-dim);color:var(--green);font-size:10px;padding:1px 6px;border-radius:4px}
+    .order-card .progress-bar{height:4px;background:var(--bg2);border-radius:2px;margin-top:10px;overflow:hidden}
+    .order-card .progress-bar .fill{height:100%;border-radius:2px;transition:width .3s}
+    .order-card .progress-bar .fill.low{background:var(--orange)}
+    .order-card .progress-bar .fill.mid{background:var(--amber)}
+    .order-card .progress-bar .fill.high{background:var(--green)}
+
+    .order-items{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .item-chip{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text2)}
+    .item-chip.cooking{border-color:var(--orange);color:var(--orange)}
+    .item-chip.cooked{border-color:var(--yellow);color:var(--yellow)}
+    .item-chip.at_counter{border-color:var(--green);color:var(--green);font-weight:600}
+    .item-chip.picked_up{border-color:var(--blue);color:var(--blue)}
+    .item-chip.delivered{color:var(--text2);opacity:.5;text-decoration:line-through}
+
+    /* Assign buttons (inline on unassigned cards) */
+    .assign-inline{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+    .assign-inline button{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;flex:1;min-width:80px}
+    .assign-inline button:active{background:var(--border)}
+    .assign-inline button .load{color:var(--text2);font-size:10px}
+
+    /* Reassign button (small on assigned cards) */
+    .reassign-btn{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text2);font-family:inherit}
+    .reassign-btn:active{background:var(--border)}
+
+    /* Secondary action buttons (captain doing waiter/cleaner work) */
+    .action-row{display:flex;gap:6px;margin:6px 14px 10px;flex-wrap:wrap}
+    .action-btn{flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;min-width:80px}
+    .action-btn:active{opacity:.7;transform:scale(.97)}
+    .action-btn.accept{border-color:var(--orange);color:var(--orange);background:var(--orange-dim)}
+    .action-btn.serve{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+    .action-btn.clean-ack{border-color:var(--purple);color:var(--purple);background:var(--purple-dim)}
+    .action-btn.clean-done{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center}
+    .modal-overlay.show{display:flex}
+    .modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:70vh;overflow-y:auto;padding:20px}
+    .modal h2{font-size:16px;margin-bottom:4px}
+    .modal .modal-sub{color:var(--text2);font-size:13px;margin-bottom:16px}
+    .modal .assign-btn{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;text-align:left}
+    .modal .assign-btn:active{background:var(--border)}
+    .modal .assign-btn .load-info{color:var(--text2);font-size:12px}
+    .modal .close-modal{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text2);font-size:14px;font-family:inherit;cursor:pointer;margin-top:8px}
+
+    /* Staff management */
+    .staff-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+    .staff-card.inactive{opacity:.4}
+    .staff-card .staff-info{flex:1}
+    .staff-card .staff-name{font-size:14px;font-weight:600}
+    .staff-card .staff-role{font-size:12px;color:var(--text2)}
+    .staff-actions{display:flex;gap:6px}
+    .staff-actions button{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit}
+    .staff-actions button:active{background:var(--border)}
+
+    .form-row{margin-bottom:12px}
+    .form-row label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px}
+    .form-row input,.form-row select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit}
+    .btn-primary{background:var(--amber);color:#000;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;width:100%}
+    .btn-primary:active{opacity:.8}
+
+    /* Shift Screen */
+    #shift-screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+    .shift-greeting{font-size:24px;font-weight:700;margin-bottom:8px}
+    .shift-sub{color:var(--text2);font-size:15px;margin-bottom:40px;text-align:center}
+    .shift-btn{width:200px;height:200px;border-radius:50%;border:3px solid var(--amber);background:var(--amber-dim);color:var(--amber);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .shift-btn:active{transform:scale(.95);background:var(--amber);color:#000}
+    .shift-btn .shift-icon{font-size:48px}
+    .shift-time{color:var(--text2);font-size:13px;margin-top:16px}
+    .shift-logout{color:var(--text2);font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline}
+
+    /* Dirty/served table alerts */
+    .alert-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .alert-row.dirty{border-color:rgba(168,85,247,.4);background:rgba(168,85,247,.08)}
+    .alert-row.served{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.06)}
+    .alert-row .alert-info{flex:1}
+    .alert-row .alert-table{font-size:15px;font-weight:700}
+    .alert-row .alert-meta{font-size:11px;color:var(--text2);margin-top:2px}
+    .alert-row .alert-time{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}
+    .alert-row .alert-time.urgent{color:var(--red)}
+    .alert-row .alert-time.warn{color:var(--orange)}
+    .alert-row .alert-time.ok{color:var(--text2)}
+
+    /* Pipeline */
+    .pipeline{display:flex;gap:2px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+    .pipe-col{flex:1;min-width:60px}
+    .pipe-header{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text2);padding:5px 6px;text-align:center;border-radius:6px 6px 0 0;border-bottom:2px solid}
+    .pipe-header.h-cooking{border-color:var(--orange);background:var(--orange-dim)}
+    .pipe-header.h-served{border-color:var(--green);background:var(--green-dim)}
+    .pipe-header.h-dirty{border-color:var(--purple);background:var(--purple-dim)}
+    .pipe-header.h-cleaning{border-color:var(--blue);background:var(--blue-dim)}
+    .pipe-header.h-done{border-color:var(--text2);background:var(--bg2)}
+    .pipe-item{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 6px;margin:3px 1px;font-size:11px;text-align:center}
+    .pipe-item .tbl{font-weight:700;font-size:13px}
+    .pipe-item .pmeta{font-size:9px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+    /* Bottleneck alerts */
+    .bottleneck{background:var(--red-dim);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;display:flex;align-items:center;gap:8px}
+    .bottleneck.warn{background:var(--orange-dim);border-color:rgba(249,115,22,.3)}
+    .bottleneck.clean{background:var(--purple-dim);border-color:rgba(168,85,247,.3)}
+    .bottleneck .bn-text{flex:1}
+    .bottleneck .bn-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);flex-shrink:0}
+
+    /* KPI compact table */
+    .kpi-table{width:100%;border-collapse:collapse;margin-bottom:12px}
+    .kpi-table th{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+    .kpi-table td{font-size:12px;padding:6px 8px;border-bottom:1px solid var(--border)}
+    .kpi-table td.mono{font-family:'JetBrains Mono',monospace;font-size:11px}
+    .kpi-table tr:last-child td{border-bottom:none}
+
+    /* Hourly bar chart */
+    .hourly-chart{display:flex;align-items:flex-end;gap:2px;height:60px;padding:0 2px;margin-bottom:4px}
+    .hour-bar{flex:1;background:var(--amber);border-radius:2px 2px 0 0;min-width:10px;position:relative;transition:height .3s}
+    .hour-bar .h-label{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+    .hour-bar .h-val{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:40px 20px}
+    .empty-state .icon{font-size:48px;margin-bottom:12px;opacity:.5}
+    .empty-state p{color:var(--text2);font-size:14px}
+
+    /* Connection */
+    .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .conn-dot.offline{background:var(--red);animation:blink 1s infinite}
+    @keyframes blink{50%{opacity:.3}}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    .toast.show{opacity:1}
+    .toast.error{border-color:var(--red);color:var(--red)}
+    .toast.success{border-color:var(--green);color:var(--green)}
+  </style>
+  <script src="/ops/setup-wizard.js"></script>
+</head>
+<body>
+
+<!-- PIN Screen -->
+<div id="pin-screen">
+  <a href="/ops/" style="color:var(--text2);font-size:13px;text-decoration:none;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px">&larr; Back to Hub</a>
+  <div class="pin-title">Captain Login</div>
+  <div class="pin-sub">Enter your 4-digit PIN</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key" style="visibility:hidden"></button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key del" data-key="del">DEL</button>
+  </div>
+</div>
+
+<!-- Shift Screen (shown after login — captain shift is auto-detected from Odoo POS) -->
+<div id="shift-screen">
+  <div class="shift-greeting" id="shift-greeting">Hello!</div>
+  <div class="shift-sub" id="shift-sub">Your shift starts automatically when you log into Odoo POS</div>
+  <button class="shift-btn" id="shift-btn" onclick="enterApp()" style="border-color:var(--green);background:rgba(34,197,94,.08);color:var(--green)">
+    <span class="shift-icon">&#x25B6;</span>
+    Open Dashboard
+  </button>
+  <div class="shift-time" id="shift-time"></div>
+  <div class="shift-logout" onclick="logout()">Logout</div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none">
+  <div class="header">
+    <h1><span class="accent"></span>Captain</h1>
+    <div class="header-right">
+      <span id="staff-name" style="font-size:13px;color:var(--text2)"></span>
+      <div class="conn-dot" id="conn-dot"></div>
+      <button class="icon-btn" onclick="pollOdoo()" title="Poll Odoo">+</button>
+      <button class="icon-btn" onclick="refreshDashboard()" title="Refresh">&#x21bb;</button>
+      <button class="icon-btn" onclick="logout()" title="Logout" style="color:var(--red)">&#x23F9;</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard<span class="badge" id="unassigned-badge" style="display:none">0</span></div>
+    <div class="tab" data-tab="staff" onclick="switchTab('staff')">Staff</div>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <!-- Bottleneck alerts (only when issues exist) -->
+    <div id="bottleneck-section"></div>
+
+    <!-- Live pipeline -->
+    <div id="pipeline-section"></div>
+
+    <div class="section-title" style="margin-top:16px">WAITERS</div>
+    <div class="waiter-scroll" id="waiter-scroll"></div>
+
+    <div id="unassigned-section"></div>
+
+    <div class="section-title" style="margin-top:20px">CLEANERS</div>
+    <div class="waiter-scroll" id="cleaner-scroll"></div>
+
+    <div id="dirty-section"></div>
+
+    <div id="served-section"></div>
+
+    <div class="section-title" style="margin-top:20px">ACTIVE ORDERS</div>
+    <div id="active-orders"></div>
+
+    <!-- KPI + Hourly -->
+    <div id="kpi-section"></div>
+    <div id="hourly-section"></div>
+  </div>
+
+  <!-- Staff Management Screen -->
+  <div class="screen" id="screen-staff">
+    <div class="section-title" style="margin-top:0">STAFF</div>
+    <div id="staff-list"></div>
+    <button class="btn-primary" style="margin-top:16px" onclick="showAddStaff()">+ Add Staff</button>
+    <div id="add-staff-form" style="display:none;margin-top:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
+      <div class="form-row"><label>Name</label><input id="new-name" placeholder="Staff name"></div>
+      <div class="form-row"><label>PIN (4 digits)</label><input id="new-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="1234"></div>
+      <div class="form-row"><label>Role</label>
+        <select id="new-role"><option value="waiter">Waiter</option><option value="captain">Captain</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-can-captain"> Can Captain</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-can-waiter" checked> Can Waiter</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="new-can-clean"> Can Clean</label>
+      </div>
+      <button class="btn-primary" style="margin-top:12px" onclick="addStaff()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reassign Modal -->
+<div class="modal-overlay" id="reassign-modal">
+  <div class="modal">
+    <h2 id="reassign-title">Reassign Order</h2>
+    <div class="modal-sub" id="reassign-sub"></div>
+    <div id="reassign-options"></div>
+    <button class="close-modal" onclick="closeReassignModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '/api/whatsapp';
+// Auto-login from hub token if available
+let token = localStorage.getItem('floor_token') || localStorage.getItem('floor_hub_token') || '';
+let staffInfo = JSON.parse(localStorage.getItem('floor_staff') || localStorage.getItem('floor_hub_staff') || 'null');
+// Block if staff doesn't have captain access
+if (staffInfo && !staffInfo.can_captain) { window.location.href = '/ops/'; }
+// Sync hub token to captain-specific storage
+if (!localStorage.getItem('floor_token') && localStorage.getItem('floor_hub_token') && staffInfo?.can_captain) {
+  localStorage.setItem('floor_token', localStorage.getItem('floor_hub_token'));
+  localStorage.setItem('floor_staff', localStorage.getItem('floor_hub_staff'));
+}
+let dashboardData = null;
+let intelData = null;
+let dashboardInterval = null;
+let pollInterval = null;
+let reassigningOrderId = null;
+
+// ── Toast ──
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ── API helper ──
+async function api(action, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Authorization': 'Bearer ' + token } };
+  if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  try {
+    const res = await fetch(`${API_BASE}?action=${action}`, opts);
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 401) { toast('Session expired — please log in again', 'error'); setTimeout(logout, 1500); throw new Error('Session expired'); }
+      throw new Error(data.error || 'Request failed');
+    }
+    document.getElementById('conn-dot').className = 'conn-dot';
+    return data;
+  } catch (e) {
+    if (e.message !== 'Session expired') document.getElementById('conn-dot').className = 'conn-dot offline';
+    throw e;
+  }
+}
+
+// ── PIN Login ──
+let pinBuffer = '';
+document.getElementById('pin-pad').addEventListener('click', async (e) => {
+  const key = e.target.closest('.pin-key')?.dataset.key;
+  if (!key) return;
+
+  if (key === 'del') { pinBuffer = pinBuffer.slice(0, -1); }
+  else if (pinBuffer.length < 4) { pinBuffer += key; }
+
+  document.querySelectorAll('#pin-dots .pin-dot').forEach((d, i) => {
+    d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  });
+
+  if (pinBuffer.length === 4) {
+    try {
+      const data = await fetch(`${API_BASE}?action=floor-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinBuffer })
+      }).then(r => r.json());
+
+      if (data.error) throw new Error(data.error);
+      if (!data.can_captain) throw new Error('Captain access required');
+
+      token = data.token;
+      staffInfo = data;
+      localStorage.setItem('floor_token', token);
+      localStorage.setItem('floor_staff', JSON.stringify(data));
+      afterLogin();
+    } catch (e) {
+      document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot error');
+      toast(e.message, 'error');
+      setTimeout(() => {
+        pinBuffer = '';
+        document.querySelectorAll('#pin-dots .pin-dot').forEach(d => d.className = 'pin-dot');
+      }, 800);
+    }
+  }
+});
+
+// ── Web Push Notifications ──
+const VAPID_PUBLIC_KEY = 'BPpmu5i8gica_zlVUgKHD7Tk81biJSviatNFuL23Y66htjsjYtly4sHm_y-e9wOloubbbeH0DxCll6P_RjtYi1w';
+function urlBase64ToUint8Array(base64String) {
+  const p = base64String.replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(p + '='.repeat((4 - p.length % 4) % 4));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+function isNativeApp() {
+  return !!(window.HENative || window.nativeFcmToken || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+}
+async function sendFcmTokenToServer(fcmToken) {
+  if (!fcmToken) return;
+  await api('floor-push-subscribe', 'POST', { fcm_token: fcmToken, platform: 'native' });
+  if (window.HENative) window.HENative.setAuthInfo(token, staffInfo?.staff_id || '');
+}
+async function setupPush() {
+  try {
+    if (isNativeApp()) {
+      let fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+      if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
+      window.addEventListener('fcmTokenReady', (e) => sendFcmTokenToServer(e.detail), { once: true });
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        fcmToken = window.nativeFcmToken || (window.HENative && window.HENative.getFcmToken()) || '';
+        if (fcmToken) { await sendFcmTokenToServer(fcmToken); return; }
+      }
+      return;
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    await api('floor-push-subscribe', 'POST', { subscription: sub.toJSON() });
+  } catch (e) { console.warn('Push setup failed:', e); }
+}
+async function teardownPush() {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    if (!reg) return;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+    api('floor-push-unsubscribe', 'POST').catch(() => {});
+  } catch (e) { /* best effort */ }
+}
+
+function logout() {
+  teardownPush();
+  token = '';
+  staffInfo = null;
+  localStorage.removeItem('floor_token');
+  localStorage.removeItem('floor_staff');
+  localStorage.removeItem('floor_hub_token');
+  localStorage.removeItem('floor_hub_staff');
+  clearInterval(dashboardInterval);
+  clearInterval(pollInterval);
+  // Redirect to hub
+  window.location.href = '/ops/';
+}
+
+// ── After Login: captain goes straight to dashboard (shift detected from Odoo POS) ──
+function afterLogin() {
+  document.getElementById('pin-screen').style.display = 'none';
+  setupPush();
+  enterApp();
+}
+
+// ── Shift Screen ──
+function showShiftScreen() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'flex';
+  document.getElementById('shift-greeting').textContent = `Hello, ${staffInfo.name}!`;
+  document.getElementById('shift-time').textContent = '';
+}
+
+async function startShift() {
+  try {
+    await api('floor-start-shift', 'POST');
+    staffInfo.on_shift = true;
+    localStorage.setItem('floor_staff', JSON.stringify(staffInfo));
+    toast('Shift started!');
+    setupPush();
+    enterApp();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showEndShift() {
+  if (confirm('End your shift?')) {
+    endShift();
+  }
+}
+
+async function endShift() {
+  try {
+    teardownPush();
+    await api('floor-end-shift', 'POST');
+    staffInfo.on_shift = false;
+    localStorage.setItem('floor_staff', JSON.stringify(staffInfo));
+    clearInterval(dashboardInterval);
+    clearInterval(pollInterval);
+    toast('Shift ended');
+    showShiftScreen();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Enter App ──
+function enterApp() {
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('shift-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('staff-name').textContent = staffInfo.name;
+  refreshLive();
+  // Single atomic poll+data every 5s (kitchen-intel pattern)
+  pollInterval = setInterval(refreshLive, 2000);
+  // Setup wizard — auto-request permissions + device-specific guide
+  if (window.SetupWizard) SetupWizard.init({
+    apiBase: API_BASE, token, vapidPublicKey: VAPID_PUBLIC_KEY,
+    setupPush, appName: 'HE Captain', storagePrefix: 'floor_captain'
+  });
+}
+
+async function refreshLive() {
+  try {
+    const data = await api('floor-live');
+    dashboardData = data;
+    renderDashboard();
+  } catch (e) { console.error('Live refresh error:', e); }
+}
+
+// ── Tab switching ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + tab));
+  if (tab === 'dashboard') refreshLive();
+  if (tab === 'staff') loadStaff();
+}
+
+// ── Dashboard ──
+async function refreshDashboard() {
+  refreshLive();
+}
+
+function renderDashboard() {
+  const d = dashboardData;
+  if (!d) return;
+
+  // Stats bar
+  const s = d.stats;
+  const alertClass = (s.unassigned || 0) > 0 ? ' alert' : '';
+  const dirtyCount = (d.dirty_tables || []).filter(t => t.clean_status === 'needs_cleaning').length;
+  const dirtyAlert = dirtyCount > 0 ? ' alert' : '';
+  const awaitPayCount = (d.served_awaiting_payment || []).length;
+  document.getElementById('stats-bar').innerHTML =
+    `<div class="stat-chip"><span class="val">${s.total_orders || 0}</span> Orders</div>` +
+    `<div class="stat-chip${alertClass}"><span class="val">${s.unassigned || 0}</span> Unassigned</div>` +
+    `<div class="stat-chip"><span class="val" style="color:var(--green)">${s.on_shift_waiters || 0}</span> On Shift</div>` +
+    `<div class="stat-chip"><span class="val">${s.active || 0}</span> Active</div>` +
+    `<div class="stat-chip"><span class="val" style="color:var(--green)">${s.served || 0}</span> Served</div>` +
+    (awaitPayCount > 0 ? `<div class="stat-chip"><span class="val" style="color:var(--blue)">${awaitPayCount}</span> Awaiting Pay</div>` : '') +
+    (dirtyCount > 0 ? `<div class="stat-chip${dirtyAlert}" style="border-color:var(--purple)"><span class="val" style="color:var(--purple)">${dirtyCount}</span> Dirty</div>` : '');
+
+  // Unassigned badge
+  const badge = document.getElementById('unassigned-badge');
+  if (d.unassigned.length > 0) {
+    badge.style.display = '';
+    badge.textContent = d.unassigned.length;
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Waiter cards with shift indicators
+  const wscroll = document.getElementById('waiter-scroll');
+  wscroll.innerHTML = d.waiters.map(w => {
+    const onShift = !!w.on_shift;
+    const shiftDuration = w.shift_started_at ? Math.round((Date.now() - new Date(w.shift_started_at).getTime()) / 60000) : 0;
+    return `<div class="waiter-card ${onShift ? 'on-shift' : 'off-shift'}">
+      <button class="shift-toggle" onclick="forceShift(${w.id}, ${onShift ? 0 : 1})">${onShift ? 'End' : 'Start'}</button>
+      <div class="waiter-name">
+        <span class="shift-dot ${onShift ? 'on' : 'off'}"></span>
+        ${w.name}
+      </div>
+      <div class="waiter-stats">
+        ${onShift ? `${w.active_orders || 0} orders | ${w.served_today || 0} served` : 'Off shift'}
+        ${onShift && shiftDuration > 0 ? `<br>${shiftDuration}m on shift` : ''}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text2);font-size:13px;padding:8px">No waiters configured</div>';
+
+  // Unassigned orders (with inline assign buttons)
+  const usec = document.getElementById('unassigned-section');
+  if (d.unassigned.length > 0) {
+    usec.innerHTML = '<div class="section-title" style="color:var(--red)">UNASSIGNED ORDERS</div>' +
+      d.unassigned.map(o => renderUnassignedCard(o)).join('');
+  } else {
+    usec.innerHTML = '';
+  }
+
+  // Cleaner cards
+  const cscroll = document.getElementById('cleaner-scroll');
+  const cleaners = d.cleaners || [];
+  cscroll.innerHTML = cleaners.map(c => {
+    const onShift = !!c.on_shift;
+    return `<div class="waiter-card ${onShift ? 'on-shift' : 'off-shift'}" style="${onShift ? 'border-color:var(--purple)' : ''}">
+      <button class="shift-toggle" onclick="forceShift(${c.id}, ${onShift ? 0 : 1})">${onShift ? 'End' : 'Start'}</button>
+      <div class="waiter-name">
+        <span class="shift-dot ${onShift ? 'on' : 'off'}" style="${onShift ? 'background:var(--purple)' : ''}"></span>
+        ${c.name}
+      </div>
+      <div class="waiter-stats">
+        ${onShift ? `${c.active_cleaning || 0} cleaning | ${c.cleaned_today || 0} done` : 'Off shift'}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text2);font-size:13px;padding:8px">No cleaners configured</div>';
+
+  // Dirty tables (needs cleaning)
+  const dirtyDiv = document.getElementById('dirty-section');
+  const dirtyTables = (d.dirty_tables || []).filter(t => t.clean_status === 'needs_cleaning');
+  const cleaningTables = (d.dirty_tables || []).filter(t => t.clean_status === 'cleaning');
+  if (dirtyTables.length > 0 || cleaningTables.length > 0) {
+    let html = '<div class="section-title" style="color:var(--purple);margin-top:20px">TABLES NEEDING CLEANING</div>';
+    for (const t of dirtyTables) {
+      const waitMin = t.paid_at ? Math.round((Date.now() - new Date(t.paid_at).getTime()) / 60000) : 0;
+      const urgency = waitMin > 3 ? 'urgent' : waitMin > 1 ? 'warn' : 'ok';
+      html += `<div class="alert-row dirty">
+        <div class="alert-info">
+          <div class="alert-table">Table ${t.table_number || '?'}</div>
+          <div class="alert-meta">${t.odoo_order_name || ''} &middot; Paid ${waitMin}m ago</div>
+        </div>
+        <button class="action-btn clean-ack" style="margin:0;flex-shrink:0" onclick="captainCleanAck(${t.id})">Clean</button>
+        <div class="alert-time ${urgency}">${waitMin}m</div>
+      </div>`;
+    }
+    for (const t of cleaningTables) {
+      const cleanMin = t.clean_ack_at ? Math.round((Date.now() - new Date(t.clean_ack_at).getTime()) / 60000) : 0;
+      html += `<div class="alert-row" style="border-color:var(--purple);background:var(--purple-dim)">
+        <div class="alert-info">
+          <div class="alert-table">Table ${t.table_number || '?'}</div>
+          <div class="alert-meta">Being cleaned &middot; ${cleanMin}m</div>
+        </div>
+        <button class="action-btn clean-done" style="margin:0;flex-shrink:0" onclick="captainCleanDone(${t.id})">Done</button>
+        <div class="alert-time" style="color:var(--purple)">${cleanMin}m</div>
+      </div>`;
+    }
+    dirtyDiv.innerHTML = html;
+  } else {
+    dirtyDiv.innerHTML = '';
+  }
+
+  // Served awaiting payment
+  const servedDiv = document.getElementById('served-section');
+  const servedOrders = d.served_awaiting_payment || [];
+  if (servedOrders.length > 0) {
+    let html = '<div class="section-title" style="color:var(--blue);margin-top:20px">AWAITING PAYMENT</div>';
+    for (const o of servedOrders) {
+      const waitMin = o.served_at ? Math.round((Date.now() - new Date(o.served_at).getTime()) / 60000) : 0;
+      const urgency = waitMin > 10 ? 'urgent' : waitMin > 5 ? 'warn' : 'ok';
+      html += `<div class="alert-row served">
+        <div class="alert-info">
+          <div class="alert-table">Table ${o.table_number || '?'}</div>
+          <div class="alert-meta">${o.odoo_order_name || ''} &middot; Served ${waitMin}m ago</div>
+        </div>
+        <div class="alert-time ${urgency}">${waitMin}m</div>
+      </div>`;
+    }
+    servedDiv.innerHTML = html;
+  } else {
+    servedDiv.innerHTML = '';
+  }
+
+  // Active orders (assigned) — grouped by table
+  const aDiv = document.getElementById('active-orders');
+  const assigned = d.active.filter(o => o.waiter_id);
+  if (assigned.length > 0) {
+    // Group by table_number
+    const tableMap = {};
+    for (const o of assigned) {
+      const tbl = o.table_number || 'none';
+      if (!tableMap[tbl]) tableMap[tbl] = { table_number: o.table_number, orders: [], allItems: [] };
+      tableMap[tbl].orders.push(o);
+      for (const item of (o.items || [])) {
+        tableMap[tbl].allItems.push(item);
+      }
+    }
+    aDiv.innerHTML = Object.values(tableMap).map(tbl => renderActiveTableCard(tbl)).join('');
+  } else if (d.unassigned.length === 0) {
+    aDiv.innerHTML = '<div class="empty-state"><div class="icon">&#x1f4cb;</div><p>No active orders</p><p style="margin-top:6px;font-size:12px;color:var(--text2)">Orders auto-assigned to on-shift waiters</p></div>';
+  } else {
+    aDiv.innerHTML = '';
+  }
+
+  // ── Pipeline (from live_orders in floor-live response) ──
+  renderIntel();
+}
+
+function renderIntel() {
+  const intel = dashboardData;
+
+  // Pipeline
+  const pipeDiv = document.getElementById('pipeline-section');
+  if (intel && intel.live_orders) {
+    const orders = intel.live_orders;
+    const cooking = orders.filter(o => o.status === 'assigned' || o.status === 'in_progress' || o.status === 'new');
+    const served = orders.filter(o => o.status === 'served' && !o.paid_at);
+    const dirty = orders.filter(o => o.paid_at && o.clean_status === 'needs_cleaning');
+    const cleaning = orders.filter(o => o.clean_status === 'cleaning');
+    const done = orders.filter(o => o.status === 'closed').slice(0, 5);
+    const total = cooking.length + served.length + dirty.length + cleaning.length;
+
+    if (total > 0 || done.length > 0) {
+      function pipeItems(items) {
+        if (items.length === 0) return '<div class="pipe-item" style="opacity:.3;font-size:10px">--</div>';
+        return items.map(o => {
+          const mins = Math.round((Date.now() - new Date(o.created_at).getTime()) / 60000);
+          return `<div class="pipe-item"><div class="tbl">${o.table_number || '?'}</div><div class="pmeta">${mins}m</div></div>`;
+        }).join('');
+      }
+      pipeDiv.innerHTML = `<div class="section-title" style="margin-top:0">LIVE PIPELINE</div>
+        <div class="pipeline">
+          <div class="pipe-col"><div class="pipe-header h-cooking">Active (${cooking.length})</div>${pipeItems(cooking)}</div>
+          <div class="pipe-col"><div class="pipe-header h-served">Served (${served.length})</div>${pipeItems(served)}</div>
+          <div class="pipe-col"><div class="pipe-header h-dirty">Dirty (${dirty.length})</div>${pipeItems(dirty)}</div>
+          <div class="pipe-col"><div class="pipe-header h-cleaning">Clean (${cleaning.length})</div>${pipeItems(cleaning)}</div>
+          <div class="pipe-col"><div class="pipe-header h-done">Done (${done.length})</div>${pipeItems(done)}</div>
+        </div>`;
+    } else {
+      pipeDiv.innerHTML = '';
+    }
+  } else {
+    pipeDiv.innerHTML = '';
+  }
+
+  // Bottleneck alerts
+  const bnDiv = document.getElementById('bottleneck-section');
+  if (intel && intel.bottlenecks && intel.bottlenecks.length > 0) {
+    bnDiv.innerHTML = intel.bottlenecks.slice(0, 5).map(b => {
+      const cls = b.type === 'cleaning' ? 'bottleneck clean' : b.type === 'payment' ? 'bottleneck warn' : 'bottleneck';
+      return `<div class="${cls}"><span class="bn-text">${b.message}</span><span class="bn-time">${b.wait_min}m</span></div>`;
+    }).join('');
+  } else {
+    bnDiv.innerHTML = '';
+  }
+
+  // KPI tables
+  const kpiDiv = document.getElementById('kpi-section');
+  if (intel) {
+    let kpiHtml = '';
+    // Waiter KPIs
+    if (intel.waiter_kpis && intel.waiter_kpis.length > 0) {
+      kpiHtml += '<div class="section-title" style="margin-top:20px">WAITER PERFORMANCE</div>';
+      kpiHtml += '<table class="kpi-table"><tr><th>Waiter</th><th>Served</th><th>Avg Time</th></tr>';
+      kpiHtml += intel.waiter_kpis.map(w => `<tr><td>${w.name}</td><td class="mono">${w.orders_served}</td><td class="mono">${w.avg_serve_min ?? '--'}m</td></tr>`).join('');
+      kpiHtml += '</table>';
+    }
+    // Cleaner KPIs
+    if (intel.cleaner_kpis && intel.cleaner_kpis.length > 0) {
+      kpiHtml += '<div class="section-title" style="margin-top:16px">CLEANER PERFORMANCE</div>';
+      kpiHtml += '<table class="kpi-table"><tr><th>Cleaner</th><th>Done</th><th>Avg</th><th>Resp</th></tr>';
+      kpiHtml += intel.cleaner_kpis.map(c => `<tr><td>${c.name}</td><td class="mono">${c.tables_cleaned}</td><td class="mono">${c.avg_clean_min ?? '--'}m</td><td class="mono">${c.avg_response_min ?? '--'}m</td></tr>`).join('');
+      kpiHtml += '</table>';
+    }
+    kpiDiv.innerHTML = kpiHtml;
+  } else {
+    kpiDiv.innerHTML = '';
+  }
+
+  // Hourly chart
+  const hourlyDiv = document.getElementById('hourly-section');
+  if (intel && intel.hourly && intel.hourly.length > 0) {
+    const hourly = intel.hourly;
+    const maxOrders = Math.max(...hourly.map(h => h.orders), 1);
+    const minHour = Math.min(...hourly.map(h => h.hour));
+    const maxHour = Math.max(...hourly.map(h => h.hour));
+    const hourMap = {};
+    for (const h of hourly) hourMap[h.hour] = h.orders;
+
+    let bars = '';
+    for (let h = minHour; h <= maxHour; h++) {
+      const count = hourMap[h] || 0;
+      const pct = Math.max(5, (count / maxOrders) * 100);
+      bars += `<div class="hour-bar" style="height:${pct}%"><span class="h-val">${count || ''}</span><span class="h-label">${h}</span></div>`;
+    }
+    hourlyDiv.innerHTML = `<div class="section-title" style="margin-top:20px">ORDERS BY HOUR</div><div class="hourly-chart">${bars}</div><div style="height:18px"></div>`;
+  } else {
+    hourlyDiv.innerHTML = '';
+  }
+}
+
+function renderUnassignedCard(order) {
+  const age = Math.round((Date.now() - new Date(order.created_at).getTime()) / 60000);
+  const items = order.items || [];
+  const itemsHtml = items.length > 0
+    ? '<div class="order-items">' + items.map(i =>
+        `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('') + '</div>'
+    : '';
+
+  // Get on-shift waiters for inline assign buttons
+  const onShiftWaiters = (dashboardData?.waiters || []).filter(w => w.on_shift);
+  let assignHtml = '';
+  if (onShiftWaiters.length > 0) {
+    assignHtml = '<div class="assign-inline">' + onShiftWaiters
+      .sort((a, b) => (a.active_orders || 0) - (b.active_orders || 0))
+      .map(w => `<button onclick="assignOrder(${order.id}, ${w.id})">${w.name}<br><span class="load">${w.active_orders || 0} orders</span></button>`)
+      .join('') + '</div>';
+  } else {
+    assignHtml = '<div style="margin-top:10px;font-size:12px;color:var(--red);text-align:center;padding:8px;border:1px solid var(--red);border-radius:8px;background:var(--red-dim)">No waiters on shift — start a shift first</div>';
+  }
+
+  return `<div class="order-card unassigned">
+    <div class="order-top">
+      <span class="table-num">${order.table_number ? 'Table ' + order.table_number : 'No Table'}</span>
+      <span class="order-name">${order.odoo_order_name || ''}</span>
+    </div>
+    <div class="order-meta">
+      <span>${order.total_items || 0} items</span>
+      <span>${age}m ago</span>
+    </div>
+    ${itemsHtml}
+    ${assignHtml}
+  </div>`;
+}
+
+function renderActiveTableCard(tbl) {
+  const items = tbl.allItems;
+  const orderNames = tbl.orders.map(o => o.odoo_order_name).filter(Boolean).join(', ');
+  const waiterNames = [...new Set(tbl.orders.map(o => o.waiter_name).filter(Boolean))].join(', ');
+  const autoAssigned = tbl.orders.some(o => o.auto_assigned);
+  const oldestAge = Math.round((Date.now() - Math.min(...tbl.orders.map(o => new Date(o.created_at).getTime()))) / 60000);
+  // First order id for reassign (reassign applies to individual orders)
+  const firstOrderId = tbl.orders[0]?.id;
+
+  const cooking = items.filter(i => i.status === 'cooking').length;
+  const ready = items.filter(i => i.status === 'at_counter').length;
+  const pickedUp = items.filter(i => i.status === 'picked_up').length;
+  const delivered = items.filter(i => i.status === 'delivered').length;
+  const total = items.length || 1;
+  const progressPct = Math.round((delivered / total) * 100);
+  const pClass = progressPct < 33 ? 'low' : progressPct < 66 ? 'mid' : 'high';
+
+  const itemsHtml = items.length > 0
+    ? '<div class="order-items">' + items.map(i =>
+        `<span class="item-chip ${i.status}">${i.quantity > 1 ? i.quantity + 'x ' : ''}${i.product_name}</span>`
+      ).join('') + '</div>'
+    : '';
+
+  // Action buttons for captain doing waiter work
+  const needsAccept = tbl.orders.some(o => o.status === 'new' || o.status === 'assigned');
+  const isInProgress = tbl.orders.some(o => o.status === 'in_progress');
+  const orderIdList = tbl.orders.map(o => o.id);
+  let actionsHtml = '';
+  if (needsAccept || isInProgress) {
+    actionsHtml = '<div class="action-row">';
+    if (needsAccept) actionsHtml += `<button class="action-btn accept" onclick="captainAccept([${orderIdList}])">Accept</button>`;
+    if (isInProgress) actionsHtml += `<button class="action-btn serve" onclick="captainServe([${orderIdList}])">Mark Served</button>`;
+    actionsHtml += '</div>';
+  }
+
+  return `<div class="order-card">
+    <div class="order-top">
+      <span class="table-num">${tbl.table_number ? 'Table ' + tbl.table_number : 'No Table'}</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="order-name">${orderNames}</span>
+        <button class="reassign-btn" onclick="openReassignModal(${firstOrderId})">&#x21C4;</button>
+      </div>
+    </div>
+    <div class="order-meta">
+      <span>${oldestAge}m ago</span>
+      ${cooking > 0 ? `<span style="color:var(--orange)">${cooking} preparing</span>` : ''}
+      ${ready > 0 ? `<span style="color:var(--green)">${ready} ready</span>` : ''}
+      ${pickedUp > 0 ? `<span style="color:var(--blue)">${pickedUp} collected</span>` : ''}
+      ${delivered > 0 ? `<span style="color:var(--text2)">${delivered} served</span>` : ''}
+      <span class="waiter-tag">${waiterNames || '?'}</span>
+      ${autoAssigned ? '<span class="auto-tag">auto</span>' : ''}
+    </div>
+    ${itemsHtml}
+    <div class="progress-bar"><div class="fill ${pClass}" style="width:${progressPct}%"></div></div>
+    ${actionsHtml}
+  </div>`;
+}
+
+// ── Captain doing waiter work: accept orders ──
+async function captainAccept(orderIds) {
+  try {
+    for (const id of orderIds) await api('floor-accept-order', 'POST', { order_id: id });
+    toast('Order accepted');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing waiter work: mark served ──
+async function captainServe(orderIds) {
+  try {
+    for (const id of orderIds) await api('floor-serve-table', 'POST', { order_id: id });
+    toast('Table served!');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing cleaner work: acknowledge cleaning ──
+async function captainCleanAck(orderId) {
+  try {
+    await api('floor-clean-ack', 'POST', { order_id: orderId });
+    toast('Cleaning started');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Captain doing cleaner work: done cleaning ──
+async function captainCleanDone(orderId) {
+  try {
+    await api('floor-clean-done', 'POST', { order_id: orderId });
+    toast('Table cleaned!');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Force shift (Captain toggles waiter shift) ──
+async function forceShift(staffId, onShift) {
+  try {
+    await api('floor-force-shift', 'POST', { staff_id: staffId, on_shift: !!onShift });
+    toast(onShift ? 'Shift started' : 'Shift ended');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Assign Order ──
+async function assignOrder(orderId, waiterId) {
+  try {
+    await api('floor-assign', 'POST', { order_id: orderId, waiter_id: waiterId });
+    toast('Order assigned');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Reassign Modal ──
+function openReassignModal(orderId) {
+  reassigningOrderId = orderId;
+  const order = (dashboardData?.active || []).find(o => o.id === orderId);
+  document.getElementById('reassign-title').textContent = order?.table_number ? 'Table ' + order.table_number : 'Reassign Order';
+  document.getElementById('reassign-sub').textContent = `Currently: ${order?.waiter_name || 'none'} | ${order?.total_items || '?'} items`;
+
+  const opts = document.getElementById('reassign-options');
+  const waiters = (dashboardData?.waiters || []).sort((a, b) => (a.active_orders || 0) - (b.active_orders || 0));
+  opts.innerHTML = waiters.map(w => {
+    const isCurrent = w.id === order?.waiter_id;
+    return `<button class="assign-btn${isCurrent ? '' : ''}" onclick="reassignOrder(${w.id})" ${isCurrent ? 'disabled style="opacity:.4"' : ''}>
+      <span>${w.name}${isCurrent ? ' (current)' : ''}${w.on_shift ? '' : ' [off-shift]'}</span>
+      <span class="load-info">${w.active_orders || 0} orders</span>
+    </button>`;
+  }).join('');
+
+  document.getElementById('reassign-modal').classList.add('show');
+}
+
+function closeReassignModal() {
+  document.getElementById('reassign-modal').classList.remove('show');
+  reassigningOrderId = null;
+}
+
+async function reassignOrder(waiterId) {
+  try {
+    await api('floor-reassign', 'POST', { order_id: reassigningOrderId, waiter_id: waiterId });
+    closeReassignModal();
+    toast('Order reassigned');
+    refreshDashboard();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Poll Odoo (now handled by floor-live) ──
+async function pollOdoo() {
+  refreshLive();
+}
+
+// ── Staff Management ──
+async function loadStaff() {
+  try {
+    const data = await api('floor-staff');
+    const list = document.getElementById('staff-list');
+    list.innerHTML = data.staff.map(s => {
+      const roles = [];
+      if (s.can_captain) roles.push('Captain');
+      if (s.can_waiter) roles.push('Waiter');
+      if (s.can_clean) roles.push('Cleaner');
+      const onShift = !!s.on_shift;
+      const shiftInfo = onShift ? ` | On shift since ${new Date(s.shift_started_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : '';
+      return `<div class="staff-card${s.is_active ? '' : ' inactive'}">
+        <div class="staff-info">
+          <div class="staff-name" style="display:flex;align-items:center;gap:6px">
+            <span class="shift-dot ${onShift ? 'on' : 'off'}" style="width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--${onShift ? 'green' : 'text2'})"></span>
+            ${s.name}
+          </div>
+          <div class="staff-role">${roles.join(' + ') || s.role} | Load: ${s.current_load || 0}${shiftInfo}</div>
+        </div>
+        <div class="staff-actions">
+          <button onclick="toggleStaff(${s.id})">${s.is_active ? 'Off' : 'On'}</button>
+          <button onclick="removeStaff(${s.id})" style="color:var(--red)">Del</button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="empty-state"><p>No staff configured</p></div>';
+  } catch (e) { console.error('Staff load error:', e); }
+}
+
+function showAddStaff() {
+  const form = document.getElementById('add-staff-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addStaff() {
+  const name = document.getElementById('new-name').value.trim();
+  const pin = document.getElementById('new-pin').value.trim();
+  const role = document.getElementById('new-role').value;
+  const can_captain = document.getElementById('new-can-captain').checked;
+  const can_waiter = document.getElementById('new-can-waiter').checked;
+  const can_clean = document.getElementById('new-can-clean').checked;
+  if (!name || !pin || pin.length !== 4) { toast('Name + 4-digit PIN required', 'error'); return; }
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'add', name, pin, role, can_captain, can_waiter, can_clean });
+    toast('Staff added');
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-pin').value = '';
+    document.getElementById('add-staff-form').style.display = 'none';
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function toggleStaff(id) {
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'toggle', staff_id: id });
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function removeStaff(id) {
+  if (!confirm('Remove this staff member?')) return;
+  try {
+    await api('floor-manage-staff', 'POST', { operation: 'remove', staff_id: id });
+    toast('Staff removed');
+    loadStaff();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Init ──
+if (token && staffInfo) {
+  afterLogin();
+  // Always register FCM token for native app
+  if (isNativeApp()) setupPush();
+} else {
+  // No token — redirect to hub for login
+  window.location.href = '/ops/';
+}
+// Force re-register FCM token when native app fires the token event
+if (isNativeApp()) {
+  window.addEventListener('fcmTokenReady', (e) => {
+    if (token && e.detail) sendFcmTokenToServer(e.detail);
+  });
+}
+</script>
+</body>
+</html>
