@@ -370,6 +370,12 @@ async function createPmax(token, env, body) {
   step(`   → ${budgetResource}`);
 
   // ─── 2. Campaign ───────────────────────────────────────────────────────
+  // v23 minimal-fields create. `urlExpansionOptOut` was removed in v23 (now
+  // implicit, default is URL expansion ON). `geoTargetTypeSetting` works on
+  // SEARCH but errors on PERFORMANCE_MAX in v23 — geo intent is set per
+  // campaignCriterion.location.locationGroup instead. For now we omit both
+  // and let Google use defaults; can patch via Ads UI if URL expansion or
+  // geo-intent type becomes an issue.
   step(`2. Creating PMax campaign (PAUSED)`);
   const campaignR = await ads(token, env, `/customers/${CID}/campaigns:mutate`, {
     operations: [{
@@ -379,13 +385,6 @@ async function createPmax(token, env, body) {
         advertisingChannelType: 'PERFORMANCE_MAX',
         campaignBudget: budgetResource,
         biddingStrategyType: 'MAXIMIZE_CONVERSIONS',
-        // Geo targeting — present users in BLR (not just searches about BLR)
-        geoTargetTypeSetting: {
-          positiveGeoTargetType: 'PRESENCE_OR_INTEREST',
-          negativeGeoTargetType: 'PRESENCE',
-        },
-        // No website URL crawling — we want strict creative control
-        urlExpansionOptOut: true,
       }
     }],
   });
