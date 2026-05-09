@@ -384,7 +384,11 @@ async function createPmax(token, env, body) {
         status: 'PAUSED',
         advertisingChannelType: 'PERFORMANCE_MAX',
         campaignBudget: budgetResource,
+        // v23 oneof: must include both the strategy-type enum AND the inline
+        // strategy resource (`maximizeConversions: {}` is the empty-default form
+        // — no targetCpaMicros, Google maximizes volume within budget).
         biddingStrategyType: 'MAXIMIZE_CONVERSIONS',
+        maximizeConversions: {},
       }
     }],
   });
