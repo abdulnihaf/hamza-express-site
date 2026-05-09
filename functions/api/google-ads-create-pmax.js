@@ -117,7 +117,9 @@ async function ads(token, env, path, body, method = 'POST') {
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
     const msg = d.error?.message || d.error?.status || `HTTP ${r.status}`;
-    throw new Error(`${method} ${path} → ${r.status}: ${msg}\n${JSON.stringify(d).slice(0,800)}`);
+    // 5000-char window — Ads API can return multiple errorCodes per failure
+    // and we need to see all of them to iterate quickly.
+    throw new Error(`${method} ${path} → ${r.status}: ${msg}\n${JSON.stringify(d).slice(0,5000)}`);
   }
   return d;
 }
@@ -389,12 +391,27 @@ async function createPmax(token, env, body) {
         // — no targetCpaMicros, Google maximizes volume within budget).
         biddingStrategyType: 'MAXIMIZE_CONVERSIONS',
         maximizeConversions: {},
+        // v23 EU political-ads compliance — required even for non-EU campaigns
+        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
       }
     }],
   });
   const campaignResource = campaignR.results[0].resourceName;
   const campaignId = campaignResource.split('/').pop();
   step(`   → ${campaignResource}`);
+
+  // ─── 2b. Brand-Guidelines required: link business name at CAMPAIGN level ─
+  // Accounts with Brand Guidelines enabled (HE has this) require ≥1
+  // BUSINESS_NAME asset linked as a CampaignAsset, not just AssetGroupAsset.
+  // Logos may also need to be linked here — try business name first, surface
+  // any further required-field errors on the next pass.
+  step(`2b. Linking business name as CampaignAsset (Brand Guidelines)`);
+  await ads(token, env, `/customers/${CID}/campaignAssets:mutate`, {
+    operations: textAssets.businessNames.map(bn => ({
+      create: { campaign: campaignResource, asset: bn, fieldType: 'BUSINESS_NAME' }
+    })),
+  });
+  step(`   → ${textAssets.businessNames.length} business-name CampaignAsset link(s)`);
 
   // ─── 3. Asset Group ────────────────────────────────────────────────────
   step(`3. Creating asset group (PAUSED)`);
