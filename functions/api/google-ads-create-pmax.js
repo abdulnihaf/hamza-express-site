@@ -338,6 +338,16 @@ async function uploadImageAsset(token, env, body) {
 }
 
 // ─── Full PMax create orchestration ──────────────────────────────────────
+// Atomic: builds budget + campaign + brand-guidelines campaign-asset links +
+// asset group + asset-group asset bindings + audience signals + neg-kw set +
+// geo/language criteria — all in ONE googleAds:mutate call. Required because
+// PMax campaigns with Brand Guidelines validate the BUSINESS_NAME / LOGO
+// CampaignAsset links during campaign create — separate-step builds hit
+// REQUIRED_BUSINESS_NAME_ASSET_NOT_LINKED / REQUIRED_LOGO_ASSET_NOT_LINKED.
+//
+// Cross-references between operations use negative temp IDs that the API
+// rewrites to real resource names atomically. If any operation fails, the
+// whole transaction rolls back.
 async function createPmax(token, env, body) {
   // Validate inputs
   const required = ['name','budgetINR','finalUrl','assetGroupName','textAssets','imageAssets','signals','geoTargetIds','languageIds'];
@@ -352,89 +362,77 @@ async function createPmax(token, env, body) {
   if (!imageAssets.squareMarketing?.length)                                     return j({ error: 'need ≥1 squareMarketing image asset' }, 400);
   if (!imageAssets.logos?.length)                                               return j({ error: 'need ≥1 logo asset' }, 400);
 
-  const log = [];
-  const step = (msg) => { log.push(msg); console.log(msg); };
+  // Temp resource names — rewritten by API atomically
+  const budgetTmp   = `customers/${CID}/campaignBudgets/-1`;
+  const campaignTmp = `customers/${CID}/campaigns/-2`;
+  const agTmp       = `customers/${CID}/assetGroups/-3`;
 
-  // ─── 1. Budget ─────────────────────────────────────────────────────────
+  const ops = [];
   const budgetMicros = Math.round(body.budgetINR * 1_000_000);
-  step(`1. Creating budget — ₹${body.budgetINR}/day (${budgetMicros} micros)`);
-  const budgetR = await ads(token, env, `/customers/${CID}/campaignBudgets:mutate`, {
-    operations: [{
+
+  // 1. Budget
+  ops.push({
+    campaignBudgetOperation: {
       create: {
+        resourceName: budgetTmp,
         name: `${body.name} — Budget`,
         amountMicros: String(budgetMicros),
         deliveryMethod: 'STANDARD',
         explicitlyShared: false,
       }
-    }],
+    }
   });
-  const budgetResource = budgetR.results[0].resourceName;
-  step(`   → ${budgetResource}`);
 
-  // ─── 2. Campaign ───────────────────────────────────────────────────────
-  // v23 minimal-fields create. `urlExpansionOptOut` was removed in v23 (now
-  // implicit, default is URL expansion ON). `geoTargetTypeSetting` works on
-  // SEARCH but errors on PERFORMANCE_MAX in v23 — geo intent is set per
-  // campaignCriterion.location.locationGroup instead. For now we omit both
-  // and let Google use defaults; can patch via Ads UI if URL expansion or
-  // geo-intent type becomes an issue.
-  step(`2. Creating PMax campaign (PAUSED)`);
-  const campaignR = await ads(token, env, `/customers/${CID}/campaigns:mutate`, {
-    operations: [{
+  // 2. Campaign (PAUSED)
+  ops.push({
+    campaignOperation: {
       create: {
+        resourceName: campaignTmp,
         name: body.name,
         status: 'PAUSED',
         advertisingChannelType: 'PERFORMANCE_MAX',
-        campaignBudget: budgetResource,
-        // v23 oneof: must include both the strategy-type enum AND the inline
-        // strategy resource (`maximizeConversions: {}` is the empty-default form
-        // — no targetCpaMicros, Google maximizes volume within budget).
+        campaignBudget: budgetTmp,
         biddingStrategyType: 'MAXIMIZE_CONVERSIONS',
         maximizeConversions: {},
-        // v23 EU political-ads compliance — required even for non-EU campaigns
         containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
       }
-    }],
+    }
   });
-  const campaignResource = campaignR.results[0].resourceName;
-  const campaignId = campaignResource.split('/').pop();
-  step(`   → ${campaignResource}`);
 
-  // ─── 2b. Brand-Guidelines required: link business name at CAMPAIGN level ─
-  // Accounts with Brand Guidelines enabled (HE has this) require ≥1
-  // BUSINESS_NAME asset linked as a CampaignAsset, not just AssetGroupAsset.
-  // Logos may also need to be linked here — try business name first, surface
-  // any further required-field errors on the next pass.
-  step(`2b. Linking business name as CampaignAsset (Brand Guidelines)`);
-  await ads(token, env, `/customers/${CID}/campaignAssets:mutate`, {
-    operations: textAssets.businessNames.map(bn => ({
-      create: { campaign: campaignResource, asset: bn, fieldType: 'BUSINESS_NAME' }
-    })),
-  });
-  step(`   → ${textAssets.businessNames.length} business-name CampaignAsset link(s)`);
+  // 3. CampaignAsset links — Brand Guidelines requires BUSINESS_NAME + LOGO at campaign level
+  for (const bn of textAssets.businessNames) {
+    ops.push({
+      campaignAssetOperation: { create: { campaign: campaignTmp, asset: bn, fieldType: 'BUSINESS_NAME' } }
+    });
+  }
+  for (const logo of imageAssets.logos) {
+    ops.push({
+      campaignAssetOperation: { create: { campaign: campaignTmp, asset: logo, fieldType: 'LOGO' } }
+    });
+  }
+  for (const lscapeLogo of (imageAssets.landscapeLogos || [])) {
+    ops.push({
+      campaignAssetOperation: { create: { campaign: campaignTmp, asset: lscapeLogo, fieldType: 'LANDSCAPE_LOGO' } }
+    });
+  }
 
-  // ─── 3. Asset Group ────────────────────────────────────────────────────
-  step(`3. Creating asset group (PAUSED)`);
-  const assetGroupR = await ads(token, env, `/customers/${CID}/assetGroups:mutate`, {
-    operations: [{
+  // 4. Asset Group (PAUSED)
+  ops.push({
+    assetGroupOperation: {
       create: {
+        resourceName: agTmp,
         name: body.assetGroupName,
-        campaign: campaignResource,
+        campaign: campaignTmp,
         finalUrls: [body.finalUrl],
         status: 'PAUSED',
       }
-    }],
-  });
-  const assetGroupResource = assetGroupR.results[0].resourceName;
-  step(`   → ${assetGroupResource}`);
-
-  // ─── 4. AssetGroupAsset links — bind each asset to a field type ───────
-  step(`4. Linking assets to asset group`);
-  const links = [];
-  const link = (resource, fieldType) => links.push({
-    create: { assetGroup: assetGroupResource, asset: resource, fieldType }
+    }
   });
 
+  // 5. AssetGroupAsset bindings — every text + image + video asset goes here
+  const link = (asset, fieldType) => ops.push({
+    assetGroupAssetOperation: { create: { assetGroup: agTmp, asset, fieldType } }
+  });
   textAssets.headlines.forEach(r => link(r, 'HEADLINE'));
   textAssets.longHeadlines.forEach(r => link(r, 'LONG_HEADLINE'));
   textAssets.descriptions.forEach(r => link(r, 'DESCRIPTION'));
@@ -445,114 +443,96 @@ async function createPmax(token, env, body) {
   imageAssets.logos.forEach(r => link(r, 'LOGO'));
   (body.videoAssets || []).forEach(r => link(r, 'YOUTUBE_VIDEO'));
 
-  const linkR = await ads(token, env, `/customers/${CID}/assetGroupAssets:mutate`, {
-    operations: links,
-    partialFailure: true,
-  });
-  step(`   → linked ${links.length} assets (partialFailure: ${!!linkR.partialFailureError})`);
-
-  // ─── 5. AssetGroupSignal — audience signals (custom audiences + user lists) ─
-  step(`5. Adding audience signals`);
-  const signalOps = [];
+  // 6. AssetGroupSignal — audience signals (custom audiences + user lists)
   for (const audId of (signals.audienceIds || [])) {
-    signalOps.push({
-      create: {
-        assetGroup: assetGroupResource,
-        audience: {
-          customAudiences: [`customers/${CID}/customAudiences/${audId}`],
-        },
+    ops.push({
+      assetGroupSignalOperation: {
+        create: {
+          assetGroup: agTmp,
+          audience: { customAudiences: [`customers/${CID}/customAudiences/${audId}`] },
+        }
       }
     });
   }
   for (const ulId of (signals.userListIds || [])) {
-    signalOps.push({
-      create: {
-        assetGroup: assetGroupResource,
-        audience: {
-          userLists: [`customers/${CID}/userLists/${ulId}`],
-        },
+    ops.push({
+      assetGroupSignalOperation: {
+        create: {
+          assetGroup: agTmp,
+          audience: { userLists: [`customers/${CID}/userLists/${ulId}`] },
+        }
       }
     });
   }
-  if (signalOps.length) {
-    await ads(token, env, `/customers/${CID}/assetGroupSignals:mutate`, {
-      operations: signalOps,
-      partialFailure: true,
-    });
-    step(`   → ${signalOps.length} signal(s)`);
-  } else {
-    step(`   → 0 signals (none provided)`);
-  }
 
-  // ─── 6. CampaignSharedSet — apply negative keyword shared set ──────────
+  // 7. CampaignSharedSet — negative keyword set
   if (negativeKeywordSetId) {
-    step(`6. Applying negative keyword shared set ${negativeKeywordSetId}`);
-    await ads(token, env, `/customers/${CID}/campaignSharedSets:mutate`, {
-      operations: [{
+    ops.push({
+      campaignSharedSetOperation: {
         create: {
-          campaign: campaignResource,
+          campaign: campaignTmp,
           sharedSet: `customers/${CID}/sharedSets/${negativeKeywordSetId}`,
         }
-      }],
+      }
     });
-    step(`   → attached`);
   }
 
-  // ─── 7. CampaignCriterion — geo + language ─────────────────────────────
-  step(`7. Adding geo + language criteria`);
-  const criterionOps = [];
+  // 8. CampaignCriterion — geo + language
   for (const geo of body.geoTargetIds) {
-    criterionOps.push({
-      create: {
-        campaign: campaignResource,
-        location: { geoTargetConstant: `geoTargetConstants/${geo}` },
+    ops.push({
+      campaignCriterionOperation: {
+        create: {
+          campaign: campaignTmp,
+          location: { geoTargetConstant: `geoTargetConstants/${geo}` },
+        }
       }
     });
   }
   for (const lang of body.languageIds) {
-    criterionOps.push({
-      create: {
-        campaign: campaignResource,
-        language: { languageConstant: `languageConstants/${lang}` },
+    ops.push({
+      campaignCriterionOperation: {
+        create: {
+          campaign: campaignTmp,
+          language: { languageConstant: `languageConstants/${lang}` },
+        }
       }
     });
   }
-  await ads(token, env, `/customers/${CID}/campaignCriteria:mutate`, {
-    operations: criterionOps,
-    partialFailure: true,
-  });
-  step(`   → ${criterionOps.length} criteria`);
 
-  // ─── 8. CampaignAsset — link GBP location asset set (Store Goals) ──────
+  // 9. Optional: GBP location asset set (Store Visits)
   if (locationAssetSetId) {
-    step(`8. Linking GBP location asset set ${locationAssetSetId}`);
-    await ads(token, env, `/customers/${CID}/campaignAssetSets:mutate`, {
-      operations: [{
+    ops.push({
+      campaignAssetSetOperation: {
         create: {
-          campaign: campaignResource,
+          campaign: campaignTmp,
           assetSet: `customers/${CID}/assetSets/${locationAssetSetId}`,
         }
-      }],
+      }
     });
-    step(`   → linked`);
-  } else {
-    step(`8. Skipped GBP location link — no locationAssetSetId provided. Link manually in Ads UI if Store Goals desired.`);
   }
+
+  // Execute atomically
+  const r = await ads(token, env, `/customers/${CID}/googleAds:mutate`, {
+    mutateOperations: ops,
+  });
+
+  // Walk results and pull out the resource names of the resources we created
+  const resources = { totalOperations: ops.length };
+  for (const resp of (r.mutateOperationResponses || [])) {
+    if (resp.campaignBudgetResult) resources.budget       = resp.campaignBudgetResult.resourceName;
+    if (resp.campaignResult)       resources.campaign     = resp.campaignResult.resourceName;
+    if (resp.assetGroupResult)     resources.assetGroup   = resp.assetGroupResult.resourceName;
+  }
+  resources.campaignId = resources.campaign?.split('/').pop();
 
   return j({
     ok: true,
-    log,
-    resources: {
-      budget: budgetResource,
-      campaign: campaignResource,
-      campaignId,
-      assetGroup: assetGroupResource,
-    },
+    resources,
     nextSteps: [
       'Open ads.google.com → Campaigns → find this PAUSED campaign',
       'Verify all assets and the final URL render correctly',
       'Set status=ENABLED to start serving',
-      `URL: https://ads.google.com/aw/campaigns/management?campaignId=${campaignId}&ocid=${CID}`,
+      `URL: https://ads.google.com/aw/campaigns/management?campaignId=${resources.campaignId}&ocid=${CID}`,
     ],
   });
 }
