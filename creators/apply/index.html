@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Apply · Creator Partner · Hamza Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1a; --card:#111826; --card2:#1a2234; --line:#273042;
+  --text:#e6edf7; --mute:#8b95a8; --dim:#5a6477;
+  --tan:#D2B48C; --sienna:#713520; --offwhite:#FAF3E3;
+  --gold:#fbbf24; --green:#22c55e; --red:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+.serif{font-family:'Cinzel',serif;letter-spacing:.04em}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* PROGRESS HEADER */
+.progress{position:sticky;top:0;z-index:50;background:rgba(10,15,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.brand-mark{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--tan);letter-spacing:.12em}
+.brand-mark::before{content:'';display:inline-block;width:5px;height:18px;background:var(--gold);border-radius:3px;vertical-align:middle;margin-right:10px}
+.progress-text{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);font-weight:600}
+.progress-bar{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--sienna),var(--tan));transition:width .3s}
+
+/* STEP CONTAINER */
+.app{max-width:560px;margin:0 auto;padding:48px 24px 96px;min-height:calc(100vh - 50px)}
+.step{display:none;animation:fadeIn .25s ease-out}
+.step.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:10px}
+.q{font-size:28px;font-weight:800;line-height:1.2;letter-spacing:-.01em;margin-bottom:8px}
+.q-sub{color:var(--mute);font-size:15px;line-height:1.55;margin-bottom:24px}
+.q-sub b{color:var(--text)}
+
+input[type="text"],input[type="email"],input[type="tel"],textarea{width:100%;background:var(--card);border:2px solid var(--line);color:var(--text);padding:16px 18px;border-radius:12px;font-family:inherit;font-size:18px;transition:border-color .15s}
+input:focus,textarea:focus{outline:none;border-color:var(--tan)}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+textarea{min-height:90px;resize:vertical}
+.label-prefix{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--tan);font-weight:700;pointer-events:none}
+.with-prefix{position:relative}
+.with-prefix input{padding-left:38px}
+.helper{font-size:13px;color:var(--mute);margin-top:8px}
+.helper.error{color:var(--red)}
+
+/* BUTTONS */
+.actions{margin-top:28px;display:flex;gap:12px}
+.btn{flex:1;padding:16px 22px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;border:none;letter-spacing:.01em}
+.btn-primary{background:linear-gradient(135deg,var(--sienna),var(--tan));color:var(--bg);box-shadow:0 6px 20px rgba(212,180,140,.2)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 28px rgba(212,180,140,.3)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--mute);border:1px solid var(--line)}
+.btn-ghost:hover{color:var(--text);border-color:var(--mute)}
+
+/* TIER REVEAL CARD */
+.tier-card{background:linear-gradient(135deg,rgba(212,180,140,.06),rgba(113,53,32,.04));border:1px solid var(--tan);border-radius:16px;padding:28px;margin:16px 0}
+.tier-card .badge{display:inline-flex;align-items:center;gap:8px;padding:5px 11px;background:rgba(212,180,140,.16);border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--tan);letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+.tier-card .followers{font-size:36px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px}
+.tier-card .followers-label{font-size:12px;color:var(--mute);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:18px}
+.tier-card .er{display:inline-block;background:rgba(34,197,94,.12);color:#4ade80;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;margin-left:8px}
+.tier-card .er.low{background:rgba(239,68,68,.12);color:#fca5a5}
+.tier-card .full-name{font-size:15px;color:var(--text);font-weight:600;margin-bottom:14px}
+
+.offer-block{margin-top:22px;padding-top:22px;border-top:1px dashed var(--line)}
+.offer-block h4{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:12px}
+.offer-list{list-style:none;padding:0;font-size:14px;line-height:1.8}
+.offer-list li{padding-left:20px;position:relative;color:var(--text)}
+.offer-list li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700}
+.offer-list li.cash{color:var(--gold);font-family:'JetBrains Mono',monospace;font-weight:700}
+.offer-list li.cash::before{color:var(--gold)}
+
+.decline-card{background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(113,53,32,.04));border:1px solid rgba(239,68,68,.4);border-radius:16px;padding:28px;margin:16px 0}
+.decline-card .badge{background:rgba(239,68,68,.16);color:#fca5a5}
+.decline-card p{color:var(--text);font-size:15px;line-height:1.6}
+
+/* SLOT PICKER */
+.slots-list{margin-top:14px;max-height:480px;overflow-y:auto;padding-right:4px}
+.day-group{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.day-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.day-date{font-weight:700;font-size:15px}
+.day-day{color:var(--mute);font-size:12px;font-family:'JetBrains Mono',monospace}
+.day-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px}
+.slot{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;text-align:center;transition:all .12s}
+.slot:hover:not(.full):not(.selected){border-color:var(--tan);transform:translateY(-1px)}
+.slot.selected{background:rgba(212,180,140,.18);border-color:var(--tan);box-shadow:0 0 0 1px var(--tan)}
+.slot.full{opacity:.4;cursor:not-allowed}
+.slot-icon{font-size:14px;margin-bottom:3px;display:block}
+.slot-window{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:2px}
+.slot-time{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.slot-cap{font-size:10px;color:var(--tan);margin-top:3px;font-weight:700}
+.slot.full .slot-cap{color:var(--dim)}
+
+/* SUMMARY (review step) */
+.summary{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin:14px 0}
+.summary-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.summary-row:last-child{border-bottom:none}
+.summary-row .label{color:var(--mute);font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.summary-row .value{color:var(--text);font-weight:600}
+
+/* CONFIRMED */
+.confirmed{background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(212,180,140,.04));border:1px solid var(--green);border-radius:16px;padding:36px 28px;text-align:center;margin:20px 0}
+.confirmed .check{font-size:56px;line-height:1;margin-bottom:18px}
+.confirmed h2{font-size:24px;font-weight:800;margin-bottom:12px}
+.confirmed p{color:var(--mute);font-size:15px;line-height:1.6}
+.confirmed .info{margin-top:20px;font-size:14px;line-height:1.7;color:var(--text)}
+.confirmed .info b{color:var(--text);font-family:'JetBrains Mono',monospace}
+.confirmed .map-link{display:inline-block;background:var(--card);border:1px solid var(--tan);color:var(--tan);padding:10px 18px;border-radius:8px;margin-top:18px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;text-decoration:none}
+
+.pending-card{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(212,180,140,.03));border:1px solid rgba(251,191,36,.4);border-radius:16px;padding:36px 28px;text-align:center}
+.pending-card .check{font-size:48px;line-height:1;margin-bottom:14px;color:var(--gold)}
+
+/* LOADING */
+.loading{text-align:center;padding:60px 24px}
+.spinner{display:inline-block;width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--tan);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--mute);font-size:14px}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--red);color:#fca5a5;padding:12px 22px;border-radius:8px;font-size:13px;z-index:300;display:none}
+.toast.show{display:block}
+
+@media(max-width:600px){
+  .app{padding:32px 18px 80px}
+  .q{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="progress">
+  <div class="brand-mark">EST. 1918</div>
+  <div class="progress-text"><span id="step-num">1</span> of 8</div>
+  <div class="progress-bar" id="progress-bar" style="width:12.5%"></div>
+</div>
+
+<div class="app">
+
+<!-- STEP 1: IG handle -->
+<div class="step active" data-step="1">
+  <div class="eyebrow">Step 1 / 8</div>
+  <h1 class="q">What's your Instagram handle?</h1>
+  <p class="q-sub">We'll auto-detect your tier and offer.</p>
+  <div class="with-prefix">
+    <span class="label-prefix">@</span>
+    <input type="text" id="handle-input" placeholder="yourhandle" autocomplete="off" autocapitalize="off">
+  </div>
+  <div class="helper" id="handle-helper">Just the username, no @ needed.</div>
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-step1-next" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- STEP 2: Loading + tier reveal -->
+<div class="step" data-step="2">
+  <div class="eyebrow">Step 2 / 8</div>
+  <div id="lookup-loading" class="loading">
+    <div class="spinner"></div>
+    <p>Looking up <span class="mono" id="loading-handle"></span>…</p>
+  </div>
+
+  <div id="lookup-result" style="display:none">
+    <h1 class="q" id="lookup-greeting">Hi there!</h1>
+    <p class="q-sub" id="lookup-sub">Here's what we found.</p>
+    <div id="tier-card-mount"></div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(1)">← Try another handle</button>
+      <button class="btn btn-primary" id="btn-step2-next">Continue</button>
+    </div>
+  </div>
+
+  <div id="lookup-decline" style="display:none">
+    <h1 class="q">Thanks for applying.</h1>
+    <p class="q-sub" id="decline-text"></p>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(1)">← Try another handle</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: Other platforms (optional) -->
+<div class="step" data-step="3">
+  <div class="eyebrow">Step 3 / 8 · optional</div>
+  <h1 class="q">Other platforms?</h1>
+  <p class="q-sub">Cross-platform reach matters. Skip if IG-only.</p>
+  <label style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;display:block;margin-top:12px">YouTube</label>
+  <div class="with-prefix">
+    <span class="label-prefix">@</span>
+    <input type="text" id="youtube-input" placeholder="yourchannel" autocomplete="off">
+  </div>
+  <label style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;display:block;margin-top:18px">TikTok</label>
+  <div class="with-prefix">
+    <span class="label-prefix">@</span>
+    <input type="text" id="tiktok-input" placeholder="yourhandle" autocomplete="off">
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" id="btn-step3-skip">Skip</button>
+    <button class="btn btn-primary" id="btn-step3-next">Continue</button>
+  </div>
+</div>
+
+<!-- STEP 4: Why us (optional) -->
+<div class="step" data-step="4">
+  <div class="eyebrow">Step 4 / 8 · optional</div>
+  <h1 class="q">Why Hamza Express?</h1>
+  <p class="q-sub">Helps us host you better. 1-2 sentences max — skip if you'd rather just eat.</p>
+  <textarea id="why-input" placeholder="(optional) — e.g. 'Love covering BLR's Muslim food scene' or 'Curious about 1918 heritage spots'" maxlength="280"></textarea>
+  <div class="helper">Max 280 characters.</div>
+  <div class="actions">
+    <button class="btn btn-ghost" id="btn-step4-skip">Skip</button>
+    <button class="btn btn-primary" id="btn-step4-next">Continue</button>
+  </div>
+</div>
+
+<!-- STEP 5: Phone + email -->
+<div class="step" data-step="5">
+  <div class="eyebrow">Step 5 / 8</div>
+  <h1 class="q">Where do we WhatsApp you?</h1>
+  <p class="q-sub">Confirmation + last-mile details land here. Required.</p>
+  <label style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;display:block">Phone (required)</label>
+  <input type="tel" id="phone-input" placeholder="+91 9876543210" autocomplete="tel">
+  <label style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px;display:block;margin-top:18px">Email (optional)</label>
+  <input type="email" id="email-input" placeholder="you@gmail.com" autocomplete="email">
+  <div class="helper">We'll only message about your booking. No newsletter, no spam.</div>
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-step5-next" disabled>Continue</button>
+  </div>
+</div>
+
+<!-- STEP 6: Pick a slot -->
+<div class="step" data-step="6">
+  <div class="eyebrow">Step 6 / 8</div>
+  <h1 class="q">Pick your slot</h1>
+  <p class="q-sub">5 windows / day · one creator per slot · May 10–31. Eid (May 27) fills fastest.</p>
+  <div id="slots-mount" class="slots-list">
+    <div class="loading"><div class="spinner"></div><p>Loading slots…</p></div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" id="btn-step6-next" disabled>Continue with selected slot</button>
+  </div>
+</div>
+
+<!-- STEP 7: Review + confirm -->
+<div class="step" data-step="7">
+  <div class="eyebrow">Step 7 / 8 · review</div>
+  <h1 class="q">All set?</h1>
+  <p class="q-sub">Review and confirm — you can still go back to edit.</p>
+  <div class="summary" id="summary-mount"></div>
+  <div class="actions">
+    <button class="btn btn-ghost" onclick="goToStep(6)">← Back</button>
+    <button class="btn btn-primary" id="btn-step7-submit">Confirm application</button>
+  </div>
+</div>
+
+<!-- STEP 8: Confirmation -->
+<div class="step" data-step="8">
+  <div id="confirmation-mount"></div>
+</div>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/creator-application';
+const SLOTS_API = 'https://hnhotels.in/api/influencer-bookings?action=slots';
+
+const STATE = {
+  step: 1,
+  handle: '',
+  lookup: null,                  // { tier, offer, decision, ... }
+  youtube: '',
+  tiktok: '',
+  why: '',
+  phone: '',
+  email: '',
+  selectedSlot: null,            // { id, slot_date, window_code, window_label }
+};
+
+const WINDOW_ICONS = { AFTERNOON: '☀', GOLDEN: '◐', PRIME: '✦', LATE: '☾', MIDNIGHT: '✧' };
+
+function $(id) { return document.getElementById(id); }
+function fmt(n) { if (n == null) return '—'; if (n >= 1000) return (n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,'') + 'K'; return String(n); }
+function escHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(m, e=false) { const t=$('toast'); t.textContent=m; t.style.borderColor = e?'var(--red)':'var(--green)'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500); }
+
+function goToStep(n) {
+  STATE.step = n;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.step[data-step="${n}"]`).classList.add('active');
+  $('step-num').textContent = n;
+  $('progress-bar').style.width = ((n / 8) * 100) + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (n === 6 && !slotsLoaded) loadSlots();
+}
+
+// STEP 1: handle input → enable continue
+const handleInput = $('handle-input');
+const btnStep1 = $('btn-step1-next');
+handleInput.addEventListener('input', () => {
+  const v = handleInput.value.trim().replace(/^@/, '');
+  const valid = /^[a-z0-9._]{2,30}$/i.test(v);
+  btnStep1.disabled = !valid;
+  $('handle-helper').textContent = v && !valid ? 'Letters, numbers, dots, underscores only.' : 'Just the username, no @ needed.';
+  $('handle-helper').className = valid || !v ? 'helper' : 'helper error';
+});
+handleInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !btnStep1.disabled) btnStep1.click(); });
+
+btnStep1.addEventListener('click', async () => {
+  STATE.handle = handleInput.value.trim().replace(/^@/, '').toLowerCase();
+  goToStep(2);
+  await runLookup();
+});
+
+// STEP 2: lookup + tier reveal
+async function runLookup() {
+  $('lookup-loading').style.display = 'block';
+  $('lookup-result').style.display = 'none';
+  $('lookup-decline').style.display = 'none';
+  $('loading-handle').textContent = '@' + STATE.handle;
+  try {
+    const r = await fetch(API + '?action=lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handle: STATE.handle }),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Lookup failed');
+    STATE.lookup = d;
+    renderTierReveal(d);
+  } catch (e) {
+    toast('Lookup failed — try again', true);
+    goToStep(1);
+  }
+}
+
+function renderTierReveal(d) {
+  $('lookup-loading').style.display = 'none';
+  if (d.decision === 'decline') {
+    $('lookup-decline').style.display = 'block';
+    $('decline-text').textContent = d.decision_reason;
+    return;
+  }
+  $('lookup-result').style.display = 'block';
+  if (!d.found) {
+    // Apify-queued fallback
+    $('lookup-greeting').textContent = `We'll review @${STATE.handle}`;
+    $('lookup-sub').textContent = d.message || 'Submit anyway and we'll get back within 24h.';
+    $('tier-card-mount').innerHTML = `
+      <div class="tier-card" style="border-color:var(--mute)">
+        <span class="badge">PENDING REVIEW</span>
+        <p style="color:var(--mute);font-size:14px;line-height:1.6">We couldn't auto-verify your IG profile. Submit your slot pick and we'll review your full profile within 24h. If you're a real BLR food creator, we'll get back fast.</p>
+      </div>
+    `;
+    return;
+  }
+  $('lookup-greeting').textContent = `Hi ${d.full_name || '@' + d.handle}!`;
+  $('lookup-sub').textContent = `Here's what we're offering:`;
+  const t = d.tier_meta;
+  const er = d.engagement_rate;
+  const erDisplay = er != null ? `<span class="er ${er < 0.01 ? 'low' : ''}">${(er*100).toFixed(2)}% ER</span>` : '';
+  const cashLine = t.cash_paise > 0 ? `<li class="cash">+ ₹${(t.cash_paise/100).toLocaleString('en-IN')} cash payment</li>` : '';
+  const addOnsLines = (t.add_ons || []).map(a => `<li>${escHtml(a)}</li>`).join('');
+  const asksLines = (t.asks || []).map(a => `<li style="color:var(--mute);font-size:13px">${escHtml(a)}</li>`).join('');
+
+  $('tier-card-mount').innerHTML = `
+    <div class="tier-card">
+      <span class="badge">${escHtml(t.label)}</span>
+      <div class="full-name">${escHtml(d.full_name || '@' + d.handle)} ${d.is_verified ? '· ✓ verified' : ''}</div>
+      <div class="followers">${fmt(d.followers_count)}<small> followers</small> ${erDisplay}</div>
+
+      <div class="offer-block">
+        <h4>You get</h4>
+        <ul class="offer-list">
+          <li><b>${t.covers} ${t.covers === 1 ? 'cover' : 'covers'}</b> — meal worth ₹${(t.budget_paise/100).toLocaleString('en-IN')}</li>
+          ${addOnsLines}
+          ${cashLine}
+        </ul>
+      </div>
+
+      <div class="offer-block">
+        <h4>We ask</h4>
+        <ul class="offer-list">
+          ${asksLines}
+          <li style="color:var(--mute);font-size:13px">Tag @hamzaexpressblr · use the geotag · post within 7 days</li>
+        </ul>
+      </div>
+
+      ${d.decision === 'manual' ? `<div class="helper" style="margin-top:18px;color:var(--gold);font-weight:600">⚠ This tier goes through 24-hour manual review (we cap cash-tier offers carefully).</div>` : ''}
+    </div>
+  `;
+}
+
+$('btn-step2-next').addEventListener('click', () => {
+  if (STATE.lookup?.decision === 'decline') return;
+  goToStep(3);
+});
+
+// STEP 3: other platforms
+$('btn-step3-skip').addEventListener('click', () => goToStep(4));
+$('btn-step3-next').addEventListener('click', () => {
+  STATE.youtube = $('youtube-input').value.trim().replace(/^@/, '');
+  STATE.tiktok = $('tiktok-input').value.trim().replace(/^@/, '');
+  goToStep(4);
+});
+
+// STEP 4: why us
+$('btn-step4-skip').addEventListener('click', () => goToStep(5));
+$('btn-step4-next').addEventListener('click', () => {
+  STATE.why = $('why-input').value.trim();
+  goToStep(5);
+});
+
+// STEP 5: phone/email
+const phoneInput = $('phone-input'), emailInput = $('email-input'), btnStep5 = $('btn-step5-next');
+function checkPhone() {
+  const p = phoneInput.value.replace(/\D/g, '');
+  btnStep5.disabled = !(p.length >= 10);
+}
+phoneInput.addEventListener('input', checkPhone);
+btnStep5.addEventListener('click', () => {
+  STATE.phone = phoneInput.value.trim();
+  STATE.email = emailInput.value.trim();
+  goToStep(6);
+});
+
+// STEP 6: slot picker
+let slotsLoaded = false;
+async function loadSlots() {
+  try {
+    const r = await fetch(SLOTS_API);
+    const d = await r.json();
+    if (!d.success) throw new Error('Slots load failed');
+    renderSlots(d.slots);
+    slotsLoaded = true;
+  } catch (e) {
+    $('slots-mount').innerHTML = '<p style="color:var(--red);text-align:center;padding:30px">Couldn\'t load slots. Refresh to retry.</p>';
+  }
+}
+function renderSlots(slots) {
+  const byDate = {};
+  for (const s of slots) {
+    if (!byDate[s.slot_date]) byDate[s.slot_date] = [];
+    byDate[s.slot_date].push(s);
+  }
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtDate = (s) => {
+    const d = new Date(s + 'T00:00:00');
+    return { day: days[d.getDay()], date: d.getDate() + ' ' + months[d.getMonth()] };
+  };
+
+  $('slots-mount').innerHTML = Object.entries(byDate).map(([date, list]) => {
+    const fd = fmtDate(date);
+    const isEid = date === '2026-05-27';
+    return `
+      <div class="day-group">
+        <div class="day-h">
+          <span class="day-date">${fd.date}</span>
+          <span class="day-day">${fd.day}${isEid ? ' · EID 🌙' : ''}</span>
+        </div>
+        <div class="day-slots">${list.map(s => {
+          const remaining = s.remaining;
+          const full = remaining <= 0;
+          const icon = WINDOW_ICONS[s.window_code] || '·';
+          return `
+            <div class="slot ${full ? 'full' : ''}" data-slot-id="${s.id}" ${full ? '' : `onclick="selectSlot(${s.id}, '${s.slot_date}', '${s.window_code}', '${escHtml(s.window_label)}')"`}>
+              <span class="slot-icon">${icon}</span>
+              <div class="slot-window">${s.window_code}</div>
+              <div class="slot-time">${s.window_label}</div>
+              <div class="slot-cap">${full ? 'Booked' : '1 spot · exclusive'}</div>
+            </div>
+          `;
+        }).join('')}</div>
+      </div>
+    `;
+  }).join('');
+}
+function selectSlot(id, date, windowCode, windowLabel) {
+  STATE.selectedSlot = { id, slot_date: date, window_code: windowCode, window_label: windowLabel };
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  document.querySelector(`[data-slot-id="${id}"]`).classList.add('selected');
+  $('btn-step6-next').disabled = false;
+}
+$('btn-step6-next').addEventListener('click', () => {
+  if (!STATE.selectedSlot) return;
+  goToStep(7);
+  renderSummary();
+});
+
+// STEP 7: summary + submit
+function renderSummary() {
+  const d = STATE.lookup;
+  const t = d.tier_meta;
+  const slot = STATE.selectedSlot;
+  $('summary-mount').innerHTML = `
+    <div class="summary-row"><span class="label">Handle</span><span class="value">@${escHtml(STATE.handle)}</span></div>
+    <div class="summary-row"><span class="label">Tier</span><span class="value">${escHtml(t.label)}</span></div>
+    <div class="summary-row"><span class="label">Followers</span><span class="value mono">${fmt(d.followers_count)}</span></div>
+    <div class="summary-row"><span class="label">Offer</span><span class="value">${t.covers} cover${t.covers !== 1 ? 's' : ''}${t.cash_paise > 0 ? ` + ₹${(t.cash_paise/100).toLocaleString('en-IN')} cash` : ''}</span></div>
+    <div class="summary-row"><span class="label">Slot</span><span class="value">${escHtml(slot.slot_date)} · ${escHtml(slot.window_label)}</span></div>
+    <div class="summary-row"><span class="label">Phone</span><span class="value mono">${escHtml(STATE.phone)}</span></div>
+    ${STATE.email ? `<div class="summary-row"><span class="label">Email</span><span class="value">${escHtml(STATE.email)}</span></div>` : ''}
+    ${STATE.youtube ? `<div class="summary-row"><span class="label">YouTube</span><span class="value">@${escHtml(STATE.youtube)}</span></div>` : ''}
+    ${STATE.tiktok ? `<div class="summary-row"><span class="label">TikTok</span><span class="value">@${escHtml(STATE.tiktok)}</span></div>` : ''}
+  `;
+}
+
+$('btn-step7-submit').addEventListener('click', async () => {
+  const btn = $('btn-step7-submit');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  try {
+    const r = await fetch(API + '?action=submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        handle: STATE.handle,
+        contact_phone: STATE.phone,
+        contact_email: STATE.email || null,
+        youtube_handle: STATE.youtube || null,
+        tiktok_handle: STATE.tiktok || null,
+        why_us_text: STATE.why || null,
+        preferred_slot_id: STATE.selectedSlot.id,
+        application_source: 'self_serve',
+        referrer_url: document.referrer || null,
+      }),
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error(d.error || 'Submit failed');
+    goToStep(8);
+    renderConfirmation(d);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Confirm application';
+    toast(e.message || 'Submit failed — try again', true);
+  }
+});
+
+// STEP 8: confirmation
+function renderConfirmation(d) {
+  const slot = STATE.selectedSlot;
+  if (d.status === 'auto_approved') {
+    $('confirmation-mount').innerHTML = `
+      <div class="confirmed">
+        <div class="check">✓</div>
+        <h2>You're booked.</h2>
+        <p>${escHtml(d.confirmation_message)}</p>
+        <div class="info">
+          <b>${escHtml(slot.slot_date)}</b><br>
+          <b>${escHtml(slot.window_label)}</b>
+        </div>
+        <a class="map-link" href="https://maps.app.goo.gl/uV5UPq3DA2DfL3RT9" target="_blank">📍 Get directions</a>
+        <div class="info" style="margin-top:24px;font-size:12px;line-height:1.7">
+          <b>Hamza Express</b> · #19 H.K.P. Road · Shivajinagar<br>
+          Bangalore 560051 · Open 2 PM – 3 AM<br>
+          <span style="font-family:'Cinzel',serif;color:var(--tan);font-weight:700;letter-spacing:.05em">EST. 1918</span>
+          <span style="color:var(--dim)"> · Four generations of Dakhni cuisine</span>
+        </div>
+      </div>
+    `;
+  } else if (d.status === 'pending') {
+    $('confirmation-mount').innerHTML = `
+      <div class="pending-card">
+        <div class="check">⌛</div>
+        <h2>Application received.</h2>
+        <p style="color:var(--mute);font-size:15px;line-height:1.6;margin-top:8px">${escHtml(d.confirmation_message)}</p>
+        <div class="info" style="margin-top:18px">We'll review within 24h and WhatsApp you to confirm.</div>
+        ${slot ? `<div class="info" style="margin-top:8px;color:var(--mute);font-size:13px">Slot held: ${escHtml(slot.slot_date)} · ${escHtml(slot.window_label)}</div>` : ''}
+      </div>
+    `;
+  } else if (d.status === 'declined') {
+    $('confirmation-mount').innerHTML = `
+      <div class="pending-card" style="border-color:var(--red)">
+        <div class="check" style="color:var(--red)">—</div>
+        <h2>We can't fit you right now.</h2>
+        <p>${escHtml(d.decision_reason || d.confirmation_message)}</p>
+      </div>
+    `;
+  }
+}
+</script>
+
+</body>
+</html>
