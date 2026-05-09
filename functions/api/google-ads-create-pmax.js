@@ -76,9 +76,11 @@ export async function onRequest(context) {
       case 'upload-image-asset':return await uploadImageAsset(token, env, body);
       case 'create':            return await createPmax(token, env, body);
       case 'enrich-pmax':       return await enrichPmax(token, env, body);
+      case 'update-campaign':   return await updateCampaign(token, env, body);
+      case 'update-asset-group':return await updateAssetGroup(token, env, body);
       case 'remove-pmax':       return await removePmax(token, env, url.searchParams.get('id'));
       default:
-        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','remove-pmax'] }, 400);
+        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','remove-pmax'] }, 400);
     }
   } catch (err) {
     return j({ error: err.message, stack: env.DEBUG ? err.stack : undefined }, 500);
@@ -661,6 +663,91 @@ async function enrichPmax(token, env, body) {
       assetGroupAssetLinks: assetGroupAssetLinks.length,
     },
   });
+}
+
+// ─── Update Campaign ─────────────────────────────────────────────────────
+// Partial-update a campaign. Body: {
+//   id: "23834053403"                    (required)
+//   status?: "ENABLED" | "PAUSED"        (REMOVED uses remove-pmax instead)
+//   startDate?: "2026-05-11"             (YYYY-MM-DD, IST campaign timezone)
+//   endDate?: "2026-12-31"
+//   budgetINR?: 500                      (also updates the linked CampaignBudget)
+//   name?: "..."
+// }
+async function updateCampaign(token, env, body) {
+  const { id } = body;
+  if (!id) return j({ error: 'body.id required' }, 400);
+  const resourceName = `customers/${CID}/campaigns/${id}`;
+
+  const update = { resourceName };
+  const masks = [];
+
+  if (body.status) {
+    if (body.status === 'REMOVED') return j({ error: 'use action=remove-pmax for REMOVED' }, 400);
+    update.status = body.status;
+    masks.push('status');
+  }
+  if (body.startDate) { update.startDate = body.startDate; masks.push('start_date'); }
+  if (body.endDate)   { update.endDate   = body.endDate;   masks.push('end_date'); }
+  if (body.name)      { update.name      = body.name;      masks.push('name'); }
+
+  if (masks.length === 0 && !body.budgetINR) {
+    return j({ error: 'no updateable fields provided', allowed: ['status','startDate','endDate','name','budgetINR'] }, 400);
+  }
+
+  const ops = [];
+  if (masks.length > 0) {
+    ops.push({
+      campaignOperation: { update, updateMask: masks.join(',') }
+    });
+  }
+
+  // Optionally update the linked budget. Need to look up the budget resource
+  // first to mutate its amount_micros.
+  let budgetUpdated = null;
+  if (body.budgetINR != null) {
+    const rows = await gaql(token, env, `
+      SELECT campaign.id, campaign_budget.resource_name
+      FROM campaign WHERE campaign.id = ${id} LIMIT 1
+    `);
+    const budgetResource = rows[0]?.campaignBudget?.resourceName;
+    if (!budgetResource) return j({ error: `could not find budget for campaign ${id}` }, 404);
+    const micros = String(Math.round(body.budgetINR * 1_000_000));
+    ops.push({
+      campaignBudgetOperation: {
+        update: { resourceName: budgetResource, amountMicros: micros },
+        updateMask: 'amount_micros',
+      }
+    });
+    budgetUpdated = { resource: budgetResource, amountMicros: micros };
+  }
+
+  const r = await ads(token, env, `/customers/${CID}/googleAds:mutate`, { mutateOperations: ops });
+  return j({
+    ok: true,
+    operations: ops.length,
+    updatedFields: masks,
+    budgetUpdated,
+  });
+}
+
+// ─── Update Asset Group ──────────────────────────────────────────────────
+// Body: { id: "6711266279", status?: "ENABLED" | "PAUSED", name?, finalUrls? }
+async function updateAssetGroup(token, env, body) {
+  const { id } = body;
+  if (!id) return j({ error: 'body.id required' }, 400);
+  const resourceName = `customers/${CID}/assetGroups/${id}`;
+  const update = { resourceName };
+  const masks = [];
+  if (body.status)    { update.status    = body.status;    masks.push('status'); }
+  if (body.name)      { update.name      = body.name;      masks.push('name'); }
+  if (body.finalUrls) { update.finalUrls = body.finalUrls; masks.push('final_urls'); }
+  if (masks.length === 0) return j({ error: 'no updateable fields' }, 400);
+
+  const r = await ads(token, env, `/customers/${CID}/assetGroups:mutate`, {
+    operations: [{ update, updateMask: masks.join(',') }],
+  });
+  return j({ ok: true, updatedFields: masks, resource: r.results?.[0]?.resourceName });
 }
 
 // ─── Remove PMax campaign ────────────────────────────────────────────────
