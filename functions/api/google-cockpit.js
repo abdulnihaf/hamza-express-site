@@ -43,8 +43,13 @@ export async function onRequest(context) {
     else if (period === '30d') dateFilter = `segments.date BETWEEN '${daysAgo(30)}' AND '${today}'`;
     else dateFilter = `segments.date BETWEEN '2026-04-14' AND '${today}'`; // campaign start
 
+    // Switched to googleAds:searchStream for reliability — :search silently
+    // 400s on certain valid v23 queries (e.g., FROM campaign without WHERE)
+    // because of GoogleAdsService:search idempotency requirements that
+    // searchStream doesn't enforce. Stream returns { results: [...] } batches
+    // which we flatten.
     const query = async (gaql) => {
-      const resp = await fetch(`${API}/customers/${CID}/googleAds:search`, {
+      const resp = await fetch(`${API}/customers/${CID}/googleAds:searchStream`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -54,7 +59,11 @@ export async function onRequest(context) {
         body: JSON.stringify({ query: gaql }),
       });
       if (!resp.ok) return [];
-      return (await resp.json()).results || [];
+      const data = await resp.json();
+      const batches = Array.isArray(data) ? data : [data];
+      const rows = [];
+      for (const b of batches) for (const r of (b.results || [])) rows.push(r);
+      return rows;
     };
 
     // Run all queries in parallel
