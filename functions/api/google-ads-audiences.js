@@ -375,16 +375,12 @@ async function createNegativeKeywordList(token, env, body) {
 }
 
 // ─── Remove Campaign ─────────────────────────────────────────────────────
+// v23 quirk: REMOVED is set via the `remove` operation (resource-name string),
+// NOT via update with status='REMOVED' (returns INVALID_ENUM_VALUE).
 async function removeCampaign(token, env, id) {
   if (!id) throw new Error('?id=<campaign_id> required');
   const r = await adsApi(token, env, `/customers/${CUSTOMER_ID}/campaigns:mutate`, {
-    operations: [{
-      update: {
-        resourceName: `customers/${CUSTOMER_ID}/campaigns/${id}`,
-        status: 'REMOVED',
-      },
-      updateMask: 'status',
-    }],
+    operations: [{ remove: `customers/${CUSTOMER_ID}/campaigns/${id}` }],
   });
   return json({ ok: true, removed: r.results?.[0]?.resourceName });
 }
