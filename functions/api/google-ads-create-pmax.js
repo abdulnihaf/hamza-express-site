@@ -275,18 +275,15 @@ async function createTextAssets(token, env, body) {
   businessNames.forEach((b,i) => b.length > 25 && errs.push(`businessName[${i}] >25 chars: "${b}"`));
   if (errs.length) return j({ error: 'validation failed', details: errs }, 400);
 
-  // Build operations
+  // Build operations. v23 has no businessNameAsset resource — "business name"
+  // is just a TEXT asset, bound to the asset group with field_type=BUSINESS_NAME.
   const operations = [];
   const tag = []; // parallel array to track which slot each op is for
 
-  for (const t of [...headlines, ...longHeadlines, ...descriptions]) {
-    operations.push({ create: { textAsset: { text: t } } });
-    tag.push({ kind: 'text', text: t });
-  }
-  for (const b of businessNames) {
-    operations.push({ create: { name: `business_name:${b}`, businessNameAsset: { name: b } } });
-    tag.push({ kind: 'business_name', text: b });
-  }
+  for (const t of headlines)      { operations.push({ create: { textAsset: { text: t } } }); tag.push({ kind: 'headline',      text: t }); }
+  for (const t of longHeadlines)  { operations.push({ create: { textAsset: { text: t } } }); tag.push({ kind: 'longHeadline',  text: t }); }
+  for (const t of descriptions)   { operations.push({ create: { textAsset: { text: t } } }); tag.push({ kind: 'description',   text: t }); }
+  for (const b of businessNames)  { operations.push({ create: { textAsset: { text: b } } }); tag.push({ kind: 'businessName',  text: b }); }
 
   if (operations.length === 0) return j({ ok: true, message: 'nothing to create', resources: {} });
 
@@ -295,13 +292,13 @@ async function createTextAssets(token, env, body) {
     partialFailure: true,
   });
 
-  // Map results back to slots
+  // Map results back to slots — kind tag is 1:1 with the input order
   const results = (r.results || []).map((res, i) => ({ ...tag[i], resourceName: res.resourceName }));
   const buckets = {
-    headlines:    results.filter(x => x.kind === 'text' && headlines.includes(x.text)),
-    longHeadlines:results.filter(x => x.kind === 'text' && longHeadlines.includes(x.text) && !headlines.includes(x.text)),
-    descriptions: results.filter(x => x.kind === 'text' && descriptions.includes(x.text) && !headlines.includes(x.text) && !longHeadlines.includes(x.text)),
-    businessNames:results.filter(x => x.kind === 'business_name'),
+    headlines:     results.filter(x => x.kind === 'headline'),
+    longHeadlines: results.filter(x => x.kind === 'longHeadline'),
+    descriptions:  results.filter(x => x.kind === 'description'),
+    businessNames: results.filter(x => x.kind === 'businessName'),
   };
   return j({ ok: true, partialFailureError: r.partialFailureError, resources: buckets });
 }
