@@ -235,6 +235,10 @@ async function preflight(token, env) {
 }
 
 // ─── List existing assets ────────────────────────────────────────────────
+// v23 quirk: GAQL WHERE clause rejects 'BUSINESS_NAME' and 'LOGO' as asset.type
+// enum values even though they are valid at the resource level. Drop the WHERE
+// filter and bucket client-side instead. This may pull a lot of rows on busy
+// accounts — cap to ~500 by adding LIMIT.
 async function listAssets(token, env) {
   const rows = await gaql(token, env, `
     SELECT asset.id, asset.name, asset.type, asset.resource_name,
@@ -243,13 +247,15 @@ async function listAssets(token, env) {
            asset.image_asset.full_size.height_pixels, asset.image_asset.file_size,
            asset.youtube_video_asset.youtube_video_id
     FROM asset
-    WHERE asset.type IN ('TEXT','IMAGE','YOUTUBE_VIDEO','BUSINESS_NAME','LOGO')
+    LIMIT 500
   `);
-  // Bucket by type for easy consumption
-  const byType = { TEXT:[], IMAGE:[], YOUTUBE_VIDEO:[], BUSINESS_NAME:[], LOGO:[] };
+  // Bucket by type for easy consumption — keep the legacy type names so
+  // downstream consumers don't break.
+  const byType = { TEXT:[], IMAGE:[], YOUTUBE_VIDEO:[], BUSINESS_NAME:[], LOGO:[], OTHER:[] };
   for (const r of rows) {
     const a = r.asset;
     if (byType[a.type]) byType[a.type].push(a);
+    else byType.OTHER.push(a);
   }
   return j({ ok: true, count: rows.length, assets: byType });
 }
