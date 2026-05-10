@@ -286,6 +286,42 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
 }
 
 // ───────────────────────────────────────────────────────────────────
+// OUTREACH — cold-DM email to a discovered creator inviting them to apply.
+// Wraps an owner-edited body (plain text or basic HTML) in the brand shell.
+// Supported template variables in the body: {first_name} {handle} {tier} {full_name}
+// ───────────────────────────────────────────────────────────────────
+export function buildOutreachEmail({ first_name, handle, tier, full_name, body_text, subject }) {
+  const subj = subject || 'An invitation from Hamza Hotel — est. 1918, Shivajinagar';
+  // Substitute placeholders in the body
+  const vars = { first_name, handle, tier, full_name };
+  let body = String(body_text || '');
+  for (const k in vars) body = body.split(`{${k}}`).join(vars[k] || '');
+
+  // Convert plain-text paragraphs (double-newlines → <p>; URLs → <a>)
+  const escHtml = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const linkify = s => s.replace(/(https?:\/\/[^\s<>"']+)/g,
+    `<a href="$1" style="color:${BRAND.sienna};text-decoration:underline;">$1</a>`);
+  const paragraphs = body.split(/\n\s*\n/).map(p => {
+    // Inside a paragraph, single \n becomes <br/>
+    const inner = linkify(escHtml(p)).replace(/\n/g, '<br/>');
+    return `<p style="margin:0 0 16px 0;font-family:Georgia,'Times New Roman',Times,serif;font-size:16px;line-height:1.7;color:${BRAND.text};">${inner}</p>`;
+  }).join('\n');
+
+  const preheader = `An invitation to sit at the Hamza family table — by selection only`;
+
+  const innerBody = `
+    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${paragraphs}
+
+    ${ctaButton('https://hamzaexpress.in/creators/', 'View your invitation card →')}
+
+    ${heritageStrip()}
+  `;
+
+  return { subject: subj, html: shell({ preheader, body: innerBody }) };
+}
+
+// ───────────────────────────────────────────────────────────────────
 // TEMPLATE 2b — TENTATIVE (outlet approved, awaiting creator confirmation)
 // Fires the moment owner taps Approve. Booking is held but not final.
 // Creator must tap the Confirm button to lock the slot.
