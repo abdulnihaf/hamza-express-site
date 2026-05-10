@@ -581,6 +581,7 @@ async function createPmax(token, env, body) {
 async function enrichPmax(token, env, body) {
   const { campaignId, assetGroupId,
           createCallAsset,
+          createSitelinks = [],
           campaignAssetLinks = [],
           assetGroupAssetLinks = [] } = body;
 
@@ -619,6 +620,39 @@ async function enrichPmax(token, env, body) {
     ops.push({
       campaignAssetOperation: {
         create: { campaign: campaignResource, asset: callAssetTmp, fieldType: 'CALL' }
+      }
+    });
+  }
+
+  // 1b. (Optional) bulk-create Sitelinks and bind to campaign
+  // Each: { linkText (≤25), finalUrl, description1? (≤35), description2? (≤35) }
+  for (let i = 0; i < createSitelinks.length; i++) {
+    const sl = createSitelinks[i];
+    if (!sl.linkText || !sl.finalUrl) {
+      return j({ error: `createSitelinks[${i}] needs linkText + finalUrl` }, 400);
+    }
+    if (sl.linkText.length > 25)        return j({ error: `createSitelinks[${i}].linkText >25 chars` }, 400);
+    if (sl.description1 && sl.description1.length > 35) return j({ error: `createSitelinks[${i}].description1 >35 chars` }, 400);
+    if (sl.description2 && sl.description2.length > 35) return j({ error: `createSitelinks[${i}].description2 >35 chars` }, 400);
+
+    // Temp ids -10..-19 reserved for sitelinks (call asset uses -1)
+    const slTmp = `customers/${CID}/assets/-${10 + i}`;
+    const sitelinkAsset = { linkText: sl.linkText };
+    if (sl.description1) sitelinkAsset.description1 = sl.description1;
+    if (sl.description2) sitelinkAsset.description2 = sl.description2;
+    ops.push({
+      assetOperation: {
+        create: {
+          resourceName: slTmp,
+          name: sl.name || `Sitelink: ${sl.linkText}`,
+          finalUrls: [sl.finalUrl],
+          sitelinkAsset,
+        }
+      }
+    });
+    ops.push({
+      campaignAssetOperation: {
+        create: { campaign: campaignResource, asset: slTmp, fieldType: 'SITELINK' }
       }
     });
   }
@@ -673,6 +707,14 @@ async function enrichPmax(token, env, body) {
 //   endDate?: "2026-12-31"
 //   budgetINR?: 500                      (also updates the linked CampaignBudget)
 //   name?: "..."
+//   conversionGoals?: [{ category, origin?, biddable }]
+//                                        Override which conversion-goal
+//                                        categories the campaign optimises
+//                                        for. category = ConversionActionCategory
+//                                        enum (PHONE_CALL_LEAD, GET_DIRECTIONS,
+//                                        CONTACT, etc.). origin defaults to
+//                                        GOOGLE_HOSTED. biddable=true makes
+//                                        PMax optimise toward it; false drops it.
 // }
 async function updateCampaign(token, env, body) {
   const { id } = body;
@@ -691,8 +733,8 @@ async function updateCampaign(token, env, body) {
   if (body.endDate)   { update.endDate   = body.endDate;   masks.push('end_date'); }
   if (body.name)      { update.name      = body.name;      masks.push('name'); }
 
-  if (masks.length === 0 && !body.budgetINR) {
-    return j({ error: 'no updateable fields provided', allowed: ['status','startDate','endDate','name','budgetINR'] }, 400);
+  if (masks.length === 0 && !body.budgetINR && !body.conversionGoals?.length) {
+    return j({ error: 'no updateable fields provided', allowed: ['status','startDate','endDate','name','budgetINR','conversionGoals'] }, 400);
   }
 
   const ops = [];
@@ -722,12 +764,34 @@ async function updateCampaign(token, env, body) {
     budgetUpdated = { resource: budgetResource, amountMicros: micros };
   }
 
+  // Optionally toggle CampaignConversionGoal records. Resource-name format:
+  //   customers/{cid}/campaignConversionGoals/{campaign_id}~{category}~{origin}
+  // Google auto-creates these when a campaign is created — we just flip the
+  // `biddable` field on the categories we want to bias toward (or away from).
+  const goalsApplied = [];
+  for (const g of (body.conversionGoals || [])) {
+    if (!g.category) return j({ error: 'conversionGoals[].category required' }, 400);
+    const origin = g.origin || 'GOOGLE_HOSTED';
+    const ccgResource = `customers/${CID}/campaignConversionGoals/${id}~${g.category}~${origin}`;
+    ops.push({
+      campaignConversionGoalOperation: {
+        update: {
+          resourceName: ccgResource,
+          biddable: g.biddable !== false,
+        },
+        updateMask: 'biddable',
+      }
+    });
+    goalsApplied.push({ category: g.category, origin, biddable: g.biddable !== false });
+  }
+
   const r = await ads(token, env, `/customers/${CID}/googleAds:mutate`, { mutateOperations: ops });
   return j({
     ok: true,
     operations: ops.length,
     updatedFields: masks,
     budgetUpdated,
+    conversionGoalsApplied: goalsApplied,
   });
 }
 
