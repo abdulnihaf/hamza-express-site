@@ -49,7 +49,7 @@ export async function onRequest(context) {
     tier: body.tier || 'T3 · 15K–30K · Mid-Micro',
     slot: body.slot || 'Prime · 8 PM on 2026-05-15',
     hosting: body.hosting || ['3 covers (your party size)', 'Welcome chai', 'Dessert flight'],
-    asks: body.asks || ['1 reel within 7 days', '5 stories same evening', 'Tag @hamzaexpressblr', '24-hour bio link'],
+    asks: body.asks || ['1 reel within 7 days', '5 stories same evening', 'Tag @hamzaexpress1918', '24-hour bio link'],
     cash_inr: body.cash_inr || 0,
   };
 

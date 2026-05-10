@@ -28,7 +28,7 @@ const BRAND = {
 
 const LOGO_URL = 'https://hamzaexpress.in/assets/brand/he-emblem.png';
 const APPLY_URL = 'https://hamzaexpress.in/creators/';
-const ADDRESS = '#19 H.K.P. Road · Shivajinagar · Bangalore 560051';
+const ADDRESS = '151 TO 154, HKP Road, Sulthangunta · Shivajinagar · Bangalore 560051';
 const WABA_NUMBER = '+91 80080 02049';
 
 // ───────────────────────────────────────────────────────────────────
@@ -215,7 +215,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
       ${eyebrow('What we ask, in return')}
       ${bulletList(asks)}
       ${divider()}
-      <p style="margin:0 0 8px 0;font-size:14px;line-height:1.7;">When you arrive, please tag <strong>@hamzaexpressblr</strong> and use the <strong>Shivajinagar geotag</strong>. That's the only deliverable that matters operationally — everything else is yours to tell in your own voice.</p>
+      <p style="margin:0 0 8px 0;font-size:14px;line-height:1.7;">When you arrive, please tag <strong>@hamzaexpress1918</strong> and use the <strong>Shivajinagar geotag</strong>. That's the only deliverable that matters operationally — everything else is yours to tell in your own voice.</p>
       <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;">Save us at <strong>${WABA_NUMBER}</strong> on WhatsApp — last-mile details and reminders will land there.</p>
     ` : ''}
 
@@ -288,7 +288,7 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
       ${eyebrow('What we ask, in return')}
       ${bulletList(asks)}
       ${divider()}
-      <p style="margin:0 0 8px 0;font-size:14px;line-height:1.7;">Please tag <strong>@hamzaexpressblr</strong> and use the <strong>Shivajinagar geotag</strong> when you arrive. That is the only formal deliverable — the rest is yours to tell in your own voice.</p>
+      <p style="margin:0 0 8px 0;font-size:14px;line-height:1.7;">Please tag <strong>@hamzaexpress1918</strong> and use the <strong>Shivajinagar geotag</strong> when you arrive. That is the only formal deliverable — the rest is yours to tell in your own voice.</p>
       <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;">Save <strong>${WABA_NUMBER}</strong> on WhatsApp now — slot reminders and last-mile details land there.</p>
       ${ctaButton(APPLY_URL, 'View your invitation card →')}
     ` : ''}

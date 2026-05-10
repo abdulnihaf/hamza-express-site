@@ -65,7 +65,7 @@ Your invitation to Hamza Express is confirmed.
 
 Tier: {{1}}
 Slot: {{2}}
-Where: 19 H.K.P. Road, Shivajinagar, Bangalore 560051
+Where: 151 TO 154, HKP Road, Sulthangunta, Shivajinagar, Bangalore 560051
 
 What we're hosting you with:
 {{3}}
@@ -73,7 +73,7 @@ What we're hosting you with:
 What we ask:
 {{4}}
 
-Tag @hamzaexpressblr · use the Shivajinagar geotag.
+Tag @hamzaexpress1918 · use the Shivajinagar geotag.
 
 Looking forward,
 — Nihaf, Managing Director, HN Hotels Pvt Ltd
