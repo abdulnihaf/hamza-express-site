@@ -7,7 +7,7 @@ window. Once approved, swap `sendWaba()` → `sendTemplate()` in the
 `notifyOwner / notifyCreatorReceived / notifyCreator` helpers in
 `functions/api/creator-application.js`.
 
-WABA sender: **+91 80080 02045** (Hamza Express).
+WABA sender: **+91 80080 02049** (Hamza Express).
 WABA category: **Utility** (transactional — application receipts, booking
 confirmations, owner-side ops alerts). NOT marketing.
 
@@ -78,7 +78,7 @@ Tag @hamzaexpressblr · use the Shivajinagar geotag.
 Looking forward,
 — Nihaf, Managing Director, HN Hotels Pvt Ltd
 Hamza Express · est. 1918 · Shivajinagar
-Save us: +91 80080 02045 (WhatsApp)
+Save us: +91 80080 02049 (WhatsApp)
 ```
 
 **Variables:**
@@ -180,7 +180,7 @@ async function sendTemplate(env, to, name, varsArray, lang = 'en') {
 
 Until templates are approved, all 3 messages send via free-form text. They
 deliver only within 24h of the recipient's most recent inbound message to
-+91 80080 02045. Failure mode (Meta error 131047 / 132000 — "outside session
++91 80080 02049. Failure mode (Meta error 131047 / 132000 — "outside session
 window") is logged into `influencer_applications.notes_owner` so the owner
 dashboard can show delivery state per application.
 

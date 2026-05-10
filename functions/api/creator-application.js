@@ -587,7 +587,7 @@ function notifyOwnerText(app, decisionReason, slot) {
 }
 
 // "We received your application" — fires on EVERY submit, before any approval branching.
-// Critical because the creator needs an immediate "we got it" so they save the +91 80080 02045
+// Critical because the creator needs an immediate "we got it" so they save the +91 80080 02049
 // contact and recognise subsequent messages. This is the application receipt; the slot
 // confirmation message (notifyCreatorText) fires later when a booking is actually confirmed.
 function notifyCreatorReceivedText(app, slot, tierMeta) {
@@ -623,7 +623,7 @@ function notifyCreatorReceivedText(app, slot, tierMeta) {
     `— Nihaf`,
     `Managing Director, HN Hotels Pvt Ltd`,
     `Hamza Express · est. 1918 · Shivajinagar`,
-    `Save us: +91 80080 02045 (WhatsApp)`,
+    `Save us: +91 80080 02049 (WhatsApp)`,
   );
   return lines.join('\n');
 }
@@ -674,7 +674,7 @@ function notifyCreatorText(app, slot, tierMeta) {
     `— Nihaf`,
     `Managing Director, HN Hotels Pvt Ltd`,
     `Hamza Express · est. 1918 · Shivajinagar`,
-    `Save us: +91 80080 02045 (WhatsApp)`,
+    `Save us: +91 80080 02049 (WhatsApp)`,
   );
   return lines.join('\n');
 }
