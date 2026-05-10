@@ -27,14 +27,14 @@ const TIER_MATRIX = {
         add_ons: [], asks: [], auto_decline: true,
         decline_reason: 'We work with creators who have at least 1K active followers. Build your audience and apply again!' },
   T1: { label: '1K–5K · Nano', min: 1000, max: 4999, covers: 1, cash_paise: 0, budget_paise: 60000,
-        add_ons: [], asks: ['1 reel · 3 stories · tag @hamzaexpress1918'], auto_approve: true },
+        add_ons: [], asks: ['1 reel · 3 stories · tag @hamzaexpress1918'], auto_approve: false },
   T2: { label: '5K–15K · Micro', min: 5000, max: 14999, covers: 2, cash_paise: 0, budget_paise: 120000,
-        add_ons: ['Welcome chai'], asks: ['1 reel · 5 stories · tag @hamzaexpress1918 · use the geotag pin'], auto_approve: true },
+        add_ons: ['Welcome chai'], asks: ['1 reel · 5 stories · tag @hamzaexpress1918 · use the geotag pin'], auto_approve: false },
   T3: { label: '15K–30K · Mid-Micro', min: 15000, max: 29999, covers: 3, cash_paise: 0, budget_paise: 180000,
-        add_ons: ['Welcome chai', 'Dessert'], asks: ['1 reel · 5 stories · tag · 24-hour bio link'], auto_approve: true },
+        add_ons: ['Welcome chai', 'Dessert'], asks: ['1 reel · 5 stories · tag · 24-hour bio link'], auto_approve: false },
   T4: { label: '30K–60K · Upper-Micro', min: 30000, max: 59999, covers: 4, cash_paise: 0, budget_paise: 240000,
         add_ons: ['Welcome chai', 'Dessert flight', 'Chef interaction'],
-        asks: ['1 reel · 1 permanent grid post · 5 stories · tag'], auto_approve: true, auto_approve_min_er: 0.015 },
+        asks: ['1 reel · 1 permanent grid post · 5 stories · tag'], auto_approve: false },
   T5: { label: '60K–100K · Macro-Micro', min: 60000, max: 99999, covers: 4, cash_paise: 50000, budget_paise: 290000,
         add_ons: ['Mutton Brain Dry comp', 'Dessert flight', 'Chai', 'Chef interaction'],
         asks: ['1 reel · 1 permanent grid post · 7 stories · 7-day bio tag'], auto_approve: false },
@@ -234,94 +234,69 @@ function buildLookupResponse(profile) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// PUBLIC: submit — insert application, auto-approve if eligible
+// PUBLIC: submit — insert application. EVERY tier goes to manual review.
+//
+// Body shape (new):
+//   handle              required — IG username (no @)
+//   follower_range      required — 'T1'..'T7' (creator self-selects from dropdown)
+//   audience_json       optional — JSON array of audience tags (Foodies, Families, etc)
+//   contact_phone       required — WhatsApp number
+//   contact_email       required — email for confirmation
+//   preferred_slot_id   required — slot from /api/influencer-bookings?action=slots
+//   why_us_text         optional — personal note / special request
+//   full_name           optional — creator's display name
 // ─────────────────────────────────────────────────────────────────────
 async function actionSubmit(env, db, body) {
   const handle = (body.handle || '').toString().trim().replace(/^@/, '').toLowerCase();
   if (!handle) return json({ error: 'handle required' }, 400);
+  if (!/^[a-z0-9._]{2,30}$/.test(handle)) return json({ error: 'invalid handle format' }, 400);
+
   const phone = (body.contact_phone || '').toString().trim();
-  if (!phone) return json({ error: 'contact_phone required' }, 400);
+  if (!phone) return json({ error: 'WhatsApp number required' }, 400);
+  if (phone.replace(/\D/g, '').length < 10) return json({ error: 'invalid phone' }, 400);
+
+  const email = (body.contact_email || '').toString().trim();
+  if (!email) return json({ error: 'email required' }, 400);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'invalid email' }, 400);
+
   const slotId = parseInt(body.preferred_slot_id || '0');
   if (!slotId) return json({ error: 'preferred_slot_id required' }, 400);
 
-  // Re-fetch tier server-side (don't trust client)
-  const cached = await db.prepare(`
-    SELECT followers_count, engagement_rate, is_private, last_post_at, full_name, profile_pic_url, category_name,
-           is_business_account, is_verified
-    FROM influencer_bio_pulse WHERE username = ? AND status = 'ok'
-  `).bind(handle).first();
+  // Tier comes from the creator's own dropdown selection — no IG lookup.
+  // Owner verifies the actual follower count during manual review before approving.
+  const tier = String(body.follower_range || '').toUpperCase().trim();
+  if (!/^T[1-7]$/.test(tier) || !TIER_MATRIX[tier]) {
+    return json({ error: 'invalid follower_range — must be T1..T7' }, 400);
+  }
+  const tierMeta = TIER_MATRIX[tier];
 
-  let profile = cached;
-  if (!profile?.followers_count) {
-    // Try public endpoint one more time
-    try {
-      const r = await fetch(`https://i.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`, {
-        headers: { 'x-ig-app-id': '936619743392459', 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148' },
-      });
-      if (r.ok) {
-        const j = await r.json();
-        const u = j?.data?.user;
-        if (u) profile = {
-          followers_count: u.edge_followed_by?.count,
-          full_name: u.full_name,
-          is_private: u.is_private ? 1 : 0,
-          is_verified: u.is_verified ? 1 : 0,
-          is_business_account: u.is_business_account ? 1 : 0,
-          profile_pic_url: u.profile_pic_url_hd || u.profile_pic_url,
-          category_name: u.category_name,
-        };
-      }
-    } catch {}
+  // Audience tags (multi-select) — stored as JSON, used later for Gemini scoring + owner context
+  let audienceJson = null;
+  if (Array.isArray(body.audience)) {
+    audienceJson = JSON.stringify(body.audience.filter(t => typeof t === 'string').slice(0, 12));
   }
 
-  // If still no profile data, force manual review (all fields TBD)
-  const followers = profile?.followers_count || 0;
-  const tier = tierOf(followers);
-  const tierMeta = TIER_MATRIX[tier];
-  const decision = approvalDecision({
-    tier,
-    engagement_rate: profile?.engagement_rate,
-    is_private: profile?.is_private,
-    last_post_at: profile?.last_post_at,
-  });
-
-  // Look up slot
+  // Look up slot — exists + not blocked
   const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(slotId).first();
   if (!slot) return json({ error: 'slot_id not found' }, 400);
-  if (slot.is_blocked || slot.booked_count >= slot.capacity) {
-    return json({ error: 'slot_full' }, 409);
+  if (slot.is_blocked) return json({ error: 'slot_blocked' }, 409);
+
+  // Optimistic lock — atomic UPDATE that fails if slot was just taken by another submitter.
+  // booked_count++ only succeeds if booked_count < capacity.
+  const bumpResult = await db.prepare(`
+    UPDATE influencer_slots
+    SET booked_count = booked_count + 1
+    WHERE id = ? AND booked_count < capacity AND is_blocked = 0
+  `).bind(slotId).run();
+
+  if (!bumpResult.meta.changes || bumpResult.meta.changes === 0) {
+    return json({ error: 'slot_full', detail: 'This slot was just taken by another applicant. Please pick another.' }, 409);
   }
 
-  let status, autoApproved, bookingId = null, outreachToken = null;
-  if (decision.decision === 'decline') {
-    status = 'declined';
-    autoApproved = 0;
-  } else if (decision.decision === 'auto_approve') {
-    status = 'auto_approved';
-    autoApproved = 1;
-    // Create booking shell and reserve the slot
-    outreachToken = genToken();
-    const bk = await db.prepare(`
-      INSERT INTO influencer_bookings
-        (creator_username, creator_name, creator_followers, creator_tier, cover_commitment, meal_budget_paise,
-         slot_id, slot_date, window_code, status, outreach_token, contact_phone, contact_email,
-         notes_creator)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?)
-    `).bind(
-      handle, profile?.full_name || null, followers, tier, tierMeta.covers,
-      tierMeta.budget_paise + (tierMeta.cash_paise || 0),
-      slotId, slot.slot_date, slot.window_code,
-      outreachToken, phone, body.contact_email || null,
-      body.why_us_text || null
-    ).run();
-    bookingId = bk.meta.last_row_id;
-
-    // Bump slot booked_count
-    await db.prepare(`UPDATE influencer_slots SET booked_count = booked_count + 1 WHERE id = ?`).bind(slotId).run();
-  } else {
-    status = 'pending';
-    autoApproved = 0;
-  }
+  // EVERY application is manual review. Always pending. No auto-approve, no booking shell yet.
+  // Owner reviews at /ops/influencer-applications and taps Approve to materialise the booking.
+  const status = 'pending';
+  const autoApproved = 0;
 
   // Insert application row
   const result = await db.prepare(`
@@ -333,61 +308,50 @@ async function actionSubmit(env, db, body) {
       computed_tier, offer_covers, offer_cash_paise, offer_addons_json, asks_json,
       preferred_slot_id, preferred_slot_date, preferred_window_code,
       status, auto_approved, decline_reason,
-      outreach_token, booking_id, application_source
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      outreach_token, booking_id, application_source, audience_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
-    handle, profile?.full_name || null, followers, profile?.engagement_rate || null,
-    profile?.is_verified ? 1 : 0, profile?.is_business_account ? 1 : 0,
-    profile?.category_name || null, profile?.profile_pic_url || null,
+    handle, body.full_name || null, null, null,
+    0, 0,
+    null, null,
     body.youtube_handle || null, body.tiktok_handle || null, body.other_platforms_text || null,
-    body.why_us_text || null, phone, body.contact_email || null,
+    body.why_us_text || null, phone, email,
     tier, tierMeta.covers, tierMeta.cash_paise || 0,
     JSON.stringify(tierMeta.add_ons || []), JSON.stringify(tierMeta.asks || []),
     slotId, slot.slot_date, slot.window_code,
-    status, autoApproved, decision.decision === 'decline' ? decision.reason : null,
-    outreachToken, bookingId, body.application_source || 'self_serve'
+    status, autoApproved, null,
+    null, null, body.application_source || 'self_serve', audienceJson
   ).run();
 
-  // ── Side effects: WABA notifications. Best-effort, never block the response.
-  // Three messages can fire here:
-  //   1. Owner alert (always)         — "🍽️ NEW CREATOR APPLICATION"
-  //   2. Creator receipt (always)     — "📝 We've received your application"
-  //   3. Creator confirmation (auto)  — "Your invitation is confirmed" (only on auto_approve)
-  // Manual-review tier (T5+) gets only #1+#2 here; #3 fires later on owner approve.
+  // ── Side effects: notify owner + creator. Best-effort, never block the response.
+  // Two messages on submit (every booking is manual-review now):
+  //   1. Owner alert            — "🍽️ NEW CREATOR APPLICATION · review at /ops/..."
+  //   2. Creator receipt (WABA) — "📝 We've received your application"
+  //   2b. Creator receipt (email) — branded HTML
+  // The slot-confirmation (#3) fires later when owner taps Approve at /ops/influencer-applications.
   const appRow = {
     id: result.meta.last_row_id,
     username: handle,
-    full_name: profile?.full_name,
-    followers_count: followers,
-    engagement_rate: profile?.engagement_rate,
+    full_name: body.full_name || null,
+    followers_count: null,                  // we don't lookup any more
+    follower_range: tier,
     computed_tier: tier,
     tier,
     status,
     contact_phone: phone,
-    decline_reason: decision.decision === 'decline' ? decision.reason : null,
+    contact_email: email,
+    audience: Array.isArray(body.audience) ? body.audience : [],
     preferred_slot_id: slotId,
   };
-  await notifyOwner(env, db, appRow, decision.reason, slot);
+  await notifyOwner(env, db, appRow, 'Manual review required (every application).', slot);
   await notifyCreatorReceived(env, db, appRow, slot, tierMeta);
-  // Email layer — branded HTML to creator's email (best-effort)
   await notifyCreatorEmail(env, db, appRow, slot, tierMeta, 'received');
-  if (status === 'auto_approved') {
-    await notifyCreator(env, db, appRow, slot, tierMeta);
-  }
 
   return json({
     success: true,
     application_id: result.meta.last_row_id,
-    status,
-    decision: decision.decision,
-    decision_reason: decision.reason,
-    booking_id: bookingId,
-    booking_url: outreachToken ? `https://hnhotels.in/marketing/Influencer/booking/?token=${outreachToken}` : null,
-    confirmation_message: status === 'auto_approved'
-      ? `Booked for ${slot.slot_date} · ${slot.window_label}. Check your phone — we'll WhatsApp last-mile details.`
-      : status === 'declined'
-        ? decision.reason
-        : `Application received. We'll review within 24h and WhatsApp you.`,
+    status: 'pending',
+    confirmation_message: `Thank you. Your application is in our hands — we'll personally review and respond within 24 hours via WhatsApp + email.`,
   });
 }
 
