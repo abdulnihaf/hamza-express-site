@@ -10,7 +10,7 @@
 // Returns: { ok, message_id } from Gmail API on success, or detailed error.
 
 import { sendEmail } from './_lib/email-sender.js';
-import { buildReceivedEmail, buildDecisionEmail, buildTentativeEmail } from './_lib/email-templates.js';
+import { buildReceivedEmail, buildDecisionEmail, buildTentativeEmail, buildOutreachEmail } from './_lib/email-templates.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +61,20 @@ export async function onRequest(context) {
       subject: 'Test from Hamza Express creator flow · ' + new Date().toISOString().slice(0,16).replace('T',' '),
       html: '<html><body style="font-family:Georgia,serif;color:#713520"><h1>Hello.</h1><p>This is a plain-html smoke test from <strong>nihaf@hnhotels.in</strong> via the Gmail API. If you see this, the OAuth flow + refresh token + sendEmail helper all work.</p></body></html>',
     };
+  } else if (kind === 'outreach') {
+    // Pull the saved D1 template + subject and render it with the sample first_name
+    const cfgRows = await env.HIRING_DB.prepare(
+      `SELECT config_key, config_value FROM programme_config WHERE config_key IN ('outreach_template_body','outreach_subject_email')`
+    ).all();
+    const cfg = {};
+    for (const r of (cfgRows.results || [])) cfg[r.config_key] = r.config_value;
+    const tmplBody = cfg.outreach_template_body || '(template not saved — visit /ops/creator-outreach and save first)';
+    const tmplSubject = cfg.outreach_subject_email || 'An invitation from Hamza Hotel';
+    payload = buildOutreachEmail({
+      ...sample,
+      body_text: tmplBody,
+      subject: tmplSubject,
+    });
   } else if (kind === 'tentative') {
     payload = buildTentativeEmail({
       ...sample,
