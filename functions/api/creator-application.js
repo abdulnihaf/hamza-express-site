@@ -561,8 +561,14 @@ async function sendTemplate(env, to, templateName, vars, lang = 'en') {
   if (!phone || phone.length < 10) return { ok: false, error: 'invalid phone' };
 
   const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+  // Meta rejects template parameters with newlines / tabs / >4 consecutive spaces.
+  // Sanitise here once so individual call sites don't have to remember.
+  const sanitiseParam = (v) => String(v == null ? '' : v)
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{4,}/g, '   ')   // collapse 4+ spaces to 3
+    .slice(0, 1024);
   const components = (vars && vars.length)
-    ? [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: String(v).slice(0, 1024) })) }]
+    ? [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: sanitiseParam(v) })) }]
     : [];
   try {
     const resp = await fetch(url, {
@@ -831,12 +837,15 @@ async function notifyCreator(env, db, app, slot, tierMeta) {
     : 'your selected slot';
   const tierLabel = m.label || (app.computed_tier || 'TBD');
 
-  const hostingLines = [`· ${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`];
-  (m.add_ons || []).forEach(a => hostingLines.push(`· ${a}`));
-  if (m.cash_paise) hostingLines.push(`· ₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
-  const hostingWith = hostingLines.join('\n');
+  // Meta template parameters disallow newlines / tabs / >4 consecutive spaces.
+  // Flatten the bullet list to a single-line comma-joined string for the
+  // template path. The free-form fallback (`text`) keeps the multi-line bullets.
+  const hostingItems = [`${m.covers} ${m.covers === 1 ? 'cover' : 'covers'}`];
+  (m.add_ons || []).forEach(a => hostingItems.push(a));
+  if (m.cash_paise) hostingItems.push(`₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
+  const hostingWith = hostingItems.join(' · ');
 
-  const asks = (m.asks || []).map(a => `· ${a}`).join('\n');
+  const asks = (m.asks || []).join(' · ');
 
   const r = await sendWabaSmart(env, app.contact_phone, 'creator_invitation_confirmed', [
     tierLabel, slotStr, hostingWith, asks,
