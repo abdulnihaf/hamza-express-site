@@ -608,6 +608,7 @@ function notifyCreatorText(app, slot, tierMeta) {
     `— Nihaf`,
     `Managing Director, HN Hotels Pvt Ltd`,
     `Hamza Express · est. 1918 · Shivajinagar`,
+    `Save us: +91 80080 02045 (WhatsApp)`,
   );
   return lines.join('\n');
 }
