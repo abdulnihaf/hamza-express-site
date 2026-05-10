@@ -40,7 +40,14 @@ h1{font-family:'Times New Roman',Georgia,serif;font-size:46px;font-weight:700;fo
 /* TIME PICKER (window flexibility) */
 .time-picker{margin:0 auto 24px;max-width:520px;text-align:left}
 .time-picker .label{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.22em;font-weight:700;margin-bottom:14px;padding-left:4px}
-.time-picker .hint{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:14px;color:var(--ink-mute);margin-bottom:16px;padding-left:4px;line-height:1.5}
+.time-picker .hint{
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:15px;color:var(--sienna);line-height:1.55;
+  margin-bottom:18px;padding:14px 18px;
+  background:var(--tan);border-left:3px solid var(--sienna);
+}
+.time-picker .hint b{font-weight:700}
+.time-picker .hint-sub{font-style:italic;font-size:13px;color:var(--ink-mute);margin-top:6px;display:block}
 .windows{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
 .win{
   background:var(--offwhite);border:1.5px solid var(--sienna);
@@ -121,7 +128,10 @@ h1{font-family:'Times New Roman',Georgia,serif;font-size:46px;font-weight:700;fo
 
     <div class="time-picker">
       <div class="label">Pick your time slot</div>
-      <div class="hint">You picked one when you applied — but you're free to switch to another window on the same date if it suits you better. Greyed-out ones are already booked by another creator.</div>
+      <div class="hint">
+        ↓ <b>You can switch your time below</b> — pick any open window on this date. Your originally-booked one is highlighted, but feel free to move it if another time suits better.
+        <span class="hint-sub">Greyed-out windows are already booked by another creator.</span>
+      </div>
       <div class="windows" id="windows-grid">
         <!-- populated by JS -->
       </div>
