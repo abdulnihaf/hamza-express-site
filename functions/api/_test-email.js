@@ -95,7 +95,7 @@ export async function onRequest(context) {
     to,
     subject: payload.subject,
     html: payload.html,
-    from_name: 'Nihaf · Hamza Express',
+    from_name: 'Abdul Nihaf',
   });
   return json(r, r.ok ? 200 : 502);
 }
