@@ -30,6 +30,28 @@ const LOGO_URL = 'https://hamzaexpress.in/assets/brand/he-emblem.png';
 const APPLY_URL = 'https://hamzaexpress.in/creators/';
 const ADDRESS = '151 TO 154, HKP Road, Sulthangunta · Shivajinagar · Bangalore 560051';
 const WABA_NUMBER = '+91 80080 02049';
+const MAP_URL = 'https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg';
+
+// Format slot date+window into "Saturday, 10 May · Prime · 8 PM"
+function fmtSlotEmail(slot) {
+  if (!slot) return 'Your selected slot';
+  const WIN = {
+    AFTERNOON: { time: '4 PM', label: 'Afternoon' },
+    GOLDEN:    { time: '6 PM', label: 'Golden Hour' },
+    PRIME:     { time: '8 PM', label: 'Prime' },
+    LATE:      { time: '10 PM', label: 'Late' },
+    MIDNIGHT:  { time: '12 AM (midnight)', label: 'Midnight' },
+  };
+  const win = WIN[slot.window_code] || { time: slot.window_code, label: '' };
+  let dateStr = slot.slot_date || '';
+  try {
+    const d = new Date(slot.slot_date + 'T00:00:00+05:30');
+    dateStr = d.toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
+    });
+  } catch {}
+  return `${dateStr} · ${win.label} · ${win.time}`;
+}
 
 // ───────────────────────────────────────────────────────────────────
 // Shared layout shell — header, footer, base wrapper
@@ -240,29 +262,88 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
 }
 
 // ───────────────────────────────────────────────────────────────────
+// TEMPLATE 2b — TENTATIVE (outlet approved, awaiting creator confirmation)
+// Fires the moment owner taps Approve. Booking is held but not final.
+// Creator must tap the Confirm button to lock the slot.
+// ───────────────────────────────────────────────────────────────────
+export function buildTentativeEmail({ first_name, handle, tier, slot, hosting, asks, cash_inr, confirm_url }) {
+  const slotLabel = fmtSlotEmail(slot);
+  const subject = `🎉 Outlet approved · please confirm your slot at Hamza Express`;
+  const preheader = `Your slot is held for ${slotLabel}. One last tap to lock it in.`;
+
+  const body = `
+    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${bigHeading(`We'd be honoured to host you, ${first_name}.`)}
+    ${statusPill({ label: '🎉 Outlet approved · awaiting your confirmation', color: BRAND.sienna, bg: '#fdf6e3' })}
+    <p style="margin:0 0 20px 0;">The family has personally reviewed your application and we'd love to have you at our table. Your slot is on hold — one last tap from you and the kitchen prepares for your arrival.</p>
+
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:8px 0 16px 0;border-top:1px solid ${BRAND.line};">
+      ${detailRow('Creator', `@${handle}`)}
+      ${detailRow('Tier', tier)}
+      ${detailRow('Slot held', slotLabel)}
+      ${detailRow('Address', ADDRESS)}
+    </table>
+
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:24px 0 8px 0;">
+      <tr><td style="background:${BRAND.sienna};border-radius:4px;">
+        <a href="${confirm_url}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">✓ Confirm my slot</a>
+      </td></tr>
+    </table>
+
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:8px 0 24px 0;">
+      <tr><td style="border:1.5px solid ${BRAND.sienna};">
+        <a href="${MAP_URL}" style="display:inline-block;padding:14px 28px;font-family:Georgia,serif;font-size:14px;color:${BRAND.sienna};text-decoration:none;font-weight:700;letter-spacing:.04em;">📍 Get directions</a>
+      </td></tr>
+    </table>
+
+    ${hosting ? `
+      ${eyebrow('What we will host you with')}
+      ${bulletList(hosting)}
+      ${cash_inr ? `<div style="margin:14px 0 0 0;padding:12px 16px;background:#fdf6e3;border-left:3px solid ${BRAND.gold};font-family:Georgia,serif;color:${BRAND.sienna};font-size:14px;">
+        <strong>Cash on top of the meal:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
+      </div>` : ''}
+      ${divider()}
+      ${eyebrow('What we ask, in return')}
+      ${bulletList(asks)}
+      ${divider()}
+    ` : ''}
+
+    <p style="margin:0 0 12px 0;font-size:14px;line-height:1.7;color:${BRAND.mute};font-style:italic;">If we don't hear from you in 24 hours, we'll release the slot back to the pool. No pressure — just want to make sure the kitchen is ready for you.</p>
+
+    <p style="margin:0 0 12px 0;font-size:14px;line-height:1.7;">Save <strong>${WABA_NUMBER}</strong> on WhatsApp now — slot reminders and day-of details land there.</p>
+
+    ${heritageStrip()}
+    ${signoff()}
+  `;
+
+  return { subject, html: shell({ preheader, body }) };
+}
+
+// ───────────────────────────────────────────────────────────────────
 // TEMPLATE 2 — outlet decision (approve or reject after manual review)
 // ───────────────────────────────────────────────────────────────────
 export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, asks, cash_inr, status, decline_reason }) {
   // status: 'approved' | 'declined'
   const isApproved = status === 'approved';
 
+  const slotLabel = fmtSlotEmail(slot);
   let pill, headline, leadCopy;
   if (isApproved) {
-    pill = statusPill({ label: '✓ Outlet approved · slot reserved', color: '#0a6645', bg: '#e0f4e8' });
-    headline = `Your invitation is confirmed, ${first_name}.`;
-    leadCopy = `<p style="margin:0 0 20px 0;">The family has personally reviewed your application and we'd be honoured to host you. Below are the details — please save them.</p>`;
+    pill = statusPill({ label: '✅ Slot locked in', color: '#0a6645', bg: '#e0f4e8' });
+    headline = `You're booked, ${first_name}.`;
+    leadCopy = `<p style="margin:0 0 20px 0;font-size:17px;line-height:1.65;">Your slot at Hamza Express is confirmed. Save the details below — and the WhatsApp number — so we can reach you on the day of.</p>`;
   } else {
     pill = statusPill({ label: 'Decision · Not this round', color: '#8b1d1d', bg: '#fbe5e5' });
     headline = `Thank you for applying, ${first_name}.`;
-    leadCopy = `<p style="margin:0 0 20px 0;">We're not able to host this round.${decline_reason ? ` ${decline_reason}` : ''} Please don't take it as a final no — when the timing or fit is right, the door is open.</p>`;
+    leadCopy = `<p style="margin:0 0 12px 0;">We're not able to host this round.</p>${decline_reason ? `<p style="margin:0 0 20px 0;font-style:italic;color:${BRAND.mute};border-left:3px solid ${BRAND.line};padding:10px 16px;background:#fdf6e3;">"${decline_reason.replace(/[<>]/g,'')}"</p>` : ''}<p style="margin:0 0 20px 0;">Please don't take it as a final no — when the timing or fit is right, the door is open.</p>`;
   }
 
   const subject = isApproved
-    ? 'Your invitation to Hamza Express is confirmed'
+    ? `✅ Your slot at Hamza Express is locked in · ${slotLabel.split('·')[0].trim()}`
     : 'Hamza Express — application update';
 
   const preheader = isApproved
-    ? `Slot reserved at the table the city has been sitting at since 1918. Save the address.`
+    ? `${slotLabel} · 151 TO 154 HKP Road, Shivajinagar`
     : `Thank you for the consideration. We'd love you to apply again.`;
 
   const body = `
@@ -271,11 +352,28 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
     ${pill}
     ${leadCopy}
 
+    ${isApproved ? `
+    <!-- BIG SLOT BOX — the one thing they need to see -->
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:24px 0;background:${BRAND.tan};border:2px solid ${BRAND.sienna};">
+      <tr><td style="padding:28px 32px;">
+        <div style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:12px;">Your slot</div>
+        <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:24px;font-weight:700;line-height:1.3;margin-bottom:14px;">${slotLabel}</div>
+        <div style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:15px;line-height:1.55;">📍 ${ADDRESS}</div>
+      </td></tr>
+    </table>
+
+    <!-- Map button, prominent -->
+    <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:8px 0 24px 0;">
+      <tr><td style="background:${BRAND.sienna};border-radius:4px;">
+        <a href="${MAP_URL}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">📍 Get directions on Google Maps</a>
+      </td></tr>
+    </table>
+    ` : ''}
+
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:8px 0 16px 0;border-top:1px solid ${BRAND.line};">
       ${detailRow('Creator', `@${handle}`)}
       ${detailRow('Tier', tier)}
-      ${detailRow(isApproved ? 'Slot reserved' : 'Slot requested', slot)}
-      ${isApproved ? detailRow('Address', ADDRESS) : ''}
+      ${!isApproved ? detailRow('Slot requested', slotLabel) : ''}
     </table>
 
     ${isApproved && hosting ? `
@@ -289,8 +387,8 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
       ${bulletList(asks)}
       ${divider()}
       <p style="margin:0 0 8px 0;font-size:14px;line-height:1.7;">Please tag <strong>@hamzaexpress1918</strong> and use the <strong>Shivajinagar geotag</strong> when you arrive. That is the only formal deliverable — the rest is yours to tell in your own voice.</p>
-      <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;">Save <strong>${WABA_NUMBER}</strong> on WhatsApp now — slot reminders and last-mile details land there.</p>
-      ${ctaButton(APPLY_URL, 'View your invitation card →')}
+      <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;"><strong>Day-of:</strong> walk in, mention you're from the creator program. Park on HKP Road or take Russell Market lanes.</p>
+      <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;">Save <strong>${WABA_NUMBER}</strong> on WhatsApp now — last-mile details and reminders land there.</p>
     ` : ''}
 
     ${!isApproved ? `
