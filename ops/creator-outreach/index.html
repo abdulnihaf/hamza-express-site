@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creator Outreach Control · Hamza Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1a; --card:#111826; --card2:#1a2234; --line:#273042;
+  --text:#e6edf7; --mute:#8b95a8; --dim:#5a6477;
+  --tan:#D2B48C; --gold:#fbbf24; --green:#22c55e; --red:#ef4444; --blue:#60a5fa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ============== TOPBAR ============== */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:16px;font-weight:700}
+.topbar h1 small{color:var(--mute);font-weight:500;margin-left:8px;font-size:12px}
+.btn{background:var(--tan);color:#0a0f1a;border:none;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;border-radius:4px}
+.btn:hover{filter:brightness(1.1)}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--tan);color:var(--tan)}
+.btn-mini{padding:6px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+
+/* ============== PIN GATE ============== */
+.gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+.gate-box{background:var(--card);border:1px solid var(--line);padding:32px;border-radius:8px;max-width:360px;width:90%;text-align:center}
+.gate-box h2{margin-bottom:12px;font-size:18px}
+.gate-box p{color:var(--mute);font-size:13px;margin-bottom:18px}
+.gate-box input{width:100%;padding:12px;background:var(--card2);border:1px solid var(--line);color:var(--text);font-family:'JetBrains Mono',monospace;border-radius:4px;font-size:14px}
+.gate-box .err{color:var(--red);font-size:12px;margin-top:10px;min-height:16px}
+
+/* ============== STATS BAR ============== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:14px 22px;background:var(--card2);border-bottom:1px solid var(--line)}
+.stat{padding:8px 12px;border-left:2px solid var(--tan)}
+.stat .num{font-size:22px;font-weight:800;line-height:1}
+.stat .lbl{font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em;font-family:'JetBrains Mono',monospace;margin-top:4px}
+
+/* ============== TEMPLATES PANEL ============== */
+.tmpl-panel{padding:18px 22px;background:var(--card);border-bottom:1px solid var(--line)}
+.tmpl-panel summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--tan);user-select:none;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+.tmpl-panel summary::after{content:' ▾';font-size:11px}
+.tmpl-panel[open] summary::after{content:' ▴'}
+.tmpl-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px}
+.tmpl-cell label{display:block;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.tmpl-cell textarea{width:100%;min-height:140px;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:10px;font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:4px;resize:vertical;line-height:1.5}
+.tmpl-cell input.subj{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:8px 10px;font-size:12px;border-radius:4px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.tmpl-help{font-size:11px;color:var(--mute);margin-top:8px;line-height:1.5}
+.tmpl-help code{background:var(--card2);padding:1px 6px;border-radius:3px;color:var(--tan);font-family:'JetBrains Mono',monospace;font-size:10px}
+@media (max-width:900px){.tmpl-grid{grid-template-columns:1fr}}
+
+/* ============== FILTER BAR ============== */
+.filter{padding:12px 22px;background:transparent;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px}
+.filter label{color:var(--mute);margin-right:4px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;font-size:10px;letter-spacing:.1em}
+.filter input,.filter select{background:var(--card2);border:1px solid var(--line);color:var(--text);padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:4px}
+
+/* ============== TABLE ============== */
+.list{padding:14px 22px}
+.row{display:grid;grid-template-columns:auto 1fr 90px 90px 1fr 240px;gap:14px;align-items:center;padding:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px;border-radius:6px;transition:border-color .15s}
+.row:hover{border-color:var(--card2)}
+.row.fully-sent{opacity:.55}
+.row.replied{border-left:3px solid var(--green)}
+.row.applied{border-left:3px solid var(--gold)}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--card2);object-fit:cover;flex-shrink:0;border:1px solid var(--line)}
+.who .handle{font-weight:700;font-size:14px}
+.who .handle::before{content:'@';color:var(--mute);font-weight:400}
+.who .name{font-size:11px;color:var(--mute);margin-top:2px}
+.followers{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;text-align:center}
+.followers small{display:block;font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em;margin-top:2px;font-weight:400}
+.tier{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--tan);text-align:center;background:rgba(212,180,140,.1);padding:6px;border-radius:4px}
+.bio{font-size:11px;color:var(--mute);line-height:1.5;max-height:42px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.actions{display:flex;gap:6px;justify-content:flex-end}
+.action-btn{flex:1;padding:8px 6px;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:4px;transition:all .15s;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;min-width:64px}
+.action-btn.disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+.action-btn.sent{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.4);color:var(--green)}
+.action-btn:hover:not(.disabled):not(.sent){border-color:var(--tan);color:var(--tan)}
+.action-btn.ig.sent{background:rgba(229,46,110,.1);border-color:rgba(229,46,110,.4);color:#e52e6e}
+.action-btn .check{font-size:9px}
+.row .reply-pill{display:inline-block;padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;border-radius:99px;margin-top:4px}
+.reply-pill.replied{background:rgba(34,197,94,.15);color:var(--green)}
+.reply-pill.applied{background:rgba(251,191,36,.15);color:var(--gold)}
+.reply-pill.declined{background:rgba(239,68,68,.15);color:var(--red)}
+.reply-pill.bounced{background:rgba(107,114,128,.2);color:var(--dim)}
+
+@media (max-width:1100px){
+  .row{grid-template-columns:48px 1fr 80px;grid-auto-rows:auto;gap:8px 12px}
+  .row .followers{grid-column:3;grid-row:1}
+  .row .tier{grid-column:3;grid-row:2;margin-top:4px}
+  .row .bio{grid-column:1/-1;grid-row:3}
+  .row .actions{grid-column:1/-1;grid-row:4;margin-top:6px}
+}
+
+/* ============== TOAST ============== */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--green);color:var(--green);padding:10px 18px;border-radius:6px;font-size:13px;z-index:90;display:none;font-family:'JetBrains Mono',monospace}
+.toast.show{display:block;animation:fadeOut 2.4s forwards}
+@keyframes fadeOut{0%{opacity:0;transform:translate(-50%,10px)}10%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
+
+.muted-msg{padding:24px;text-align:center;color:var(--mute);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <form class="gate-box" id="gateForm">
+    <h2>Creator Outreach Control</h2>
+    <p>Enter dashboard key to continue.</p>
+    <input type="password" id="gateKey" placeholder="DASHBOARD_API_KEY" autofocus>
+    <button class="btn" type="submit" style="margin-top:14px;width:100%">Unlock</button>
+    <div class="err" id="gateErr"></div>
+  </form>
+</div>
+
+<div id="app" style="display:none">
+  <div class="topbar">
+    <h1>Creator Outreach <small>· manual send · IG / WA / Email</small></h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-mini" id="btnRefresh">Refresh</button>
+      <button class="btn btn-ghost btn-mini" id="btnLogout">Lock</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <details class="tmpl-panel" open>
+    <summary>Outreach templates · paste your IG / WA / Email body here · supports {first_name} {handle} {followers} {tier}</summary>
+    <div class="tmpl-grid">
+      <div class="tmpl-cell">
+        <label>📷 Instagram DM</label>
+        <textarea id="tmpl_ig" placeholder="Paste your IG DM template. Use {first_name} or {handle} as placeholder."></textarea>
+      </div>
+      <div class="tmpl-cell">
+        <label>💬 WhatsApp</label>
+        <textarea id="tmpl_wa" placeholder="Paste your WhatsApp template."></textarea>
+      </div>
+      <div class="tmpl-cell">
+        <label>✉️ Email</label>
+        <input class="subj" id="tmpl_email_subj" placeholder="Subject line">
+        <textarea id="tmpl_email" placeholder="Paste your Email body."></textarea>
+      </div>
+    </div>
+    <div class="tmpl-help">
+      Templates auto-save in your browser. Available placeholders:
+      <code>{first_name}</code> <code>{handle}</code> <code>{followers}</code> <code>{tier}</code>
+      <code>{full_name}</code>
+      &nbsp;·&nbsp; The IG button copies the rendered text to your clipboard and opens
+      the creator's IG profile in a new tab — paste into Instagram's "Message" box and send.
+      The WA button opens wa.me with the text pre-filled. The Email button opens your default mail client with subject + body pre-filled.
+    </div>
+  </details>
+
+  <div class="filter">
+    <label>Min</label>
+    <input type="number" id="filterMin" value="5000" step="1000" style="width:80px">
+    <label>Max</label>
+    <input type="number" id="filterMax" value="100000" step="1000" style="width:80px">
+    <label>Hide already sent</label>
+    <select id="filterSent">
+      <option value="all">No</option>
+      <option value="not-fully-sent">Yes</option>
+      <option value="never-sent">Never sent (any channel)</option>
+    </select>
+    <label>Tier</label>
+    <select id="filterTier">
+      <option value="">All</option>
+      <option>T2</option><option>T3</option><option>T4</option><option>T5</option><option>T6</option>
+    </select>
+    <button class="btn btn-mini" id="btnApply">Apply</button>
+    <span style="margin-left:auto;color:var(--mute);font-size:12px" id="resultCount"></span>
+  </div>
+
+  <div class="list" id="list">
+    <div class="muted-msg">Loading…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/creator-outreach';
+
+// ── Templates persistence
+const DEFAULT_TEMPLATES = {
+  ig: '',
+  wa: '',
+  email: '',
+  email_subj: 'An invitation from Hamza Hotel — est. 1918, Shivajinagar',
+};
+function loadTemplates() {
+  try { return Object.assign({}, DEFAULT_TEMPLATES, JSON.parse(localStorage.getItem('co_templates') || '{}')); }
+  catch { return DEFAULT_TEMPLATES; }
+}
+function saveTemplates(t) { localStorage.setItem('co_templates', JSON.stringify(t)); }
+
+function bindTemplates() {
+  const t = loadTemplates();
+  document.getElementById('tmpl_ig').value = t.ig;
+  document.getElementById('tmpl_wa').value = t.wa;
+  document.getElementById('tmpl_email').value = t.email;
+  document.getElementById('tmpl_email_subj').value = t.email_subj;
+  ['tmpl_ig','tmpl_wa','tmpl_email','tmpl_email_subj'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      saveTemplates({
+        ig: document.getElementById('tmpl_ig').value,
+        wa: document.getElementById('tmpl_wa').value,
+        email: document.getElementById('tmpl_email').value,
+        email_subj: document.getElementById('tmpl_email_subj').value,
+      });
+    });
+  });
+}
+
+// ── PIN gate
+function getKey() { return sessionStorage.getItem('co_key') || ''; }
+function setKey(k) { sessionStorage.setItem('co_key', k); }
+
+document.getElementById('gateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const k = document.getElementById('gateKey').value.trim();
+  if (!k) return;
+  // Test the key
+  const r = await fetch(API + '?action=stats', { headers: { 'X-Dashboard-Key': k } });
+  if (r.status === 401) {
+    document.getElementById('gateErr').textContent = 'Wrong key.';
+    return;
+  }
+  setKey(k);
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  bindTemplates();
+  await refreshAll();
+});
+
+document.getElementById('btnLogout').addEventListener('click', () => {
+  sessionStorage.removeItem('co_key');
+  location.reload();
+});
+document.getElementById('btnRefresh').addEventListener('click', refreshAll);
+document.getElementById('btnApply').addEventListener('click', () => loadList());
+
+// Auto-unlock if key is in session
+if (getKey()) {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  bindTemplates();
+  refreshAll();
+}
+
+// ── Helpers
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('show'); void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function render(template, vars) {
+  let s = String(template || '');
+  for (const k in vars) {
+    s = s.replaceAll('{' + k + '}', vars[k] || '');
+  }
+  return s;
+}
+
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000) return (n/1000).toFixed(n>=10000 ? 0 : 1) + 'K';
+  return String(n);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    return true;
+  }
+}
+
+// ── Data load
+async function refreshAll() {
+  await loadStats();
+  await loadList();
+}
+
+async function loadStats() {
+  const r = await fetch(API + '?action=stats', { headers: { 'X-Dashboard-Key': getKey() } });
+  if (!r.ok) return;
+  const d = await r.json();
+  const sentMap = {};
+  (d.sent_by_channel || []).forEach(x => sentMap[x.channel] = x.c);
+  const replyMap = {};
+  (d.replies || []).forEach(x => replyMap[x.reply_state] = x.c);
+  const stats = document.getElementById('stats');
+  stats.innerHTML = `
+    <div class="stat"><div class="num">${sentMap.ig    || 0}</div><div class="lbl">IG sent</div></div>
+    <div class="stat"><div class="num">${sentMap.wa    || 0}</div><div class="lbl">WhatsApp sent</div></div>
+    <div class="stat"><div class="num">${sentMap.email || 0}</div><div class="lbl">Email sent</div></div>
+    <div class="stat"><div class="num" style="color:var(--green)">${replyMap.replied || 0}</div><div class="lbl">Replied</div></div>
+    <div class="stat"><div class="num" style="color:var(--gold)">${replyMap.applied || 0}</div><div class="lbl">Applied</div></div>
+    <div class="stat"><div class="num" style="color:var(--red)">${replyMap.declined || 0}</div><div class="lbl">Declined</div></div>
+  `;
+}
+
+let CURRENT = [];
+async function loadList() {
+  const min = parseInt(document.getElementById('filterMin').value) || 5000;
+  const max = parseInt(document.getElementById('filterMax').value) || 100000;
+  const sentFilter = document.getElementById('filterSent').value;
+  const tierFilter = document.getElementById('filterTier').value;
+
+  document.getElementById('list').innerHTML = '<div class="muted-msg">Loading…</div>';
+  const r = await fetch(API + `?action=list&min_followers=${min}&max_followers=${max}&limit=100`, {
+    headers: { 'X-Dashboard-Key': getKey() }
+  });
+  if (!r.ok) {
+    document.getElementById('list').innerHTML = '<div class="muted-msg">Failed to load.</div>';
+    return;
+  }
+  const d = await r.json();
+  CURRENT = d.creators || [];
+
+  // Apply client-side filters
+  let visible = CURRENT;
+  if (tierFilter) visible = visible.filter(c => c.tier === tierFilter);
+  if (sentFilter === 'not-fully-sent') {
+    visible = visible.filter(c => !(c.sent.ig && c.sent.wa && c.sent.email));
+  } else if (sentFilter === 'never-sent') {
+    visible = visible.filter(c => !(c.sent.ig || c.sent.wa || c.sent.email));
+  }
+
+  document.getElementById('resultCount').textContent =
+    `${visible.length} shown · ${CURRENT.length} total in window · ${(d.excluded_brands || []).length} restaurant/brand auto-excluded`;
+
+  if (visible.length === 0) {
+    document.getElementById('list').innerHTML = '<div class="muted-msg">No creators match the filters.</div>';
+    return;
+  }
+  document.getElementById('list').innerHTML = visible.map(rowHTML).join('');
+  visible.forEach(c => bindRow(c));
+}
+
+function rowHTML(c) {
+  const handle = c.handle;
+  const safeName = (c.full_name || '').replace(/[<>]/g, '');
+  const fullySent = c.sent.ig && c.sent.wa && c.sent.email;
+  const replyCls = c.reply_state === 'replied' ? 'replied' : c.reply_state === 'applied' ? 'applied' : '';
+  const cls = `row${fullySent ? ' fully-sent' : ''}${replyCls ? ' ' + replyCls : ''}`;
+  const replyPill = c.reply_state && c.reply_state !== 'none'
+    ? `<span class="reply-pill ${c.reply_state}">${c.reply_state}</span>`
+    : '';
+  const avatar = c.profile_pic_url
+    ? `<img class="avatar" src="${c.profile_pic_url}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
+    : `<div class="avatar"></div>`;
+
+  // Channel button states
+  const igBtn = `<button class="action-btn ig${c.sent.ig ? ' sent' : ''}" data-act="ig" data-handle="${handle}">📷 IG${c.sent.ig ? ' <span class="check">✓</span>' : ''}</button>`;
+  const waBtn = c.contact.whatsapp
+    ? `<a class="action-btn wa${c.sent.wa ? ' sent' : ''}" data-act="wa" data-handle="${handle}" data-phone="${c.contact.whatsapp}" target="_blank" rel="noopener">💬 WA${c.sent.wa ? ' <span class="check">✓</span>' : ''}</a>`
+    : `<span class="action-btn disabled">💬 —</span>`;
+  const emBtn = c.contact.email
+    ? `<a class="action-btn em${c.sent.email ? ' sent' : ''}" data-act="email" data-handle="${handle}" data-email="${c.contact.email}" target="_blank" rel="noopener">✉ Mail${c.sent.email ? ' <span class="check">✓</span>' : ''}</a>`
+    : `<span class="action-btn disabled">✉ —</span>`;
+
+  return `
+    <div class="${cls}" data-handle="${handle}">
+      ${avatar}
+      <div class="who">
+        <div class="handle">${handle}</div>
+        <div class="name">${safeName}${replyPill ? ' ' + replyPill : ''}</div>
+      </div>
+      <div class="followers">${fmt(c.followers_count)}<small>followers</small></div>
+      <div class="tier">${c.tier}</div>
+      <div class="bio">${(c.biography || '').replace(/[<>]/g,'').slice(0,160)}</div>
+      <div class="actions">
+        ${igBtn}
+        ${waBtn}
+        ${emBtn}
+      </div>
+    </div>
+  `;
+}
+
+function bindRow(c) {
+  const row = document.querySelector(`.row[data-handle="${c.handle}"]`);
+  if (!row) return;
+  const t = loadTemplates();
+  const vars = {
+    first_name: c.first_name || c.full_name || c.handle,
+    handle: c.handle,
+    followers: fmt(c.followers_count),
+    tier: c.tier,
+    full_name: c.full_name || '',
+  };
+
+  // IG: copy to clipboard + open profile
+  const igBtn = row.querySelector('[data-act="ig"]');
+  if (igBtn && !igBtn.classList.contains('disabled')) {
+    igBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const text = render(t.ig || '(IG template not set — paste it in the Templates panel above)', vars);
+      const ok = await copyToClipboard(text);
+      window.open(`https://www.instagram.com/${c.handle}/`, '_blank');
+      await logSend(c.handle, 'ig', text, c.handle);
+      toast(ok ? '📋 IG message copied · profile opened. Paste & send.' : 'Profile opened (clipboard failed).');
+      setTimeout(loadList, 600);
+    });
+  }
+
+  // WA: pre-fill wa.me
+  const waBtn = row.querySelector('[data-act="wa"]');
+  if (waBtn) {
+    waBtn.addEventListener('click', async () => {
+      const text = render(t.wa || '(WA template not set — paste it in the Templates panel above)', vars);
+      const phone = waBtn.dataset.phone;
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+      waBtn.href = url;  // ensure href is current
+      await logSend(c.handle, 'wa', text, phone);
+      toast('💬 WhatsApp opened · review and tap send.');
+      setTimeout(loadList, 600);
+    });
+  }
+
+  // Email: mailto:
+  const emBtn = row.querySelector('[data-act="email"]');
+  if (emBtn) {
+    emBtn.addEventListener('click', async () => {
+      const subj = render(t.email_subj || 'An invitation from Hamza Hotel', vars);
+      const body = render(t.email || '(Email template not set — paste it in the Templates panel above)', vars);
+      const email = emBtn.dataset.email;
+      const url = `mailto:${email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+      emBtn.href = url;
+      await logSend(c.handle, 'email', body, email);
+      toast('✉ Mail draft opened · review and send.');
+      setTimeout(loadList, 600);
+    });
+  }
+}
+
+async function logSend(handle, channel, snapshot, contactValue) {
+  try {
+    await fetch(API + '?action=log-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ handle, channel, snapshot_text: snapshot, contact_value: contactValue }),
+    });
+  } catch (e) { console.warn('log-send failed', e); }
+}
+
+</script>
+</body>
+</html>
