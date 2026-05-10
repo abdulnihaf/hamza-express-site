@@ -299,14 +299,17 @@ function goToStep(n) {
 // STEP 1: handle input → enable continue
 const handleInput = $('handle-input');
 const btnStep1 = $('btn-step1-next');
-handleInput.addEventListener('input', () => {
+function validateHandle() {
   const v = handleInput.value.trim().replace(/^@/, '');
   const valid = /^[a-z0-9._]{2,30}$/i.test(v);
   btnStep1.disabled = !valid;
   $('handle-helper').textContent = v && !valid ? 'Letters, numbers, dots, underscores only.' : 'Just the username, no @ needed.';
   $('handle-helper').className = valid || !v ? 'helper' : 'helper error';
-});
+}
+['input','change','blur','paste'].forEach(ev => handleInput.addEventListener(ev, () => setTimeout(validateHandle, 0)));
 handleInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !btnStep1.disabled) btnStep1.click(); });
+// Validate on load in case Chrome autofilled or value was set programmatically
+validateHandle();
 
 btnStep1.addEventListener('click', async () => {
   STATE.handle = handleInput.value.trim().replace(/^@/, '').toLowerCase();
@@ -419,7 +422,8 @@ function checkPhone() {
   const p = phoneInput.value.replace(/\D/g, '');
   btnStep5.disabled = !(p.length >= 10);
 }
-phoneInput.addEventListener('input', checkPhone);
+['input','change','blur','paste'].forEach(ev => phoneInput.addEventListener(ev, () => setTimeout(checkPhone, 0)));
+checkPhone();
 btnStep5.addEventListener('click', () => {
   STATE.phone = phoneInput.value.trim();
   STATE.email = emailInput.value.trim();
