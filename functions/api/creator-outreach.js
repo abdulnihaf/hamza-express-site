@@ -318,16 +318,22 @@ async function actionSendBulkWhatsApp(env, db, body) {
     return d.length >= 10 ? d : null;
   };
 
-  // Send template helper (inline — keeps this file self-contained).
-  // Tries the latest approved Marketing template, falls back to the prior
-  // generation. The chain is: v2 → v1. Whichever is approved at Meta gets
-  // used; the other is skipped automatically. This way the moment v2
-  // approves, sends auto-upgrade with no redeploy.
+  // Send template helper. Chain v3 → v2 → v1.
+  //   v3: "Greetings!" opener, ZERO body vars. Auto-prefers when Meta approves.
+  //   v2: "Hi @{{1}}" with handle (currently default).
+  //   v1: older copy, last fallback.
   async function sendMarketingTemplate(phone, handle) {
     const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
-    const chain = ['creator_outreach_invitation_v2', 'creator_outreach_invitation_v1'];
+    const chain = [
+      { name: 'creator_outreach_invitation_v3', vars: [] },
+      { name: 'creator_outreach_invitation_v2', vars: [{ type: 'text', text: handle }] },
+      { name: 'creator_outreach_invitation_v1', vars: [{ type: 'text', text: handle }] },
+    ];
     let lastErr = null;
-    for (const name of chain) {
+    for (const t of chain) {
+      const components = t.vars.length
+        ? [{ type: 'body', parameters: t.vars }]
+        : [];
       const resp = await fetch(url, {
         method: 'POST',
         headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
@@ -335,28 +341,16 @@ async function actionSendBulkWhatsApp(env, db, body) {
           messaging_product: 'whatsapp',
           to: phone,
           type: 'template',
-          template: {
-            name,
-            language: { code: 'en' },
-            components: [
-              { type: 'body', parameters: [{ type: 'text', text: handle }] },
-            ],
-          },
+          template: { name: t.name, language: { code: 'en' }, components },
         }),
       });
       const data = await resp.json();
-      if (resp.ok) return { ok: true, message_id: data?.messages?.[0]?.id, via: name };
+      if (resp.ok) return { ok: true, message_id: data?.messages?.[0]?.id, via: t.name };
       lastErr = { status: resp.status, error: data?.error };
-      // Common Meta errors that should fall through to the next name in chain:
-      //   132000 = template name doesn't exist (still pending)
-      //   132001 = template-language mismatch
-      //   132012 = template-variable mismatch
       const code = data?.error?.code;
-      if (code !== 132000 && code !== 132001 && code !== 132012) {
-        // For other errors (recipient blocked us / phone invalid / rate limit),
-        // don't retry — the next template won't help.
-        break;
-      }
+      // Fall through only on template-side errors (132000 not-found, 132001 lang
+      // mismatch, 132012 var mismatch). Recipient-side errors stop retrying.
+      if (code !== 132000 && code !== 132001 && code !== 132012) break;
     }
     return { ok: false, ...(lastErr || { error: 'unknown' }) };
   }
@@ -540,7 +534,7 @@ async function actionSendBulkEmail(env, db, body) {
       to: email,
       subject: payload.subject,
       html: payload.html,
-      from_name: 'Nihaf · Hamza Express',
+      from_name: 'Abdul Nihaf',
     });
 
     if (r.ok) {

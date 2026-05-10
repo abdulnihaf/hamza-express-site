@@ -16,7 +16,7 @@
 //     subject:  'An invitation from Hamza Hotel',
 //     html:     '<html>…</html>',
 //     reply_to: 'nihaf@hnhotels.in',          // optional, defaults to sender
-//     from_name: 'Nihaf · Hamza Express',     // optional friendly name
+//     from_name: 'Abdul Nihaf',     // optional friendly name
 //   });
 //   // → { ok: true, message_id }  on success
 //   // → { ok: false, status, error } on failure
@@ -96,7 +96,7 @@ export async function sendEmail(env, opts) {
     return { ok: false, error: 'GMAIL_SENDER not configured' };
   }
 
-  const fromName = opts.from_name || 'Nihaf · Hamza Express';
+  const fromName = opts.from_name || 'Abdul Nihaf';
   const fromEmail = env.GMAIL_SENDER;
   const fromHeader = `"${fromName}" <${fromEmail}>`;
 

@@ -1118,7 +1118,7 @@ async function notifyCreatorEmail(env, db, app, slot, tierMeta, kind /* 'receive
     to: app.contact_email,
     subject: payload.subject,
     html: payload.html,
-    from_name: 'Nihaf · Hamza Express',
+    from_name: 'Abdul Nihaf',
   });
 
   try {
