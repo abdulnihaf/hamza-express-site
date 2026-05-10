@@ -4,9 +4,9 @@
 // POSTs an RFC 2822 message base64url-encoded to /gmail/v1/users/me/messages/send.
 //
 // Required env (set as Cloudflare Pages secrets):
+//   GMAIL_CLIENT_ID         — Hamza Express Email Sender OAuth client (in nihaf@hnhotels.in GCP project)
+//   GMAIL_CLIENT_SECRET     — same client's secret
 //   GMAIL_REFRESH_TOKEN     — minted by /api/email-auth (one-time, gmail.send scope)
-//   GOOGLE_DRIVE_CLIENT_ID  — same OAuth client used for Drive (NCH Marketing Web)
-//   GOOGLE_DRIVE_CLIENT_SECRET
 //   GMAIL_SENDER            — display address (e.g. "nihaf@hnhotels.in")
 //
 // Usage:
@@ -33,11 +33,11 @@ async function getAccessToken(env) {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedExpiresAt > now + 300) return cachedToken;
 
-  const clientId = env.GOOGLE_DRIVE_CLIENT_ID;
-  const clientSecret = env.GOOGLE_DRIVE_CLIENT_SECRET;
+  const clientId = env.GMAIL_CLIENT_ID;
+  const clientSecret = env.GMAIL_CLIENT_SECRET;
   const refreshToken = env.GMAIL_REFRESH_TOKEN;
   if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error('Missing GOOGLE_DRIVE_CLIENT_ID/SECRET or GMAIL_REFRESH_TOKEN — run /api/email-auth first');
+    throw new Error('Missing GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET / GMAIL_REFRESH_TOKEN — run /api/email-auth first');
   }
 
   const resp = await fetch(TOKEN_URL, {

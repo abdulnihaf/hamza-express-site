@@ -1,17 +1,20 @@
 // /api/email-auth — ONE-TIME setup flow to obtain a Gmail API refresh token
 // for sending emails as nihaf@hnhotels.in via the Gmail API.
 //
-// Mirrors /api/drive-auth pattern. Same OAuth client (NCH Marketing Web —
-// GOOGLE_DRIVE_CLIENT_ID / SECRET on this project) so we don't have to set up
-// a fresh client. We only need to:
-//   1. Add this endpoint URL to the Authorized Redirect URIs of that client
-//      in Google Cloud Console (one click)
+// Uses dedicated OAuth client "Hamza Express Email Sender" living in
+// nihaf@hnhotels.in's Default Gemini Project (gen-lang-client-0856693577).
+// Client credentials are stored as GMAIL_CLIENT_ID + GMAIL_CLIENT_SECRET on
+// this Pages project. Sender is GMAIL_SENDER (= nihaf@hnhotels.in).
+//
+// Setup needed once:
+//   1. Add this endpoint URL to the Authorized Redirect URIs of the Web
+//      OAuth client in Google Cloud Console (already done at setup time)
 //   2. Run this flow ONCE in a browser logged into nihaf@hnhotels.in
 //   3. Paste the returned refresh token into wrangler:
 //        wrangler pages secret put GMAIL_REFRESH_TOKEN --project-name=hamza-express-site
 //
 // After that the creator-application flow can send templated HTML emails to
-// every applicant from nihaf@hnhotels.in — fully automated, no MCP needed.
+// every applicant from nihaf@hnhotels.in — fully automated.
 //
 // Scope is gmail.send (minimum privilege — can only SEND, can't read inbox).
 
@@ -31,13 +34,13 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
-  const clientId = env.GOOGLE_DRIVE_CLIENT_ID;        // re-using existing OAuth client
-  const clientSecret = env.GOOGLE_DRIVE_CLIENT_SECRET;
+  const clientId = env.GMAIL_CLIENT_ID;
+  const clientSecret = env.GMAIL_CLIENT_SECRET;
   const redirectUri = `${url.origin}/api/email-auth`;
 
   if (!clientId || !clientSecret) {
     return htmlResp(
-      '<pre>Missing GOOGLE_DRIVE_CLIENT_ID / GOOGLE_DRIVE_CLIENT_SECRET secrets on this project.</pre>',
+      '<pre>Missing GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET secrets on this project. Set them via wrangler pages secret put.</pre>',
       500,
     );
   }
