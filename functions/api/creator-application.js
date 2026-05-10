@@ -753,7 +753,7 @@ async function notifyCreatorReceived(env, db, app, slot, tierMeta) {
     : 'your selected slot';
   const tierLabel = (tierMeta && tierMeta.label) || (TIER_MATRIX[app.computed_tier]?.label) || app.computed_tier || 'TBD';
 
-  const r = await sendWabaSmart(env, app.contact_phone, 'creator_application_received', [
+  const r = await sendWabaSmart(env, app.contact_phone, 'creator_application_received_v2', [
     app.username, status, tierLabel, slotStr,
   ], text);
   try {
@@ -833,7 +833,7 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
       : `⏳ NEEDS REVIEW. ${decisionReason || 'Manual approval required for this tier.'}`;
   const reviewUrl = `https://hnhotels.in/ops/influencer-applications/?app_id=${app.id || ''}`;
 
-  const r = await sendWabaSmart(env, ownerPhone, 'creator_owner_alert', [
+  const r = await sendWabaSmart(env, ownerPhone, 'creator_owner_alert_v2', [
     profile, slotReq, statusLong, reviewUrl,
   ], text);
   // best-effort log into the application row
@@ -956,7 +956,7 @@ async function notifyCreator(env, db, app, slot, tierMeta) {
 
   const asks = (m.asks || []).join(' · ');
 
-  const r = await sendWabaSmart(env, app.contact_phone, 'creator_invitation_confirmed', [
+  const r = await sendWabaSmart(env, app.contact_phone, 'creator_invitation_confirmed_v2', [
     tierLabel, slotStr, hostingWith, asks,
   ], text);
   try {
