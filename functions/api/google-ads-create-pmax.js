@@ -78,9 +78,10 @@ export async function onRequest(context) {
       case 'enrich-pmax':       return await enrichPmax(token, env, body);
       case 'update-campaign':   return await updateCampaign(token, env, body);
       case 'update-asset-group':return await updateAssetGroup(token, env, body);
+      case 'list-campaign-goals':return await listCampaignGoals(token, env, url.searchParams.get('id'));
       case 'remove-pmax':       return await removePmax(token, env, url.searchParams.get('id'));
       default:
-        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','remove-pmax'] }, 400);
+        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','list-campaign-goals','remove-pmax'] }, 400);
     }
   } catch (err) {
     return j({ error: err.message, stack: env.DEBUG ? err.stack : undefined }, 500);
@@ -812,6 +813,25 @@ async function updateAssetGroup(token, env, body) {
     operations: [{ update, updateMask: masks.join(',') }],
   });
   return j({ ok: true, updatedFields: masks, resource: r.results?.[0]?.resourceName });
+}
+
+// ─── List CampaignConversionGoal records for a campaign ─────────────────
+// Used to discover the actual resource-name pattern (campaign_id ~ category ~
+// origin) Google has auto-created. update-campaign references these by name.
+async function listCampaignGoals(token, env, id) {
+  if (!id) throw new Error('?id=<campaign_id> required');
+  const rows = await gaql(token, env, `
+    SELECT campaign.id, campaign_conversion_goal.category,
+           campaign_conversion_goal.origin, campaign_conversion_goal.biddable,
+           campaign_conversion_goal.resource_name
+    FROM campaign_conversion_goal
+    WHERE campaign.id = ${id}
+  `);
+  return j({
+    ok: true,
+    count: rows.length,
+    goals: rows.map(r => r.campaignConversionGoal),
+  });
 }
 
 // ─── Remove PMax campaign ────────────────────────────────────────────────
