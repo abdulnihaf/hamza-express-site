@@ -149,7 +149,11 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn" id="btn-save-tmpl" style="background:var(--tan)">💾 Save template</button>
       <button class="btn" id="btn-bulk-email" style="background:var(--green);color:#fff">📩 Bulk Email all eligible</button>
+      <button class="btn" id="btn-bulk-wa" style="background:#25d366;color:#fff">📱 Bulk WhatsApp (Marketing template)</button>
       <span id="bulk-status" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;flex:1"></span>
+    </div>
+    <div class="tmpl-help" style="margin-top:10px;font-size:11px;color:var(--mute)">
+      <strong style="color:#25d366">📱 Bulk WhatsApp</strong> uses the Meta-approved Marketing template <code>creator_outreach_invitation_v1</code> — body has the heritage paragraph + "View my invitation" URL button. Only the {handle} variable is dynamic; the body text itself can't be edited (it's locked by Meta approval). To change body, submit a new template + wait 6-24h.
     </div>
   </details>
 
@@ -235,6 +239,44 @@ function bindTemplates() {
   });
   // Bulk email button
   document.getElementById('btn-bulk-email').addEventListener('click', bulkEmail);
+  document.getElementById('btn-bulk-wa').addEventListener('click', bulkWhatsApp);
+}
+
+// ── Bulk WhatsApp — Meta-approved Marketing template
+async function bulkWhatsApp() {
+  const status = document.getElementById('bulk-status');
+  const btn = document.getElementById('btn-bulk-wa');
+  const eligible = (CURRENT || []).filter(c => c.contact && c.contact.whatsapp && !c.sent.wa);
+  if (!eligible.length) {
+    toast('No eligible creators (need WhatsApp number + not-yet-sent)', true);
+    return;
+  }
+  const ok = confirm(`Send the Marketing-template WhatsApp to ${eligible.length} creators?\n\nFrom: +91 80080 02049 (Hamza Express WABA)\nTemplate: creator_outreach_invitation_v1\nButton: "View my invitation"\n\nThis cannot be undone.`);
+  if (!ok) return;
+
+  btn.disabled = true;
+  btn.textContent = '📱 Sending…';
+  status.textContent = `Sending WhatsApp template to ${eligible.length} creators…`;
+
+  try {
+    const r = await fetch(API + '?action=send-bulk-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ handles: eligible.map(c => c.handle) }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'bulk WA send failed');
+    const s = d.summary;
+    status.innerHTML = `✓ Sent ${s.sent} · skipped ${s.skipped_already_sent + s.skipped_no_phone} · failed ${s.failed}`;
+    toast(`📱 ${s.sent} WhatsApp messages sent`);
+    await loadList();
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+    toast('Bulk WhatsApp failed: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📱 Bulk WhatsApp (Marketing template)';
+  }
 }
 
 // In-memory shim for the row-action click handlers, which still expect

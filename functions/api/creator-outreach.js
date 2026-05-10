@@ -49,6 +49,7 @@ export async function onRequest(context) {
       if (action === 'mark-reply')      return await actionMarkReply(env, db, body);
       if (action === 'save-config')     return await actionSaveConfig(env, db, body);
       if (action === 'send-bulk-email') return await actionSendBulkEmail(env, db, body);
+      if (action === 'send-bulk-whatsapp') return await actionSendBulkWhatsApp(env, db, body);
     }
     return json({ error: 'unknown action: ' + action }, 400);
   } catch (e) {
@@ -278,6 +279,117 @@ function tierOf(f) {
 }
 
 async function safeJson(req) { try { return await req.json(); } catch { return {}; } }
+
+// ─────────────────────────────────────────────────────────────────────
+// SEND-BULK-WHATSAPP — fires the Meta-approved MARKETING template
+// `creator_outreach_invitation_v1` to selected creators via Cloud API.
+//
+// Template body has 1 var (handle). 1 URL button (static URL → /creators/).
+// Idempotent: skips creators already sent on the WhatsApp channel unless
+// body.skip_already_sent === false.
+// ─────────────────────────────────────────────────────────────────────
+async function actionSendBulkWhatsApp(env, db, body) {
+  const handles = Array.isArray(body.handles) ? body.handles.filter(h => typeof h === 'string') : [];
+  if (!handles.length) return json({ error: 'handles required' }, 400);
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
+    return json({ error: 'waba_not_configured', detail: 'Set WA_ACCESS_TOKEN and WA_PHONE_ID secrets.' }, 500);
+  }
+  const skipAlready = body.skip_already_sent !== false;
+
+  const placeholders = handles.map(() => '?').join(',');
+  const cre = await db.prepare(`
+    SELECT bp.username, bp.full_name, bp.followers_count,
+           bp.extracted_phones_json, bp.extracted_whatsapp_json,
+           (SELECT sent_at FROM creator_outreach_log WHERE handle=bp.username AND channel='wa') AS wa_sent_at
+    FROM influencer_bio_pulse bp
+    WHERE bp.username IN (${placeholders})
+  `).bind(...handles).all();
+
+  const summary = { sent: 0, skipped_no_phone: 0, skipped_already_sent: 0, failed: 0 };
+  const results = [];
+
+  // Phone normaliser
+  const normPhone = (p) => {
+    if (!p) return null;
+    const d = String(p).replace(/\D/g, '');
+    if (d.length === 10) return '91' + d;
+    if (d.length === 12 && d.startsWith('91')) return d;
+    if (d.length === 11 && d.startsWith('0')) return '91' + d.slice(1);
+    return d.length >= 10 ? d : null;
+  };
+
+  // Send template helper (inline — keeps this file self-contained)
+  async function sendMarketingTemplate(phone, handle) {
+    const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'template',
+        template: {
+          name: 'creator_outreach_invitation_v1',
+          language: { code: 'en' },
+          components: [
+            { type: 'body', parameters: [{ type: 'text', text: handle }] },
+            // No button params — the URL button has no variable in v1
+          ],
+        },
+      }),
+    });
+    const data = await resp.json();
+    return resp.ok
+      ? { ok: true, message_id: data?.messages?.[0]?.id }
+      : { ok: false, status: resp.status, error: data?.error };
+  }
+
+  for (const c of (cre.results || [])) {
+    if (skipAlready && c.wa_sent_at) {
+      summary.skipped_already_sent++;
+      results.push({ handle: c.username, status: 'skipped_already_sent' });
+      continue;
+    }
+    let phone = null;
+    try {
+      const pl = JSON.parse(c.extracted_phones_json || '[]');
+      if (pl.length) phone = pl[0];
+    } catch {}
+    if (!phone) {
+      try {
+        const wl = JSON.parse(c.extracted_whatsapp_json || '[]');
+        if (wl.length) phone = wl[0];
+      } catch {}
+    }
+    phone = normPhone(phone);
+    if (!phone) {
+      summary.skipped_no_phone++;
+      results.push({ handle: c.username, status: 'skipped_no_phone' });
+      continue;
+    }
+
+    const r = await sendMarketingTemplate(phone, c.username);
+    if (r.ok) {
+      summary.sent++;
+      results.push({ handle: c.username, status: 'sent', message_id: r.message_id, phone });
+      try {
+        await db.prepare(`
+          INSERT INTO creator_outreach_log (handle, channel, sent_at, sent_by, send_count, snapshot_text, contact_value)
+          VALUES (?, 'wa', datetime('now'), 'bulk', 1, ?, ?)
+          ON CONFLICT(handle, channel) DO UPDATE SET
+            sent_at=datetime('now'), send_count=send_count+1,
+            snapshot_text=excluded.snapshot_text, contact_value=excluded.contact_value, updated_at=datetime('now')
+        `).bind(c.username, 'creator_outreach_invitation_v1 (Marketing template, handle=' + c.username + ')', phone).run();
+      } catch {}
+    } else {
+      summary.failed++;
+      results.push({ handle: c.username, status: 'failed', error: r.error?.message || JSON.stringify(r.error || r).slice(0, 200), phone });
+    }
+    await new Promise(res => setTimeout(res, 300));
+  }
+
+  return json({ success: true, summary, results });
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // LOAD-CONFIG — returns the persisted unified outreach template + subject
