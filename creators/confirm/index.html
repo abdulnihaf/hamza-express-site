@@ -9,122 +9,60 @@
 <link rel="icon" href="/favicon.ico">
 <style>
 :root{
-  --sienna:#713520;
-  --sienna-dark:#5a2818;
-  --tan:#D2B48C;
-  --tan-light:#dfc5a1;
-  --offwhite:#FAF3E3;
-  --offwhite-dim:#f0e7d3;
-  --white:#FFFFFF;
-  --ink-soft:#5a2a1a;
-  --ink-mute:#8b6147;
-  --gold:#a87a2a;
-  --green:#0a6645;
-  --red:#9c2a2a;
+  --sienna:#713520;--sienna-dark:#5a2818;
+  --tan:#D2B48C;--tan-light:#dfc5a1;
+  --offwhite:#FAF3E3;--offwhite-dim:#f0e7d3;
+  --white:#FFFFFF;--ink-soft:#5a2a1a;--ink-mute:#8b6147;
+  --gold:#a87a2a;--green:#0a6645;--red:#9c2a2a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{
-  background:var(--tan);
-  color:var(--sienna);
-  font-family:'Times New Roman',Georgia,'Times',serif;
-  -webkit-font-smoothing:antialiased;
-  line-height:1.55;
-  min-height:100vh;
-}
-.topbar{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:18px 28px;
-  border-bottom:1px solid var(--sienna);
-  background:var(--tan);
-}
+html,body{background:var(--tan);color:var(--sienna);font-family:'Times New Roman',Georgia,'Times',serif;-webkit-font-smoothing:antialiased;line-height:1.55;min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;border-bottom:1px solid var(--sienna);background:var(--tan)}
 .topbar img{height:30px;width:auto;display:block}
-.topbar .since{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:11px;color:var(--sienna);
-  letter-spacing:.22em;text-transform:uppercase;font-weight:600;
-}
+.topbar .since{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
 
-.stage{
-  max-width:640px;margin:0 auto;
-  padding:48px 24px 80px;
-  text-align:center;
-}
-.eyebrow{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:11px;color:var(--sienna);
-  letter-spacing:.32em;text-transform:uppercase;
-  font-weight:700;margin-bottom:24px;
-}
+.stage{max-width:640px;margin:0 auto;padding:48px 24px 80px;text-align:center}
+.eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);letter-spacing:.32em;text-transform:uppercase;font-weight:700;margin-bottom:24px}
 .eyebrow span{display:inline-block;padding:0 18px;position:relative}
-.eyebrow span::before,.eyebrow span::after{
-  content:'';position:absolute;top:50%;width:36px;height:1px;
-  background:var(--sienna);opacity:.6;
-}
-.eyebrow span::before{right:100%}
-.eyebrow span::after{left:100%}
+.eyebrow span::before,.eyebrow span::after{content:'';position:absolute;top:50%;width:36px;height:1px;background:var(--sienna);opacity:.6}
+.eyebrow span::before{right:100%}.eyebrow span::after{left:100%}
 
-h1{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:46px;font-weight:700;font-style:italic;
-  line-height:1.1;letter-spacing:-.01em;
-  margin-bottom:22px;color:var(--sienna);
-}
-.lead{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:18px;line-height:1.7;color:var(--ink-soft);
-  max-width:520px;margin:0 auto 36px;
-}
+h1{font-family:'Times New Roman',Georgia,serif;font-size:46px;font-weight:700;font-style:italic;line-height:1.1;letter-spacing:-.01em;margin-bottom:22px;color:var(--sienna)}
+.lead{font-family:'Times New Roman',Georgia,serif;font-size:18px;line-height:1.7;color:var(--ink-soft);max-width:520px;margin:0 auto 36px}
 
 /* SLOT CARD */
-.slot-card{
-  background:var(--offwhite);
-  border:2px solid var(--sienna);
-  padding:32px 28px;margin:0 auto 32px;
-  max-width:520px;text-align:left;
+.slot-card{background:var(--offwhite);border:2px solid var(--sienna);padding:32px 28px;margin:0 auto 24px;max-width:520px;text-align:left}
+.slot-card .label{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.18em;font-weight:700;margin-bottom:8px}
+.slot-card .date{font-family:'Times New Roman',Georgia,serif;font-size:26px;font-weight:700;color:var(--sienna);line-height:1.2;margin-bottom:6px}
+.slot-card .date-sub{font-family:'Times New Roman',Georgia,serif;font-size:14px;font-style:italic;color:var(--ink-mute);margin-bottom:18px}
+.slot-card .where{font-family:'Times New Roman',Georgia,serif;font-size:14px;color:var(--ink-soft);line-height:1.6;padding-top:14px;border-top:1px dotted var(--sienna)}
+
+/* TIME PICKER (window flexibility) */
+.time-picker{margin:0 auto 24px;max-width:520px;text-align:left}
+.time-picker .label{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.22em;font-weight:700;margin-bottom:14px;padding-left:4px}
+.time-picker .hint{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:14px;color:var(--ink-mute);margin-bottom:16px;padding-left:4px;line-height:1.5}
+.windows{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.win{
+  background:var(--offwhite);border:1.5px solid var(--sienna);
+  font-family:'Times New Roman',Georgia,serif;color:var(--sienna);
+  padding:14px 8px;cursor:pointer;text-align:center;transition:all .15s;
+  font-weight:500;
 }
-.slot-card .label{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:11px;color:var(--ink-mute);
-  text-transform:uppercase;letter-spacing:.18em;
-  font-weight:700;margin-bottom:8px;
-}
-.slot-card .when{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:24px;font-weight:700;color:var(--sienna);
-  line-height:1.3;margin-bottom:18px;
-}
-.slot-card .where{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:15px;color:var(--ink-soft);line-height:1.6;
-  padding-top:14px;border-top:1px dotted var(--sienna);
-}
+.win:hover:not(.taken):not(:disabled){background:var(--tan)}
+.win.selected{background:var(--sienna);color:var(--offwhite);font-weight:700;border-color:var(--sienna)}
+.win.taken{background:var(--offwhite-dim);color:var(--ink-mute);cursor:not-allowed;text-decoration:line-through;opacity:.6}
+.win .time{display:block;font-size:18px;font-weight:700;line-height:1;margin-bottom:4px}
+.win .name{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:500;opacity:.8}
+.win.selected .name{opacity:.9}
 
 /* BUTTONS */
-.btn-row{display:flex;flex-direction:column;gap:12px;align-items:center;margin:32px 0}
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:16px;font-weight:700;
-  padding:20px 36px;border:none;cursor:pointer;
-  letter-spacing:.16em;text-transform:uppercase;
-  transition:all .2s;text-decoration:none;
-  min-width:280px;
-}
-.btn-primary{
-  background:var(--sienna);color:var(--offwhite);
-  box-shadow:0 4px 0 var(--sienna-dark);
-  font-size:18px;
-}
-.btn-primary:hover:not(:disabled){
-  background:var(--sienna-dark);transform:translateY(-1px);
-  box-shadow:0 6px 0 var(--sienna-dark);color:var(--offwhite);
-}
+.btn-row{display:flex;flex-direction:column;gap:12px;align-items:center;margin:32px 0;max-width:520px;margin-left:auto;margin-right:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:'Times New Roman',Georgia,serif;font-size:16px;font-weight:700;padding:20px 32px;border:none;cursor:pointer;letter-spacing:.16em;text-transform:uppercase;transition:all .2s;text-decoration:none;width:100%}
+.btn-primary{background:var(--sienna);color:var(--offwhite);box-shadow:0 4px 0 var(--sienna-dark);font-size:18px}
+.btn-primary:hover:not(:disabled){background:var(--sienna-dark);transform:translateY(-1px);box-shadow:0 6px 0 var(--sienna-dark);color:var(--offwhite)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
 .btn-primary::after{content:'→';font-weight:700;font-size:18px}
-.btn-secondary{
-  background:transparent;color:var(--sienna);
-  border:2px solid var(--sienna);
-}
+.btn-secondary{background:transparent;color:var(--sienna);border:2px solid var(--sienna)}
 .btn-secondary:hover{background:var(--offwhite)}
 
 /* STATES */
@@ -132,51 +70,23 @@ h1{
 .state-wrap.active{display:block;animation:fadeIn .35s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
 
-.success-badge{
-  display:inline-block;margin:0 0 16px;padding:14px 28px;
-  background:var(--green);color:var(--offwhite);
-  font-family:'Times New Roman',Georgia,serif;font-size:13px;
-  letter-spacing:.18em;text-transform:uppercase;font-weight:700;
-}
+.success-badge{display:inline-block;margin:0 0 16px;padding:14px 28px;background:var(--green);color:var(--offwhite);font-family:'Times New Roman',Georgia,serif;font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+.warn-badge{display:inline-block;margin:0 0 16px;padding:12px 24px;background:var(--gold);color:var(--offwhite);font-family:'Times New Roman',Georgia,serif;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
 
-.error-banner{
-  background:var(--offwhite);border:1.5px solid var(--red);
-  color:var(--red);padding:18px 22px;margin:24px 0;
-  font-family:'Times New Roman',Georgia,serif;font-size:15px;
-}
-.note{
-  font-family:'Times New Roman',Georgia,serif;
-  font-style:italic;color:var(--ink-mute);
-  font-size:14px;line-height:1.7;margin-top:24px;
-}
+.error-banner{background:var(--offwhite);border:1.5px solid var(--red);color:var(--red);padding:18px 22px;margin:24px auto;max-width:520px;font-family:'Times New Roman',Georgia,serif;font-size:15px;text-align:left}
+.note{font-family:'Times New Roman',Georgia,serif;font-style:italic;color:var(--ink-mute);font-size:14px;line-height:1.7;margin-top:24px;max-width:520px;margin-left:auto;margin-right:auto}
 
-/* HERITAGE STRIP */
-.heritage-strip{
-  background:var(--sienna);color:var(--offwhite);
-  padding:32px 28px;margin:48px -24px 0;
-  text-align:center;
-}
-.heritage-strip .lab{
-  font-family:'Times New Roman',Georgia,serif;
-  font-size:11px;color:var(--tan);
-  letter-spacing:.22em;text-transform:uppercase;
-  font-weight:700;margin-bottom:14px;
-}
-.heritage-strip p{
-  font-family:'Times New Roman',Georgia,serif;
-  font-style:italic;font-size:15px;line-height:1.7;
-  color:var(--offwhite);max-width:540px;margin:0 auto;
-}
+.heritage-strip{background:var(--sienna);color:var(--offwhite);padding:32px 28px;margin:48px -24px 0;text-align:center}
+.heritage-strip .lab{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--tan);letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.heritage-strip p{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:15px;line-height:1.7;color:var(--offwhite);max-width:540px;margin:0 auto}
 
 @media (max-width:680px){
-  .topbar{padding:14px 18px}
-  .topbar .since{display:none}
+  .topbar{padding:14px 18px}.topbar .since{display:none}
   .stage{padding:32px 18px 48px}
-  h1{font-size:32px}
-  .lead{font-size:16px}
-  .slot-card{padding:24px 22px}
-  .slot-card .when{font-size:20px}
-  .btn{min-width:auto;width:100%}
+  h1{font-size:30px}.lead{font-size:16px}
+  .slot-card{padding:24px 22px}.slot-card .date{font-size:22px}
+  .windows{grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px}
+  .win{padding:12px 4px}.win .time{font-size:15px}.win .name{font-size:10px}
   .heritage-strip{margin:36px -18px 0;padding:24px 22px}
 }
 </style>
@@ -192,25 +102,33 @@ h1{
 
   <!-- LOADING -->
   <div class="state-wrap active" id="state-loading">
-    <div class="eyebrow"><span>Confirming your slot</span></div>
-    <h1>One <em>quiet moment.</em></h1>
-    <p class="lead">Looking up your booking…</p>
+    <div class="eyebrow"><span>One quiet moment</span></div>
+    <h1>Looking up <em>your booking…</em></h1>
   </div>
 
   <!-- TENTATIVE — needs confirmation -->
   <div class="state-wrap" id="state-tentative">
     <div class="eyebrow"><span>Outlet approved · awaiting your nod</span></div>
     <h1>One last tap, <em><span id="conf-name">friend</span>.</em></h1>
-    <p class="lead">The family has reviewed your application and we'd be honoured to host you. Confirm the slot below and we'll have the kitchen ready for your arrival.</p>
+    <p class="lead">The family has reviewed your application and we'd be honoured to host you. Confirm the time below and we'll have the kitchen ready.</p>
 
     <div class="slot-card">
-      <div class="label">Your slot</div>
-      <div class="when" id="conf-slot">—</div>
+      <div class="label">Your booked date</div>
+      <div class="date" id="conf-date">—</div>
+      <div class="date-sub" id="conf-date-rel">Loading slot details…</div>
       <div class="where">📍 <span id="conf-address">151 TO 154, HKP Road, Sulthangunta, Shivajinagar, Bangalore 560051</span></div>
     </div>
 
+    <div class="time-picker">
+      <div class="label">Pick your time slot</div>
+      <div class="hint">You picked one when you applied — but you're free to switch to another window on the same date if it suits you better. Greyed-out ones are already booked by another creator.</div>
+      <div class="windows" id="windows-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
     <div class="btn-row">
-      <button class="btn btn-primary" id="btn-confirm">✓ Yes, I'll be there</button>
+      <button class="btn btn-primary" id="btn-confirm" disabled>✓ Yes, I'll be there</button>
       <a class="btn btn-secondary" id="btn-map" href="https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg" target="_blank" rel="noopener">📍 Get directions</a>
     </div>
     <p class="note">By confirming, you commit to the slot above. If something changes, WhatsApp us at <strong>+91 80080 02049</strong> as soon as you can.</p>
@@ -218,12 +136,13 @@ h1{
 
   <!-- ALREADY CONFIRMED -->
   <div class="state-wrap" id="state-already">
-    <div class="success-badge">Already confirmed</div>
+    <div class="success-badge">✓ Already confirmed</div>
     <h1>You're <em>booked.</em></h1>
     <p class="lead">This slot is locked in. The family will host you on the date below — see you soon.</p>
     <div class="slot-card">
       <div class="label">Your slot</div>
-      <div class="when" id="al-slot">—</div>
+      <div class="date" id="al-date">—</div>
+      <div class="date-sub" id="al-time">—</div>
       <div class="where">📍 151 TO 154, HKP Road, Sulthangunta, Shivajinagar</div>
     </div>
     <div class="btn-row">
@@ -231,14 +150,15 @@ h1{
     </div>
   </div>
 
-  <!-- CONFIRMATION SUCCESS -->
+  <!-- SUCCESS -->
   <div class="state-wrap" id="state-success">
     <div class="success-badge">✓ Slot confirmed</div>
     <h1>See you soon, <em><span id="ok-name">friend</span>.</em></h1>
     <p class="lead">The kitchen is ready for you. Your booking is locked in. We've sent the full confirmation to your WhatsApp + email — save the +91 80080 02049 number now so reminders reach you.</p>
     <div class="slot-card">
       <div class="label">Your slot</div>
-      <div class="when" id="ok-slot">—</div>
+      <div class="date" id="ok-date">—</div>
+      <div class="date-sub" id="ok-time">—</div>
       <div class="where">📍 151 TO 154, HKP Road, Sulthangunta, Shivajinagar</div>
     </div>
     <div class="btn-row">
@@ -246,7 +166,7 @@ h1{
     </div>
   </div>
 
-  <!-- ERROR / EXPIRED -->
+  <!-- ERROR -->
   <div class="state-wrap" id="state-error">
     <div class="eyebrow"><span>Hmm</span></div>
     <h1>Something's <em>off.</em></h1>
@@ -268,7 +188,6 @@ h1{
 const API = '/api/creator-application';
 const params = new URLSearchParams(location.search);
 const TOKEN = params.get('token');
-
 const $ = id => document.getElementById(id);
 function show(id) {
   document.querySelectorAll('.state-wrap').forEach(s => s.classList.remove('active'));
@@ -280,37 +199,104 @@ const WIN_LABELS = {
   GOLDEN:    { time: '6 PM', label: 'Golden Hour' },
   PRIME:     { time: '8 PM', label: 'Prime' },
   LATE:      { time: '10 PM', label: 'Late' },
-  MIDNIGHT:  { time: '12 AM (midnight)', label: 'Midnight' },
+  MIDNIGHT:  { time: '12 AM', label: 'Midnight' },
 };
-function fmtSlot(date, win) {
-  const w = WIN_LABELS[win] || { time: win, label: '' };
-  let dStr = date;
+
+let SELECTED_SLOT_ID = null;
+let BOOKING = null;
+
+function fmtDate(dateStr) {
   try {
-    const d = new Date(date + 'T00:00:00+05:30');
-    dStr = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Kolkata' });
-  } catch {}
-  return `${dStr} · ${w.label} · ${w.time}`;
+    const d = new Date(dateStr + 'T00:00:00+05:30');
+    return d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Kolkata' });
+  } catch { return dateStr; }
+}
+function relativeDate(dateStr) {
+  try {
+    const d = new Date(dateStr + 'T00:00:00+05:30');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const target = new Date(d);
+    target.setHours(0,0,0,0);
+    const days = Math.round((target - today) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Tomorrow';
+    if (days < 0) return Math.abs(days) + ' day' + (Math.abs(days) > 1 ? 's' : '') + ' ago';
+    if (days < 7) return 'In ' + days + ' days';
+    return 'In ' + days + ' days';
+  } catch { return ''; }
 }
 
-async function loadStatus() {
+async function loadBooking() {
   if (!TOKEN) {
     show('state-error');
     $('error-detail').textContent = 'No confirmation token in the URL. Open the link from your WhatsApp or email.';
     return;
   }
   try {
-    // Just call confirm with a sentinel "preview" mode? We don't have one yet.
-    // Easiest: try to confirm. If already confirmed, server returns already_confirmed=true.
-    // If tentative, it confirms (which is what user wanted by clicking) — BUT we want the user to see a button first.
-    // So instead: show the tentative state with whatever info we have; let user click confirm explicitly.
-    // We don't have a separate read-only endpoint, so just show the tentative pane optimistically.
-    // The actual confirm POST happens on button click.
-    // We'll fetch status via a non-mutating call. For now: just render the tentative pane.
+    const r = await fetch(API + '?action=read-booking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: TOKEN }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) {
+      show('state-error');
+      $('error-detail').textContent = d.error || 'Could not look up your booking.';
+      return;
+    }
+    BOOKING = d.booking;
+    SELECTED_SLOT_ID = d.booking.slot_id;
+
+    // Already confirmed?
+    if (d.booking.status === 'confirmed') {
+      $('al-date').textContent = fmtDate(d.booking.slot_date);
+      const win = WIN_LABELS[d.booking.window_code] || { time: d.booking.window_code, label: '' };
+      $('al-time').textContent = `${win.label} · ${win.time}`;
+      show('state-already');
+      return;
+    }
+    if (d.booking.status !== 'tentative') {
+      show('state-error');
+      $('error-detail').textContent = `Booking is in '${d.booking.status}' state — please WhatsApp us if this looks wrong.`;
+      return;
+    }
+
+    // Render tentative state
+    $('conf-name').textContent = d.booking.creator_username.split(/[._]/)[0] || d.booking.creator_username;
+    $('conf-date').textContent = fmtDate(d.booking.slot_date);
+    $('conf-date-rel').textContent = relativeDate(d.booking.slot_date);
+    $('conf-address').textContent = d.biz.address;
+    $('btn-map').href = d.biz.map_url;
+
+    // Render the 5 windows
+    const grid = $('windows-grid');
+    grid.innerHTML = '';
+    (d.day_windows || []).forEach(w => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'win' + (w.is_current ? ' selected' : '') + (!w.is_open ? ' taken' : '');
+      btn.disabled = !w.is_open;
+      btn.dataset.id = w.id;
+      btn.dataset.code = w.window_code;
+      btn.innerHTML = `<span class="time">${w.time}</span><span class="name">${w.window_label}</span>`;
+      if (w.is_open) {
+        btn.addEventListener('click', () => selectWindow(btn));
+      }
+      grid.appendChild(btn);
+    });
+    $('btn-confirm').disabled = false;
     show('state-tentative');
   } catch (e) {
     show('state-error');
     $('error-detail').textContent = 'Could not load your booking — ' + (e.message || 'unknown');
   }
+}
+
+function selectWindow(btn) {
+  document.querySelectorAll('.win.selected').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  SELECTED_SLOT_ID = parseInt(btn.dataset.id);
 }
 
 $('btn-confirm').addEventListener('click', async () => {
@@ -321,23 +307,34 @@ $('btn-confirm').addEventListener('click', async () => {
     const r = await fetch(API + '?action=confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: TOKEN }),
+      body: JSON.stringify({ token: TOKEN, slot_id: SELECTED_SLOT_ID }),
     });
     const d = await r.json();
     if (!r.ok) {
       if (d.error === 'booking_not_tentative') {
-        show('state-already');
+        // Re-load — it's already confirmed
+        await loadBooking();
+        return;
+      }
+      if (d.error === 'new_slot_full') {
+        // The window they switched to got taken — reload to refresh availability
+        btn.disabled = false;
+        btn.textContent = '✓ Yes, I\'ll be there';
+        alert('That window was just taken. Reloading the calendar.');
+        await loadBooking();
         return;
       }
       throw new Error(d.error || 'confirm_failed');
     }
     if (d.already_confirmed) {
-      show('state-already');
-      if (d.slot) $('al-slot').textContent = fmtSlot(d.slot.date, d.slot.window);
+      await loadBooking();
       return;
     }
     if (d.slot) {
-      $('ok-slot').textContent = fmtSlot(d.slot.date, d.slot.window);
+      $('ok-name').textContent = BOOKING.creator_username.split(/[._]/)[0] || BOOKING.creator_username;
+      $('ok-date').textContent = fmtDate(d.slot.date);
+      const win = WIN_LABELS[d.slot.window] || { time: d.slot.window, label: '' };
+      $('ok-time').textContent = `${win.label} · ${win.time}` + (d.moved ? '  (window updated)' : '');
     }
     show('state-success');
   } catch (e) {
@@ -346,6 +343,6 @@ $('btn-confirm').addEventListener('click', async () => {
   }
 });
 
-loadStatus();
+loadBooking();
 </script>
 </body></html>

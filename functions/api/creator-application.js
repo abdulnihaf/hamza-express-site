@@ -111,6 +111,7 @@ export async function onRequest(context) {
       if (action === 'lookup')        return await actionLookup(env, db, body);
       if (action === 'submit')        return await actionSubmit(env, db, body);
       if (action === 'confirm')       return await actionConfirm(env, db, body);
+      if (action === 'read-booking')  return await actionReadBooking(env, db, body);
       if (action === 'approve')       return await actionApprove(env, db, body, request);
       if (action === 'adjust')        return await actionAdjust(env, db, body, request);
       if (action === 'decline')       return await actionDecline(env, db, body, request);
@@ -471,8 +472,62 @@ async function actionApprove(env, db, body, request) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// PUBLIC: read-booking — token-authenticated read-only lookup for the
+// confirm page. Returns booking + slot details + all 5 windows for the
+// booked date with availability so creator can flex within the day.
+// ─────────────────────────────────────────────────────────────────────
+async function actionReadBooking(env, db, body) {
+  const token = (body.token || '').toString().trim();
+  if (!token) return json({ error: 'token required' }, 400);
+
+  const booking = await db.prepare(`SELECT * FROM influencer_bookings WHERE outreach_token = ?`).bind(token).first();
+  if (!booking) return json({ error: 'booking_not_found' }, 404);
+
+  const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(booking.slot_id).first();
+
+  // Fetch all 5 windows for the booked date (so the creator can pick another
+  // time within the same day if they want flexibility).
+  const dayWindows = await db.prepare(`
+    SELECT id, slot_date, window_code, window_label, capacity, booked_count, is_blocked
+    FROM influencer_slots
+    WHERE slot_date = ?
+    ORDER BY CASE window_code
+      WHEN 'AFTERNOON' THEN 1 WHEN 'GOLDEN' THEN 2 WHEN 'PRIME' THEN 3
+      WHEN 'LATE' THEN 4 WHEN 'MIDNIGHT' THEN 5 ELSE 99 END
+  `).bind(booking.slot_date).all();
+
+  return json({
+    success: true,
+    booking: {
+      id: booking.id,
+      status: booking.status,
+      creator_username: booking.creator_username,
+      creator_tier: booking.creator_tier,
+      slot_id: booking.slot_id,
+      slot_date: booking.slot_date,
+      window_code: booking.window_code,
+    },
+    biz: {
+      name: BIZ.name,
+      address: BIZ.address,
+      map_url: BIZ.map_url,
+      waba_phone: BIZ.waba_phone,
+    },
+    day_windows: (dayWindows.results || []).map(w => ({
+      id: w.id,
+      window_code: w.window_code,
+      window_label: w.window_label || (WINDOW_LABELS[w.window_code]?.label || ''),
+      time: WINDOW_LABELS[w.window_code]?.time || '',
+      is_open: !w.is_blocked && (w.booked_count < w.capacity),
+      is_current: w.id === booking.slot_id,
+    })),
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // PUBLIC: confirm — creator-side confirmation via outreach_token
-// Flips booking from 'tentative' → 'confirmed', fires final messages.
+// Flips booking from 'tentative' → 'confirmed'. Optionally accepts a
+// new_slot_id to move within the same date.
 // ─────────────────────────────────────────────────────────────────────
 async function actionConfirm(env, db, body) {
   const token = (body.token || '').toString().trim();
@@ -487,8 +542,42 @@ async function actionConfirm(env, db, body) {
     return json({ error: 'booking_not_tentative', detail: `Current status: ${booking.status}` }, 409);
   }
 
-  // Get slot + application + tierMeta for the message body
-  const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(booking.slot_id).first();
+  // Optional: creator picked a different time window within the same date
+  const newSlotId = body.slot_id ? parseInt(body.slot_id) : null;
+  let activeSlot;
+
+  if (newSlotId && newSlotId !== booking.slot_id) {
+    // Verify new slot exists, is on the same date, and has capacity
+    const newSlot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(newSlotId).first();
+    if (!newSlot) return json({ error: 'new_slot_not_found' }, 404);
+    if (newSlot.slot_date !== booking.slot_date) {
+      return json({ error: 'cross_date_move_not_allowed', detail: 'Pick a different window on the SAME date, or WhatsApp us to reschedule for a different day.' }, 400);
+    }
+    // Atomic move: bump new slot first (might fail if full), then release old
+    const bump = await db.prepare(`
+      UPDATE influencer_slots SET booked_count = booked_count + 1
+      WHERE id = ? AND booked_count < capacity AND is_blocked = 0
+    `).bind(newSlotId).run();
+    if (!bump.meta.changes) {
+      return json({ error: 'new_slot_full', detail: 'That window was just taken. Reload and pick another.' }, 409);
+    }
+    // Release old slot
+    await db.prepare(`UPDATE influencer_slots SET booked_count = MAX(0, booked_count - 1) WHERE id = ?`).bind(booking.slot_id).run();
+    // Update booking row to point at the new slot
+    await db.prepare(`
+      UPDATE influencer_bookings SET slot_id = ?, window_code = ?, updated_at = datetime('now')
+      WHERE id = ?
+    `).bind(newSlotId, newSlot.window_code, booking.id).run();
+    // Also update the application row's preferred_slot_id for consistency
+    await db.prepare(`
+      UPDATE influencer_applications SET preferred_slot_id = ?, preferred_window_code = ?
+      WHERE outreach_token = ?
+    `).bind(newSlotId, newSlot.window_code, token).run();
+    activeSlot = newSlot;
+  } else {
+    activeSlot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(booking.slot_id).first();
+  }
+
   const app = await db.prepare(`SELECT * FROM influencer_applications WHERE outreach_token = ?`).bind(token).first();
   const tierMeta = TIER_MATRIX[booking.creator_tier] || TIER_MATRIX.T1;
 
@@ -506,16 +595,21 @@ async function actionConfirm(env, db, body) {
     status: 'confirmed',
     outreach_token: token,
   };
-  await notifyCreator(env, db, finalAppRow, slot, tierMeta);
-  await notifyCreatorEmail(env, db, finalAppRow, slot, tierMeta, 'decision');
-  // Bonus: WABA location pin (separate message, renders as tappable map)
+  await notifyCreator(env, db, finalAppRow, activeSlot, tierMeta);
+  await notifyCreatorEmail(env, db, finalAppRow, activeSlot, tierMeta, 'decision');
   await sendWabaLocation(env, booking.contact_phone, BIZ.lat, BIZ.lng, BIZ.name, BIZ.address);
 
   return json({
     success: true,
     booking_id: booking.id,
     booking_status: 'confirmed',
-    slot: { date: slot?.slot_date, window: slot?.window_code, label: slot?.window_label },
+    slot: {
+      id: activeSlot?.id,
+      date: activeSlot?.slot_date,
+      window: activeSlot?.window_code,
+      label: activeSlot?.window_label,
+    },
+    moved: newSlotId && newSlotId !== booking.slot_id,
   });
 }
 
@@ -669,7 +763,7 @@ async function sendWabaLocation(env, to, lat, lng, name, address) {
 
 // Template send — works WITHOUT 24h session. The actual transactional path.
 // Returns { ok, message_id } on success, { ok:false, status, meta } on failure.
-async function sendTemplate(env, to, templateName, vars, lang = 'en') {
+async function sendTemplate(env, to, templateName, vars, lang = 'en', buttonVars = null) {
   if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
     return { ok: false, error: 'WA_ACCESS_TOKEN or WA_PHONE_ID missing' };
   }
@@ -677,15 +771,26 @@ async function sendTemplate(env, to, templateName, vars, lang = 'en') {
   if (!phone || phone.length < 10) return { ok: false, error: 'invalid phone' };
 
   const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
-  // Meta rejects template parameters with newlines / tabs / >4 consecutive spaces.
-  // Sanitise here once so individual call sites don't have to remember.
   const sanitiseParam = (v) => String(v == null ? '' : v)
     .replace(/[\r\n\t]+/g, ' ')
-    .replace(/\s{4,}/g, '   ')   // collapse 4+ spaces to 3
+    .replace(/\s{4,}/g, '   ')
     .slice(0, 1024);
-  const components = (vars && vars.length)
-    ? [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: sanitiseParam(v) })) }]
-    : [];
+  const components = [];
+  if (vars && vars.length) {
+    components.push({ type: 'body', parameters: vars.map(v => ({ type: 'text', text: sanitiseParam(v) })) });
+  }
+  // URL button parameters: pass [{index: '0', value: 'tokenSuffix'}, ...]
+  // for templates that have URL buttons with a {{1}} placeholder in the URL.
+  if (Array.isArray(buttonVars)) {
+    buttonVars.forEach(bv => {
+      components.push({
+        type: 'button',
+        sub_type: 'url',
+        index: String(bv.index),
+        parameters: [{ type: 'text', text: sanitiseParam(bv.value) }],
+      });
+    });
+  }
   try {
     const resp = await fetch(url, {
       method: 'POST',
@@ -722,23 +827,29 @@ async function sendTemplate(env, to, templateName, vars, lang = 'en') {
 // During the period between code-deploy and template-approval, this lets the flow
 // continue working in test mode (owner has session) without blowing up if a
 // creator with no session submits.
-async function sendWabaSmart(env, to, templateName, vars, fallbackText) {
+// Smart sender with optional fallback-template chain.
+//   templateName: string OR array of strings — tried in order until one delivers.
+//   vars: body params for ALL templates in the chain (must share body shape)
+//   buttonVars: array OR null — only applies to the FIRST template (typically the one with buttons)
+//   fallbackText: free-form text used if all templates fail (delivers only inside 24h session)
+async function sendWabaSmart(env, to, templateName, vars, fallbackText, buttonVars = null) {
   if (env.WABA_TEMPLATES_DISABLED === '1') {
     return await sendWaba(env, to, fallbackText);
   }
-  const t = await sendTemplate(env, to, templateName, vars);
-  if (t.ok) return { ...t, via: 'template' };
-  // Template failed — try free-form. Common Meta error codes here:
-  //   132000 — template name does not exist (still pending)
-  //   132001 — template language mismatch
-  //   132012 — template variable mismatch
-  // For any of these we fall back; production logs both attempts.
+  const names = Array.isArray(templateName) ? templateName : [templateName];
+  let lastTemplateError = null;
+  for (let i = 0; i < names.length; i++) {
+    const t = await sendTemplate(env, to, names[i], vars, 'en', i === 0 ? buttonVars : null);
+    if (t.ok) return { ...t, via: 'template:' + names[i] };
+    lastTemplateError = t.meta || t.error;
+  }
+  // All templates failed — try free-form (works only in 24h session).
   const f = await sendWaba(env, to, fallbackText);
   return {
     ok: f.ok,
     message_id: f.message_id || null,
     via: f.ok ? 'fallback_text' : 'failed',
-    template_error: t.meta || t.error,
+    template_error: lastTemplateError,
     fallback_error: f.ok ? null : (f.meta || f.error),
   };
 }
@@ -1058,14 +1169,20 @@ async function notifyCreatorTentative(env, db, app, slot, tierMeta, token) {
   if (!app.contact_phone) return { skipped: 'no contact_phone' };
   const text = notifyCreatorTentativeText(app, slot, tierMeta, token);
 
-  // Template name: creator_outlet_approved_v2 (will need Meta approval — fall back to free-form for now)
+  // Template `creator_outlet_approved_v3` — UTILITY with 2 URL buttons:
+  //   Body vars (3): handle / slotStr / address
+  //   Button 0: "Confirm my slot" → URL has {{1}} suffix → token
+  //   Button 1: "Get directions" → static URL (no var)
+  // sendWabaSmart falls back to free-form text if v3 not yet APPROVED.
   const slotStr = fmtSlotTiming(slot);
-  const r = await sendWabaSmart(env, app.contact_phone, 'creator_outlet_approved_v2', [
-    app.username,
-    slotStr,
-    BIZ.address,
-    `https://hamzaexpress.in/creators/confirm/?token=${token}`,
-  ], text);
+  const r = await sendWabaSmart(env, app.contact_phone,
+    ['creator_outlet_approved_v3', 'creator_outlet_approved_v2'],
+    // v3 has 3 body vars; v2 has 4 (the 4th was the URL when no buttons existed).
+    // Sending 4 vars is fine for v3 too — extras are ignored if the body only references {{1}}–{{3}}.
+    [app.username, slotStr, BIZ.address, `https://hamzaexpress.in/creators/confirm/?token=${token}`],
+    text,
+    [{ index: 0, value: token }],
+  );
 
   try {
     await db.prepare(`
@@ -1106,9 +1223,15 @@ async function notifyCreator(env, db, app, slot, tierMeta) {
 
   const asks = (m.asks || []).join(' · ');
 
-  const r = await sendWabaSmart(env, app.contact_phone, 'creator_invitation_confirmed_v2', [
-    tierLabel, slotStr, hostingWith, asks,
-  ], text);
+  // creator_invitation_confirmed_v3 — same body as v2 + a single URL button "Get directions"
+  // (static URL, no variable, so no buttonVars needed). Falls back to v2 / free-form if v3
+  // not yet approved.
+  const r = await sendWabaSmart(env, app.contact_phone,
+    ['creator_invitation_confirmed_v3', 'creator_invitation_confirmed_v2'],
+    [tierLabel, slotStr, hostingWith, asks],
+    text,
+    null,
+  );
   try {
     await db.prepare(`
       UPDATE influencer_applications
