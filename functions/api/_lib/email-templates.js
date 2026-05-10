@@ -62,8 +62,31 @@ function shell({ preheader, body }) {
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
 <title>An invitation from Hamza Hotel</title>
 <!--[if mso]><style type="text/css">body,table,td{font-family:Georgia,serif !important}</style><![endif]-->
+<style type="text/css">
+  /* Mobile breakpoint — Apple Mail iOS / Gmail Android / Outlook Mobile honor this. */
+  @media only screen and (max-width:480px){
+    .px-mobile{padding-left:22px !important;padding-right:22px !important}
+    .px-mobile-tight{padding-left:18px !important;padding-right:18px !important}
+    .py-mobile{padding-top:24px !important;padding-bottom:24px !important}
+    .h1-mobile{font-size:24px !important;line-height:1.2 !important}
+    .h2-mobile{font-size:20px !important;line-height:1.25 !important}
+    .body-mobile{font-size:15px !important;line-height:1.65 !important}
+    .small-mobile{font-size:13px !important}
+    .cta-mobile{display:block !important;width:auto !important;padding:16px 22px !important;font-size:15px !important}
+    .stack-mobile{display:block !important;width:100% !important;padding-left:0 !important;padding-right:0 !important;text-align:left !important}
+    .label-mobile{padding-bottom:2px !important;width:auto !important;display:block !important}
+    .slot-when-mobile{font-size:20px !important}
+    .logo-mobile{width:96px !important;height:96px !important}
+  }
+  /* Universal fluid-image safety */
+  img{max-width:100%;height:auto}
+  /* Anchor link colors stay branded across clients */
+  a{color:#713520}
+</style>
 </head>
 <body style="margin:0;padding:0;background:#f4ece0;font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.text};-webkit-font-smoothing:antialiased;">
 <!-- Preheader (shown in inbox preview, hidden in body) -->
@@ -76,23 +99,23 @@ ${preheader}
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="600" style="max-width:600px;width:100%;background:${BRAND.offwhite};border:1px solid ${BRAND.line};border-radius:6px;overflow:hidden;">
 
       <!-- HEADER STRIP -->
-      <tr><td style="background:${BRAND.tan};padding:32px 40px;text-align:center;border-bottom:3px solid ${BRAND.sienna};">
-        <img src="${LOGO_URL}" alt="Hamza Express · Est. 1918" width="120" height="120" style="display:block;margin:0 auto 14px;width:120px;height:120px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />
-        <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;">
+      <tr><td class="px-mobile py-mobile" style="background:${BRAND.tan};padding:32px 40px;text-align:center;border-bottom:3px solid ${BRAND.sienna};">
+        <img class="logo-mobile" src="${LOGO_URL}" alt="Hamza Express · Est. 1918" width="120" height="120" style="display:block;margin:0 auto 14px;width:120px;height:120px;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />
+        <div class="small-mobile" style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:600;">
           Est. 1918 · Shivajinagar · Bangalore
         </div>
-        <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-top:6px;opacity:.75;">
+        <div class="small-mobile" style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-top:6px;opacity:.75;">
           Over a hundred years of taste
         </div>
       </td></tr>
 
       <!-- BODY -->
-      <tr><td style="padding:40px 40px 24px 40px;font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.text};font-size:16px;line-height:1.7;">
+      <tr><td class="px-mobile body-mobile" style="padding:40px 40px 24px 40px;font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.text};font-size:16px;line-height:1.7;">
         ${body}
       </td></tr>
 
       <!-- FOOTER STRIP -->
-      <tr><td style="background:${BRAND.tan};padding:24px 40px;text-align:center;border-top:1px solid ${BRAND.sienna};">
+      <tr><td class="px-mobile-tight" style="background:${BRAND.tan};padding:24px 40px;text-align:center;border-top:1px solid ${BRAND.sienna};">
         <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:14px;font-weight:700;letter-spacing:.04em;margin-bottom:6px;">
           Hamza Express
         </div>
@@ -126,7 +149,7 @@ function eyebrow(label) {
 }
 
 function bigHeading(text) {
-  return `<h1 style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:30px;line-height:1.2;font-weight:700;margin:0 0 18px 0;letter-spacing:-.005em;">${text}</h1>`;
+  return `<h1 class="h1-mobile" style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:30px;line-height:1.2;font-weight:700;margin:0 0 18px 0;letter-spacing:-.005em;">${text}</h1>`;
 }
 
 function statusPill({ label, color, bg }) {
@@ -136,9 +159,10 @@ function statusPill({ label, color, bg }) {
 }
 
 function detailRow(label, value) {
+  // On mobile (≤480px), the label cell stacks above the value cell via .stack-mobile + .label-mobile.
   return `<tr>
-    <td style="padding:10px 0;font-family:Georgia,serif;color:${BRAND.mute};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;border-bottom:1px dotted ${BRAND.line};vertical-align:top;width:120px;">${label}</td>
-    <td style="padding:10px 0 10px 14px;font-family:Georgia,serif;color:${BRAND.text};font-size:15px;font-weight:600;border-bottom:1px dotted ${BRAND.line};vertical-align:top;">${value}</td>
+    <td class="label-mobile stack-mobile" style="padding:10px 0;font-family:Georgia,serif;color:${BRAND.mute};font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;border-bottom:1px dotted ${BRAND.line};vertical-align:top;width:120px;">${label}</td>
+    <td class="stack-mobile" style="padding:10px 0 10px 14px;font-family:Georgia,serif;color:${BRAND.text};font-size:15px;font-weight:600;border-bottom:1px dotted ${BRAND.line};vertical-align:top;">${value}</td>
   </tr>`;
 }
 
@@ -154,7 +178,7 @@ function bulletList(items) {
 function ctaButton(href, label) {
   return `<table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:24px 0 8px 0;">
     <tr><td style="background:${BRAND.sienna};border-radius:4px;">
-      <a href="${href}" style="display:inline-block;padding:14px 28px;font-family:Georgia,serif;font-size:14px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">${label}</a>
+      <a class="cta-mobile" href="${href}" style="display:inline-block;padding:14px 28px;font-family:Georgia,serif;font-size:14px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">${label}</a>
     </td></tr></table>`;
 }
 
@@ -286,13 +310,13 @@ export function buildTentativeEmail({ first_name, handle, tier, slot, hosting, a
 
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:24px 0 8px 0;">
       <tr><td style="background:${BRAND.sienna};border-radius:4px;">
-        <a href="${confirm_url}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">✓ Confirm my slot</a>
+        <a class="cta-mobile" href="${confirm_url}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">✓ Confirm my slot</a>
       </td></tr>
     </table>
 
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:8px 0 24px 0;">
       <tr><td style="border:1.5px solid ${BRAND.sienna};">
-        <a href="${MAP_URL}" style="display:inline-block;padding:14px 28px;font-family:Georgia,serif;font-size:14px;color:${BRAND.sienna};text-decoration:none;font-weight:700;letter-spacing:.04em;">📍 Get directions</a>
+        <a class="cta-mobile" href="${MAP_URL}" style="display:inline-block;padding:14px 28px;font-family:Georgia,serif;font-size:14px;color:${BRAND.sienna};text-decoration:none;font-weight:700;letter-spacing:.04em;">📍 Get directions</a>
       </td></tr>
     </table>
 
@@ -355,17 +379,17 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
     ${isApproved ? `
     <!-- BIG SLOT BOX — the one thing they need to see -->
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:24px 0;background:${BRAND.tan};border:2px solid ${BRAND.sienna};">
-      <tr><td style="padding:28px 32px;">
+      <tr><td class="px-mobile-tight" style="padding:28px 32px;">
         <div style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:12px;">Your slot</div>
-        <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:24px;font-weight:700;line-height:1.3;margin-bottom:14px;">${slotLabel}</div>
-        <div style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:15px;line-height:1.55;">📍 ${ADDRESS}</div>
+        <div class="slot-when-mobile" style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:24px;font-weight:700;line-height:1.3;margin-bottom:14px;">${slotLabel}</div>
+        <div class="small-mobile" style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:15px;line-height:1.55;">📍 ${ADDRESS}</div>
       </td></tr>
     </table>
 
     <!-- Map button, prominent -->
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" style="margin:8px 0 24px 0;">
       <tr><td style="background:${BRAND.sienna};border-radius:4px;">
-        <a href="${MAP_URL}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">📍 Get directions on Google Maps</a>
+        <a class="cta-mobile" href="${MAP_URL}" style="display:inline-block;padding:18px 36px;font-family:Georgia,serif;font-size:16px;color:${BRAND.offwhite};text-decoration:none;font-weight:700;letter-spacing:.06em;text-transform:uppercase;">📍 Get directions on Google Maps</a>
       </td></tr>
     </table>
     ` : ''}
