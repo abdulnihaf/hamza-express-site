@@ -6,6 +6,14 @@
 // Reads/writes to influencer_applications + influencer_bio_pulse tables in
 // the hn-hiring D1 (bound here as HIRING_DB).
 //
+// Side effects on submit/approve:
+//   - submit  → notifyOwner (WABA text to OWNER_PHONE summarising the application)
+//   - approve → notifyCreator (WABA text to creator's phone confirming the slot)
+// Both use the existing HE WABA bearer + phone-id (WA_ACCESS_TOKEN, WA_PHONE_ID).
+// Free-form text only works inside the recipient's 24h session window — for cold
+// transactional sends a Meta-approved template is required. We swallow failures
+// (don't block the application flow) but log them in influencer_applications.notes_owner.
+//
 // See docs/CREATOR-PORTAL-ARCHITECTURE.md for full design.
 
 // ─────────────────────────────────────────────────────────────────────
@@ -338,6 +346,26 @@ async function actionSubmit(env, db, body) {
     outreachToken, bookingId, body.application_source || 'self_serve'
   ).run();
 
+  // ── Side effects: WABA notifications. Best-effort, never block the response.
+  const appRow = {
+    id: result.meta.last_row_id,
+    username: handle,
+    full_name: profile?.full_name,
+    followers_count: followers,
+    engagement_rate: profile?.engagement_rate,
+    computed_tier: tier,
+    tier,
+    status,
+    contact_phone: phone,
+    preferred_slot_id: slotId,
+  };
+  // Owner alert — every submission, regardless of decision
+  await notifyOwner(env, db, appRow, decision.reason, slot);
+  // Creator confirmation — only on auto_approve (other paths confirm on owner approve)
+  if (status === 'auto_approved') {
+    await notifyCreator(env, db, appRow, slot, tierMeta);
+  }
+
   return json({
     success: true,
     application_id: result.meta.last_row_id,
@@ -441,6 +469,14 @@ async function actionApprove(env, db, body, request) {
     WHERE id=?
   `).bind(bk.meta.last_row_id, outreachToken, body.actor || 'owner', body.notes || null, body.id).run();
 
+  // ── Side effect: confirm to creator on WhatsApp. Best-effort.
+  await notifyCreator(env, db, {
+    id: body.id,
+    username: app.username,
+    contact_phone: app.contact_phone,
+    computed_tier: app.computed_tier,
+  }, slot, tierMeta);
+
   return json({ success: true, application_id: body.id, booking_id: bk.meta.last_row_id, outreach_token: outreachToken });
 }
 
@@ -466,6 +502,157 @@ async function actionDecline(env, db, body, request) {
     WHERE id=?
   `).bind(body.reason || 'Declined by owner', body.actor || 'owner', body.notes || null, body.id).run();
   return json({ success: true });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// WABA NOTIFICATIONS — transactional (free-form text via Meta Cloud API)
+//
+// Reliability note: Meta only allows free-form text within the recipient's
+// 24h session. For cold sends we'd need approved message templates — not
+// implemented here, will be added once Meta-approved templates land. For
+// now: send free-form, record success/failure in application notes, never
+// throw. The dashboard at /ops/influencer-applications shows the delivery
+// state per row.
+// ─────────────────────────────────────────────────────────────────────
+async function sendWaba(env, to, text) {
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
+    return { ok: false, error: 'WA_ACCESS_TOKEN or WA_PHONE_ID missing' };
+  }
+  const phone = String(to || '').replace(/\D/g, '');
+  if (!phone || phone.length < 10) return { ok: false, error: 'invalid phone' };
+
+  const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'text',
+        text: { body: String(text).slice(0, 4096) },
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      return { ok: false, status: resp.status, meta: data?.error || data };
+    }
+    return { ok: true, message_id: data?.messages?.[0]?.id };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+function notifyOwnerText(app, decisionReason, slot) {
+  const tier = app.computed_tier || app.tier || 'T?';
+  const tierLabel = TIER_MATRIX[tier]?.label || tier;
+  const status = app.status === 'auto_approved'
+    ? '✅ AUTO-CONFIRMED'
+    : app.status === 'declined'
+      ? '❌ AUTO-DECLINED'
+      : '⏳ NEEDS REVIEW';
+  const slotLine = slot
+    ? `${slot.window_label || slot.window_code || ''} on ${slot.slot_date}`
+    : `slot #${app.preferred_slot_id || '?'}`;
+  const er = app.engagement_rate
+    ? `ER ${(parseFloat(app.engagement_rate) * 100).toFixed(2)}%`
+    : 'ER unknown';
+
+  const lines = [
+    `🍽️ NEW CREATOR APPLICATION`,
+    ``,
+    `@${app.username} · ${tierLabel}`,
+    `${(app.followers_count || 0).toLocaleString('en-IN')} followers · ${er}`,
+    `Wants: ${slotLine}`,
+    ``,
+    `Status: ${status}`,
+  ];
+  if (decisionReason && app.status !== 'auto_approved') {
+    lines.push(`Why: ${decisionReason}`);
+  }
+  if (app.contact_phone) lines.push(`Contact: +${app.contact_phone}`);
+  if (app.status !== 'auto_approved' && app.status !== 'declined') {
+    lines.push(``, `Review:`);
+    lines.push(`https://hnhotels.in/ops/influencer-applications/?app_id=${app.id || ''}`);
+  }
+  return lines.join('\n');
+}
+
+function notifyCreatorText(app, slot, tierMeta) {
+  const m = tierMeta || TIER_MATRIX[app.computed_tier || app.tier || 'T1'] || TIER_MATRIX.T1;
+  const slotLine = slot
+    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
+    : `your selected slot`;
+  const lines = [
+    `Your invitation to Hamza Express is confirmed.`,
+    ``,
+    `Tier: ${m.label}`,
+    `Slot: ${slotLine}`,
+    `Where: 19 H.K.P. Road, Shivajinagar, Bangalore 560051`,
+    ``,
+    `What we're hosting you with:`,
+    `· ${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`,
+  ];
+  (m.add_ons || []).forEach(a => lines.push(`· ${a}`));
+  if (m.cash_paise) lines.push(`· ₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
+  lines.push(``, `What we ask:`);
+  (m.asks || []).forEach(a => lines.push(`· ${a}`));
+  lines.push(
+    ``,
+    `Tag @hamzaexpressblr · use the Shivajinagar geotag.`,
+    ``,
+    `Looking forward,`,
+    `— Nihaf`,
+    `Managing Director, HN Hotels Pvt Ltd`,
+    `Hamza Express · est. 1918 · Shivajinagar`,
+  );
+  return lines.join('\n');
+}
+
+async function notifyOwner(env, db, app, decisionReason, slot) {
+  const ownerPhone = env.OWNER_PHONE || env.HE_OWNER_PHONE;
+  if (!ownerPhone) {
+    console.warn('OWNER_PHONE env not set — skipping owner WABA notification');
+    return { skipped: 'OWNER_PHONE not configured' };
+  }
+  const text = notifyOwnerText(app, decisionReason, slot);
+  const r = await sendWaba(env, ownerPhone, text);
+  // best-effort log into the application row
+  try {
+    await db.prepare(`
+      UPDATE influencer_applications
+      SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) ||
+          ?
+      WHERE id = ?
+    `).bind(
+      `[${new Date().toISOString()}] owner-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      app.id
+    ).run();
+  } catch {}
+  return r;
+}
+
+async function notifyCreator(env, db, app, slot, tierMeta) {
+  if (!app.contact_phone) return { skipped: 'no contact_phone on application' };
+  const text = notifyCreatorText(app, slot, tierMeta);
+  const r = await sendWaba(env, app.contact_phone, text);
+  try {
+    await db.prepare(`
+      UPDATE influencer_applications
+      SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) ||
+          ?
+      WHERE id = ?
+    `).bind(
+      `[${new Date().toISOString()}] creator-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      app.id
+    ).run();
+  } catch {}
+  return r;
 }
 
 // ─────────────────────────────────────────────────────────────────────
