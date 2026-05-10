@@ -1,4 +1,6 @@
 // /api/creator-application — Hamza Express Creator Partner Portal API
+import { sendEmail } from './_lib/email-sender.js';
+import { buildReceivedEmail, buildDecisionEmail } from './_lib/email-templates.js';
 //
 // Powers hamzaexpress.in/creators/apply (the public Typeform-style flow) and
 // hnhotels.in/ops/influencer-applications/ (owner approval surface).
@@ -367,6 +369,8 @@ async function actionSubmit(env, db, body) {
   };
   await notifyOwner(env, db, appRow, decision.reason, slot);
   await notifyCreatorReceived(env, db, appRow, slot, tierMeta);
+  // Email layer — branded HTML to creator's email (best-effort)
+  await notifyCreatorEmail(env, db, appRow, slot, tierMeta, 'received');
   if (status === 'auto_approved') {
     await notifyCreator(env, db, appRow, slot, tierMeta);
   }
@@ -474,13 +478,18 @@ async function actionApprove(env, db, body, request) {
     WHERE id=?
   `).bind(bk.meta.last_row_id, outreachToken, body.actor || 'owner', body.notes || null, body.id).run();
 
-  // ── Side effect: confirm to creator on WhatsApp. Best-effort.
-  await notifyCreator(env, db, {
+  // ── Side effects: confirm to creator on WhatsApp + email. Best-effort.
+  const approvedAppRow = {
     id: body.id,
     username: app.username,
+    full_name: app.full_name,
     contact_phone: app.contact_phone,
+    contact_email: app.contact_email,
     computed_tier: app.computed_tier,
-  }, slot, tierMeta);
+    status: 'approved',
+  };
+  await notifyCreator(env, db, approvedAppRow, slot, tierMeta);
+  await notifyCreatorEmail(env, db, approvedAppRow, slot, tierMeta, 'decision');
 
   return json({ success: true, application_id: body.id, booking_id: bk.meta.last_row_id, outreach_token: outreachToken });
 }
@@ -501,11 +510,32 @@ async function actionAdjust(env, db, body, request) {
 async function actionDecline(env, db, body, request) {
   if (!requireOwner(env, request, body)) return json({ error: 'unauthorized' }, 401);
   if (!body.id) return json({ error: 'id required' }, 400);
+
+  const app = await db.prepare(`SELECT * FROM influencer_applications WHERE id = ?`).bind(body.id).first();
+  if (!app) return json({ error: 'application not found' }, 404);
+
   await db.prepare(`
     UPDATE influencer_applications
     SET status='declined', decline_reason=?, reviewed_by=?, reviewed_at=datetime('now'), notes_owner=?
     WHERE id=?
   `).bind(body.reason || 'Declined by owner', body.actor || 'owner', body.notes || null, body.id).run();
+
+  // ── Side effect: tell the creator we're not hosting this round (email layer).
+  // We deliberately don't fire WABA on decline — feels punitive to ping someone's
+  // phone with a rejection. Email is plenty.
+  const declinedAppRow = {
+    id: body.id,
+    username: app.username,
+    full_name: app.full_name,
+    contact_email: app.contact_email,
+    computed_tier: app.computed_tier,
+    status: 'declined',
+    decline_reason: body.reason || null,
+  };
+  const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(app.preferred_slot_id).first();
+  const tierMeta = TIER_MATRIX[app.computed_tier] || TIER_MATRIX.T1;
+  await notifyCreatorEmail(env, db, declinedAppRow, slot, tierMeta, 'decision');
+
   return json({ success: true });
 }
 
@@ -816,6 +846,85 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
       WHERE id = ?
     `).bind(
       `[${new Date().toISOString()}] owner-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      app.id
+    ).run();
+  } catch {}
+  return r;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// EMAIL NOTIFICATIONS — Gmail API via /api/email-auth refresh token.
+// Best-effort, never blocks the response. Logs success / failure into
+// influencer_applications.notes_owner like the WABA helpers.
+// ─────────────────────────────────────────────────────────────────────
+function firstNameFor(app) {
+  if (app.full_name) {
+    const cleaned = String(app.full_name)
+      .replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, '')
+      .replace(/[|\-_·•★⭐👑📍🇮🇳]/g, ' ').trim();
+    const parts = cleaned.split(/\s+/).filter(p => p.length > 0 && /^[a-zA-Z]/.test(p));
+    if (parts[0]) return parts[0];
+  }
+  return app.username || 'there';
+}
+
+function emailViewVars(app, slot, tierMeta) {
+  const m = tierMeta || TIER_MATRIX[app.computed_tier || app.tier || 'T1'] || TIER_MATRIX.T1;
+  const slotStr = slot
+    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
+    : 'your selected slot';
+  const tierLabel = m.label || (app.computed_tier || 'TBD');
+
+  const hosting = [`${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`];
+  (m.add_ons || []).forEach(a => hosting.push(a));
+  const cashInr = m.cash_paise ? Math.round(m.cash_paise / 100) : 0;
+
+  return {
+    first_name: firstNameFor(app),
+    handle: app.username,
+    tier: tierLabel,
+    slot: slotStr,
+    hosting,
+    asks: m.asks || [],
+    cash_inr: cashInr,
+  };
+}
+
+async function notifyCreatorEmail(env, db, app, slot, tierMeta, kind /* 'received' | 'decision' */) {
+  if (!app.contact_email) return { skipped: 'no contact_email' };
+  if (!env.GMAIL_REFRESH_TOKEN) return { skipped: 'GMAIL_REFRESH_TOKEN not configured — run /api/email-auth' };
+
+  const vars = emailViewVars(app, slot, tierMeta);
+  let payload;
+  if (kind === 'decision') {
+    payload = buildDecisionEmail({
+      ...vars,
+      status: app.status === 'approved' || app.status === 'auto_approved' ? 'approved' : 'declined',
+      decline_reason: app.decline_reason || null,
+    });
+  } else {
+    payload = buildReceivedEmail({
+      ...vars,
+      status: app.status,                                   // 'pending' | 'auto_approved' | 'declined'
+    });
+  }
+
+  const r = await sendEmail(env, {
+    to: app.contact_email,
+    subject: payload.subject,
+    html: payload.html,
+    from_name: 'Nihaf · Hamza Express',
+  });
+
+  try {
+    await db.prepare(`
+      UPDATE influencer_applications
+      SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) ||
+          ?
+      WHERE id = ?
+    `).bind(
+      `[${new Date().toISOString()}] ${kind}-email: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
       app.id
     ).run();
   } catch {}
