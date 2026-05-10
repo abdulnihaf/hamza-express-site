@@ -318,30 +318,47 @@ async function actionSendBulkWhatsApp(env, db, body) {
     return d.length >= 10 ? d : null;
   };
 
-  // Send template helper (inline — keeps this file self-contained)
+  // Send template helper (inline — keeps this file self-contained).
+  // Tries the latest approved Marketing template, falls back to the prior
+  // generation. The chain is: v2 → v1. Whichever is approved at Meta gets
+  // used; the other is skipped automatically. This way the moment v2
+  // approves, sends auto-upgrade with no redeploy.
   async function sendMarketingTemplate(phone, handle) {
     const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: phone,
-        type: 'template',
-        template: {
-          name: 'creator_outreach_invitation_v1',
-          language: { code: 'en' },
-          components: [
-            { type: 'body', parameters: [{ type: 'text', text: handle }] },
-            // No button params — the URL button has no variable in v1
-          ],
-        },
-      }),
-    });
-    const data = await resp.json();
-    return resp.ok
-      ? { ok: true, message_id: data?.messages?.[0]?.id }
-      : { ok: false, status: resp.status, error: data?.error };
+    const chain = ['creator_outreach_invitation_v2', 'creator_outreach_invitation_v1'];
+    let lastErr = null;
+    for (const name of chain) {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: phone,
+          type: 'template',
+          template: {
+            name,
+            language: { code: 'en' },
+            components: [
+              { type: 'body', parameters: [{ type: 'text', text: handle }] },
+            ],
+          },
+        }),
+      });
+      const data = await resp.json();
+      if (resp.ok) return { ok: true, message_id: data?.messages?.[0]?.id, via: name };
+      lastErr = { status: resp.status, error: data?.error };
+      // Common Meta errors that should fall through to the next name in chain:
+      //   132000 = template name doesn't exist (still pending)
+      //   132001 = template-language mismatch
+      //   132012 = template-variable mismatch
+      const code = data?.error?.code;
+      if (code !== 132000 && code !== 132001 && code !== 132012) {
+        // For other errors (recipient blocked us / phone invalid / rate limit),
+        // don't retry — the next template won't help.
+        break;
+      }
+    }
+    return { ok: false, ...(lastErr || { error: 'unknown' }) };
   }
 
   for (const c of (cre.results || [])) {
