@@ -7,206 +7,322 @@
 <meta name="description" content="Since 1918, the Hamza family has cooked for Bangalore. Four generations on, we're inviting a small, hand-picked group of food creators to our table.">
 <meta name="robots" content="index,follow">
 <link rel="icon" href="/favicon.ico">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════════════════════════════
+   HAMZA EXPRESS — CREATORS LANDING
+   Tokens straight from /Documents/Design/HE/HE Brand Doc.docx
+   - Burnt Sienna  #713520  primary text + strokes + ink
+   - Tan           #D2B48C  primary background — the canvas
+   - Off-White     #FAF3E3  highlights, panels, EXPRESS fill
+   - Times New Roman / Georgia — exclusive brand typeface
+   ═══════════════════════════════════════════════════════════════════ */
 :root{
-  --bg:#0a0f1a; --ink:#070b13; --card:#111826; --card2:#1a2234; --line:#273042; --line2:#1d2535;
-  --text:#e6edf7; --mute:#8b95a8; --dim:#5a6477;
-  --tan:#D2B48C; --tan-soft:rgba(212,180,140,.16); --sienna:#713520; --offwhite:#FAF3E3;
-  --gold:#fbbf24; --green:#22c55e;
+  --sienna:#713520;
+  --sienna-dark:#5a2818;
+  --tan:#D2B48C;
+  --tan-deep:#bd9e75;
+  --tan-light:#dfc5a1;
+  --offwhite:#FAF3E3;
+  --offwhite-dim:#f0e7d3;
+  --white:#FFFFFF;
+  --ink-soft:#5a2a1a;
+  --ink-mute:#8b6147;
+  --gold:#a87a2a;
+  --green:#4f7a3f;
+  --red:#9c2a2a;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
-.serif{font-family:'Cinzel',serif;letter-spacing:.04em}
-.editorial{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500}
-.mono{font-family:'JetBrains Mono',monospace}
-a{color:var(--tan);text-decoration:none;transition:color .15s}
-a:hover{color:var(--offwhite)}
+html,body{
+  background:var(--tan);
+  color:var(--sienna);
+  font-family:'Times New Roman',Georgia,'Times',serif;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.55;
+  overflow-x:hidden;
+}
+.serif{font-family:'Times New Roman',Georgia,'Times',serif}
+.sans{font-family:Helvetica,Arial,sans-serif}
+.mono{font-family:'Courier New',Courier,monospace}
+a{color:var(--sienna);text-decoration:underline;text-decoration-color:rgba(113,53,32,.3);text-underline-offset:3px;transition:all .15s}
+a:hover{text-decoration-color:var(--sienna)}
 
-/* ======= TOP BAR ======= */
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:rgba(10,15,26,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:30}
-.topbar .mark{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--tan);letter-spacing:.16em}
-.topbar .since{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mute);letter-spacing:.18em;text-transform:uppercase}
+/* ═══════════════════════════════════════════════════════════════════
+   TOPBAR
+   ═══════════════════════════════════════════════════════════════════ */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:18px 28px;
+  border-bottom:1px solid var(--sienna);
+  position:sticky;top:0;
+  background:var(--tan);
+  z-index:30;
+}
+.topbar img{height:32px;width:auto;display:block}
+.topbar .since{
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:11px;color:var(--sienna);
+  letter-spacing:.22em;text-transform:uppercase;font-weight:600;
+}
 
-/* ======= HERO ======= */
-.hero{padding:88px 24px 72px;text-align:center;position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 50% -10%,rgba(212,180,140,.10) 0%,transparent 60%),linear-gradient(180deg,#0d121d 0%,var(--bg) 80%)}
-.hero::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:1px;height:80%;background:linear-gradient(180deg,transparent,rgba(212,180,140,.18),transparent);pointer-events:none}
-.hero .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--tan);letter-spacing:.32em;text-transform:uppercase;margin-bottom:24px}
-.hero .eyebrow span{display:inline-block;padding:0 14px;position:relative}
-.hero .eyebrow span::before,.hero .eyebrow span::after{content:'';position:absolute;top:50%;width:24px;height:1px;background:var(--tan);opacity:.5}
+/* ═══════════════════════════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════════════════════════ */
+.hero{
+  padding:80px 28px 72px;
+  text-align:center;
+  position:relative;
+  background:var(--tan);
+}
+.hero::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:4px;
+  background:linear-gradient(90deg,transparent,var(--sienna),transparent);
+}
+.hero-logo{
+  max-width:320px;width:80%;height:auto;
+  margin:0 auto 32px;display:block;
+}
+.hero .eyebrow{
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:12px;color:var(--sienna);
+  letter-spacing:.32em;text-transform:uppercase;font-weight:700;
+  margin-bottom:24px;
+}
+.hero .eyebrow span{display:inline-block;padding:0 18px;position:relative}
+.hero .eyebrow span::before,.hero .eyebrow span::after{
+  content:'';position:absolute;top:50%;width:36px;height:1px;
+  background:var(--sienna);opacity:.6;
+}
 .hero .eyebrow span::before{right:100%}
 .hero .eyebrow span::after{left:100%}
-.hero h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:64px;font-weight:500;line-height:1.05;letter-spacing:-.015em;margin-bottom:22px;max-width:780px;margin-left:auto;margin-right:auto}
-.hero h1 i{font-style:italic;color:var(--tan);font-weight:500}
-.hero-sub{color:#c2cad8;font-size:18px;max-width:580px;margin:0 auto 18px;line-height:1.7;font-weight:400}
-.hero-signature{margin-top:24px;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:17px;color:var(--tan);letter-spacing:.02em}
-.hero-signature::before{content:'— ';color:var(--mute)}
-.cta{display:inline-flex;align-items:center;gap:10px;background:var(--offwhite);color:#1a1410;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;padding:18px 36px;border-radius:0;letter-spacing:.04em;text-transform:uppercase;border:none;cursor:pointer;text-decoration:none;transition:all .2s;margin-top:36px}
-.cta:hover{background:var(--tan);color:#1a1410;transform:translateY(-1px)}
+.hero h1{
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:60px;font-weight:700;font-style:italic;
+  line-height:1.05;letter-spacing:-.01em;
+  margin-bottom:24px;max-width:800px;margin-left:auto;margin-right:auto;
+  color:var(--sienna);
+}
+.hero h1 em{font-style:italic;color:var(--sienna-dark);font-weight:700}
+.hero-sub{
+  font-family:'Times New Roman',Georgia,serif;
+  color:var(--ink-soft);font-size:19px;
+  max-width:600px;margin:0 auto 22px;line-height:1.7;font-weight:400;
+}
+.hero-signature{
+  margin-top:24px;
+  font-family:'Times New Roman',Georgia,serif;
+  font-style:italic;font-size:18px;color:var(--sienna);
+  letter-spacing:.02em;
+}
+.hero-signature::before{content:'— ';color:var(--ink-mute)}
+.cta{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--sienna);color:var(--offwhite);
+  font-family:'Times New Roman',Georgia,serif;
+  font-size:15px;font-weight:700;
+  padding:18px 40px;border-radius:0;
+  letter-spacing:.16em;text-transform:uppercase;
+  border:none;cursor:pointer;text-decoration:none;
+  transition:all .2s;margin-top:36px;
+  box-shadow:0 4px 0 var(--sienna-dark);
+}
+.cta:hover{background:var(--sienna-dark);transform:translateY(-1px);color:var(--offwhite);box-shadow:0 6px 0 var(--sienna-dark)}
 .cta::after{content:'→';font-weight:700;font-size:18px}
-.cta-secondary{display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);letter-spacing:.16em;text-transform:uppercase}
-.cta-secondary::before{content:'· ';color:var(--dim)}
-.cta-secondary::after{content:' ·';color:var(--dim)}
+.cta-secondary{
+  display:inline-block;margin-top:14px;
+  font-family:'Times New Roman',Georgia,serif;font-style:italic;
+  font-size:14px;color:var(--ink-mute);
+}
 
-/* ======= HERITAGE TIMELINE ======= */
-.heritage{padding:72px 24px;max-width:980px;margin:0 auto;position:relative}
-.heritage-h{text-align:center;margin-bottom:56px}
-.heritage-h .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.24em;margin-bottom:14px;font-weight:600}
-.heritage-h h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
-.heritage-h h2 i{font-style:italic;color:var(--tan)}
-.heritage-h p{color:var(--mute);font-size:15px;max-width:560px;margin:14px auto 0;line-height:1.7}
-.timeline{position:relative;padding:24px 0}
-.timeline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--line),var(--line),transparent);transform:translateX(-50%)}
-.tl-row{display:grid;grid-template-columns:1fr 80px 1fr;align-items:start;gap:0;margin-bottom:32px;position:relative}
+/* ═══════════════════════════════════════════════════════════════════
+   HERITAGE TIMELINE
+   ═══════════════════════════════════════════════════════════════════ */
+.heritage{
+  padding:88px 28px;
+  background:var(--offwhite);
+  border-top:1px solid var(--sienna);
+  border-bottom:1px solid var(--sienna);
+}
+.heritage-h{text-align:center;margin-bottom:56px;max-width:980px;margin-left:auto;margin-right:auto}
+.heritage-h .eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.28em;margin-bottom:18px;font-weight:700}
+.heritage-h h2{font-family:'Times New Roman',Georgia,serif;font-size:42px;font-weight:700;letter-spacing:-.005em;line-height:1.15;color:var(--sienna)}
+.heritage-h h2 em{font-style:italic}
+.heritage-h p{color:var(--ink-soft);font-size:16px;max-width:600px;margin:18px auto 0;line-height:1.75;font-style:italic;font-family:'Times New Roman',Georgia,serif}
+.timeline{max-width:980px;margin:0 auto;position:relative;padding:24px 0}
+.timeline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--sienna);opacity:.3;transform:translateX(-50%)}
+.tl-row{display:grid;grid-template-columns:1fr 110px 1fr;align-items:start;gap:0;margin-bottom:40px;position:relative}
 .tl-row:last-child{margin-bottom:0}
-.tl-year{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--tan);text-align:center;background:var(--bg);padding:8px 0;position:relative;z-index:2}
-.tl-year::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;background:var(--tan);box-shadow:0 0 0 4px var(--bg),0 0 0 5px var(--tan)}
-.tl-text{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;line-height:1.55;color:#c2cad8;padding-top:8px}
-.tl-text b{font-weight:600;color:var(--text)}
-.tl-text.right{text-align:left;padding-left:8px;grid-column:3}
-.tl-text.left{text-align:right;padding-right:8px;grid-column:1}
+.tl-year{font-family:'Times New Roman',Georgia,serif;font-size:24px;font-weight:700;color:var(--sienna);text-align:center;background:var(--offwhite);padding:8px 0;position:relative;z-index:2}
+.tl-year::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:var(--sienna);box-shadow:0 0 0 5px var(--offwhite),0 0 0 6px var(--sienna)}
+.tl-text{font-family:'Times New Roman',Georgia,serif;font-size:17px;line-height:1.65;color:var(--ink-soft);padding-top:8px}
+.tl-text b,.tl-text strong{font-weight:700;color:var(--sienna)}
+.tl-text.right{text-align:left;padding-left:18px;grid-column:3}
+.tl-text.left{text-align:right;padding-right:18px;grid-column:1}
 
-/* ======= INVITATION SECTION ======= */
-.invitation{padding:80px 24px;background:linear-gradient(180deg,var(--bg) 0%,#0d121d 100%);border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+/* ═══════════════════════════════════════════════════════════════════
+   INVITATION (TIER CARDS)
+   ═══════════════════════════════════════════════════════════════════ */
+.invitation{padding:88px 28px;background:var(--tan);border-bottom:1px solid var(--sienna)}
 .invite-wrap{max-width:1100px;margin:0 auto}
-.invite-h{text-align:center;margin-bottom:48px}
-.invite-h .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.24em;margin-bottom:14px;font-weight:600}
-.invite-h h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:42px;font-weight:500;letter-spacing:-.01em;line-height:1.15;margin-bottom:14px}
-.invite-h h2 i{font-style:italic;color:var(--tan)}
-.invite-h p{color:var(--mute);font-size:15px;max-width:580px;margin:0 auto;line-height:1.7}
-.invite-h p b{color:var(--text);font-weight:500}
+.invite-h{text-align:center;margin-bottom:52px}
+.invite-h .eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.28em;margin-bottom:18px;font-weight:700}
+.invite-h h2{font-family:'Times New Roman',Georgia,serif;font-size:44px;font-weight:700;letter-spacing:-.005em;line-height:1.15;margin-bottom:16px;color:var(--sienna)}
+.invite-h h2 em{font-style:italic}
+.invite-h p{color:var(--ink-soft);font-size:16px;max-width:600px;margin:0 auto;line-height:1.7;font-family:'Times New Roman',Georgia,serif}
+.invite-h p b{font-weight:700;color:var(--sienna)}
 
-.tier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:8px}
-.tier-card{background:var(--card);border:1px solid var(--line);border-radius:0;padding:26px 24px;cursor:pointer;transition:all .25s ease;position:relative;text-align:left;font-family:inherit;color:inherit;width:100%;display:block;overflow:hidden}
-.tier-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--line);transition:background .2s}
-.tier-card:hover{border-color:var(--tan);transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.4)}
-.tier-card:hover::before{background:var(--tan)}
-.tier-card:hover .tier-arrow{transform:translateX(4px);color:var(--tan)}
-.tier-card:focus{outline:none;border-color:var(--tan)}
-.tier-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
-.tier-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.16em;font-weight:600}
-.tier-arrow{color:var(--dim);font-size:18px;font-weight:300;transition:all .2s}
-.tier-followers{font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;font-weight:600;letter-spacing:-.01em;line-height:1;margin-bottom:6px;color:var(--text)}
-.tier-tag{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:15px;color:var(--mute);margin-bottom:22px}
-.tier-deal{padding-top:20px;border-top:1px solid var(--line);font-size:14px;color:#c2cad8;line-height:1.65}
-.tier-deal b{color:var(--text);font-weight:600}
-.tier-deal .cash{color:var(--gold);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px}
-.tier-tap{margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.16em;font-weight:600}
-.tier-tap::before{content:'→ ';color:var(--tan)}
+.tier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;margin-top:8px}
+.tier-card{
+  background:var(--offwhite);
+  border:1px solid var(--sienna);
+  padding:28px 26px;cursor:pointer;
+  transition:all .25s ease;position:relative;text-align:left;
+  font-family:inherit;color:inherit;width:100%;display:block;overflow:hidden;
+}
+.tier-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sienna)}
+.tier-card:hover{transform:translateY(-3px);box-shadow:0 14px 0 -8px var(--sienna)}
+.tier-card:hover .tier-arrow{transform:translateX(4px)}
+.tier-card:focus{outline:2px solid var(--sienna);outline-offset:3px}
+.tier-row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.tier-name{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.18em;font-weight:700}
+.tier-arrow{color:var(--sienna);font-size:22px;font-weight:700;transition:all .2s}
+.tier-followers{font-family:'Times New Roman',Georgia,serif;font-size:34px;font-weight:700;letter-spacing:-.005em;line-height:1;margin-bottom:8px;color:var(--sienna)}
+.tier-tag{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:16px;color:var(--ink-soft);margin-bottom:22px;line-height:1.4}
+.tier-deal{padding-top:20px;border-top:1px solid var(--sienna);font-size:15px;color:var(--ink-soft);line-height:1.65;font-family:'Times New Roman',Georgia,serif}
+.tier-deal b{color:var(--sienna);font-weight:700}
+.tier-deal .cash{color:var(--gold);font-family:'Times New Roman',Georgia,serif;font-weight:700;font-size:14px}
+.tier-tap{margin-top:18px;font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.16em;font-weight:600}
+.tier-tap::before{content:'→ ';color:var(--sienna)}
+.tier-card.featured{background:var(--sienna);color:var(--offwhite)}
+.tier-card.featured::before{background:var(--offwhite)}
+.tier-card.featured .tier-name,.tier-card.featured .tier-followers,.tier-card.featured .tier-arrow,.tier-card.featured .tier-deal b{color:var(--offwhite)}
+.tier-card.featured .tier-tag,.tier-card.featured .tier-deal,.tier-card.featured .tier-tap{color:var(--tan)}
+.tier-card.featured .tier-deal{border-top-color:var(--offwhite);opacity:1}
+.tier-card.featured .tier-deal .cash{color:#f0c674}
 
-.tier-card.featured{background:linear-gradient(135deg,#1d1612 0%,var(--card) 70%);border-color:rgba(212,180,140,.4)}
-.tier-card.featured::before{background:var(--tan)}
-
-/* ======= MODAL ======= */
-.modal-backdrop{position:fixed;inset:0;background:rgba(5,8,15,.84);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 16px}
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════════ */
+.modal-backdrop{position:fixed;inset:0;background:rgba(58,26,16,.85);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:32px 16px}
 .modal-backdrop.open{display:flex}
-.modal{background:var(--card);border:1px solid var(--line);max-width:680px;width:100%;border-radius:0;position:relative;animation:modalIn .35s cubic-bezier(.2,.7,.2,1);overflow:hidden}
+.modal{background:var(--offwhite);border:2px solid var(--sienna);max-width:680px;width:100%;border-radius:0;position:relative;animation:modalIn .35s cubic-bezier(.2,.7,.2,1);overflow:hidden}
 @keyframes modalIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.modal-head{padding:36px 36px 28px;border-bottom:1px solid var(--line2);background:linear-gradient(135deg,#1d1612 0%,var(--card) 80%);position:relative}
-.modal-close{position:absolute;top:18px;right:18px;width:36px;height:36px;border:1px solid var(--line);background:transparent;color:var(--mute);font-size:20px;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
-.modal-close:hover{border-color:var(--tan);color:var(--tan)}
-.modal-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.18em;font-weight:600;margin-bottom:10px}
-.modal-h{font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:500;letter-spacing:-.01em;line-height:1.15;margin-bottom:6px}
-.modal-h i{font-style:italic;color:var(--tan)}
-.modal-tag{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:16px;color:var(--mute)}
-.modal-body{padding:28px 36px 36px}
-.modal-section{margin-bottom:28px}
+.modal-head{padding:36px 36px 28px;border-bottom:2px solid var(--sienna);background:var(--sienna);color:var(--offwhite);position:relative}
+.modal-close{position:absolute;top:18px;right:18px;width:36px;height:36px;border:1px solid var(--offwhite);background:transparent;color:var(--offwhite);font-size:20px;cursor:pointer;border-radius:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.modal-close:hover{background:var(--offwhite);color:var(--sienna)}
+.modal-eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.22em;font-weight:700;margin-bottom:10px}
+.modal-h{font-family:'Times New Roman',Georgia,serif;font-size:32px;font-weight:700;letter-spacing:-.005em;line-height:1.15;margin-bottom:8px;color:var(--offwhite)}
+.modal-h em{font-style:italic}
+.modal-tag{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:16px;color:var(--tan)}
+.modal-body{padding:32px 36px 36px;color:var(--ink-soft);font-family:'Times New Roman',Georgia,serif}
+.modal-section{margin-bottom:30px}
 .modal-section:last-child{margin-bottom:0}
-.modal-section-h{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tan);text-transform:uppercase;letter-spacing:.22em;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line2)}
+.modal-section-h{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.22em;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--sienna)}
 .modal-list{list-style:none;padding:0}
-.modal-list li{position:relative;padding:8px 0 8px 26px;font-size:15px;line-height:1.6;color:#c8d0de}
-.modal-list li::before{content:'';position:absolute;left:0;top:18px;width:14px;height:1px;background:var(--tan)}
-.modal-list li b{color:var(--text);font-weight:600}
-.modal-list li .note{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:13px;color:var(--mute);margin-top:3px;line-height:1.5}
+.modal-list li{position:relative;padding:8px 0 8px 26px;font-size:16px;line-height:1.65;color:var(--ink-soft);font-family:'Times New Roman',Georgia,serif}
+.modal-list li::before{content:'';position:absolute;left:0;top:18px;width:14px;height:1px;background:var(--sienna)}
+.modal-list li b{color:var(--sienna);font-weight:700}
+.modal-list li .note{display:block;font-style:italic;font-size:14px;color:var(--ink-mute);margin-top:3px;line-height:1.55}
 .modal-list.deliverables li::before{background:var(--gold)}
-.modal-cash-row{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);padding:14px 18px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;font-size:14px}
-.modal-cash-row b{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:18px}
-.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px;padding-top:24px;border-top:1px solid var(--line2)}
-.meta-item{font-size:13px;color:var(--mute)}
-.meta-item b{display:block;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;font-weight:600}
-.modal-cta-row{margin-top:32px;padding-top:24px;border-top:1px solid var(--line2);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.modal-cta{display:inline-flex;align-items:center;gap:8px;background:var(--offwhite);color:#1a1410;font-size:14px;font-weight:700;padding:14px 26px;letter-spacing:.04em;text-transform:uppercase;text-decoration:none;transition:all .15s}
-.modal-cta:hover{background:var(--tan);color:#1a1410}
+.modal-cash-row{background:var(--tan);border:1px solid var(--gold);padding:14px 18px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--sienna)}
+.modal-cash-row b{font-family:'Times New Roman',Georgia,serif;color:var(--gold);font-size:20px;font-weight:700}
+.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;padding-top:24px;border-top:1px solid var(--sienna)}
+.meta-item{font-size:14px;color:var(--ink-soft);font-family:'Times New Roman',Georgia,serif}
+.meta-item b{display:block;color:var(--sienna);font-family:'Times New Roman',Georgia,serif;font-size:11px;text-transform:uppercase;letter-spacing:.16em;margin-bottom:6px;font-weight:700}
+.modal-cta-row{margin-top:32px;padding-top:24px;border-top:1px solid var(--sienna);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.modal-cta{display:inline-flex;align-items:center;gap:8px;background:var(--sienna);color:var(--offwhite);font-family:'Times New Roman',Georgia,serif;font-size:14px;font-weight:700;padding:14px 28px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:all .15s;box-shadow:0 3px 0 var(--sienna-dark)}
+.modal-cta:hover{background:var(--sienna-dark);color:var(--offwhite)}
 .modal-cta::after{content:'→'}
-.modal-foot-note{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:14px;color:var(--mute);flex:1;min-width:200px}
+.modal-foot-note{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:14px;color:var(--ink-mute);flex:1;min-width:200px}
 
-/* ======= TABLE / WHAT YOU'LL EAT ======= */
-.kitchen{padding:80px 24px;max-width:1100px;margin:0 auto}
-.kitchen-h{text-align:center;margin-bottom:48px}
-.kitchen-h .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.24em;margin-bottom:14px;font-weight:600}
-.kitchen-h h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
-.kitchen-h h2 i{font-style:italic;color:var(--tan)}
-.kitchen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
-.dish{background:var(--card);border:1px solid var(--line);padding:26px}
-.dish h3{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:600;margin-bottom:8px}
-.dish h3 i{font-style:italic;color:var(--tan)}
-.dish-line{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.16em;margin-bottom:14px}
-.dish p{color:#c2cad8;font-size:14px;line-height:1.65}
+/* ═══════════════════════════════════════════════════════════════════
+   KITCHEN — signature dishes
+   ═══════════════════════════════════════════════════════════════════ */
+.kitchen{padding:88px 28px;background:var(--offwhite);border-bottom:1px solid var(--sienna)}
+.kitchen-h{text-align:center;margin-bottom:52px;max-width:1100px;margin-left:auto;margin-right:auto}
+.kitchen-h .eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.28em;margin-bottom:18px;font-weight:700}
+.kitchen-h h2{font-family:'Times New Roman',Georgia,serif;font-size:42px;font-weight:700;letter-spacing:-.005em;line-height:1.15;color:var(--sienna)}
+.kitchen-h h2 em{font-style:italic}
+.kitchen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:1100px;margin:0 auto}
+.dish{background:var(--tan);border:1px solid var(--sienna);padding:30px 28px}
+.dish h3{font-family:'Times New Roman',Georgia,serif;font-size:26px;font-weight:700;margin-bottom:8px;color:var(--sienna)}
+.dish h3 em{font-style:italic}
+.dish-line{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:.18em;margin-bottom:14px;font-weight:600}
+.dish p{color:var(--ink-soft);font-size:15px;line-height:1.7;font-family:'Times New Roman',Georgia,serif}
 
-/* ======= ETIQUETTE / WHAT WE ASK ======= */
-.etiquette{padding:80px 24px;background:#0d121d;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
-.etiq-wrap{max-width:780px;margin:0 auto;text-align:center}
-.etiq-wrap .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.24em;margin-bottom:14px;font-weight:600}
-.etiq-wrap h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:500;letter-spacing:-.01em;line-height:1.2;margin-bottom:18px}
-.etiq-wrap h2 i{font-style:italic;color:var(--tan)}
-.etiq-intro{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:18px;color:#c2cad8;line-height:1.7;max-width:600px;margin:0 auto 40px}
+/* ═══════════════════════════════════════════════════════════════════
+   ETIQUETTE — sienna inverse section
+   ═══════════════════════════════════════════════════════════════════ */
+.etiquette{padding:88px 28px;background:var(--sienna);color:var(--offwhite);border-bottom:1px solid var(--sienna-dark)}
+.etiq-wrap{max-width:820px;margin:0 auto;text-align:center}
+.etiq-wrap .eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.28em;margin-bottom:18px;font-weight:700}
+.etiq-wrap h2{font-family:'Times New Roman',Georgia,serif;font-size:42px;font-weight:700;letter-spacing:-.005em;line-height:1.15;margin-bottom:20px;color:var(--offwhite)}
+.etiq-wrap h2 em{font-style:italic;color:var(--tan)}
+.etiq-intro{font-family:'Times New Roman',Georgia,serif;font-style:italic;font-size:19px;color:var(--tan);line-height:1.7;max-width:640px;margin:0 auto 44px}
 .etiq-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;text-align:left}
 .etiq-item{padding:24px;border-left:2px solid var(--tan)}
-.etiq-item h3{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--tan);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px}
-.etiq-item p{color:#c2cad8;font-size:14px;line-height:1.65}
+.etiq-item h3{font-family:'Times New Roman',Georgia,serif;font-size:14px;font-weight:700;color:var(--tan);text-transform:uppercase;letter-spacing:.18em;margin-bottom:12px}
+.etiq-item p{color:var(--offwhite);font-size:15px;line-height:1.7;font-family:'Times New Roman',Georgia,serif}
+.etiq-item p b{color:var(--tan);font-weight:700}
 
-/* ======= FAQ ======= */
-.faq{padding:80px 24px;max-width:760px;margin:0 auto}
-.faq-h{text-align:center;margin-bottom:36px}
-.faq-h .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.24em;margin-bottom:14px;font-weight:600}
-.faq-h h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:500;letter-spacing:-.01em}
-.faq-h h2 i{font-style:italic;color:var(--tan)}
-.faq-q{background:transparent;border-bottom:1px solid var(--line);padding:18px 0;cursor:pointer}
-.faq-q summary{font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--text)}
-.faq-q summary::after{content:'+';color:var(--tan);font-size:22px;font-weight:300;transition:transform .15s;font-family:'Plus Jakarta Sans',sans-serif}
+/* ═══════════════════════════════════════════════════════════════════
+   FAQ
+   ═══════════════════════════════════════════════════════════════════ */
+.faq{padding:88px 28px;max-width:780px;margin:0 auto;background:var(--tan)}
+.faq-h{text-align:center;margin-bottom:42px}
+.faq-h .eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--sienna);text-transform:uppercase;letter-spacing:.28em;margin-bottom:18px;font-weight:700}
+.faq-h h2{font-family:'Times New Roman',Georgia,serif;font-size:38px;font-weight:700;letter-spacing:-.005em;color:var(--sienna)}
+.faq-h h2 em{font-style:italic}
+.faq-q{background:transparent;border-bottom:1px solid var(--sienna);padding:22px 0;cursor:pointer}
+.faq-q summary{font-family:'Times New Roman',Georgia,serif;font-size:21px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;color:var(--sienna)}
+.faq-q summary::after{content:'+';color:var(--sienna);font-size:26px;font-weight:300;transition:transform .15s;font-family:'Times New Roman',Georgia,serif}
 .faq-q[open] summary::after{transform:rotate(45deg)}
-.faq-q p{margin-top:14px;color:var(--mute);font-size:15px;line-height:1.7;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400}
-.faq-q p b{color:var(--text);font-weight:600}
+.faq-q p{margin-top:14px;color:var(--ink-soft);font-size:16px;line-height:1.75;font-family:'Times New Roman',Georgia,serif}
+.faq-q p b{color:var(--sienna);font-weight:700}
 
-/* ======= FINAL ======= */
-.final{padding:96px 24px;text-align:center;background:radial-gradient(800px 500px at 50% 50%,rgba(212,180,140,.10) 0%,transparent 70%),linear-gradient(180deg,#0d121d 0%,var(--bg) 80%);position:relative;overflow:hidden;border-top:1px solid var(--line2)}
-.final-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tan);text-transform:uppercase;letter-spacing:.32em;margin-bottom:24px;font-weight:600}
-.final h2{font-family:'Cormorant Garamond',Georgia,serif;font-size:52px;font-weight:500;letter-spacing:-.01em;line-height:1.1;margin-bottom:18px;max-width:680px;margin-left:auto;margin-right:auto}
-.final h2 i{font-style:italic;color:var(--tan)}
-.final p{color:#c2cad8;font-size:16px;margin-bottom:32px;line-height:1.7;max-width:540px;margin-left:auto;margin-right:auto}
-.final-meta{margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase}
+/* ═══════════════════════════════════════════════════════════════════
+   FINAL CTA
+   ═══════════════════════════════════════════════════════════════════ */
+.final{padding:104px 28px;text-align:center;background:var(--offwhite);border-top:1px solid var(--sienna);position:relative;overflow:hidden}
+.final-eyebrow{font-family:'Times New Roman',Georgia,serif;font-size:12px;color:var(--sienna);text-transform:uppercase;letter-spacing:.32em;margin-bottom:24px;font-weight:700}
+.final h2{font-family:'Times New Roman',Georgia,serif;font-size:54px;font-weight:700;font-style:italic;letter-spacing:-.01em;line-height:1.1;margin-bottom:22px;max-width:720px;margin-left:auto;margin-right:auto;color:var(--sienna)}
+.final h2 em{font-style:italic}
+.final p{color:var(--ink-soft);font-size:17px;margin-bottom:36px;line-height:1.7;max-width:560px;margin-left:auto;margin-right:auto;font-family:'Times New Roman',Georgia,serif;font-style:italic}
+.final-meta{margin-top:24px;font-family:'Times New Roman',Georgia,serif;font-size:11px;color:var(--ink-mute);letter-spacing:.22em;text-transform:uppercase;font-weight:600}
 
-/* ======= FOOTER ======= */
-.footer{padding:36px 24px 48px;text-align:center;color:var(--dim);font-size:12px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
-.footer .mark{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--tan);letter-spacing:.16em;margin-bottom:8px;display:block}
+/* ═══════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════ */
+.footer{padding:42px 28px 56px;text-align:center;color:var(--offwhite);font-size:13px;background:var(--sienna);font-family:'Times New Roman',Georgia,serif}
+.footer img{height:36px;margin-bottom:18px}
+.footer .mark-text{font-family:'Times New Roman',Georgia,serif;font-size:14px;font-weight:700;color:var(--tan);letter-spacing:.16em;margin-bottom:10px;display:block;text-transform:uppercase}
+.footer a{color:var(--tan)}
+.footer a:hover{color:var(--offwhite)}
 
-/* ======= MOBILE ======= */
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE
+   ═══════════════════════════════════════════════════════════════════ */
 @media (max-width:680px){
   .topbar{padding:14px 18px}
   .topbar .since{display:none}
-  .hero{padding:60px 18px 56px}
-  .hero h1{font-size:42px}
-  .hero-sub{font-size:16px}
-  .hero .eyebrow{font-size:10px;letter-spacing:.24em}
-  .heritage{padding:56px 18px}
-  .heritage-h h2,.invite-h h2,.kitchen-h h2,.etiq-wrap h2{font-size:30px}
-  .timeline::before{left:32px}
-  .tl-row{grid-template-columns:64px 1fr;gap:12px}
+  .hero{padding:48px 18px 56px}
+  .hero h1{font-size:38px}
+  .hero-sub{font-size:17px}
+  .hero .eyebrow{font-size:10px;letter-spacing:.22em}
+  .hero-logo{max-width:240px;width:80%}
+  .heritage,.invitation,.kitchen,.etiquette,.faq,.final{padding:60px 18px}
+  .heritage-h h2,.invite-h h2,.kitchen-h h2,.etiq-wrap h2,.final h2{font-size:32px}
+  .timeline::before{left:30px}
+  .tl-row{grid-template-columns:60px 1fr;gap:14px}
   .tl-year{grid-column:1;font-size:18px}
-  .tl-text.left,.tl-text.right{grid-column:2;text-align:left;padding-left:12px;padding-right:0;font-size:16px}
-  .invitation{padding:60px 18px}
-  .tier-card{padding:22px 20px}
-  .tier-followers{font-size:28px}
+  .tl-text.left,.tl-text.right{grid-column:2;text-align:left;padding-left:14px;padding-right:0;font-size:16px}
+  .tier-card{padding:24px 22px}
+  .tier-followers{font-size:30px}
   .modal{margin:0}
-  .modal-head{padding:32px 24px 24px}
-  .modal-h{font-size:28px}
-  .modal-body{padding:24px 24px 32px}
-  .modal-meta{grid-template-columns:1fr;gap:12px}
-  .kitchen{padding:60px 18px}
-  .etiquette{padding:60px 18px}
-  .faq{padding:60px 18px}
-  .final{padding:64px 18px}
-  .final h2{font-size:36px}
+  .modal-head{padding:30px 24px 22px}
+  .modal-h{font-size:26px}
+  .modal-body{padding:26px 24px 30px}
+  .modal-meta{grid-template-columns:1fr;gap:14px}
+  .final h2{font-size:38px}
   .modal-backdrop{padding:16px 8px}
 }
 </style>
@@ -214,18 +330,19 @@ a:hover{color:var(--offwhite)}
 <body>
 
 <div class="topbar">
-  <div class="mark">HAMZA EXPRESS</div>
+  <a href="https://hamzaexpress.in" aria-label="Hamza Express home"><img src="/assets/Text_Logo.svg" alt="Hamza Express"></a>
   <div class="since">EST. 1918 · SHIVAJINAGAR</div>
 </div>
 
 <!-- ============== HERO ============== -->
 <section class="hero">
+  <img class="hero-logo" src="/assets/Full_Logo_Brown_BG.svg" alt="Hamza Express — Over 100 Years of Taste, Delivered · Est. 1918">
   <div class="eyebrow"><span>An Invitation · By Selection</span></div>
-  <h1>Since 1918, the Hamza family has cooked <i>for Bangalore.</i></h1>
+  <h1>Since 1918, the Hamza family has cooked <em>for Bangalore.</em></h1>
   <p class="hero-sub">
-    A hundred and eight years. Four generations. The same Dakhni biryani, the same kababs from the same coal-grilled tandoor, the same brain-dry our grandfather perfected in the 1950s. This year, we've quietly refreshed the room — and we're inviting a small, hand-picked group of food creators to come sit at our table.
+    A hundred and eight years. Four generations. The same Dakhni biryani, the same kababs from the same coal-grilled tandoor, the same bheja fry our grandfather perfected in the 1950s. This year, we've quietly refreshed the room — and we're inviting a small, hand-picked group of food creators to come sit at our table.
   </p>
-  <div class="hero-signature">Mohammed Hamza · 4th generation · Shivajinagar</div>
+  <div class="hero-signature">Nihaf · Managing Director · HN Hotels Pvt Ltd</div>
   <a href="/creators/apply" class="cta">Request your invitation</a>
   <div class="cta-secondary">Five seats per evening · By selection only</div>
 </section>
@@ -234,20 +351,20 @@ a:hover{color:var(--offwhite)}
 <section class="heritage">
   <div class="heritage-h">
     <div class="eyebrow">The Lineage</div>
-    <h2>One family. <i>One street.</i><br>Four generations cooking.</h2>
-    <p>Most restaurants in Shivajinagar are younger than our youngest cook. We are not. We've been on this stretch of H.K.P. Road since the year of the Spanish Flu, and we are still here.</p>
+    <h2>One family. One street.<br><em>Four generations cooking.</em></h2>
+    <p>Most restaurants in Shivajinagar are younger than our youngest cook. We are not. We've been on this stretch of HKP Road since the year of the Spanish Flu, and we are still here.</p>
   </div>
 
   <div class="timeline">
     <div class="tl-row">
-      <div class="tl-text left"><b>The first kitchen.</b> Our great-grandfather sets up a small Dakhni biryani counter on H.K.P. Road, in what was then a market town outside Bangalore Cantonment. The recipes come down the family from Hyderabad.</div>
+      <div class="tl-text left"><b>The first kitchen.</b> Our great-grandfather sets up a small Dakhni biryani counter on HKP Road, in what was then a market town outside Bangalore Cantonment. The recipes come down the family from Hyderabad.</div>
       <div class="tl-year">1918</div>
       <div></div>
     </div>
     <div class="tl-row">
       <div></div>
       <div class="tl-year">1950s</div>
-      <div class="tl-text right"><b>Second generation.</b> The family adds the kababs and the mutton brain dry — dishes still on our menu today, made the same way. Bangalore is no longer a market town; we are still on the same street.</div>
+      <div class="tl-text right"><b>Second generation.</b> The family adds the kababs and bheja fry — dishes still on our menu today, made the same way. Bangalore is no longer a market town; we are still on the same street.</div>
     </div>
     <div class="tl-row">
       <div class="tl-text left"><b>Third generation.</b> The walk-up biryani window becomes a Shivajinagar landmark. Office workers, students, late-night cabbies — everyone knows the address. The recipes don't change.</div>
@@ -272,66 +389,63 @@ a:hover{color:var(--offwhite)}
   <div class="invite-wrap">
     <div class="invite-h">
       <div class="eyebrow">The Invitation · By Audience</div>
-      <h2>What we lay on the table <i>for you.</i></h2>
+      <h2>What we lay on the table <em>for you.</em></h2>
       <p>We don't negotiate. The offer is pre-defined by audience size — <b>so you know exactly what you'll be hosted with before you even submit.</b> Tap any card below for the full invitation.</p>
     </div>
-
-    <div class="tier-grid" id="tierGrid">
-      <!-- Tier cards rendered by JS -->
-    </div>
+    <div class="tier-grid" id="tierGrid"></div>
   </div>
 </section>
 
-<!-- ============== KITCHEN / WHAT YOU'LL EAT ============== -->
+<!-- ============== KITCHEN ============== -->
 <section class="kitchen">
   <div class="kitchen-h">
     <div class="eyebrow">From the Kitchen</div>
-    <h2>The dishes you'll <i>be served.</i></h2>
+    <h2>The dishes you'll <em>be served.</em></h2>
   </div>
   <div class="kitchen-grid">
     <div class="dish">
-      <h3><i>Mutton</i> Biryani</h3>
+      <h3><em>Mutton</em> Biryani</h3>
       <div class="dish-line">The 1918 recipe</div>
       <p>Dum-cooked in sealed handi. Long-grain basmati layered with mutton that's been marinated overnight, ghee, fried onions, and our family's own spice blend. The dish that built our reputation.</p>
     </div>
     <div class="dish">
-      <h3><i>Brain</i> Dry</h3>
-      <div class="dish-line">The 1950s addition</div>
-      <p>Mutton brain, slow-cooked dry with green chillies, ginger, and curry leaves. Most cafés in Bangalore can't make this. We've been making it since the second generation. Reserved for serious eaters.</p>
-    </div>
-    <div class="dish">
-      <h3><i>Chicken</i> Kabab</h3>
-      <div class="dish-line">From the coal tandoor</div>
-      <p>Hand-minced chicken, family masala, threaded onto skewers and grilled over real coal — not gas, not electric. The smoke is part of the flavor. Our top revenue dish, and it shows.</p>
-    </div>
-    <div class="dish">
-      <h3><i>Ghee</i> Rice</h3>
-      <div class="dish-line">The unsung hero</div>
-      <p>Pure ghee, basmati, whole spices. Simple in the way only old kitchens can do simple. Outsells biryani by a small margin — Bangalore knows what it's looking for.</p>
-    </div>
-    <div class="dish">
-      <h3><i>Tandoori</i> Chicken</h3>
-      <div class="dish-line">Charred, never dry</div>
-      <p>Yogurt-marinated 24 hours. Pulled out of the tandoor exactly when the skin chars and the meat is still juicy. A test of the kitchen — we pass it daily.</p>
-    </div>
-    <div class="dish">
-      <h3><i>Bheja</i> Fry</h3>
+      <h3><em>Bheja</em> Fry</h3>
       <div class="dish-line">The Hamza signature</div>
       <p>Mutton brain, tempered with green chillies, onions, and the family masala. Bangalore knows us for this — it's the dish on every regular's order. There's a reason our IG bio leads with it: it's the line you can't fake.</p>
     </div>
     <div class="dish">
-      <h3><i>Hamza</i> Special</h3>
+      <h3><em>Brain</em> Dry</h3>
+      <div class="dish-line">The 1950s addition</div>
+      <p>Mutton brain, slow-cooked dry with green chillies, ginger, and curry leaves. Most cafés in Bangalore can't make this. We've been making it since the second generation. Reserved for serious eaters.</p>
+    </div>
+    <div class="dish">
+      <h3><em>Chicken</em> Kabab</h3>
+      <div class="dish-line">From the coal tandoor</div>
+      <p>Hand-minced chicken, family masala, threaded onto skewers and grilled over real coal — not gas, not electric. The smoke is part of the flavor. Our top revenue dish, and it shows.</p>
+    </div>
+    <div class="dish">
+      <h3><em>Ghee</em> Rice</h3>
+      <div class="dish-line">The unsung hero</div>
+      <p>Pure ghee, basmati, whole spices. Simple in the way only old kitchens can do simple. Outsells biryani by a small margin — Bangalore knows what it's looking for.</p>
+    </div>
+    <div class="dish">
+      <h3><em>Tandoori</em> Chicken</h3>
+      <div class="dish-line">Charred, never dry</div>
+      <p>Yogurt-marinated 24 hours. Pulled out of the tandoor exactly when the skin chars and the meat is still juicy. A test of the kitchen — we pass it daily.</p>
+    </div>
+    <div class="dish">
+      <h3><em>Hamza</em> Special</h3>
       <div class="dish-line">The family dish</div>
       <p>The one with no good way to describe it on a menu. You'll have to come and find out. We serve it to people we want to host properly.</p>
     </div>
   </div>
 </section>
 
-<!-- ============== ETIQUETTE / WHAT WE ASK ============== -->
+<!-- ============== ETIQUETTE ============== -->
 <section class="etiquette">
   <div class="etiq-wrap">
     <div class="eyebrow">House Etiquette</div>
-    <h2>We don't ask for <i>much.</i></h2>
+    <h2>We don't ask for <em>much.</em></h2>
     <p class="etiq-intro">No drafts. No approvals. No brand-speak. Just sit at our table, eat what we put in front of you, and tell the truth — the way you tell the truth on every other post.</p>
 
     <div class="etiq-list">
@@ -359,7 +473,7 @@ a:hover{color:var(--offwhite)}
 <section class="faq">
   <div class="faq-h">
     <div class="eyebrow">Honest Answers</div>
-    <h2>Questions you're <i>likely</i> to have.</h2>
+    <h2>Questions you're <em>likely</em> to have.</h2>
   </div>
 
   <details class="faq-q">
@@ -374,7 +488,7 @@ a:hover{color:var(--offwhite)}
 
   <details class="faq-q">
     <summary>What if my engagement rate is low?</summary>
-    <p>We look at active engagement, not just follower count. Below 0.5% ER, we auto-decline — that protects both sides. From 30K+ followers, we expect ER ≥ 1.5% for instant approval; otherwise we review manually within 24h. Inflated counts won't get past us.</p>
+    <p>We look at active engagement, not just follower count. Below 0.5% ER, we auto-decline — that protects both sides. Inflated counts won't get past us. We review every application personally.</p>
   </details>
 
   <details class="faq-q">
@@ -384,7 +498,7 @@ a:hover{color:var(--offwhite)}
 
   <details class="faq-q">
     <summary>How soon can I come?</summary>
-    <p>If you fall in T1–T4 with passing engagement, you're auto-confirmed the moment you submit — pick any slot in the next 21 days, you're booked. T5+ are reviewed by us personally within 24 hours. <b>Eid (May 27) slots fill fastest. Don't wait.</b></p>
+    <p>Every application is reviewed personally — by us — within 24 hours. You'll hear back via WhatsApp on <b>+91 80080 02049</b> and email. <b>Eid (May 27) slots fill fastest. Don't wait.</b></p>
   </details>
 
   <details class="faq-q">
@@ -406,17 +520,18 @@ a:hover{color:var(--offwhite)}
 <!-- ============== FINAL ============== -->
 <section class="final">
   <div class="final-eyebrow">Five Seats Per Evening</div>
-  <h2>If you tell Bangalore food stories — <i>come tell ours.</i></h2>
+  <h2>If you tell Bangalore food stories — <em>come tell ours.</em></h2>
   <p>Submit your handle. We auto-detect your tier in seconds. The whole flow takes about ninety seconds. Eid week fills first.</p>
   <a href="/creators/apply" class="cta">Request your invitation</a>
   <div class="final-meta">By selection · Five windows nightly · 4 PM to midnight</div>
 </section>
 
 <footer class="footer">
-  <span class="mark">HAMZA EXPRESS</span>
-  <div>151 TO 154, HKP Road, Sulthangunta · Shivajinagar · Bangalore 560051</div>
+  <img src="/assets/Icon.svg" alt="Hamza Express icon">
+  <span class="mark-text">HAMZA EXPRESS</span>
+  <div>151 TO 154, HKP Road · Sulthangunta · Shivajinagar · Bangalore 560051</div>
   <div style="margin-top:6px">Open 2 PM – 3 AM · <a href="https://maps.app.goo.gl/uV5UPq3DA2DfL3RT9">Get directions</a></div>
-  <div style="margin-top:14px;color:var(--dim)">Est. 1918 · Four generations · Recently refreshed</div>
+  <div style="margin-top:14px;color:var(--tan);opacity:.7">Est. 1918 · Four generations · Recently refreshed · Operated by HN Hotels Pvt Ltd</div>
 </footer>
 
 <!-- ============== MODAL ============== -->
@@ -425,192 +540,67 @@ a:hover{color:var(--offwhite)}
     <div class="modal-head">
       <button class="modal-close" id="modalClose" aria-label="Close">×</button>
       <div class="modal-eyebrow" id="modalEyebrow">T2 · MICRO</div>
-      <h2 class="modal-h" id="modalTitle">Five thousand to fifteen thousand <i>followers</i></h2>
+      <h2 class="modal-h" id="modalTitle">Five thousand to fifteen thousand <em>followers</em></h2>
       <div class="modal-tag" id="modalTag">For the creator we'd like to bring back.</div>
     </div>
-    <div class="modal-body" id="modalBody">
-      <!-- populated by JS -->
-    </div>
+    <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
 <script>
 const TIERS = [
-  {
-    code: 'T1', name: 'NANO',
-    range: '1K – 5K',
-    rangeFull: 'One thousand to five thousand <i>followers</i>',
-    tag: 'For the creator just starting their food story.',
-    headline: '1 cover · 1 reel + 3 stories',
-    cardBlurb: '<b>One seat at our table.</b><br>You, alone. The full Dakhni meal that built our name.',
-    onTable: [
-      { line: '<b>One seat</b> at our table — yourself, hosted by the family.', note: 'A welcome cup of Irani chai while you settle in.' },
-      { line: '<b>1 plate of Mutton Biryani</b> — the 1918 recipe, dum-cooked.', note: 'The dish that started everything.' },
-      { line: '<b>1 chicken kabab serving</b> — straight from the coal tandoor.' },
-      { line: '<b>1 ghee rice</b> + 1 dal of the day.' },
-      { line: '<b>1 dessert of the day</b> — usually qubani-ka-meetha or seasonal kheer.' }
-    ],
-    asked: [
-      { line: '<b>1 reel</b> within 7 days of your visit.' },
-      { line: '<b>3 stories</b> the same evening (table, dish, candid).' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: null,
-    slot: 'Choose any window: 4 PM, 6 PM, 8 PM, 10 PM, or midnight',
-    confirmation: 'Auto-confirmed on submit. We see you at the door.',
-    note: 'A small first invitation — the kind every food creator we now host began with.'
-  },
-  {
-    code: 'T2', name: 'MICRO',
-    range: '5K – 15K',
-    rangeFull: 'Five thousand to fifteen thousand <i>followers</i>',
-    tag: 'For the creator we\'d like to bring back.',
-    headline: '2 covers + welcome chai · 1 reel + 5 stories',
-    cardBlurb: '<b>Two seats — you + one guest.</b><br>The Dakhni table, plus a welcome chai.',
-    onTable: [
-      { line: '<b>Two seats</b> — yourself and a guest of your choosing.', note: 'A welcome Irani chai poured for the table.' },
-      { line: '<b>1 mutton biryani</b> + <b>1 chicken biryani</b>.', note: 'Two of our hero plates side-by-side, so you can tell readers which one you preferred.' },
-      { line: '<b>1 chicken kabab platter</b> — coal tandoor.' },
-      { line: '<b>1 ghee rice</b> + <b>1 mutton chatpata</b> (a Hamza preparation most kitchens don\'t make).' },
-      { line: '<b>1 dessert of the day</b> for the table.' }
-    ],
-    asked: [
-      { line: '<b>1 reel</b> within 7 days.' },
-      { line: '<b>5 stories</b> the same evening.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: null,
-    slot: 'Choose any window: 4 PM through midnight',
-    confirmation: 'Auto-confirmed if engagement passes 0.5%.',
-    note: 'The most-booked tier. Slots in this band fill fastest, especially on weekends.'
-  },
-  {
-    code: 'T3', name: 'MID-MICRO',
-    range: '15K – 30K',
-    rangeFull: 'Fifteen thousand to thirty thousand <i>followers</i>',
-    tag: 'For the creator with reach across Bangalore food circles.',
-    headline: '3 covers + chai + dessert flight · 1 reel + 5 stories + bio link',
-    cardBlurb: '<b>Three seats + Dakhni dessert flight.</b><br>Plus a 24-hour bio link.',
-    onTable: [
-      { line: '<b>Three seats</b> at our table.', note: 'Welcome Irani chai for the table.' },
-      { line: '<b>1 mutton biryani</b> + <b>1 chicken biryani</b> — both heroes.' },
-      { line: '<b>1 mughlai chicken</b> — the recipe travels back to our great-grandfather\'s kitchen.' },
-      { line: '<b>1 mixed kabab platter</b> (chicken + mutton seekh) from the coal tandoor.' },
-      { line: '<b>Dessert flight</b> — three plates: qubani-ka-meetha, kheer, and the Hamza special sweet.' }
-    ],
-    asked: [
-      { line: '<b>1 reel</b> within 7 days.' },
-      { line: '<b>5 stories</b> the same evening.' },
-      { line: '<b>1 bio link</b> for 24 hours pointing to our location.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: null,
-    slot: 'Choose any window: 4 PM through midnight',
-    confirmation: 'Auto-confirmed if engagement passes 1%.',
-    note: 'The first tier with a bio-link ask. Worth it — your followers will click.'
-  },
-  {
-    code: 'T4', name: 'UPPER-MICRO',
-    range: '30K – 60K',
-    rangeFull: 'Thirty thousand to sixty thousand <i>followers</i>',
-    tag: 'For the creator who can put us on Bangalore\'s food map.',
-    headline: '4 covers + dessert flight + chef interaction · 1 reel + 1 grid + 5 stories',
-    cardBlurb: '<b>Four seats + chef interaction.</b><br>A direct conversation with our 4th-generation chef.',
-    onTable: [
-      { line: '<b>Four seats</b> at our table.', note: 'Welcome chai service for the entire table.' },
-      { line: '<b>The full Dakhni spread</b>: mutton biryani, chicken biryani, ghee rice, mughlai chicken, mixed kabab platter, mutton chatpata, dal of the day, breads.' },
-      { line: '<b>Mutton brain dry</b> — included from this tier upward.', note: 'Most cafés in Bangalore can\'t make this. We\'ve been making it since the 1950s.' },
-      { line: '<b>Chef interaction</b> — five minutes with Mohammed Hamza, fourth generation, talking through the recipes if you want it for your reel.' },
-      { line: '<b>Dessert flight</b> — three plates.' }
-    ],
-    asked: [
-      { line: '<b>1 reel</b> within 10 days.' },
-      { line: '<b>1 grid post</b> (single image or carousel).' },
-      { line: '<b>5 stories</b> the same evening.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: null,
-    slot: 'Choose any window — we recommend Golden Hour (6 PM) or Prime (8 PM) for visuals',
-    confirmation: 'Auto-confirmed if engagement passes 1.5%. Otherwise, 24h manual review.',
-    note: 'The first tier where the chef sits with you. Worth telling that story on the reel.'
-  },
-  {
-    code: 'T5', name: 'MACRO-MICRO', featured: true,
-    range: '60K – 100K',
-    rangeFull: 'Sixty thousand to one hundred thousand <i>followers</i>',
-    tag: 'For the creator whose name carries weight in Bangalore food.',
-    headline: '4 covers + ₹500 + brain dry + dessert flight · 1 reel + 1 grid + 7 stories',
-    cardBlurb: '<b>Four seats + ₹500 cash.</b><br>Mutton brain dry comp + dessert flight + 7-day bio link.',
-    onTable: [
-      { line: '<b>Four seats</b> at our table.', note: 'Welcome chai for the table.' },
-      { line: '<b>Full Dakhni spread</b> as detailed at T4 — biryanis, kababs, mughlai, ghee rice.' },
-      { line: '<b>Mutton brain dry</b> — fully comped.' },
-      { line: '<b>Dessert flight</b> — three plates.' },
-      { line: '<b>Chef interaction</b> with Mohammed Hamza — extended, ten minutes, kitchen access if you want it for the reel.' },
-      { line: '<b>Printed origin card</b> — a small note from the family with the 1918 story, yours to take home.' }
-    ],
-    asked: [
-      { line: '<b>1 reel</b> within 10 days.' },
-      { line: '<b>1 grid post</b>.' },
-      { line: '<b>7 stories</b> across the same evening.' },
-      { line: '<b>7-day bio link</b> pointing to our location.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: '₹ 500',
-    slot: 'Choose any window — Golden Hour, Prime, or Late preferred',
-    confirmation: 'Manual review by Mohammed Hamza within 24 hours.',
-    note: 'The first tier with cash on top of the meal. Reviewed personally by family — we want to host you well.'
-  },
-  {
-    code: 'T6', name: 'EDGE-MACRO', featured: true,
-    range: '100K – 250K',
-    rangeFull: 'One hundred to two hundred and fifty thousand <i>followers</i>',
-    tag: 'Reserved for creators who shape Bangalore\'s food conversation.',
-    headline: '4 covers + ₹3,000 + chef tasting (8 dishes) + family photo · 2 reels + grid + collab + IG live',
-    cardBlurb: '<b>Chef\'s 8-dish tasting + ₹3,000.</b><br>A family photograph with the 4th-generation chef.',
-    onTable: [
-      { line: '<b>Four seats</b> at our table.', note: 'Welcome Irani chai service for the table — cardamom, milk, sugar adjusted to taste.' },
-      { line: '<b>Chef\'s 8-dish tasting menu</b> — hand-picked by Mohammed Hamza, spanning four generations of recipes. The brain dry, the mughlai, the special, the heritage breads, the kababs, both biryanis, the dessert flight.' },
-      { line: '<b>Kitchen access</b> for the reel — film the coal tandoor, the dum handi being broken open, the brain dry being plated.' },
-      { line: '<b>Family photograph</b> with Mohammed Hamza, framed, sent to you as a print. (We\'ll keep one for the wall too.)' },
-      { line: '<b>Printed origin card</b> + a hand-signed note from the family.' }
-    ],
-    asked: [
-      { line: '<b>2 reels</b> within 14 days (one food, one heritage / behind-the-kitchen if you can).' },
-      { line: '<b>1 grid post</b> + <b>1 IG collab post</b> (we\'ll be co-author).' },
-      { line: '<b>1 IG Live</b> — fifteen minutes from the kitchen, scheduled together.' },
-      { line: '<b>7-day bio link</b>.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: '₹ 3,000',
-    slot: 'Scheduled directly with Mohammed — typically Golden Hour or Prime',
-    confirmation: 'Personally reviewed by Mohammed Hamza. We\'ll respond within 24h.',
-    note: 'A tier we host two or three of per month. Slots are not always available — please don\'t take it personally if we ask you to wait two weeks.'
-  },
-  {
-    code: 'T7', name: 'MACRO',
-    range: '250K +',
-    rangeFull: 'Two hundred and fifty thousand and above',
-    tag: 'For the creator we\'d be honored to host.',
-    headline: '6 covers + ₹8,000 + custom brand brief · custom proposal',
-    cardBlurb: '<b>Six seats + custom brief.</b><br>₹8,000 base — pure-cash terms negotiable from here.',
-    onTable: [
-      { line: '<b>Six seats</b> — bring your team, your family, or both.' },
-      { line: '<b>Full chef tasting</b> — every signature dish on the menu, plus one off-menu family dish prepared specifically for the visit.' },
-      { line: '<b>Private kitchen tour</b> with the family — coal tandoor, the masala room, the dum kitchen.' },
-      { line: '<b>Custom brand brief</b> — we\'ll send a one-page narrative the day before, so your reel can sit on real story.' },
-      { line: '<b>Family photograph</b>, framed print delivered.' },
-      { line: '<b>A bottle of family masala</b>, hand-packed, to take home.' }
-    ],
-    asked: [
-      { line: 'Negotiated by mutual brief — typically <b>2 reels + 1 grid + IG Live</b>.' },
-      { line: 'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' }
-    ],
-    cash: '₹ 8,000+',
-    slot: 'Scheduled directly with Mohammed Hamza',
-    confirmation: 'Personal call from the family before slot is booked.',
-    note: 'For pure-cash collabs at this tier, we\'ll open a real conversation. Drop your handle — we\'ll reach out the same day.'
-  }
+  { code:'T1', name:'NANO', range:'1K – 5K', rangeFull:'One thousand to five thousand <em>followers</em>', tag:'For the creator just starting their food story.', cardBlurb:'<b>One seat at our table.</b><br>You, alone. The full Dakhni meal that built our name.', onTable:[
+    { line:'<b>One seat</b> at our table — yourself, hosted by the family.', note:'A welcome cup of Irani chai while you settle in.' },
+    { line:'<b>1 plate of Mutton Biryani</b> — the 1918 recipe, dum-cooked.', note:'The dish that started everything.' },
+    { line:'<b>1 chicken kabab serving</b> — straight from the coal tandoor.' },
+    { line:'<b>1 ghee rice</b> + 1 dal of the day.' },
+    { line:'<b>1 dessert of the day</b> — usually qubani-ka-meetha or seasonal kheer.' }
+  ], asked:[ { line:'<b>1 reel</b> within 7 days of your visit.' }, { line:'<b>3 stories</b> the same evening (table, dish, candid).' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:null, slot:'Choose any window: 4 PM, 6 PM, 8 PM, 10 PM, or midnight', confirmation:'Personally reviewed within 24 hours.', note:'A small first invitation — the kind every food creator we now host began with.' },
+  { code:'T2', name:'MICRO', range:'5K – 15K', rangeFull:'Five thousand to fifteen thousand <em>followers</em>', tag:'For the creator we\'d like to bring back.', cardBlurb:'<b>Two seats — you + one guest.</b><br>The Dakhni table, plus a welcome chai.', onTable:[
+    { line:'<b>Two seats</b> — yourself and a guest of your choosing.', note:'A welcome Irani chai poured for the table.' },
+    { line:'<b>1 mutton biryani</b> + <b>1 chicken biryani</b>.' },
+    { line:'<b>1 chicken kabab platter</b> — coal tandoor.' },
+    { line:'<b>1 bheja fry</b> + <b>1 ghee rice</b> — the two dishes Bangalore knows us for.' },
+    { line:'<b>1 dessert of the day</b> for the table.' }
+  ], asked:[ { line:'<b>1 reel</b> within 7 days.' }, { line:'<b>5 stories</b> the same evening.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:null, slot:'Choose any window: 4 PM through midnight', confirmation:'Personally reviewed within 24 hours.', note:'The most-booked tier. Slots in this band fill fastest, especially on weekends.' },
+  { code:'T3', name:'MID-MICRO', range:'15K – 30K', rangeFull:'Fifteen thousand to thirty thousand <em>followers</em>', tag:'For the creator with reach across Bangalore food circles.', cardBlurb:'<b>Three seats + Dakhni dessert flight.</b><br>Plus a 24-hour bio link.', onTable:[
+    { line:'<b>Three seats</b> at our table.', note:'Welcome Irani chai for the table.' },
+    { line:'<b>Both biryanis</b> — mutton + chicken.' },
+    { line:'<b>1 mughlai chicken</b> — the recipe travels back to our great-grandfather\'s kitchen.' },
+    { line:'<b>1 bheja fry</b> — the Hamza signature.' },
+    { line:'<b>1 mixed kabab platter</b> (chicken + mutton seekh) from the coal tandoor.' },
+    { line:'<b>Dessert flight</b> — three plates: qubani-ka-meetha, kheer, and the Hamza special sweet.' }
+  ], asked:[ { line:'<b>1 reel</b> within 7 days.' }, { line:'<b>5 stories</b> the same evening.' }, { line:'<b>1 bio link</b> for 24 hours pointing to our location.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:null, slot:'Choose any window: 4 PM through midnight', confirmation:'Personally reviewed within 24 hours.', note:'The first tier with a bio-link ask. Worth it — your followers will click.' },
+  { code:'T4', name:'UPPER-MICRO', range:'30K – 60K', rangeFull:'Thirty thousand to sixty thousand <em>followers</em>', tag:'For the creator who can put us on Bangalore\'s food map.', cardBlurb:'<b>Four seats + chef interaction.</b><br>A direct conversation with our 4th-generation chef.', onTable:[
+    { line:'<b>Four seats</b> at our table.', note:'Welcome chai service for the entire table.' },
+    { line:'<b>The full Dakhni spread</b>: both biryanis, ghee rice, mughlai chicken, mixed kabab platter, mutton chatpata, dal of the day, breads.' },
+    { line:'<b>Bheja fry + brain dry</b> — both signature mutton-brain preparations.', note:'Most cafés in Bangalore can\'t make either. We\'ve been making both for decades.' },
+    { line:'<b>Chef interaction</b> — five minutes with Mohammed Hamza, fourth generation, talking through the recipes if you want it for your reel.' },
+    { line:'<b>Dessert flight</b> — three plates.' }
+  ], asked:[ { line:'<b>1 reel</b> within 10 days.' }, { line:'<b>1 grid post</b> (single image or carousel).' }, { line:'<b>5 stories</b> the same evening.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:null, slot:'Choose any window — we recommend Golden Hour (6 PM) or Prime (8 PM) for visuals', confirmation:'Personally reviewed within 24 hours.', note:'The first tier where the chef sits with you. Worth telling that story on the reel.' },
+  { code:'T5', name:'MACRO-MICRO', featured:true, range:'60K – 100K', rangeFull:'Sixty thousand to one hundred thousand <em>followers</em>', tag:'For the creator whose name carries weight in Bangalore food.', cardBlurb:'<b>Four seats + ₹500 cash.</b><br>Bheja fry + brain dry comp + dessert flight + 7-day bio link.', onTable:[
+    { line:'<b>Four seats</b> at our table.' },
+    { line:'<b>Full Dakhni spread</b> as detailed at T4 — biryanis, kababs, mughlai, ghee rice.' },
+    { line:'<b>Bheja fry + brain dry</b> — fully comped.' },
+    { line:'<b>Dessert flight</b> — three plates.' },
+    { line:'<b>Chef interaction</b> with Mohammed Hamza — extended, ten minutes, kitchen access if you want it for the reel.' },
+    { line:'<b>Printed origin card</b> — a small note from the family with the 1918 story, yours to take home.' }
+  ], asked:[ { line:'<b>1 reel</b> within 10 days.' }, { line:'<b>1 grid post</b>.' }, { line:'<b>7 stories</b> across the same evening.' }, { line:'<b>7-day bio link</b> pointing to our location.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:'₹ 500', slot:'Choose any window — Golden Hour, Prime, or Late preferred', confirmation:'Personally reviewed by Mohammed Hamza within 24 hours.', note:'The first tier with cash on top of the meal. Reviewed personally by family — we want to host you well.' },
+  { code:'T6', name:'EDGE-MACRO', featured:true, range:'100K – 250K', rangeFull:'One hundred to two hundred and fifty thousand <em>followers</em>', tag:'Reserved for creators who shape Bangalore\'s food conversation.', cardBlurb:'<b>Chef\'s 8-dish tasting + ₹3,000.</b><br>A family photograph with the 4th-generation chef.', onTable:[
+    { line:'<b>Four seats</b> at our table.', note:'Welcome Irani chai service for the table — cardamom, milk, sugar adjusted to taste.' },
+    { line:'<b>Chef\'s 8-dish tasting menu</b> — hand-picked by Mohammed Hamza, spanning four generations of recipes. The bheja fry, the brain dry, the mughlai, the special, the heritage breads, the kababs, both biryanis, the dessert flight.' },
+    { line:'<b>Kitchen access</b> for the reel — film the coal tandoor, the dum handi being broken open, the brain dry being plated.' },
+    { line:'<b>Family photograph</b> with Mohammed Hamza, framed, sent to you as a print.' },
+    { line:'<b>Printed origin card</b> + a hand-signed note from the family.' }
+  ], asked:[ { line:'<b>2 reels</b> within 14 days (one food, one heritage / behind-the-kitchen if you can).' }, { line:'<b>1 grid post</b> + <b>1 IG collab post</b> (we\'ll be co-author).' }, { line:'<b>1 IG Live</b> — fifteen minutes from the kitchen, scheduled together.' }, { line:'<b>7-day bio link</b>.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:'₹ 3,000', slot:'Scheduled directly with Mohammed — typically Golden Hour or Prime', confirmation:'Personally reviewed by Mohammed Hamza. We\'ll respond within 24h.', note:'A tier we host two or three of per month. Slots are not always available — please don\'t take it personally if we ask you to wait two weeks.' },
+  { code:'T7', name:'MACRO', range:'250K +', rangeFull:'Two hundred and fifty thousand and above', tag:'For the creator we\'d be honored to host.', cardBlurb:'<b>Six seats + custom brief.</b><br>₹8,000 base — pure-cash terms negotiable from here.', onTable:[
+    { line:'<b>Six seats</b> — bring your team, your family, or both.' },
+    { line:'<b>Full chef tasting</b> — every signature dish on the menu, plus one off-menu family dish prepared specifically for the visit.' },
+    { line:'<b>Private kitchen tour</b> with the family — coal tandoor, the masala room, the dum kitchen.' },
+    { line:'<b>Custom brand brief</b> — we\'ll send a one-page narrative the day before, so your reel can sit on real story.' },
+    { line:'<b>Family photograph</b>, framed print delivered.' },
+    { line:'<b>A bottle of family masala</b>, hand-packed, to take home.' }
+  ], asked:[ { line:'Negotiated by mutual brief — typically <b>2 reels + 1 grid + IG Live</b>.' }, { line:'Tag <b>@hamzaexpress1918</b> · Shivajinagar geotag.' } ], cash:'₹ 8,000+', slot:'Scheduled directly with Mohammed Hamza', confirmation:'Personal call from the family before slot is booked.', note:'For pure-cash collabs at this tier, we\'ll open a real conversation. Drop your handle — we\'ll reach out the same day.' }
 ];
 
 const grid = document.getElementById('tierGrid');
@@ -621,7 +611,6 @@ const modalTitle = document.getElementById('modalTitle');
 const modalTag = document.getElementById('modalTag');
 const modalBody = document.getElementById('modalBody');
 
-// Render cards
 TIERS.forEach((t, idx) => {
   const card = document.createElement('button');
   card.className = 'tier-card' + (t.featured ? ' featured' : '');
@@ -648,53 +637,25 @@ function openModal(idx) {
   modalTag.textContent = t.tag;
 
   let body = '';
-
-  if (t.cash) {
-    body += `<div class="modal-cash-row"><span>Cash on top of the meal</span><b>${t.cash}</b></div>`;
-  }
-
-  body += `<div class="modal-section">
-    <div class="modal-section-h">What we lay on the table for you</div>
-    <ul class="modal-list">`;
-  t.onTable.forEach(item => {
-    body += `<li>${item.line}${item.note ? `<span class="note">${item.note}</span>` : ''}</li>`;
-  });
+  if (t.cash) body += `<div class="modal-cash-row"><span>Cash on top of the meal</span><b>${t.cash}</b></div>`;
+  body += `<div class="modal-section"><div class="modal-section-h">What we lay on the table for you</div><ul class="modal-list">`;
+  t.onTable.forEach(item => { body += `<li>${item.line}${item.note ? `<span class="note">${item.note}</span>` : ''}</li>`; });
   body += `</ul></div>`;
-
-  body += `<div class="modal-section">
-    <div class="modal-section-h">What we ask in return</div>
-    <ul class="modal-list deliverables">`;
-  t.asked.forEach(item => {
-    body += `<li>${item.line}${item.note ? `<span class="note">${item.note}</span>` : ''}</li>`;
-  });
+  body += `<div class="modal-section"><div class="modal-section-h">What we ask in return</div><ul class="modal-list deliverables">`;
+  t.asked.forEach(item => { body += `<li>${item.line}${item.note ? `<span class="note">${item.note}</span>` : ''}</li>`; });
   body += `</ul></div>`;
-
-  body += `<div class="modal-meta">
-    <div class="meta-item"><b>The Slot</b>${t.slot}</div>
-    <div class="meta-item"><b>Confirmation</b>${t.confirmation}</div>
-  </div>`;
-
-  body += `<div class="modal-cta-row">
-    <a href="/creators/apply?tier=${t.code}" class="modal-cta">Request this invitation</a>
-    <div class="modal-foot-note">${t.note}</div>
-  </div>`;
+  body += `<div class="modal-meta"><div class="meta-item"><b>The Slot</b>${t.slot}</div><div class="meta-item"><b>Confirmation</b>${t.confirmation}</div></div>`;
+  body += `<div class="modal-cta-row"><a href="/creators/apply?tier=${t.code}" class="modal-cta">Request this invitation</a><div class="modal-foot-note">${t.note}</div></div>`;
 
   modalBody.innerHTML = body;
   backdrop.classList.add('open');
   backdrop.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 }
-
-function closeModal() {
-  backdrop.classList.remove('open');
-  backdrop.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-}
-
+function closeModal() { backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
 modalClose.addEventListener('click', closeModal);
-backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
+backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && backdrop.classList.contains('open')) closeModal(); });
 </script>
 
-</body>
-</html>
+</body></html>
