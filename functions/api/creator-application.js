@@ -1,6 +1,6 @@
 // /api/creator-application — Hamza Express Creator Partner Portal API
 import { sendEmail } from './_lib/email-sender.js';
-import { buildReceivedEmail, buildDecisionEmail } from './_lib/email-templates.js';
+import { buildReceivedEmail, buildDecisionEmail, buildTentativeEmail } from './_lib/email-templates.js';
 //
 // Powers hamzaexpress.in/creators/apply (the public Typeform-style flow) and
 // hnhotels.in/ops/influencer-applications/ (owner approval surface).
@@ -110,6 +110,7 @@ export async function onRequest(context) {
       const body = await safeJson(request);
       if (action === 'lookup')        return await actionLookup(env, db, body);
       if (action === 'submit')        return await actionSubmit(env, db, body);
+      if (action === 'confirm')       return await actionConfirm(env, db, body);
       if (action === 'approve')       return await actionApprove(env, db, body, request);
       if (action === 'adjust')        return await actionAdjust(env, db, body, request);
       if (action === 'decline')       return await actionDecline(env, db, body, request);
@@ -412,28 +413,30 @@ async function actionApprove(env, db, body, request) {
     return json({ error: 'already approved' }, 400);
   }
 
-  // Verify slot still available
+  // Slot was already optimistically held at submit time (booked_count++) — don't re-bump here.
+  // We just need to read it to compose the message.
   const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(app.preferred_slot_id).first();
-  if (!slot || slot.is_blocked || slot.booked_count >= slot.capacity) {
-    return json({ error: 'slot_no_longer_available' }, 409);
-  }
+  if (!slot) return json({ error: 'slot_not_found' }, 404);
 
-  // Create booking shell
+  // Two-step confirm flow:
+  //   Owner approve → booking row status = 'tentative' (slot held but not finalised)
+  //   Creator clicks confirm link → /api/creator-application?action=confirm&token=X → status = 'confirmed'
+  //   Application row status = 'approved' (owner-side decision is done)
   const tierMeta = TIER_MATRIX[app.computed_tier] || TIER_MATRIX.T1;
   const outreachToken = genToken();
   const bk = await db.prepare(`
     INSERT INTO influencer_bookings
       (creator_username, creator_name, creator_followers, creator_tier, cover_commitment, meal_budget_paise,
-       slot_id, slot_date, window_code, status, outreach_token, contact_phone, contact_email, notes_creator)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, ?, ?, ?)
+       slot_id, slot_date, window_code, status, outreach_token, contact_phone, contact_email, notes_creator,
+       approved_by, approved_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'tentative', ?, ?, ?, ?, ?, datetime('now'))
   `).bind(
     app.username, app.full_name, app.followers_count, app.computed_tier, tierMeta.covers,
     tierMeta.budget_paise + (tierMeta.cash_paise || 0),
     app.preferred_slot_id, app.preferred_slot_date, app.preferred_window_code,
-    outreachToken, app.contact_phone, app.contact_email, app.why_us_text
+    outreachToken, app.contact_phone, app.contact_email, app.why_us_text,
+    body.actor || 'owner'
   ).run();
-
-  await db.prepare(`UPDATE influencer_slots SET booked_count = booked_count + 1 WHERE id = ?`).bind(app.preferred_slot_id).run();
 
   await db.prepare(`
     UPDATE influencer_applications
@@ -442,7 +445,8 @@ async function actionApprove(env, db, body, request) {
     WHERE id=?
   `).bind(bk.meta.last_row_id, outreachToken, body.actor || 'owner', body.notes || null, body.id).run();
 
-  // ── Side effects: confirm to creator on WhatsApp + email. Best-effort.
+  // ── Side effects: TENTATIVE message — tells creator the outlet has approved
+  // and asks them to confirm via the confirm link before the booking is final.
   const approvedAppRow = {
     id: body.id,
     username: app.username,
@@ -450,12 +454,69 @@ async function actionApprove(env, db, body, request) {
     contact_phone: app.contact_phone,
     contact_email: app.contact_email,
     computed_tier: app.computed_tier,
-    status: 'approved',
+    status: 'tentative',
+    outreach_token: outreachToken,
   };
-  await notifyCreator(env, db, approvedAppRow, slot, tierMeta);
-  await notifyCreatorEmail(env, db, approvedAppRow, slot, tierMeta, 'decision');
+  await notifyCreatorTentative(env, db, approvedAppRow, slot, tierMeta, outreachToken);
+  await notifyCreatorEmail(env, db, approvedAppRow, slot, tierMeta, 'tentative');
 
-  return json({ success: true, application_id: body.id, booking_id: bk.meta.last_row_id, outreach_token: outreachToken });
+  return json({
+    success: true,
+    application_id: body.id,
+    booking_id: bk.meta.last_row_id,
+    outreach_token: outreachToken,
+    booking_status: 'tentative',
+    confirm_url: `https://hamzaexpress.in/creators/confirm/?token=${outreachToken}`,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// PUBLIC: confirm — creator-side confirmation via outreach_token
+// Flips booking from 'tentative' → 'confirmed', fires final messages.
+// ─────────────────────────────────────────────────────────────────────
+async function actionConfirm(env, db, body) {
+  const token = (body.token || '').toString().trim();
+  if (!token) return json({ error: 'token required' }, 400);
+
+  const booking = await db.prepare(`SELECT * FROM influencer_bookings WHERE outreach_token = ?`).bind(token).first();
+  if (!booking) return json({ error: 'booking not found' }, 404);
+  if (booking.status === 'confirmed') {
+    return json({ success: true, already_confirmed: true, message: 'Slot already confirmed.' });
+  }
+  if (booking.status !== 'tentative') {
+    return json({ error: 'booking_not_tentative', detail: `Current status: ${booking.status}` }, 409);
+  }
+
+  // Get slot + application + tierMeta for the message body
+  const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(booking.slot_id).first();
+  const app = await db.prepare(`SELECT * FROM influencer_applications WHERE outreach_token = ?`).bind(token).first();
+  const tierMeta = TIER_MATRIX[booking.creator_tier] || TIER_MATRIX.T1;
+
+  // Flip booking status to confirmed
+  await db.prepare(`UPDATE influencer_bookings SET status='confirmed', updated_at=datetime('now') WHERE id=?`).bind(booking.id).run();
+
+  // Fire final confirmation messages
+  const finalAppRow = {
+    id: app?.id,
+    username: booking.creator_username,
+    full_name: booking.creator_name,
+    contact_phone: booking.contact_phone,
+    contact_email: booking.contact_email,
+    computed_tier: booking.creator_tier,
+    status: 'confirmed',
+    outreach_token: token,
+  };
+  await notifyCreator(env, db, finalAppRow, slot, tierMeta);
+  await notifyCreatorEmail(env, db, finalAppRow, slot, tierMeta, 'decision');
+  // Bonus: WABA location pin (separate message, renders as tappable map)
+  await sendWabaLocation(env, booking.contact_phone, BIZ.lat, BIZ.lng, BIZ.name, BIZ.address);
+
+  return json({
+    success: true,
+    booking_id: booking.id,
+    booking_status: 'confirmed',
+    slot: { date: slot?.slot_date, window: slot?.window_code, label: slot?.window_label },
+  });
 }
 
 async function actionAdjust(env, db, body, request) {
@@ -540,6 +601,67 @@ async function sendWaba(env, to, text) {
       return { ok: false, status: resp.status, meta: data?.error || data };
     }
     return { ok: true, message_id: data?.messages?.[0]?.id };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// BUSINESS LOCATION CONSTANTS — verified via Meta Graph API + Google Place ID
+// ─────────────────────────────────────────────────────────────────────
+const BIZ = {
+  name: 'Hamza Express',
+  address: '151 TO 154, HKP Road, Sulthangunta, Shivajinagar, Bangalore 560051',
+  lat: 12.98475,
+  lng: 77.60291,
+  place_id: 'ChIJ-QQjtHEXrjsR-Z1RIEm2arg',
+  // Canonical Google Maps URL — opens the verified Hamza Express location, deep-links to Maps app on mobile
+  map_url: 'https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg',
+  waba_phone: '+91 80080 02049',
+};
+
+// Window code → human-readable label
+const WINDOW_LABELS = {
+  AFTERNOON: { time: '4 PM', label: 'Afternoon' },
+  GOLDEN:    { time: '6 PM', label: 'Golden Hour' },
+  PRIME:     { time: '8 PM', label: 'Prime' },
+  LATE:      { time: '10 PM', label: 'Late' },
+  MIDNIGHT:  { time: '12 AM (midnight)', label: 'Midnight' },
+};
+
+// Format a slot timing line: "Saturday, 10 May · Prime · 8 PM"
+function fmtSlotTiming(slot) {
+  if (!slot) return 'your selected slot';
+  const win = WINDOW_LABELS[slot.window_code] || { time: slot.window_code, label: '' };
+  let dateStr = slot.slot_date;
+  try {
+    const d = new Date(slot.slot_date + 'T00:00:00+05:30');
+    dateStr = d.toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata',
+    });
+  } catch {}
+  return `${dateStr} · ${win.label} · ${win.time}`;
+}
+
+// Send a WABA location-pin message (tappable map preview in WhatsApp).
+// Free-form — works in 24h session. Best paired AFTER an approved-template send.
+async function sendWabaLocation(env, to, lat, lng, name, address) {
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) return { ok: false, error: 'WABA not configured' };
+  const phone = String(to || '').replace(/\D/g, '');
+  if (!phone || phone.length < 10) return { ok: false, error: 'invalid phone' };
+  try {
+    const r = await fetch(`https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'location',
+        location: { latitude: lat, longitude: lng, name, address },
+      }),
+    });
+    const d = await r.json();
+    return r.ok ? { ok: true, message_id: d?.messages?.[0]?.id } : { ok: false, status: r.status, meta: d?.error };
   } catch (e) {
     return { ok: false, error: e.message };
   }
@@ -737,15 +859,16 @@ async function notifyCreatorReceived(env, db, app, slot, tierMeta) {
 
 function notifyCreatorText(app, slot, tierMeta) {
   const m = tierMeta || TIER_MATRIX[app.computed_tier || app.tier || 'T1'] || TIER_MATRIX.T1;
-  const slotLine = slot
-    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
-    : `your selected slot`;
+  const slotLine = fmtSlotTiming(slot);
   const lines = [
-    `Your invitation to Hamza Express is confirmed.`,
+    `✅ Your slot at Hamza Express is locked in.`,
+    ``,
+    `📅 ${slotLine}`,
+    `📍 ${BIZ.address}`,
+    ``,
+    `🗺  Get directions: ${BIZ.map_url}`,
     ``,
     `Tier: ${m.label}`,
-    `Slot: ${slotLine}`,
-    `Where: 151 TO 154, HKP Road, Sulthangunta, Shivajinagar, Bangalore 560051`,
     ``,
     `What we're hosting you with:`,
     `· ${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`,
@@ -758,11 +881,13 @@ function notifyCreatorText(app, slot, tierMeta) {
     ``,
     `Tag @hamzaexpress1918 · use the Shivajinagar geotag.`,
     ``,
-    `Looking forward,`,
+    `Day-of: walk in, mention you're from the creator program. Park on HKP Road or take Russell Market lanes.`,
+    ``,
+    `Looking forward to hosting you,`,
     `— Nihaf`,
     `Managing Director, HN Hotels Pvt Ltd`,
     `Hamza Express · est. 1918 · Shivajinagar`,
-    `Save us: +91 80080 02049 (WhatsApp)`,
+    `Save us: ${BIZ.waba_phone} (WhatsApp)`,
   );
   return lines.join('\n');
 }
@@ -860,16 +985,21 @@ async function notifyCreatorEmail(env, db, app, slot, tierMeta, kind /* 'receive
 
   const vars = emailViewVars(app, slot, tierMeta);
   let payload;
-  if (kind === 'decision') {
+  if (kind === 'tentative') {
+    payload = buildTentativeEmail({
+      ...vars,
+      confirm_url: `https://hamzaexpress.in/creators/confirm/?token=${app.outreach_token || ''}`,
+    });
+  } else if (kind === 'decision') {
     payload = buildDecisionEmail({
       ...vars,
-      status: app.status === 'approved' || app.status === 'auto_approved' ? 'approved' : 'declined',
+      status: app.status === 'approved' || app.status === 'auto_approved' || app.status === 'confirmed' ? 'approved' : 'declined',
       decline_reason: app.decline_reason || null,
     });
   } else {
     payload = buildReceivedEmail({
       ...vars,
-      status: app.status,                                   // 'pending' | 'auto_approved' | 'declined'
+      status: app.status,
     });
   }
 
@@ -889,6 +1019,62 @@ async function notifyCreatorEmail(env, db, app, slot, tierMeta, kind /* 'receive
       WHERE id = ?
     `).bind(
       `[${new Date().toISOString()}] ${kind}-email: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      app.id
+    ).run();
+  } catch {}
+  return r;
+}
+
+// "Outlet approved · please confirm your slot" — fires when owner taps Approve.
+// The booking is HELD as tentative until creator clicks the confirm link.
+function notifyCreatorTentativeText(app, slot, tierMeta, token) {
+  const m = tierMeta || TIER_MATRIX[app.computed_tier || 'T1'] || TIER_MATRIX.T1;
+  const slotLine = fmtSlotTiming(slot);
+  const confirmUrl = `https://hamzaexpress.in/creators/confirm/?token=${token}`;
+  return [
+    `🎉 The outlet has approved your invitation.`,
+    ``,
+    `Hi @${app.username},`,
+    ``,
+    `We've held your slot for:`,
+    `📅 ${slotLine}`,
+    `📍 ${BIZ.address}`,
+    ``,
+    `One last step — please confirm so we can finalise the booking on our side too:`,
+    confirmUrl,
+    ``,
+    `Map: ${BIZ.map_url}`,
+    ``,
+    `If we don't hear from you in 24 hours, we'll release the slot back to the pool. No pressure — just want to make sure the kitchen is ready for you.`,
+    ``,
+    `— Nihaf`,
+    `Managing Director, HN Hotels Pvt Ltd`,
+    `Hamza Express · est. 1918 · Shivajinagar`,
+    `Save us: ${BIZ.waba_phone} (WhatsApp)`,
+  ].join('\n');
+}
+
+async function notifyCreatorTentative(env, db, app, slot, tierMeta, token) {
+  if (!app.contact_phone) return { skipped: 'no contact_phone' };
+  const text = notifyCreatorTentativeText(app, slot, tierMeta, token);
+
+  // Template name: creator_outlet_approved_v2 (will need Meta approval — fall back to free-form for now)
+  const slotStr = fmtSlotTiming(slot);
+  const r = await sendWabaSmart(env, app.contact_phone, 'creator_outlet_approved_v2', [
+    app.username,
+    slotStr,
+    BIZ.address,
+    `https://hamzaexpress.in/creators/confirm/?token=${token}`,
+  ], text);
+
+  try {
+    await db.prepare(`
+      UPDATE influencer_applications
+      SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) || ?
+      WHERE id = ?
+    `).bind(
+      `[${new Date().toISOString()}] tentative-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
       app.id
     ).run();
   } catch {}
