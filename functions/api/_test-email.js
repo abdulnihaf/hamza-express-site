@@ -10,7 +10,7 @@
 // Returns: { ok, message_id } from Gmail API on success, or detailed error.
 
 import { sendEmail } from './_lib/email-sender.js';
-import { buildReceivedEmail, buildDecisionEmail } from './_lib/email-templates.js';
+import { buildReceivedEmail, buildDecisionEmail, buildTentativeEmail } from './_lib/email-templates.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -43,11 +43,13 @@ export async function onRequest(context) {
   const kind = (body.kind || 'received').toString();
 
   // Sample data — matches the shape that creator-application.js builds.
+  // NOTE: tentative + decision builders now expect slot as an object {slot_date, window_code}
+  // so fmtSlotEmail() can format it consistently. Received still accepts a string fallback.
   const sample = {
     first_name: body.first_name || 'Nihaf',
     handle: body.handle || 'rajbiswas56',
     tier: body.tier || 'T3 · 15K–30K · Mid-Micro',
-    slot: body.slot || 'Prime · 8 PM on 2026-05-15',
+    slot: body.slot || { slot_date: '2026-05-15', window_code: 'PRIME' },
     hosting: body.hosting || ['3 covers (your party size)', 'Welcome chai', 'Dessert flight'],
     asks: body.asks || ['1 reel within 7 days', '5 stories same evening', 'Tag @hamzaexpress1918', '24-hour bio link'],
     cash_inr: body.cash_inr || 0,
@@ -59,6 +61,12 @@ export async function onRequest(context) {
       subject: 'Test from Hamza Express creator flow · ' + new Date().toISOString().slice(0,16).replace('T',' '),
       html: '<html><body style="font-family:Georgia,serif;color:#713520"><h1>Hello.</h1><p>This is a plain-html smoke test from <strong>nihaf@hnhotels.in</strong> via the Gmail API. If you see this, the OAuth flow + refresh token + sendEmail helper all work.</p></body></html>',
     };
+  } else if (kind === 'tentative') {
+    payload = buildTentativeEmail({
+      ...sample,
+      slot: { slot_date: '2026-05-15', window_code: 'PRIME' },
+      confirm_url: 'https://hamzaexpress.in/creators/confirm/?token=TEST-MOBILE-PREVIEW',
+    });
   } else if (kind === 'decision') {
     payload = buildDecisionEmail({
       ...sample,
