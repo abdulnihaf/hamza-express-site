@@ -1,4 +1,7 @@
 // /api/creator-outreach — Backend for the manual outreach control page.
+import { sendEmail } from './_lib/email-sender.js';
+import { buildOutreachEmail } from './_lib/email-templates.js';
+
 //
 // Powers /ops/creator-outreach — the dashboard where the owner clicks per-creator
 // channel buttons (IG / WA / Email) to fire the templated outreach manually.
@@ -35,14 +38,17 @@ export async function onRequest(context) {
   try {
     if (request.method === 'GET') {
       if (!requireOwner(env, request, null)) return json({ error: 'unauthorized' }, 401);
-      if (action === 'list')   return await actionList(env, db, url);
-      if (action === 'stats')  return await actionStats(env, db);
+      if (action === 'list')         return await actionList(env, db, url);
+      if (action === 'stats')        return await actionStats(env, db);
+      if (action === 'load-config')  return await actionLoadConfig(env, db);
     }
     if (request.method === 'POST') {
       const body = await safeJson(request);
       if (!requireOwner(env, request, body)) return json({ error: 'unauthorized' }, 401);
-      if (action === 'log-send')     return await actionLogSend(env, db, body);
-      if (action === 'mark-reply')   return await actionMarkReply(env, db, body);
+      if (action === 'log-send')        return await actionLogSend(env, db, body);
+      if (action === 'mark-reply')      return await actionMarkReply(env, db, body);
+      if (action === 'save-config')     return await actionSaveConfig(env, db, body);
+      if (action === 'send-bulk-email') return await actionSendBulkEmail(env, db, body);
     }
     return json({ error: 'unknown action: ' + action }, 400);
   } catch (e) {
@@ -272,3 +278,162 @@ function tierOf(f) {
 }
 
 async function safeJson(req) { try { return await req.json(); } catch { return {}; } }
+
+// ─────────────────────────────────────────────────────────────────────
+// LOAD-CONFIG — returns the persisted unified outreach template + subject
+// (no auth required for read, since the values aren't secrets and the page
+// itself is dashboard-key gated).
+// ─────────────────────────────────────────────────────────────────────
+async function actionLoadConfig(env, db) {
+  const rows = await db.prepare(`SELECT config_key, config_value, updated_at FROM programme_config WHERE config_key IN ('outreach_template_body','outreach_subject_email')`).all();
+  const cfg = {};
+  for (const r of (rows.results || [])) cfg[r.config_key] = r.config_value;
+  return json({ success: true, config: cfg });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SAVE-CONFIG — owner upserts unified outreach template + subject
+// ─────────────────────────────────────────────────────────────────────
+async function actionSaveConfig(env, db, body) {
+  const updates = [];
+  if (typeof body.template_body === 'string') {
+    updates.push({ key: 'outreach_template_body', value: body.template_body });
+  }
+  if (typeof body.subject_email === 'string') {
+    updates.push({ key: 'outreach_subject_email', value: body.subject_email });
+  }
+  if (!updates.length) return json({ error: 'nothing_to_save' }, 400);
+  for (const u of updates) {
+    await db.prepare(`
+      INSERT INTO programme_config (config_key, config_value, updated_at, updated_by)
+      VALUES (?, ?, datetime('now'), 'owner')
+      ON CONFLICT(config_key) DO UPDATE SET config_value=excluded.config_value, updated_at=datetime('now'), updated_by='owner'
+    `).bind(u.key, u.value).run();
+  }
+  return json({ success: true, saved: updates.map(u => u.key) });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SEND-BULK-EMAIL — fires the unified outreach email to a list of creator
+// handles via Gmail API (using the existing nihaf@hnhotels.in OAuth setup).
+//
+// Body:
+//   handles: ['rajbiswas56', 'foodonik', ...]   (required)
+//   skip_already_emailed: boolean (default true) — won't re-send to handles
+//                                                  with prior email send_at
+// Returns:
+//   summary: { sent, skipped_no_email, skipped_already_emailed, failed }
+//   results: per-handle outcome
+// ─────────────────────────────────────────────────────────────────────
+async function actionSendBulkEmail(env, db, body) {
+  const handles = Array.isArray(body.handles) ? body.handles.filter(h => typeof h === 'string') : [];
+  if (!handles.length) return json({ error: 'handles required' }, 400);
+  const skipAlreadyEmailed = body.skip_already_emailed !== false;
+
+  // Load template + subject
+  const cfgRows = await db.prepare(`SELECT config_key, config_value FROM programme_config WHERE config_key IN ('outreach_template_body','outreach_subject_email')`).all();
+  const cfg = {};
+  for (const r of (cfgRows.results || [])) cfg[r.config_key] = r.config_value;
+  const tmplBody = cfg.outreach_template_body;
+  const tmplSubject = cfg.outreach_subject_email || 'An invitation from Hamza Hotel — est. 1918, Shivajinagar';
+  if (!tmplBody) return json({ error: 'template_not_set', detail: 'Save the outreach template via save-config first.' }, 400);
+
+  if (!env.GMAIL_REFRESH_TOKEN) return json({ error: 'gmail_not_configured', detail: 'Run /api/email-auth first.' }, 500);
+
+  // Hydrate creator details + prior email send state
+  const placeholders = handles.map(() => '?').join(',');
+  const cre = await db.prepare(`
+    SELECT bp.username, bp.full_name, bp.followers_count,
+           bp.extracted_emails_json,
+           (SELECT sent_at FROM creator_outreach_log WHERE handle=bp.username AND channel='email') AS email_sent_at
+    FROM influencer_bio_pulse bp
+    WHERE bp.username IN (${placeholders})
+  `).bind(...handles).all();
+
+  const summary = { sent: 0, skipped_no_email: 0, skipped_already_emailed: 0, failed: 0 };
+  const results = [];
+
+  // Tier helper
+  const tierOf = (f) => {
+    f = f || 0;
+    if (f < 1000)   return 'T0 · Newbie';
+    if (f < 5000)   return 'T1 · Nano';
+    if (f < 15000)  return 'T2 · Micro';
+    if (f < 30000)  return 'T3 · Mid-Micro';
+    if (f < 60000)  return 'T4 · Upper-Micro';
+    if (f < 100000) return 'T5 · Macro-Micro';
+    if (f < 250000) return 'T6 · Edge-Macro';
+    return 'T7 · Macro';
+  };
+
+  // First-name extractor
+  const firstName = (full_name, handle) => {
+    if (full_name) {
+      const cleaned = String(full_name)
+        .replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, '')
+        .replace(/[|\-_·•★⭐👑📍🇮🇳]/g, ' ').trim();
+      const parts = cleaned.split(/\s+/).filter(p => p.length && /^[a-zA-Z]/.test(p));
+      if (parts[0]) return parts[0];
+    }
+    return (handle || 'there').split(/[._]/)[0];
+  };
+
+  // Send sequentially with a small gap to be respectful of Gmail rate limits
+  for (const c of (cre.results || [])) {
+    if (skipAlreadyEmailed && c.email_sent_at) {
+      summary.skipped_already_emailed++;
+      results.push({ handle: c.username, status: 'skipped_already_emailed' });
+      continue;
+    }
+    let email = null;
+    try {
+      const list = JSON.parse(c.extracted_emails_json || '[]');
+      if (list.length) email = list[0];
+    } catch {}
+    if (!email) {
+      summary.skipped_no_email++;
+      results.push({ handle: c.username, status: 'skipped_no_email' });
+      continue;
+    }
+
+    const fname = firstName(c.full_name, c.username);
+    const tierLabel = tierOf(c.followers_count);
+    const payload = buildOutreachEmail({
+      first_name: fname,
+      handle: c.username,
+      tier: tierLabel,
+      full_name: c.full_name || '',
+      body_text: tmplBody,
+      subject: tmplSubject,
+    });
+
+    const r = await sendEmail(env, {
+      to: email,
+      subject: payload.subject,
+      html: payload.html,
+      from_name: 'Nihaf · Hamza Express',
+    });
+
+    if (r.ok) {
+      summary.sent++;
+      results.push({ handle: c.username, status: 'sent', message_id: r.message_id, email });
+      // Log the send
+      try {
+        await db.prepare(`
+          INSERT INTO creator_outreach_log (handle, channel, sent_at, sent_by, send_count, snapshot_text, contact_value)
+          VALUES (?, 'email', datetime('now'), 'bulk', 1, ?, ?)
+          ON CONFLICT(handle, channel) DO UPDATE SET
+            sent_at=datetime('now'), send_count=send_count+1,
+            snapshot_text=excluded.snapshot_text, contact_value=excluded.contact_value, updated_at=datetime('now')
+        `).bind(c.username, payload.subject + '\n\n' + tmplBody.slice(0, 1000), email).run();
+      } catch {}
+    } else {
+      summary.failed++;
+      results.push({ handle: c.username, status: 'failed', error: r.error || JSON.stringify(r.detail || r).slice(0, 200), email });
+    }
+    // Small gap — avoid Gmail rate limit (200ms = max 5/sec, well under 250/sec quota)
+    await new Promise(res => setTimeout(res, 250));
+  }
+
+  return json({ success: true, summary, results });
+}

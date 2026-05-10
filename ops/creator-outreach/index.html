@@ -125,29 +125,31 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   <div class="stats" id="stats"></div>
 
   <details class="tmpl-panel" open>
-    <summary>Outreach templates · paste your IG / WA / Email body here · supports {first_name} {handle} {followers} {tier}</summary>
-    <div class="tmpl-grid">
+    <summary>Outreach template · ONE message used across IG / WhatsApp / Email · supports {first_name} {handle} {tier} {full_name}</summary>
+    <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px">
       <div class="tmpl-cell">
-        <label>📷 Instagram DM</label>
-        <textarea id="tmpl_ig" placeholder="Paste your IG DM template. Use {first_name} or {handle} as placeholder."></textarea>
+        <label>✉ Email subject (used on bulk email send)</label>
+        <input class="subj" id="tmpl_email_subj" placeholder="Subject line for cold-outreach emails">
       </div>
       <div class="tmpl-cell">
-        <label>💬 WhatsApp</label>
-        <textarea id="tmpl_wa" placeholder="Paste your WhatsApp template."></textarea>
-      </div>
-      <div class="tmpl-cell">
-        <label>✉️ Email</label>
-        <input class="subj" id="tmpl_email_subj" placeholder="Subject line">
-        <textarea id="tmpl_email" placeholder="Paste your Email body."></textarea>
+        <label>📩 Outreach message body (one template, used everywhere)</label>
+        <textarea id="tmpl_unified" placeholder="Paste your outreach message here. Variables: {first_name} {handle} {tier} {full_name}." style="min-height:280px"></textarea>
       </div>
     </div>
     <div class="tmpl-help">
-      Templates auto-save in your browser. Available placeholders:
-      <code>{first_name}</code> <code>{handle}</code> <code>{followers}</code> <code>{tier}</code>
-      <code>{full_name}</code>
-      &nbsp;·&nbsp; The IG button copies the rendered text to your clipboard and opens
-      the creator's IG profile in a new tab — paste into Instagram's "Message" box and send.
-      The WA button opens wa.me with the text pre-filled. The Email button opens your default mail client with subject + body pre-filled.
+      Saved server-side (D1) so it persists across devices. Available placeholders:
+      <code>{first_name}</code> <code>{handle}</code> <code>{tier}</code> <code>{full_name}</code>.
+      <br><br>
+      <strong style="color:var(--tan)">📩 Bulk Email:</strong> click the green button below to fire this template via Gmail API to every creator with an email who hasn't been emailed yet — wraps the body in our HE-branded HTML shell.
+      <br>
+      <strong style="color:var(--tan)">📷 IG row button:</strong> opens the creator's profile + copies rendered text to clipboard. Paste, send.
+      <br>
+      <strong style="color:var(--tan)">💬 WA row button:</strong> opens wa.me with text pre-filled. Tap send manually.
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn" id="btn-save-tmpl" style="background:var(--tan)">💾 Save template</button>
+      <button class="btn" id="btn-bulk-email" style="background:var(--green);color:#fff">📩 Bulk Email all eligible</button>
+      <span id="bulk-status" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;flex:1"></span>
     </div>
   </details>
 
@@ -181,35 +183,112 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 <script>
 const API = '/api/creator-outreach';
 
-// ── Templates persistence
-const DEFAULT_TEMPLATES = {
-  ig: '',
-  wa: '',
-  email: '',
-  email_subj: 'An invitation from Hamza Hotel — est. 1918, Shivajinagar',
-};
-function loadTemplates() {
-  try { return Object.assign({}, DEFAULT_TEMPLATES, JSON.parse(localStorage.getItem('co_templates') || '{}')); }
-  catch { return DEFAULT_TEMPLATES; }
+// ── Templates persistence (D1 via API; legacy localStorage seeds first paint)
+let LOADED_TEMPLATE = { body: '', subject: 'An invitation from Hamza Hotel — est. 1918, Shivajinagar' };
+
+async function loadTemplatesFromServer() {
+  try {
+    const r = await fetch(API + '?action=load-config', { headers: { 'X-Dashboard-Key': getKey() } });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.config) {
+        LOADED_TEMPLATE.body = d.config.outreach_template_body || '';
+        LOADED_TEMPLATE.subject = d.config.outreach_subject_email || LOADED_TEMPLATE.subject;
+      }
+    }
+  } catch (e) { console.warn('load-config failed', e); }
+  document.getElementById('tmpl_unified').value = LOADED_TEMPLATE.body;
+  document.getElementById('tmpl_email_subj').value = LOADED_TEMPLATE.subject;
 }
-function saveTemplates(t) { localStorage.setItem('co_templates', JSON.stringify(t)); }
+
+async function saveTemplatesToServer() {
+  const body = document.getElementById('tmpl_unified').value;
+  const subject = document.getElementById('tmpl_email_subj').value;
+  try {
+    const r = await fetch(API + '?action=save-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ template_body: body, subject_email: subject }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'save failed');
+    toast('💾 Template saved');
+    LOADED_TEMPLATE.body = body;
+    LOADED_TEMPLATE.subject = subject;
+  } catch (e) {
+    toast('Save failed: ' + e.message, true);
+  }
+}
 
 function bindTemplates() {
-  const t = loadTemplates();
-  document.getElementById('tmpl_ig').value = t.ig;
-  document.getElementById('tmpl_wa').value = t.wa;
-  document.getElementById('tmpl_email').value = t.email;
-  document.getElementById('tmpl_email_subj').value = t.email_subj;
-  ['tmpl_ig','tmpl_wa','tmpl_email','tmpl_email_subj'].forEach(id => {
+  // Initial load (overrides default placeholder values once API responds)
+  loadTemplatesFromServer();
+  // Manual save button
+  document.getElementById('btn-save-tmpl').addEventListener('click', saveTemplatesToServer);
+  // Auto-save on blur (debounced behaviour)
+  let saveTimer = null;
+  ['tmpl_unified','tmpl_email_subj'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
-      saveTemplates({
-        ig: document.getElementById('tmpl_ig').value,
-        wa: document.getElementById('tmpl_wa').value,
-        email: document.getElementById('tmpl_email').value,
-        email_subj: document.getElementById('tmpl_email_subj').value,
-      });
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveTemplatesToServer, 1500);
     });
   });
+  // Bulk email button
+  document.getElementById('btn-bulk-email').addEventListener('click', bulkEmail);
+}
+
+// In-memory shim for the row-action click handlers, which still expect
+// the old per-channel template structure. They all use the unified body now.
+function loadTemplates() {
+  return {
+    ig: LOADED_TEMPLATE.body,
+    wa: LOADED_TEMPLATE.body,
+    email: LOADED_TEMPLATE.body,
+    email_subj: LOADED_TEMPLATE.subject,
+  };
+}
+
+// ── Bulk email — fire the unified template via Gmail API
+async function bulkEmail() {
+  const status = document.getElementById('bulk-status');
+  const btn = document.getElementById('btn-bulk-email');
+  // Pre-flight: ensure template + subject are saved
+  if (!LOADED_TEMPLATE.body) {
+    toast('Save the template first', true);
+    return;
+  }
+  // Build handle list — use creators currently visible AND with email AND not-yet-emailed
+  const eligible = (CURRENT || []).filter(c => c.contact && c.contact.email && !c.sent.email);
+  if (!eligible.length) {
+    toast('No eligible creators (need email + not-yet-sent)', true);
+    return;
+  }
+  const ok = confirm(`Send the outreach email to ${eligible.length} creators via Gmail API?\n\nFrom: nihaf@hnhotels.in\nSubject: ${LOADED_TEMPLATE.subject}\n\nThis cannot be undone.`);
+  if (!ok) return;
+
+  btn.disabled = true;
+  btn.textContent = '📩 Sending…';
+  status.textContent = `Sending to ${eligible.length} creators…`;
+
+  try {
+    const r = await fetch(API + '?action=send-bulk-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ handles: eligible.map(c => c.handle) }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'bulk send failed');
+    const s = d.summary;
+    status.innerHTML = `✓ Sent ${s.sent} · skipped ${s.skipped_already_emailed + s.skipped_no_email} · failed ${s.failed}`;
+    toast(`📩 ${s.sent} emails sent`);
+    await loadList();
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--red)">Error: ${e.message}</span>`;
+    toast('Bulk email failed: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📩 Bulk Email all eligible';
+  }
 }
 
 // ── PIN gate
