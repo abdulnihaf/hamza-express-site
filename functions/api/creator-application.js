@@ -551,6 +551,76 @@ async function sendWaba(env, to, text) {
   }
 }
 
+// Template send — works WITHOUT 24h session. The actual transactional path.
+// Returns { ok, message_id } on success, { ok:false, status, meta } on failure.
+async function sendTemplate(env, to, templateName, vars, lang = 'en') {
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
+    return { ok: false, error: 'WA_ACCESS_TOKEN or WA_PHONE_ID missing' };
+  }
+  const phone = String(to || '').replace(/\D/g, '');
+  if (!phone || phone.length < 10) return { ok: false, error: 'invalid phone' };
+
+  const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+  const components = (vars && vars.length)
+    ? [{ type: 'body', parameters: vars.map(v => ({ type: 'text', text: String(v).slice(0, 1024) })) }]
+    : [];
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: lang },
+          components,
+        },
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      return { ok: false, status: resp.status, meta: data?.error || data };
+    }
+    return { ok: true, message_id: data?.messages?.[0]?.id };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// Smart sender: try template first (works outside 24h session). If template fails
+// for any reason — typically because it's not yet approved — fall back to free-form
+// text (which works only inside session). Both paths log to Meta + return {ok}.
+//
+// `templateName` + `vars` are passed to sendTemplate; `fallbackText` to sendWaba.
+// During the period between code-deploy and template-approval, this lets the flow
+// continue working in test mode (owner has session) without blowing up if a
+// creator with no session submits.
+async function sendWabaSmart(env, to, templateName, vars, fallbackText) {
+  if (env.WABA_TEMPLATES_DISABLED === '1') {
+    return await sendWaba(env, to, fallbackText);
+  }
+  const t = await sendTemplate(env, to, templateName, vars);
+  if (t.ok) return { ...t, via: 'template' };
+  // Template failed — try free-form. Common Meta error codes here:
+  //   132000 — template name does not exist (still pending)
+  //   132001 — template language mismatch
+  //   132012 — template variable mismatch
+  // For any of these we fall back; production logs both attempts.
+  const f = await sendWaba(env, to, fallbackText);
+  return {
+    ok: f.ok,
+    message_id: f.message_id || null,
+    via: f.ok ? 'fallback_text' : 'failed',
+    template_error: t.meta || t.error,
+    fallback_error: f.ok ? null : (f.meta || f.error),
+  };
+}
+
 function notifyOwnerText(app, decisionReason, slot) {
   const tier = app.computed_tier || app.tier || 'T?';
   const tierLabel = TIER_MATRIX[tier]?.label || tier;
@@ -631,7 +701,25 @@ function notifyCreatorReceivedText(app, slot, tierMeta) {
 async function notifyCreatorReceived(env, db, app, slot, tierMeta) {
   if (!app.contact_phone) return { skipped: 'no contact_phone' };
   const text = notifyCreatorReceivedText(app, slot, tierMeta);
-  const r = await sendWaba(env, app.contact_phone, text);
+
+  // Template `creator_application_received` body order:
+  //   {{1}} handle (without @)
+  //   {{2}} status_line
+  //   {{3}} tier_label
+  //   {{4}} slot_string
+  const status = app.status === 'auto_approved'
+    ? `🎉 You're booked. Slot is reserved.`
+    : app.status === 'declined'
+      ? `We're not able to host this round. Reason: ${app.decline_reason || 'engagement threshold not met'}.`
+      : `📝 We've received your application. We'll review and confirm within 24 hours.`;
+  const slotStr = slot
+    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
+    : 'your selected slot';
+  const tierLabel = (tierMeta && tierMeta.label) || (TIER_MATRIX[app.computed_tier]?.label) || app.computed_tier || 'TBD';
+
+  const r = await sendWabaSmart(env, app.contact_phone, 'creator_application_received', [
+    app.username, status, tierLabel, slotStr,
+  ], text);
   try {
     await db.prepare(`
       UPDATE influencer_applications
@@ -686,7 +774,32 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
     return { skipped: 'OWNER_PHONE not configured' };
   }
   const text = notifyOwnerText(app, decisionReason, slot);
-  const r = await sendWaba(env, ownerPhone, text);
+
+  // Template `creator_owner_alert` body order:
+  //   {{1}} creator_profile (e.g. "@rajbiswas56 · T3 Mid-Micro · 30,341 followers · ER 1.20%")
+  //   {{2}} slot_requested (e.g. "Prime · 8 PM on 2026-05-15")
+  //   {{3}} status_long (e.g. "⏳ NEEDS REVIEW (manual approval required for this tier)")
+  //   {{4}} review_url
+  const tier = app.computed_tier || app.tier || 'T?';
+  const tierLabel = (TIER_MATRIX[tier]?.label || tier).replace(/^T\d · /, '').replace('· ','');
+  const er = app.engagement_rate
+    ? `${(parseFloat(app.engagement_rate) * 100).toFixed(2)}%`
+    : 'unknown';
+  const followersFmt = (app.followers_count || 0).toLocaleString('en-IN');
+  const profile = `@${app.username} · ${tier} ${tierLabel} · ${followersFmt} followers · ER ${er}`;
+  const slotReq = slot
+    ? `${slot.window_label || slot.window_code || ''} on ${slot.slot_date}`
+    : `slot #${app.preferred_slot_id || '?'}`;
+  const statusLong = app.status === 'auto_approved'
+    ? '✅ AUTO-CONFIRMED. Booking is reserved.'
+    : app.status === 'declined'
+      ? `❌ AUTO-DECLINED. ${decisionReason || ''}`
+      : `⏳ NEEDS REVIEW. ${decisionReason || 'Manual approval required for this tier.'}`;
+  const reviewUrl = `https://hnhotels.in/ops/influencer-applications/?app_id=${app.id || ''}`;
+
+  const r = await sendWabaSmart(env, ownerPhone, 'creator_owner_alert', [
+    profile, slotReq, statusLong, reviewUrl,
+  ], text);
   // best-effort log into the application row
   try {
     await db.prepare(`
@@ -706,7 +819,28 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
 async function notifyCreator(env, db, app, slot, tierMeta) {
   if (!app.contact_phone) return { skipped: 'no contact_phone on application' };
   const text = notifyCreatorText(app, slot, tierMeta);
-  const r = await sendWaba(env, app.contact_phone, text);
+
+  // Template `creator_invitation_confirmed` body order:
+  //   {{1}} tier_label
+  //   {{2}} slot_string
+  //   {{3}} hosting_with (multi-line bullets)
+  //   {{4}} asks (multi-line bullets)
+  const m = tierMeta || TIER_MATRIX[app.computed_tier || app.tier || 'T1'] || TIER_MATRIX.T1;
+  const slotStr = slot
+    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
+    : 'your selected slot';
+  const tierLabel = m.label || (app.computed_tier || 'TBD');
+
+  const hostingLines = [`· ${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`];
+  (m.add_ons || []).forEach(a => hostingLines.push(`· ${a}`));
+  if (m.cash_paise) hostingLines.push(`· ₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
+  const hostingWith = hostingLines.join('\n');
+
+  const asks = (m.asks || []).map(a => `· ${a}`).join('\n');
+
+  const r = await sendWabaSmart(env, app.contact_phone, 'creator_invitation_confirmed', [
+    tierLabel, slotStr, hostingWith, asks,
+  ], text);
   try {
     await db.prepare(`
       UPDATE influencer_applications
