@@ -347,6 +347,11 @@ async function actionSubmit(env, db, body) {
   ).run();
 
   // ── Side effects: WABA notifications. Best-effort, never block the response.
+  // Three messages can fire here:
+  //   1. Owner alert (always)         — "🍽️ NEW CREATOR APPLICATION"
+  //   2. Creator receipt (always)     — "📝 We've received your application"
+  //   3. Creator confirmation (auto)  — "Your invitation is confirmed" (only on auto_approve)
+  // Manual-review tier (T5+) gets only #1+#2 here; #3 fires later on owner approve.
   const appRow = {
     id: result.meta.last_row_id,
     username: handle,
@@ -357,11 +362,11 @@ async function actionSubmit(env, db, body) {
     tier,
     status,
     contact_phone: phone,
+    decline_reason: decision.decision === 'decline' ? decision.reason : null,
     preferred_slot_id: slotId,
   };
-  // Owner alert — every submission, regardless of decision
   await notifyOwner(env, db, appRow, decision.reason, slot);
-  // Creator confirmation — only on auto_approve (other paths confirm on owner approve)
+  await notifyCreatorReceived(env, db, appRow, slot, tierMeta);
   if (status === 'auto_approved') {
     await notifyCreator(env, db, appRow, slot, tierMeta);
   }
@@ -579,6 +584,67 @@ function notifyOwnerText(app, decisionReason, slot) {
     lines.push(`https://hnhotels.in/ops/influencer-applications/?app_id=${app.id || ''}`);
   }
   return lines.join('\n');
+}
+
+// "We received your application" — fires on EVERY submit, before any approval branching.
+// Critical because the creator needs an immediate "we got it" so they save the +91 80080 02045
+// contact and recognise subsequent messages. This is the application receipt; the slot
+// confirmation message (notifyCreatorText) fires later when a booking is actually confirmed.
+function notifyCreatorReceivedText(app, slot, tierMeta) {
+  const status = app.status === 'auto_approved'
+    ? `🎉 You're booked. Slot is reserved.`
+    : app.status === 'declined'
+      ? `We're not able to host this round. Reason: ${app.decline_reason || 'engagement threshold not met'}.`
+      : `📝 We've received your application. We'll review and confirm within 24 hours.`;
+
+  const slotLine = slot
+    ? `${slot.window_label || slot.window_code} on ${slot.slot_date}`
+    : 'your selected slot';
+
+  const tierLabel = (tierMeta && tierMeta.label) || (TIER_MATRIX[app.computed_tier]?.label) || app.computed_tier;
+
+  const lines = [
+    `Hi @${app.username},`,
+    ``,
+    `Thanks for applying to Hamza Express — the 108-year-old Dakhni kitchen on H.K.P. Road, Shivajinagar.`,
+    ``,
+    status,
+    ``,
+    `Tier: ${tierLabel}`,
+    `Slot requested: ${slotLine}`,
+  ];
+  if (app.status === 'auto_approved') {
+    lines.push(``, `Full confirmation with the menu + asks lands in your next message.`);
+  } else if (app.status !== 'declined') {
+    lines.push(``, `If approved, we'll send the full confirmation here with the menu + what we'll be hosting you with.`);
+  }
+  lines.push(
+    ``,
+    `— Nihaf`,
+    `Managing Director, HN Hotels Pvt Ltd`,
+    `Hamza Express · est. 1918 · Shivajinagar`,
+    `Save us: +91 80080 02045 (WhatsApp)`,
+  );
+  return lines.join('\n');
+}
+
+async function notifyCreatorReceived(env, db, app, slot, tierMeta) {
+  if (!app.contact_phone) return { skipped: 'no contact_phone' };
+  const text = notifyCreatorReceivedText(app, slot, tierMeta);
+  const r = await sendWaba(env, app.contact_phone, text);
+  try {
+    await db.prepare(`
+      UPDATE influencer_applications
+      SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) ||
+          ?
+      WHERE id = ?
+    `).bind(
+      `[${new Date().toISOString()}] receipt-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      app.id
+    ).run();
+  } catch {}
+  return r;
 }
 
 function notifyCreatorText(app, slot, tierMeta) {
