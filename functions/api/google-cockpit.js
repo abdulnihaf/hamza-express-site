@@ -167,14 +167,16 @@ export async function onRequest(context) {
       `),
 
       // 8. ALL campaigns on the account — shows old paused + new PMax + any others
-      //    WHERE filter required — v23 GAQL silently returns empty when an
-      //    unfiltered `FROM campaign` query streams; matching the proven
-      //    pattern in google-ads.js getCampaigns which reliably returns rows.
+      //    Narrow field set: v23 searchStream silently 400s and returns []
+      //    when this query includes `advertising_channel_sub_type` (optional
+      //    field, not populated for SEARCH/PMax campaigns) or `start_date/end_date`
+      //    alongside `serving_status`. Restrict to the exact field set that
+      //    google-ads.js getCampaigns uses (proven to return rows reliably)
+      //    plus `serving_status` (required by the UI for SERVING badge).
       query(`
         SELECT
           campaign.id, campaign.name, campaign.status, campaign.serving_status,
-          campaign.advertising_channel_type, campaign.advertising_channel_sub_type,
-          campaign.start_date, campaign.end_date,
+          campaign.advertising_channel_type,
           campaign_budget.amount_micros
         FROM campaign
         WHERE campaign.status != 'REMOVED'
