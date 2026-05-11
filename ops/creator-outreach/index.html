@@ -157,6 +157,31 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
     </div>
   </details>
 
+  <details class="tmpl-panel" open>
+    <summary>🧪 Test send — verify the current template lands on your own email/phone before firing bulk</summary>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+      <div class="tmpl-cell">
+        <label>✉ Test email address</label>
+        <input class="subj" id="test_email" placeholder="you@example.com" autocomplete="email">
+        <button class="btn" id="btn-test-email" style="background:var(--green);color:#fff;margin-top:8px;width:100%">📩 Send test email</button>
+      </div>
+      <div class="tmpl-cell">
+        <label>📱 Test WhatsApp number (10 digits or +91…)</label>
+        <input class="subj" id="test_phone" placeholder="+91 9XXXXXXXXX" autocomplete="tel">
+        <button class="btn" id="btn-test-wa" style="background:#25d366;color:#fff;margin-top:8px;width:100%">📱 Send test WhatsApp</button>
+      </div>
+    </div>
+    <div class="tmpl-help" style="margin-top:12px;font-size:11px;color:var(--mute)">
+      Email: sends the SAVED template body wrapped in the HE-branded HTML shell to your address, with sample
+      first_name=<code>there</code>, tier=<code>T2 · Micro</code>. Subject is prefixed <code>[TEST]</code>.
+      <br>
+      WhatsApp: sends the same Meta-approved Marketing template chain (<code>v3 → v2 → v1</code>) that Bulk WA uses, with handle=<code>test_creator</code>. Costs ~₹0.78 per test (1 marketing conversation).
+      <br>
+      <strong style="color:var(--tan)">Neither test logs to creator_outreach_log</strong> — your bulk-send dedup state is untouched.
+    </div>
+    <div id="test-status" style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;word-break:break-all"></div>
+  </details>
+
   <div class="filter">
     <label>Min</label>
     <input type="number" id="filterMin" value="5000" step="1000" style="width:80px">
@@ -240,6 +265,78 @@ function bindTemplates() {
   // Bulk email button
   document.getElementById('btn-bulk-email').addEventListener('click', bulkEmail);
   document.getElementById('btn-bulk-wa').addEventListener('click', bulkWhatsApp);
+  // Test send buttons
+  const testEmailBtn = document.getElementById('btn-test-email');
+  const testWaBtn    = document.getElementById('btn-test-wa');
+  if (testEmailBtn) testEmailBtn.addEventListener('click', testEmail);
+  if (testWaBtn)    testWaBtn.addEventListener('click', testWhatsApp);
+}
+
+// ── Test send: same template, single recipient, no log write
+async function testEmail() {
+  const to = (document.getElementById('test_email').value || '').trim();
+  const status = document.getElementById('test-status');
+  if (!to || !to.includes('@')) {
+    toast('Enter a valid email address', true);
+    return;
+  }
+  const btn = document.getElementById('btn-test-email');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Sending…';
+  status.innerHTML = 'Sending test email to ' + to + '…';
+  try {
+    const r = await fetch(API + '?action=test-email', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ to }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || d.detail || 'send failed');
+    status.innerHTML = '✓ Sent to ' + to + ' · message_id=' + (d.message_id || '?');
+    toast('📩 Test email sent');
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--red)">Error: ' + (e.message || e) + '</span>';
+    toast('Test email failed: ' + (e.message || e), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+async function testWhatsApp() {
+  const phone = (document.getElementById('test_phone').value || '').trim();
+  const status = document.getElementById('test-status');
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 10) {
+    toast('Enter a valid phone (10 digits or +91…)', true);
+    return;
+  }
+  const btn = document.getElementById('btn-test-wa');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Sending…';
+  status.innerHTML = 'Sending test WhatsApp to ' + phone + '…';
+  try {
+    const r = await fetch(API + '?action=test-whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'X-Dashboard-Key': getKey() },
+      body: JSON.stringify({ phone }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) {
+      const detail = d.detail ? ' · ' + (typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail)).slice(0,200) : '';
+      throw new Error((d.error || 'send failed') + detail);
+    }
+    status.innerHTML = '✓ Sent to +' + (d.to || phone) + ' · template=' + (d.via || '?') + ' · message_id=' + (d.message_id || '?');
+    toast('📱 Test WhatsApp sent');
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--red)">Error: ' + (e.message || e) + '</span>';
+    toast('Test WhatsApp failed: ' + (e.message || e), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
 }
 
 // ── Bulk WhatsApp — Meta-approved Marketing template

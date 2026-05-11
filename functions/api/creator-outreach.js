@@ -50,6 +50,8 @@ export async function onRequest(context) {
       if (action === 'save-config')     return await actionSaveConfig(env, db, body);
       if (action === 'send-bulk-email') return await actionSendBulkEmail(env, db, body);
       if (action === 'send-bulk-whatsapp') return await actionSendBulkWhatsApp(env, db, body);
+      if (action === 'test-email')         return await actionTestEmail(env, db, body);
+      if (action === 'test-whatsapp')      return await actionTestWhatsApp(env, db, body);
     }
     return json({ error: 'unknown action: ' + action }, 400);
   } catch (e) {
@@ -279,6 +281,112 @@ function tierOf(f) {
 }
 
 async function safeJson(req) { try { return await req.json(); } catch { return {}; } }
+
+// ─────────────────────────────────────────────────────────────────────
+// TEST-EMAIL — sends the CURRENT saved template to a single address,
+// using sample first_name/handle/tier values. Does NOT write to
+// creator_outreach_log (bulk-send dedup state stays clean).
+// Subject is prefixed "[TEST]" so the recipient knows.
+// ─────────────────────────────────────────────────────────────────────
+async function actionTestEmail(env, db, body) {
+  const to = (body.to || '').toString().trim();
+  if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return json({ error: 'invalid_email', detail: 'Expected a valid email like you@example.com' }, 400);
+  }
+  if (!env.GMAIL_REFRESH_TOKEN) {
+    return json({ error: 'gmail_not_configured', detail: 'Run /api/email-auth first.' }, 500);
+  }
+
+  // Pull the same saved template the bulk send uses
+  const cfgRows = await db.prepare(
+    `SELECT config_key, config_value FROM programme_config WHERE config_key IN ('outreach_template_body','outreach_subject_email')`
+  ).all();
+  const cfg = {};
+  for (const r of (cfgRows.results || [])) cfg[r.config_key] = r.config_value;
+  const tmplBody = cfg.outreach_template_body;
+  const tmplSubject = cfg.outreach_subject_email || 'An invitation from Hamza Express — est. 1918, Shivajinagar';
+  if (!tmplBody) {
+    return json({ error: 'template_not_set', detail: 'Save the outreach template via save-config first.' }, 400);
+  }
+
+  const payload = buildOutreachEmail({
+    first_name: 'there',
+    handle: 'test_creator',
+    tier: 'T2 · Micro',
+    full_name: 'Test Creator',
+    body_text: tmplBody,
+    subject: '[TEST] ' + tmplSubject,
+  });
+
+  const r = await sendEmail(env, {
+    to,
+    subject: payload.subject,
+    html: payload.html,
+    from_name: 'Abdul Nihaf',
+  });
+
+  if (!r.ok) {
+    return json({
+      error: 'send_failed',
+      detail: r.error || JSON.stringify(r.detail || r).slice(0, 300),
+    }, 500);
+  }
+  return json({ success: true, message_id: r.message_id, to });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// TEST-WHATSAPP — sends the same Meta-approved Marketing template
+// chain (creator_outreach_invitation_v3 → v2 → v1) that Bulk WA uses,
+// with handle="test_creator". Single recipient, no log write.
+// Costs ~₹0.78 per send (1 marketing conversation on WABA).
+// ─────────────────────────────────────────────────────────────────────
+async function actionTestWhatsApp(env, db, body) {
+  const phoneRaw = (body.phone || '').toString();
+  const digits = phoneRaw.replace(/\D/g, '');
+  if (digits.length < 10) {
+    return json({ error: 'invalid_phone', detail: 'Expected at least 10 digits.' }, 400);
+  }
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
+    return json({ error: 'waba_not_configured', detail: 'Set WA_ACCESS_TOKEN and WA_PHONE_ID secrets.' }, 500);
+  }
+
+  // Normalise to E.164-ish (no +). Same logic as bulk send.
+  let normalized;
+  if (digits.length === 10) normalized = '91' + digits;
+  else if (digits.length === 12 && digits.startsWith('91')) normalized = digits;
+  else if (digits.length === 11 && digits.startsWith('0')) normalized = '91' + digits.slice(1);
+  else normalized = digits;
+
+  const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+  const chain = [
+    { name: 'creator_outreach_invitation_v3', vars: [] },
+    { name: 'creator_outreach_invitation_v2', vars: [{ type: 'text', text: 'test_creator' }] },
+    { name: 'creator_outreach_invitation_v1', vars: [{ type: 'text', text: 'test_creator' }] },
+  ];
+  let lastErr = null;
+  for (const t of chain) {
+    const components = t.vars.length ? [{ type: 'body', parameters: t.vars }] : [];
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: normalized,
+        type: 'template',
+        template: { name: t.name, language: { code: 'en' }, components },
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      return json({ success: true, message_id: data?.messages?.[0]?.id, via: t.name, to: normalized });
+    }
+    lastErr = { status: resp.status, error: data?.error };
+    const code = data?.error?.code;
+    // Fall through only on template-side errors (not-found, lang mismatch, var mismatch)
+    if (code !== 132000 && code !== 132001 && code !== 132012) break;
+  }
+  return json({ error: 'send_failed', detail: lastErr }, 500);
+}
 
 // ─────────────────────────────────────────────────────────────────────
 // SEND-BULK-WHATSAPP — fires the Meta-approved MARKETING template
