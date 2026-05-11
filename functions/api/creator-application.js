@@ -36,7 +36,9 @@ const TIER_MATRIX = {
         add_ons: ['Welcome chai', 'Dessert flight', 'Chef interaction'],
         asks: ['1 reel · 1 permanent grid post · 5 stories · tag'], auto_approve: false },
   T5: { label: '60K–100K · Macro-Micro', min: 60000, max: 99999, covers: 4, cash_paise: 50000, budget_paise: 290000,
-        add_ons: ['Mutton Brain Dry comp', 'Dessert flight', 'Chai', 'Chef interaction'],
+        // Generic category descriptors only — specific dishes pulled from /api/menu-top-sellers.
+        // Memory: feedback_never_invent_menu_items.md (2026-05-11).
+        add_ons: ['Signature heritage dish (comped)', 'Dessert flight', 'Chai', 'Chef interaction'],
         asks: ['1 reel · 1 permanent grid post · 7 stories · 7-day bio tag'], auto_approve: false },
   T6: { label: '100K–250K · Edge-Macro', min: 100000, max: 249999, covers: 4, cash_paise: 300000, budget_paise: 540000,
         add_ons: ['Chef tasting (8 dishes)', 'Family photo', 'Chef interaction'],
