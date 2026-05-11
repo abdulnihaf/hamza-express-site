@@ -16,6 +16,9 @@ const CORS = {
 
 const META_CAMPAIGN_ID = '120243729366800505';
 const META_DAILY_BUDGET_INR = 1500;
+// Fallback budget — actual daily-budget read dynamically from the picked
+// primary campaign below (which is whichever is ENABLED+SERVING right now,
+// or the most recent ENABLED otherwise).
 const GOOGLE_DAILY_BUDGET_INR = 500;
 const GOOGLE_CUSTOMER_ID = '3681710084';
 const GOOGLE_CAMPAIGN_ID = '23748431244';
@@ -195,17 +198,12 @@ async function googleUrgency(env) {
     if (!tokenJ.access_token) return signals;
 
     const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
-    const gaql = `
-      SELECT
-        campaign.status,
-        campaign.serving_status,
-        metrics.cost_micros,
-        metrics.search_impression_share,
-        metrics.search_budget_lost_impression_share
-      FROM campaign
-      WHERE campaign.id = ${GOOGLE_CAMPAIGN_ID} AND segments.date = '${today}'
-    `;
-    const resp = await fetch(
+
+    // Pick the primary campaign dynamically — first ENABLED+SERVING wins.
+    // Without this, urgency.js was hardcoded to the paused Search campaign
+    // and surfaced the alarming "Google campaign is PAUSED — not running"
+    // banner even while PMax was actively spending.
+    const adsFetch = (gaql) => fetch(
       `https://googleads.googleapis.com/v23/customers/${GOOGLE_CUSTOMER_ID}/googleAds:search`,
       {
         method: 'POST',
@@ -215,8 +213,41 @@ async function googleUrgency(env) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: gaql }),
-      }
+      },
     );
+
+    const listResp = await adsFetch(`
+      SELECT campaign.id, campaign.status, campaign.serving_status,
+             campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `);
+    if (!listResp.ok) return signals;
+    const listJ = await listResp.json();
+    const all = (listJ.results || []).map(x => x.campaign);
+    const primary = all.find(c => c.status === 'ENABLED' && c.servingStatus === 'SERVING')
+                  || all.find(c => c.status === 'ENABLED')
+                  || all[0];
+    const primaryId = primary?.id || GOOGLE_CAMPAIGN_ID;
+
+    // Look up the picked campaign's actual daily budget so the % spent
+    // signal isn't computed against a stale ₹500 anchor.
+    const budgetRow = (listJ.results || []).find(x => x.campaign?.id === primaryId);
+    const budgetINR = parseInt(budgetRow?.campaignBudget?.amountMicros)
+      ? parseInt(budgetRow.campaignBudget.amountMicros) / 1e6
+      : GOOGLE_DAILY_BUDGET_INR;
+
+    const resp = await adsFetch(`
+      SELECT
+        campaign.status,
+        campaign.serving_status,
+        metrics.cost_micros,
+        metrics.search_impression_share,
+        metrics.search_budget_lost_impression_share
+      FROM campaign
+      WHERE campaign.id = ${primaryId} AND segments.date = '${today}'
+    `);
     if (!resp.ok) return signals;
     const j = await resp.json();
     const r = (j.results || [])[0];
@@ -226,7 +257,7 @@ async function googleUrgency(env) {
     const budgetLost = parseFloat(r.metrics?.searchBudgetLostImpressionShare || 0);
     const status = r.campaign?.status;
     const serving = r.campaign?.servingStatus;
-    const pct = (spend / GOOGLE_DAILY_BUDGET_INR) * 100;
+    const pct = (spend / budgetINR) * 100;
 
     if (status !== 'ENABLED') {
       signals.push({
@@ -248,7 +279,7 @@ async function googleUrgency(env) {
       signals.push({
         severity: 'warning',
         source: 'google',
-        text: `Google budget ${pct.toFixed(0)}% spent (₹${Math.round(spend)}/${GOOGLE_DAILY_BUDGET_INR})`,
+        text: `Google budget ${pct.toFixed(0)}% spent (₹${Math.round(spend)}/${Math.round(budgetINR)})`,
         action: '/ops/google-cockpit/',
         count: Math.round(pct),
       });

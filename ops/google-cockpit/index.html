@@ -68,6 +68,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(-
 .layer-card .lc-foot{margin-top:6px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
 .layer-bakrid{margin-top:10px;background:linear-gradient(90deg,rgba(249,115,22,.12),rgba(168,85,247,.12));border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .layer-bakrid:empty{display:none}
+
+/* PMax notice + Search-only section toggling.
+ * When body has class .is-pmax, hide sections that don't apply to PMax
+ * (ad-group breakdown, search position, keyword performance, search terms)
+ * and show the PMax-notice section. Inverse for SEARCH primary. */
+.pmax-notice{display:none}
+body.is-pmax .pmax-notice{display:block}
+body.is-pmax .search-only-section{display:none}
 .layer-bakrid .lb-label{font-size:11px;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
 .layer-bakrid .lb-msg{font-size:12px;color:var(--text2);flex:1;min-width:200px}
 .layer-bakrid .lb-day{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);font-weight:700}
@@ -296,8 +304,18 @@ tr:hover td{background:rgba(66,133,244,.04)}
     <div class="layer-bakrid" id="layerBakrid"></div>
   </div>
 
-  <!-- Ad Group + Position -->
-  <div class="grid-2">
+  <!-- PMax view notice — visible only when primary is a PMax campaign -->
+  <div class="section pmax-notice">
+    <div class="section-title">Performance Max campaign — drill-down is different</div>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 0">
+      PMax uses asset groups + audience signals instead of ad-group/keyword/search-term drill-downs.
+      The Layered Intelligence Status panel above shows the campaign's audience seeds, custom
+      audiences, Customer Match, and negative keyword list. Conversion tracking surfaces below.
+    </p>
+  </div>
+
+  <!-- Ad Group + Position (Search-only sections — hidden when primary is PMax) -->
+  <div class="grid-2 search-only-section">
     <div class="section">
       <div class="section-title">Ad Group Performance <span class="tip">— paid impressions only</span></div>
       <div id="adGroups"></div>
@@ -318,8 +336,8 @@ tr:hover td{background:rgba(66,133,244,.04)}
     <div id="organicContent"></div>
   </div>
 
-  <!-- Keywords -->
-  <div class="section">
+  <!-- Keywords (Search-only) -->
+  <div class="section search-only-section">
     <div class="section-title">Keyword Performance <span class="tip">— what triggers your ad</span></div>
     <div id="keywords"></div>
   </div>
@@ -337,8 +355,8 @@ tr:hover td{background:rgba(66,133,244,.04)}
     <div class="chart-labels" id="dailyLabels"></div>
   </div>
 
-  <!-- Search Terms -->
-  <div class="section">
+  <!-- Search Terms (Search-only) -->
+  <div class="section search-only-section">
     <div class="section-title">What People Actually Searched <span class="tip">— exact queries that showed your ad</span></div>
     <div id="searchTerms"></div>
   </div>
@@ -384,13 +402,33 @@ async function loadData() {
 
 function render(data) {
   const o = data.overview;
+  const isPMax = data.campaignType === 'PERFORMANCE_MAX';
 
-  // Campaign badge
-  const servingLabel = o.servingStatus === 'SERVING' ? '🟢 Serving' : o.status === 'ENABLED' ? '🟡 Enabled' : '🔴 ' + o.status;
-  document.getElementById('campaignBadge').textContent = `Campaign ID: ${data.campaignId} · ${servingLabel}`;
+  // Campaign badge — show actual status, not just servingStatus.
+  // Google keeps servingStatus='SERVING' even on PAUSED campaigns (it means
+  // "would serve if enabled"), so we must check status first.
+  const servingLabel =
+    o.status === 'PAUSED'   ? '⏸ Paused' :
+    o.status === 'REMOVED'  ? '🔴 Removed' :
+    o.status === 'ENABLED' && o.servingStatus === 'SERVING' ? '🟢 Serving' :
+    o.status === 'ENABLED'  ? '🟡 Enabled' :
+    '⚪ ' + (o.status || 'Unknown');
+  const typeBadge = isPMax ? ' · PMAX' : ' · SEARCH';
+  document.getElementById('campaignBadge').textContent =
+    `Campaign: ${data.campaignName || data.campaignId} (${data.campaignId})${typeBadge} · ${servingLabel}`;
 
-  // KPIs
-  const budgetInfo = currentPeriod === 'today' ? '₹500 daily budget' : '';
+  // Toggle Search-only sections — PMax has no ad_groups / keywords / search_terms
+  // / search_position metrics. Hide those sections to avoid showing all-zeros
+  // tables that imply the campaign isn't producing data when in reality the
+  // resource type just doesn't apply.
+  document.body.classList.toggle('is-pmax', isPMax);
+
+  // KPIs — pull the actual primary-campaign budget from allCampaigns (was
+  // hardcoded ₹500 which is the legacy Search campaign — wrong when PMax is
+  // primary at ₹300/d).
+  const primaryCamp = (data.allCampaigns || []).find(c => c.id === data.campaignId);
+  const primaryBudget = primaryCamp?.budgetINR;
+  const budgetInfo = (currentPeriod === 'today' && primaryBudget) ? `₹${primaryBudget} daily budget` : '';
   document.getElementById('kpis').innerHTML = `
     <div class="kpi blue">
       <div class="kpi-label">Impressions</div>
@@ -791,7 +829,14 @@ function renderLayer(data) {
           : c.status === 'PAUSED' ? 'lc-warn'
           : c.status === 'REMOVED' ? 'lc-off'
           : 'lc-warn';
-        const stateLabel = c.servingStatus === 'SERVING' ? 'SERVING' : c.status || '?';
+        // Show actual status — Google keeps servingStatus='SERVING' even for
+        // paused campaigns (it means "would serve if enabled"). Always check
+        // status first so paused campaigns label correctly.
+        const stateLabel =
+          c.status === 'PAUSED'  ? 'PAUSED' :
+          c.status === 'REMOVED' ? 'REMOVED' :
+          c.status === 'ENABLED' && c.servingStatus === 'SERVING' ? 'SERVING' :
+          c.status === 'ENABLED' ? 'ENABLED' : (c.status || '?');
         const sub = c.budgetINR ? `₹${c.budgetINR}/d · ${c.channelType||'?'}` : (c.channelType || '?');
         return `<div class="lc-row">
           <span class="lc-name" title="${escapeHTML(c.name)}">${escapeHTML(truncate(c.name, 30))}</span>

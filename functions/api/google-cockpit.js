@@ -4,7 +4,10 @@
 
 const API = 'https://googleads.googleapis.com/v23';
 const CID = '3681710084';
-const CAMPAIGN_ID = '23748431244'; // HE — Ghee Rice & Kabab — Local Search
+// Fallback only — actual primary picked dynamically at request time from the
+// full campaign list. Prefer the first ENABLED+SERVING campaign; this hardcode
+// is only used if the campaign-list query fails entirely.
+const FALLBACK_CAMPAIGN_ID = '23748431244';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,16 +69,40 @@ export async function onRequest(context) {
       return rows;
     };
 
-    // Run all queries in parallel
-    // NOTE: Campaign overview is split into 2 queries:
-    //   - Basic metrics (impressions/clicks/spend) — reliable even with new campaigns
-    //   - Position metrics (impression share) — may return null on new campaigns, handled gracefully
+    // ── Phase 1: pick primary campaign dynamically ──
+    // Prefer the first ENABLED+SERVING campaign — that's what's actually
+    // spending money. Fall back to oldest non-removed, then hardcoded ID.
+    // Without this the cockpit header was locked to the paused Search
+    // campaign even after PMax 23834053403 started running, showing the
+    // misleading "campaign PAUSED — not running" banner.
+    const allCampaignsData = await query(`
+      SELECT
+        campaign.id, campaign.name, campaign.status, campaign.serving_status,
+        campaign.advertising_channel_type,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `);
+
+    let primary = allCampaignsData.find(r =>
+      r.campaign?.status === 'ENABLED' && r.campaign?.servingStatus === 'SERVING'
+    );
+    if (!primary) primary = allCampaignsData[0];
+    const primaryCampaignId   = primary?.campaign?.id || FALLBACK_CAMPAIGN_ID;
+    const primaryCampaignName = primary?.campaign?.name || '';
+    const primaryCampaignType = primary?.campaign?.advertisingChannelType || 'SEARCH';
+
+    // ── Phase 2: parallel queries using the primary campaign ──
+    // Ad-group / keyword / search-term queries return [] for PMax (it uses
+    // asset_group instead). The UI hides those sections when type=PERFORMANCE_MAX.
     const [
-      adGroupData, keywordData, dailyData, searchTermData, positionData, campaignStatus, negativeData,
-      allCampaignsData, userListsData, customAudData, sharedSetsData, sharedCritData
+      adGroupData, keywordData, dailyData, searchTermData, positionData,
+      campaignStatus, negativeData, campaignMetrics,
+      userListsData, customAudData, sharedSetsData, sharedCritData
     ] = await Promise.all([
 
-      // 1. Ad group breakdown — source of truth for aggregate metrics
+      // 1. Ad group breakdown — Search-only (PMax has asset_groups)
       query(`
         SELECT
           ad_group.id, ad_group.name, ad_group.status,
@@ -83,7 +110,7 @@ export async function onRequest(context) {
           metrics.impressions, metrics.clicks, metrics.cost_micros,
           metrics.ctr, metrics.average_cpc, metrics.conversions
         FROM ad_group
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
         ORDER BY metrics.impressions DESC
       `),
 
@@ -109,7 +136,7 @@ export async function onRequest(context) {
           metrics.ctr, metrics.average_cpc, metrics.conversions,
           metrics.search_impression_share
         FROM keyword_view
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
         ORDER BY metrics.impressions DESC
       `),
 
@@ -119,7 +146,7 @@ export async function onRequest(context) {
           segments.date,
           metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions
         FROM ad_group
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
         ORDER BY segments.date ASC
       `),
 
@@ -130,7 +157,7 @@ export async function onRequest(context) {
           segments.search_term_match_type,
           metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions
         FROM search_term_view
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
         ORDER BY metrics.impressions DESC
         LIMIT 30
       `),
@@ -144,14 +171,14 @@ export async function onRequest(context) {
           metrics.average_cpm,
           metrics.interactions
         FROM campaign
-        WHERE campaign.id = ${CAMPAIGN_ID} AND ${dateFilter}
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
       `),
 
       // 6. Campaign status (no date filter — always current)
       query(`
         SELECT campaign.id, campaign.name, campaign.status, campaign.serving_status
         FROM campaign
-        WHERE campaign.id = ${CAMPAIGN_ID}
+        WHERE campaign.id = ${primaryCampaignId}
       `),
 
       // 7. Existing negative keywords — so the UI can flip search-terms to "Blocked"
@@ -161,26 +188,20 @@ export async function onRequest(context) {
           campaign_criterion.keyword.match_type,
           campaign_criterion.status
         FROM campaign_criterion
-        WHERE campaign.id = ${CAMPAIGN_ID}
+        WHERE campaign.id = ${primaryCampaignId}
           AND campaign_criterion.type = 'KEYWORD'
           AND campaign_criterion.negative = true
       `),
 
-      // 8. ALL campaigns on the account — shows old paused + new PMax + any others
-      //    Narrow field set: v23 searchStream silently 400s and returns []
-      //    when this query includes `advertising_channel_sub_type` (optional
-      //    field, not populated for SEARCH/PMax campaigns) or `start_date/end_date`
-      //    alongside `serving_status`. Restrict to the exact field set that
-      //    google-ads.js getCampaigns uses (proven to return rows reliably)
-      //    plus `serving_status` (required by the UI for SERVING badge).
+      // 8. Campaign-level metrics — works for BOTH Search and PMax (PMax has no
+      //    ad_groups so summing query #1 returns 0). Use this as the overview
+      //    source of truth; sum-of-ad-groups is now a Search-only fallback.
       query(`
         SELECT
-          campaign.id, campaign.name, campaign.status, campaign.serving_status,
-          campaign.advertising_channel_type,
-          campaign_budget.amount_micros
+          metrics.impressions, metrics.clicks, metrics.cost_micros,
+          metrics.conversions, metrics.ctr, metrics.average_cpc
         FROM campaign
-        WHERE campaign.status != 'REMOVED'
-        ORDER BY campaign.id DESC
+        WHERE campaign.id = ${primaryCampaignId} AND ${dateFilter}
       `),
 
       // 9. Customer Match user lists (audience signals for PMax)
@@ -289,11 +310,19 @@ export async function onRequest(context) {
       };
     });
 
-    // Build overview by summing ad group data (reliable source)
-    const aggImpressions = adGroupData.reduce((s, r) => s + int(r.metrics?.impressions), 0);
-    const aggClicks = adGroupData.reduce((s, r) => s + int(r.metrics?.clicks), 0);
-    const aggCostMicros = adGroupData.reduce((s, r) => s + (parseInt(r.metrics?.costMicros) || 0), 0);
-    const aggConversions = adGroupData.reduce((s, r) => s + float(r.metrics?.conversions), 0);
+    // Build overview — prefer campaign-level metrics (works for both Search +
+    // PMax). Sum of ad_group data is the Search-only fallback when the
+    // campaign-level row is empty (e.g. brand-new campaigns).
+    const cm = campaignMetrics[0]?.metrics || {};
+    const aggAdGroupImpr  = adGroupData.reduce((s, r) => s + int(r.metrics?.impressions), 0);
+    const aggAdGroupClks  = adGroupData.reduce((s, r) => s + int(r.metrics?.clicks), 0);
+    const aggAdGroupCost  = adGroupData.reduce((s, r) => s + (parseInt(r.metrics?.costMicros) || 0), 0);
+    const aggAdGroupConv  = adGroupData.reduce((s, r) => s + float(r.metrics?.conversions), 0);
+
+    const aggImpressions = int(cm.impressions)  || aggAdGroupImpr;
+    const aggClicks      = int(cm.clicks)       || aggAdGroupClks;
+    const aggCostMicros  = parseInt(cm.costMicros) || aggAdGroupCost;
+    const aggConversions = float(cm.conversions) || aggAdGroupConv;
 
     // Position metrics — graceful fallback
     const pm = positionData[0]?.metrics || {};
@@ -409,8 +438,9 @@ export async function onRequest(context) {
       success: true,
       period,
       asOf: todayIST(),
-      campaignId: CAMPAIGN_ID,
-      campaignName: 'HE — Ghee Rice & Kabab — Local Search',
+      campaignId: primaryCampaignId,
+      campaignName: primaryCampaignName,
+      campaignType: primaryCampaignType,  // 'SEARCH' | 'PERFORMANCE_MAX' | etc.
       overview,
       adGroups,
       keywords,
