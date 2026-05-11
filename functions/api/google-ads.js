@@ -45,6 +45,8 @@ export async function onRequest(context) {
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'ENABLED');
       case 'ad-health':
         return await getAdHealth(accessToken, env);
+      case 'list-all-campaigns':
+        return await listAllCampaigns(accessToken, env);
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -528,6 +530,40 @@ async function getCampaigns(accessToken, env) {
     budgetMicros: r.campaignBudget?.amountMicros,
     budgetType: r.campaignBudget?.type,
     budgetINR: r.campaignBudget?.amountMicros ? (parseInt(r.campaignBudget.amountMicros) / 1000000).toFixed(2) : null,
+  }));
+
+  return json({ campaigns, count: campaigns.length });
+}
+
+// Action: Diagnostic — list ALL campaigns regardless of status (incl REMOVED + DRAFT).
+// Includes start_date so the audit trail can answer "was anything created on date X?"
+// Uses :search (not :searchStream) to match the proven google-ads.js pattern that
+// reliably returns rows; sticks to fields that don't trigger v23's silent-400 issue
+// observed with advertising_channel_sub_type + serving_status combos.
+async function listAllCampaigns(accessToken, env) {
+  const query = `
+    SELECT
+      campaign.id,
+      campaign.name,
+      campaign.status,
+      campaign.advertising_channel_type,
+      campaign.start_date,
+      campaign_budget.amount_micros
+    FROM campaign
+    ORDER BY campaign.start_date DESC
+  `;
+
+  const results = await queryGoogleAds(accessToken, env, query);
+
+  const campaigns = results.map(r => ({
+    id: r.campaign.id,
+    name: r.campaign.name,
+    status: r.campaign.status,
+    type: r.campaign.advertisingChannelType,
+    startDate: r.campaign.startDate,
+    budgetINR: r.campaignBudget?.amountMicros
+      ? (parseInt(r.campaignBudget.amountMicros) / 1000000).toFixed(2)
+      : null,
   }));
 
   return json({ campaigns, count: campaigns.length });
