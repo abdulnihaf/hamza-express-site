@@ -167,6 +167,9 @@ export async function onRequest(context) {
       `),
 
       // 8. ALL campaigns on the account — shows old paused + new PMax + any others
+      //    WHERE filter required — v23 GAQL silently returns empty when an
+      //    unfiltered `FROM campaign` query streams; matching the proven
+      //    pattern in google-ads.js getCampaigns which reliably returns rows.
       query(`
         SELECT
           campaign.id, campaign.name, campaign.status, campaign.serving_status,
@@ -174,6 +177,7 @@ export async function onRequest(context) {
           campaign.start_date, campaign.end_date,
           campaign_budget.amount_micros
         FROM campaign
+        WHERE campaign.status != 'REMOVED'
         ORDER BY campaign.id DESC
       `),
 
