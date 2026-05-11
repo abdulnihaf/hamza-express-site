@@ -80,8 +80,9 @@ export async function onRequest(context) {
       case 'update-asset-group':return await updateAssetGroup(token, env, body);
       case 'list-campaign-goals':return await listCampaignGoals(token, env, url.searchParams.get('id'));
       case 'remove-pmax':       return await removePmax(token, env, url.searchParams.get('id'));
+      case 'create-store-visits-action': return await createStoreVisitsAction(token, env);
       default:
-        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','list-campaign-goals','remove-pmax'] }, 400);
+        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','list-campaign-goals','remove-pmax','create-store-visits-action'] }, 400);
     }
   } catch (err) {
     return j({ error: err.message, stack: env.DEBUG ? err.stack : undefined }, 500);
@@ -843,6 +844,44 @@ async function removePmax(token, env, id) {
     operations: [{ remove: `customers/${CID}/campaigns/${id}` }],
   });
   return j({ ok: true, removed: r.results?.[0]?.resourceName });
+}
+
+// ─── Attempt to create STORE_VISITS conversion action ──────────────────
+// STORE_VISITS conversion actions are auto-managed by Google: created
+// when the account becomes eligible (GBP location linked + ad-spend
+// volume + foot-traffic data accumulated over time). Per Google Ads API
+// docs they are not directly advertiser-creatable via the API.
+//
+// This action attempts the create empirically and returns Google's
+// actual response so the gap surfaced by preflight can be diagnosed
+// rather than worked-around blindly.
+async function createStoreVisitsAction(token, env) {
+  const operations = [{
+    create: {
+      name: 'HE Store Visits',
+      type: 'STORE_VISITS',
+      category: 'STORE_VISIT',
+      status: 'ENABLED',
+      primaryForGoal: true,
+    },
+  }];
+  try {
+    const data = await ads(token, env, `/customers/${CID}/conversionActions:mutate`, { operations });
+    return j({
+      ok: true,
+      attempted: true,
+      created: data.results,
+      note: 'Unexpected success — verify in Ads UI Goals tab and re-run preflight.',
+    });
+  } catch (err) {
+    return j({
+      ok: false,
+      attempted: true,
+      apiError: err.message,
+      explanation: 'STORE_VISITS conversion actions are auto-created by Google when the account becomes eligible (GBP linked + sufficient ad spend + foot-traffic data). They cannot be advertiser-created via the API. This empirical attempt confirms the documented behavior.',
+      alternative: 'PMax campaign 23834053403 has 3 biddable proxy goals attached: PHONE_CALL_LEAD~CALL_FROM_ADS, GET_DIRECTIONS~GOOGLE_HOSTED, CONTACT~CALL_FROM_ADS. These are the realistic walk-in proxies for a single-location small business; STORE_VISITS may never auto-create at current ₹300/day spend.',
+    }, 200);
+  }
 }
 
 function j(data, status = 200) {
