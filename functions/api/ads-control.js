@@ -209,9 +209,31 @@ async function metaPost(id, params, token) {
 }
 
 // ═══ Google dispatch ════════════════════════════════════════════════════
+// When the caller doesn't pin a campaign id, target whichever campaign is
+// actually ENABLED+SERVING right now. Without this, every cockpit interaction
+// hits the paused legacy Search campaign even when PMax is the live one.
+async function pickPrimaryGoogleCampaign(accessToken, env) {
+  try {
+    const rows = await googleQuery(accessToken, env, `
+      SELECT campaign.id, campaign.status, campaign.serving_status
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `);
+    const all = rows.map(r => r.campaign).filter(Boolean);
+    const pick = all.find(c => c.status === 'ENABLED' && c.servingStatus === 'SERVING')
+              || all.find(c => c.status === 'ENABLED')
+              || all[0];
+    return pick?.id || null;
+  } catch { return null; }
+}
+
 async function doGoogle(env, action, body) {
   const accessToken = await getGoogleToken(env);
-  const id = (body.id || DEFAULT_GOOGLE_CAMPAIGN).toString();
+  let id = (body.id || '').toString();
+  if (!id) {
+    id = await pickPrimaryGoogleCampaign(accessToken, env) || DEFAULT_GOOGLE_CAMPAIGN;
+  }
 
   if (action === 'pause' || action === 'resume') {
     const status = action === 'pause' ? 'PAUSED' : 'ENABLED';
