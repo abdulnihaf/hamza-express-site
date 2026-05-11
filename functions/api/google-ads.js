@@ -536,10 +536,9 @@ async function getCampaigns(accessToken, env) {
 }
 
 // Action: Diagnostic — list ALL campaigns regardless of status (incl REMOVED + DRAFT).
-// Includes start_date so the audit trail can answer "was anything created on date X?"
-// Uses :search (not :searchStream) to match the proven google-ads.js pattern that
-// reliably returns rows; sticks to fields that don't trigger v23's silent-400 issue
-// observed with advertising_channel_sub_type + serving_status combos.
+// `campaign.start_date` was rejected by v23 as UNRECOGNIZED_FIELD when used unfiltered,
+// so we rely on `campaign.id` monotonicity (Google generates IDs in creation order)
+// to infer chronology. ORDER BY campaign.id DESC gives newest first.
 async function listAllCampaigns(accessToken, env) {
   const query = `
     SELECT
@@ -547,10 +546,9 @@ async function listAllCampaigns(accessToken, env) {
       campaign.name,
       campaign.status,
       campaign.advertising_channel_type,
-      campaign.start_date,
       campaign_budget.amount_micros
     FROM campaign
-    ORDER BY campaign.start_date DESC
+    ORDER BY campaign.id DESC
   `;
 
   const results = await queryGoogleAds(accessToken, env, query);
@@ -560,7 +558,6 @@ async function listAllCampaigns(accessToken, env) {
     name: r.campaign.name,
     status: r.campaign.status,
     type: r.campaign.advertisingChannelType,
-    startDate: r.campaign.startDate,
     budgetINR: r.campaignBudget?.amountMicros
       ? (parseInt(r.campaignBudget.amountMicros) / 1000000).toFixed(2)
       : null,
