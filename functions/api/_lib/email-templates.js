@@ -27,7 +27,8 @@ const BRAND = {
 };
 
 const LOGO_URL = 'https://hamzaexpress.in/assets/brand/he-emblem.png';
-const APPLY_URL = 'https://hamzaexpress.in/creators/';
+const CREATORS_HOME = 'https://hamzaexpress.in/creators/';
+const APPLY_URL = 'https://hamzaexpress.in/creators/apply/';
 const ADDRESS = '151 TO 154, HKP Road, Sulthangunta · Shivajinagar · Bangalore 560051';
 const WABA_NUMBER = '+91 80080 02049';
 const MAP_URL = 'https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg';
@@ -122,7 +123,7 @@ ${preheader}
         <div style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:12px;line-height:1.6;opacity:.85;">
           ${ADDRESS}<br/>
           WhatsApp us: <a href="https://wa.me/${WABA_NUMBER.replace(/\D/g,'')}" style="color:${BRAND.sienna};text-decoration:underline;">${WABA_NUMBER}</a><br/>
-          Web: <a href="${APPLY_URL}" style="color:${BRAND.sienna};text-decoration:underline;">hamzaexpress.in/creators</a>
+          Web: <a href="${CREATORS_HOME}" style="color:${BRAND.sienna};text-decoration:underline;">hamzaexpress.in/creators</a>
         </div>
         <div style="margin-top:18px;padding-top:14px;border-top:1px solid ${BRAND.sienna};border-top-style:dotted;font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:11px;line-height:1.6;opacity:.7;">
           Hamza Hotel · cooking on H.K.P. Road since 1918<br/>
@@ -313,7 +314,7 @@ export function buildOutreachEmail({ first_name, handle, tier, full_name, body_t
     ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
     ${paragraphs}
 
-    ${ctaButton('https://hamzaexpress.in/creators/', 'View your invitation card →')}
+    ${ctaButton(APPLY_URL, 'View your invitation card →')}
 
     ${heritageStrip()}
   `;
