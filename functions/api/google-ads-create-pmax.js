@@ -34,7 +34,11 @@
 //          videoAssets: [ids],                     // optional, [] is fine — Google auto-generates
 //          signals: { audienceIds:[975639929,976493592,976494318], userListIds:["9384755106"] },
 //          negativeKeywordSetId: "12074853990",
-//          geoTargetIds: [1007765],                // 1007765 = Bangalore. Multiple allowed.
+//          geoTargetIds: [1007768],                // 1007768 = Bengaluru (Bangalore) City.
+//                                                  // NEVER trust comments here — the previous comment said 1007765 = Bangalore
+//                                                  // but 1007765 is actually Gurugram (Haryana). PMax 23834053403 was created
+//                                                  // 2026-05-10 targeting Gurugram by mistake. Always verify any geo target
+//                                                  // ID via /api/google-ads?action=geo-suggest&q=<city>&cc=IN before use.
 //          languageIds: [1000, 1098, 1023],        // 1000=English, 1098=Hindi, 1023=Kannada
 //          locationAssetSetId: null                // optional — for Store Visits goal
 //        }
