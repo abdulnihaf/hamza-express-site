@@ -49,6 +49,10 @@ export async function onRequest(context) {
         return await listAllCampaigns(accessToken, env);
       case 'campaign-criteria':
         return await getCampaignCriteria(accessToken, env, url.searchParams.get('id'));
+      case 'geo-suggest':
+        return await geoSuggest(accessToken, env, url.searchParams.get('q'), url.searchParams.get('cc') || 'IN');
+      case 'set-campaign-location':
+        return await setCampaignLocation(accessToken, env, url.searchParams.get('id'), url.searchParams.get('geo'), url.searchParams.get('remove'));
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -662,6 +666,82 @@ async function getCampaignCriteria(accessToken, env, id) {
       proximities: buckets.PROXIMITY.length,
       negativeLocations: buckets.LOCATION.filter(l => l.negative).length,
     },
+  });
+}
+
+// Action: Resolve a city/location name → Google geo target constant ID.
+// Uses geoTargetConstants:suggest REST endpoint. Always cross-check the
+// result before using — the May 2026 blunder was the create-pmax code
+// commenting "1007765 = Bangalore" when 1007765 is actually Gurugram.
+async function geoSuggest(accessToken, env, q, countryCode) {
+  if (!q) return json({ error: '?q=<location name> required' }, 400);
+  const resp = await fetch(
+    `${GOOGLE_ADS_API}/geoTargetConstants:suggest`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        locationNames: { names: [q] },
+        countryCode,
+      }),
+    },
+  );
+  const data = await resp.json();
+  if (!resp.ok) return json({ error: `Suggest failed (${resp.status})`, raw: data }, 500);
+  // Flatten + sort by reach
+  const suggestions = (data.geoTargetConstantSuggestions || []).map(s => ({
+    id: s.geoTargetConstant?.id,
+    name: s.geoTargetConstant?.name,
+    canonicalName: s.geoTargetConstant?.canonicalName,
+    countryCode: s.geoTargetConstant?.countryCode,
+    targetType: s.geoTargetConstant?.targetType,
+    status: s.geoTargetConstant?.status,
+    resourceName: s.geoTargetConstant?.resourceName,
+    locale: s.locale,
+    reach: parseInt(s.reach) || 0,
+    searchTerm: s.searchTerm,
+  })).sort((a, b) => b.reach - a.reach);
+  return json({ query: q, countryCode, count: suggestions.length, suggestions });
+}
+
+// Action: Atomic location swap on a campaign — adds the new geo target as a
+// LOCATION criterion AND optionally removes existing LOCATION criteria
+// (passed as criterion IDs in ?remove=ID1,ID2). Designed for fixing the
+// Gurugram → Bangalore blunder cleanly.
+//   ?id=<campaign_id>&geo=<new_geo_target_id>&remove=<criterion_id_to_remove>
+async function setCampaignLocation(accessToken, env, campaignId, newGeoId, removeIds) {
+  if (!campaignId || !newGeoId) return json({ error: '?id=<campaign_id>&geo=<geo_target_id> required' }, 400);
+  const customerPrefix = `customers/${CUSTOMER_ID}`;
+  const operations = [];
+
+  // Remove old location criteria first (each removal references the existing
+  // criterion resource name shape: customers/{cid}/campaignCriteria/{campId}~{critId}).
+  const removes = (removeIds || '').split(',').map(s => s.trim()).filter(Boolean);
+  for (const critId of removes) {
+    operations.push({
+      remove: `${customerPrefix}/campaignCriteria/${campaignId}~${critId}`,
+    });
+  }
+
+  // Create the new location criterion pointing at Bangalore (or whatever).
+  operations.push({
+    create: {
+      campaign: `${customerPrefix}/campaigns/${campaignId}`,
+      location: { geoTargetConstant: `geoTargetConstants/${newGeoId}` },
+    },
+  });
+
+  const raw = await mutateGoogleAds(accessToken, env, 'campaignCriteria', operations);
+  return json({
+    ok: true,
+    campaignId,
+    added: newGeoId,
+    removed: removes,
+    results: raw,
   });
 }
 
