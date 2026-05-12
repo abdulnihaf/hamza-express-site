@@ -47,6 +47,8 @@ export async function onRequest(context) {
         return await getAdHealth(accessToken, env);
       case 'list-all-campaigns':
         return await listAllCampaigns(accessToken, env);
+      case 'campaign-criteria':
+        return await getCampaignCriteria(accessToken, env, url.searchParams.get('id'));
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -564,6 +566,103 @@ async function listAllCampaigns(accessToken, env) {
   }));
 
   return json({ campaigns, count: campaigns.length });
+}
+
+// Action: Diagnostic — list all CAMPAIGN-LEVEL criteria (LOCATION / LANGUAGE /
+// AUDIENCE / proximity) for a given campaign id, with geo target constants
+// resolved to readable names. Answers "is this PMax actually targeting
+// Bangalore?" empirically.
+async function getCampaignCriteria(accessToken, env, id) {
+  if (!id) return json({ error: '?id=<campaign_id> required' }, 400);
+
+  const critRows = await queryGoogleAds(accessToken, env, `
+    SELECT
+      campaign_criterion.criterion_id,
+      campaign_criterion.type,
+      campaign_criterion.negative,
+      campaign_criterion.location.geo_target_constant,
+      campaign_criterion.language.language_constant,
+      campaign_criterion.proximity.address.country_code,
+      campaign_criterion.proximity.address.postal_code,
+      campaign_criterion.proximity.address.city_name,
+      campaign_criterion.proximity.radius,
+      campaign_criterion.proximity.radius_units
+    FROM campaign_criterion
+    WHERE campaign.id = '${id}'
+  `);
+
+  // Collect geo target constant resource names to resolve in one batch query.
+  const geoConsts = [...new Set(
+    critRows
+      .map(r => r.campaignCriterion?.location?.geoTargetConstant)
+      .filter(Boolean),
+  )];
+
+  let geoMap = {};
+  if (geoConsts.length) {
+    const inClause = geoConsts.map(g => `'${g}'`).join(',');
+    const geoRows = await queryGoogleAds(accessToken, env, `
+      SELECT
+        geo_target_constant.resource_name,
+        geo_target_constant.id,
+        geo_target_constant.name,
+        geo_target_constant.canonical_name,
+        geo_target_constant.country_code,
+        geo_target_constant.target_type,
+        geo_target_constant.status
+      FROM geo_target_constant
+      WHERE geo_target_constant.resource_name IN (${inClause})
+    `);
+    for (const r of geoRows) {
+      const g = r.geoTargetConstant;
+      if (g?.resourceName) geoMap[g.resourceName] = g;
+    }
+  }
+
+  // Bucket criteria by type for readability.
+  const buckets = { LOCATION: [], LANGUAGE: [], PROXIMITY: [], OTHER: [] };
+  for (const r of critRows) {
+    const c = r.campaignCriterion || {};
+    const type = c.type;
+    const item = {
+      criterionId: c.criterionId,
+      type,
+      negative: c.negative || false,
+    };
+    if (type === 'LOCATION') {
+      const ref = c.location?.geoTargetConstant;
+      const meta = geoMap[ref] || {};
+      item.geoTargetConstant = ref;
+      item.geoTargetId = meta.id;
+      item.name = meta.name;
+      item.canonicalName = meta.canonicalName;
+      item.countryCode = meta.countryCode;
+      item.targetType = meta.targetType;
+      buckets.LOCATION.push(item);
+    } else if (type === 'LANGUAGE') {
+      item.languageConstant = c.language?.languageConstant;
+      buckets.LANGUAGE.push(item);
+    } else if (type === 'PROXIMITY') {
+      item.address = c.proximity?.address;
+      item.radius = c.proximity?.radius;
+      item.radiusUnits = c.proximity?.radiusUnits;
+      buckets.PROXIMITY.push(item);
+    } else {
+      buckets.OTHER.push(item);
+    }
+  }
+
+  return json({
+    campaignId: id,
+    count: critRows.length,
+    criteria: buckets,
+    summary: {
+      locations: buckets.LOCATION.length,
+      languages: buckets.LANGUAGE.length,
+      proximities: buckets.PROXIMITY.length,
+      negativeLocations: buckets.LOCATION.filter(l => l.negative).length,
+    },
+  });
 }
 
 // Action: Get campaign metrics for a date range
