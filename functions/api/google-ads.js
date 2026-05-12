@@ -53,6 +53,8 @@ export async function onRequest(context) {
         return await geoSuggest(accessToken, env, url.searchParams.get('q'), url.searchParams.get('cc') || 'IN');
       case 'set-campaign-location':
         return await setCampaignLocation(accessToken, env, url.searchParams.get('id'), url.searchParams.get('geo'), url.searchParams.get('remove'));
+      case 'set-campaign-proximity':
+        return await setCampaignProximity(accessToken, env, url.searchParams);
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -741,6 +743,55 @@ async function setCampaignLocation(accessToken, env, campaignId, newGeoId, remov
     campaignId,
     added: newGeoId,
     removed: removes,
+    results: raw,
+  });
+}
+
+// Action: Set a PROXIMITY criterion (lat/lng + radius) on a campaign, atomically
+// removing existing LOCATION criteria by criterion id. Use this for hyper-local
+// restaurant targeting around a physical store.
+//   ?id=<campaign>&lat=12.9861&lng=77.6048&radius=2&units=KILOMETERS&remove=1007768
+async function setCampaignProximity(accessToken, env, params) {
+  const campaignId = params.get('id');
+  const lat = parseFloat(params.get('lat'));
+  const lng = parseFloat(params.get('lng'));
+  const radius = parseFloat(params.get('radius') || '2');
+  const units = (params.get('units') || 'KILOMETERS').toUpperCase();
+  const removeIds = (params.get('remove') || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  if (!campaignId) return json({ error: '?id=<campaign> required' }, 400);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return json({ error: '?lat & ?lng required (decimal degrees)' }, 400);
+  if (!['KILOMETERS', 'MILES'].includes(units)) return json({ error: 'units must be KILOMETERS or MILES' }, 400);
+
+  const customerPrefix = `customers/${CUSTOMER_ID}`;
+  const operations = [];
+
+  for (const critId of removeIds) {
+    operations.push({
+      remove: `${customerPrefix}/campaignCriteria/${campaignId}~${critId}`,
+    });
+  }
+
+  operations.push({
+    create: {
+      campaign: `${customerPrefix}/campaigns/${campaignId}`,
+      proximity: {
+        geoPoint: {
+          latitudeInMicroDegrees: Math.round(lat * 1_000_000),
+          longitudeInMicroDegrees: Math.round(lng * 1_000_000),
+        },
+        radius,
+        radiusUnits: units,
+      },
+    },
+  });
+
+  const raw = await mutateGoogleAds(accessToken, env, 'campaignCriteria', operations);
+  return json({
+    ok: true,
+    campaignId,
+    proximity: { lat, lng, radius, units },
+    removed: removeIds,
     results: raw,
   });
 }
