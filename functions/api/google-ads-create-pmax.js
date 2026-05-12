@@ -83,10 +83,11 @@ export async function onRequest(context) {
       case 'update-campaign':   return await updateCampaign(token, env, body);
       case 'update-asset-group':return await updateAssetGroup(token, env, body);
       case 'list-campaign-goals':return await listCampaignGoals(token, env, url.searchParams.get('id'));
+      case 'list-asset-group-assets': return await listAssetGroupAssets(token, env, url.searchParams.get('assetGroupId'));
       case 'remove-pmax':       return await removePmax(token, env, url.searchParams.get('id'));
       case 'create-store-visits-action': return await createStoreVisitsAction(token, env);
       default:
-        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','list-campaign-goals','remove-pmax','create-store-visits-action'] }, 400);
+        return j({ error: `unknown action: ${action}`, valid: ['preflight','list-assets','create-text-assets','upload-image-asset','create','enrich-pmax','update-campaign','update-asset-group','list-campaign-goals','list-asset-group-assets','remove-pmax','create-store-visits-action'] }, 400);
     }
   } catch (err) {
     return j({ error: err.message, stack: env.DEBUG ? err.stack : undefined }, 500);
@@ -250,6 +251,39 @@ async function preflight(token, env) {
 // enum values even though they are valid at the resource level. Drop the WHERE
 // filter and bucket client-side instead. This may pull a lot of rows on busy
 // accounts — cap to ~500 by adding LIMIT.
+async function listAssetGroupAssets(token, env, assetGroupId) {
+  if (!assetGroupId) return j({ error: '?assetGroupId required' }, 400);
+  const rows = await gaql(token, env, `
+    SELECT asset_group_asset.asset, asset_group_asset.field_type, asset_group_asset.status,
+           asset.id, asset.type, asset.text_asset.text,
+           asset.image_asset.full_size.url,
+           asset.youtube_video_asset.youtube_video_id,
+           asset.call_to_action_asset.call_to_action
+    FROM asset_group_asset
+    WHERE asset_group.id = ${Number(assetGroupId)}
+    LIMIT 500
+  `);
+  const links = rows.map(r => {
+    const a = r.asset || {};
+    const link = r.assetGroupAsset || {};
+    return {
+      assetId: a.id,
+      type: a.type,
+      fieldType: link.fieldType,
+      status: link.status,
+      text: a.textAsset?.text,
+      imageUrl: a.imageAsset?.fullSize?.url,
+      videoId: a.youtubeVideoAsset?.youtubeVideoId,
+      callToAction: a.callToActionAsset?.callToAction,
+    };
+  });
+  const byFieldType = {};
+  for (const l of links) {
+    (byFieldType[l.fieldType] ||= []).push(l);
+  }
+  return j({ ok: true, assetGroupId, count: links.length, byFieldType, links });
+}
+
 async function listAssets(token, env) {
   const rows = await gaql(token, env, `
     SELECT asset.id, asset.name, asset.type, asset.resource_name,
