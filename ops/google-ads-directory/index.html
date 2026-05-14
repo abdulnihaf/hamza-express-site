@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HE Google Ads Intelligence Directory</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#080b10;--panel:#111722;--panel2:#171f2c;--line:#2b3648;--line2:#3e4b60;
+  --text:#f5f7fb;--muted:#9aa6b8;--soft:#c9d2df;
+  --blue:#4f8cff;--green:#28c76f;--amber:#f5b041;--red:#ff5c5c;--cyan:#25c7d9;--violet:#a78bfa;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.45}
+a{color:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding:18px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.brand{min-width:0}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:5px}
+h1{font-size:23px;line-height:1.15;margin:0 0 7px;letter-spacing:0}
+.sub{font-size:13px;color:var(--muted);max-width:880px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 13px;border:1px solid var(--line2);border-radius:8px;text-decoration:none;background:var(--panel);font-size:12px;font-weight:800;color:var(--text);white-space:nowrap}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#061225}
+.grid{display:grid;gap:12px}
+.grid.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 0}
+.kpi{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:13px;min-width:0}
+.kpi b{display:block;font-size:18px;line-height:1.15;margin-bottom:5px}
+.kpi span{display:block;font-size:11px;color:var(--muted)}
+.band{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:14px;margin-bottom:12px}
+.band-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.band-title{font-size:15px;font-weight:900}
+.band-note{font-size:12px;color:var(--muted);max-width:760px}
+.pill{display:inline-flex;align-items:center;min-height:26px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);white-space:nowrap}
+.pill.green{color:var(--green);border-color:rgba(40,199,111,.5);background:rgba(40,199,111,.09)}
+.pill.blue{color:var(--blue);border-color:rgba(79,140,255,.5);background:rgba(79,140,255,.09)}
+.pill.amber{color:var(--amber);border-color:rgba(245,176,65,.5);background:rgba(245,176,65,.09)}
+.pill.red{color:var(--red);border-color:rgba(255,92,92,.5);background:rgba(255,92,92,.09)}
+.cols-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cols-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cols-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.card{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:13px;min-width:0}
+.card h2,.card h3{margin:0 0 8px;line-height:1.2;letter-spacing:0}
+.card h2{font-size:15px}.card h3{font-size:13px}
+.card p{margin:0 0 9px;color:var(--muted);font-size:12px}
+.meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.row{display:grid;grid-template-columns:190px 1fr;gap:10px;border-top:1px dashed rgba(158,172,192,.25);padding:8px 0;font-size:12px}
+.row:first-child{border-top:0}
+.row b{color:var(--soft)}
+.row span{color:var(--muted)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;min-width:960px;background:var(--panel2);font-size:12px}
+th,td{padding:10px;border-bottom:1px solid rgba(158,172,192,.18);vertical-align:top;text-align:left}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:rgba(255,255,255,.025)}
+td{color:var(--soft)}
+tr:last-child td{border-bottom:0}
+.score{font-weight:900}.score.high{color:var(--green)}.score.med{color:var(--amber)}.score.low{color:var(--muted)}
+.tag{display:inline-flex;align-items:center;margin:2px 4px 2px 0;border:1px solid var(--line2);border-radius:999px;padding:3px 8px;font-size:11px;color:var(--soft);background:rgba(255,255,255,.025)}
+.map{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:8px}
+.map-step{border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:8px;padding:10px;min-height:92px}
+.map-step b{display:block;font-size:11px;color:var(--text);margin-bottom:5px}
+.map-step span{display:block;font-size:11px;color:var(--muted)}
+.callout{border-left:3px solid var(--amber);background:rgba(245,176,65,.08);padding:11px 12px;border-radius:0 8px 8px 0;color:var(--soft);font-size:12px;margin-top:10px}
+.source-list{display:grid;gap:8px}
+.source-list a{display:block;border:1px solid var(--line);border-radius:8px;padding:10px;text-decoration:none;background:rgba(255,255,255,.025);font-size:12px;color:var(--soft)}
+.source-list a span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.sticky-nav{position:sticky;top:0;z-index:5;background:rgba(8,11,16,.94);backdrop-filter:blur(10px);border-bottom:1px solid rgba(158,172,192,.15);padding:8px 0;margin:0 0 12px}
+.nav-inner{max-width:1320px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:0 18px}
+.nav-inner a{min-height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-size:12px;color:var(--soft);white-space:nowrap;background:var(--panel)}
+.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+@media(max-width:980px){.grid.kpis,.cols-2,.cols-3,.cols-4,.map{grid-template-columns:1fr}.top{flex-direction:column}.actions{justify-content:flex-start}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="sticky-nav">
+  <div class="nav-inner">
+    <a href="#owner">Owner Read</a>
+    <a href="#live">Live State</a>
+    <a href="#docs">Google Capability</a>
+    <a href="#config">Config Dictionary</a>
+    <a href="#persona">Persona Matrix</a>
+    <a href="#late-night">Late-Night Search</a>
+    <a href="#pmax">PMax Base</a>
+    <a href="#roadmap">Next Campaigns</a>
+    <a href="#sources">Sources</a>
+  </div>
+</div>
+<main class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="eyebrow">Hamza Express · Google Ads Intelligence Directory</div>
+      <h1>Persona-led Google architecture for HKP Road footfall</h1>
+      <div class="sub">This directory converts the local-pulse intelligence from session <code>019e1fb9-0160-7680-b330-904181b6faaf</code> into Google Ads campaign coordinates: Search intent, PMax role, Maps action, radius, time, keywords, proof, measurement, and launch guardrails.</div>
+    </div>
+    <div class="actions">
+      <a class="btn primary" href="/ops/google-cockpit/">Open Cockpit</a>
+      <a class="btn" href="/api/google-ads?action=late-night-search-intelligence">Late-Night JSON</a>
+      <a class="btn" href="/go/google-night">Landing Page</a>
+    </div>
+  </div>
+
+  <section class="grid kpis" id="owner">
+    <div class="kpi"><b>Objective</b><span>Maximum physical footfall to Hamza Express, not generic clicks.</span></div>
+    <div class="kpi"><b>Base Layer</b><span>PMax stays broad discovery with store goals and local actions.</span></div>
+    <div class="kpi"><b>Surgical Layer</b><span>Late-night Search captures active hungry users from 22:00-03:00.</span></div>
+    <div class="kpi"><b>Safety Lock</b><span>Exact pin proximity only. No city geo ID. No Gurugram path.</span></div>
+  </section>
+
+  <section class="band" id="live">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Live Account State</div>
+        <div class="band-note">This reads the production Google Ads API through the HE worker. It does not mutate spend or campaign status.</div>
+      </div>
+      <span class="pill green">Read only</span>
+    </div>
+    <div class="cols-4" id="liveState">
+      <div class="card"><h3>Loading</h3><p>Fetching live PMax and late-night Search state...</p></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Owner Logic</div>
+        <div class="band-note">Google is not one campaign. It is a stack of behaviors. Some eaters search actively, some only need Maps, some need broad discovery, and some are better reached by Meta/flyers/TV before Google captures them.</div>
+      </div>
+      <span class="pill green">Footfall first</span>
+    </div>
+    <div class="map">
+      <div class="map-step"><b>Eater</b><span>Who is making the food decision?</span></div>
+      <div class="map-step"><b>Behavior</b><span>Do they search, browse, use Maps, or already know the place?</span></div>
+      <div class="map-step"><b>Campaign</b><span>Search for explicit demand. PMax for broad store discovery.</span></div>
+      <div class="map-step"><b>Proof</b><span>One dish, one barrier, one local reason to trust.</span></div>
+      <div class="map-step"><b>Action</b><span>Directions, call, menu, walk-in, parcel. Not blind traffic.</span></div>
+    </div>
+  </section>
+
+  <section class="band" id="docs">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Latest Google Capability Extraction</div>
+        <div class="band-note">Practical interpretation of official Google Ads and Google Ads API docs for HE.</div>
+      </div>
+      <span class="pill blue">Current docs</span>
+    </div>
+    <div class="cols-3">
+      <div class="card">
+        <h3>Performance Max</h3>
+        <p>PMax is goal-based and reaches Search, Maps, YouTube, Display, Discover, Gmail and more. For HE it is a broad store-discovery layer, not a keyword-surgical layer.</p>
+        <div class="meta"><span class="tag">store goals</span><span class="tag">asset groups</span><span class="tag">audience signals</span><span class="tag">channel reporting</span></div>
+      </div>
+      <div class="card">
+        <h3>Search</h3>
+        <p>Search is for explicit demand: open now, near me, biryani, kabab, halal, family restaurant, parcel. It gives keyword, schedule, query and match-type control.</p>
+        <div class="meta"><span class="tag">exact</span><span class="tag">phrase</span><span class="tag">ad schedule</span><span class="tag">negative terms</span></div>
+      </div>
+      <div class="card">
+        <h3>Maps / Local Ads</h3>
+        <p>Local Ads can serve through Search and PMax when location assets are linked. For HE the real owner KPI is directions/call/menu until Store Visits becomes eligible.</p>
+        <div class="meta"><span class="tag">directions</span><span class="tag">calls</span><span class="tag">menu views</span><span class="tag">GBP asset</span></div>
+      </div>
+    </div>
+    <div class="callout">Store Visits means Google estimates people who physically visited after interacting with ads. It is not manually createable here yet; Google controls eligibility. Until then, HE should read directions, calls, menu views, corrected local spend, hour, network and eventual POS lift as the practical measurement stack.</div>
+  </section>
+
+  <section class="band" id="config">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Campaign Configuration Dictionary</div>
+        <div class="band-note">These are the controllable coordinates. The rule is simple: if the eater behavior needs exact query, exact time, exact radius, and exact action language, use Search. If the eater needs broad discovery across Google inventory, use PMax.</div>
+      </div>
+      <span class="pill blue">Search vs PMax</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Coordinate</th><th>Search campaign control</th><th>PMax campaign control</th><th>HE launch rule</th></tr></thead>
+        <tbody>
+          <tr><td><b>Owner objective</b></td><td>Directly map campaign to one active intent.</td><td>Map campaign to store-goal optimization and broad reach.</td><td>Late-night footfall gets Search; PMax remains base discovery.</td></tr>
+          <tr><td><b>Status</b></td><td>Create PAUSED, audit, then enable manually.</td><td>Existing PMax can stay ENABLED if guardrails stay clean.</td><td>No new spend starts automatically from this directory.</td></tr>
+          <tr><td><b>Budget</b></td><td>Exact daily budget by campaign.</td><td>Exact daily budget, but channel allocation is automated.</td><td>Rs 300/day assigned to late-night Search, not another PMax.</td></tr>
+          <tr><td><b>Geo</b></td><td>Exact proximity radius + presence-only setting.</td><td>Exact proximity radius + location asset, but delivery still optimizes broadly.</td><td>No city geo IDs. Use Hamza pin only.</td></tr>
+          <tr><td><b>Time</b></td><td>Ad schedule blocks by day/hour.</td><td>Limited surgical time control for intent isolation.</td><td>Late-night Search runs only 22:00-03:00.</td></tr>
+          <tr><td><b>Network</b></td><td>Google Search only, Search partners off, Display off.</td><td>Search, Maps, YouTube, Display, Discover, Gmail and other eligible inventory.</td><td>Keep Search clean for query audit; read PMax by channel split.</td></tr>
+          <tr><td><b>Persona targeting</b></td><td>Keywords, match types, copy, negatives, landing page.</td><td>Audience signals, Customer Match, asset groups, creative proof.</td><td>Use eater category only when it maps to real Google behavior.</td></tr>
+          <tr><td><b>Creative proof</b></td><td>RSA headlines/descriptions, paths, sitelinks, callouts.</td><td>Text, images, videos, logos, asset groups and listing/store assets.</td><td>Brain Dry/Ghee Rice/Kabab proof should be selected before asset-heavy tests.</td></tr>
+          <tr><td><b>Measurement</b></td><td>Search terms, keyword spend, hour split, calls, directions, menu.</td><td>Campaign/asset group/channel split, local actions, Customer Match health.</td><td>Until Store Visits unlocks, directions/calls/menu + POS lift are the owner read.</td></tr>
+          <tr><td><b>Failure mode</b></td><td>Wrong geo, broad keywords, bad negatives, weak ad relevance.</td><td>Blind channel spend, weak assets, low conversion signal, noisy inventory.</td><td>Cockpit guardrails must show both campaigns separately.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="persona">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Google Persona Matrix</div>
+        <div class="band-note">The six eater categories are not equal on Google. Late-night, family, explorer and parcel have active Google behavior. Loyalists are better captured through branded/local queries and retargeting, not generic cold Search.</div>
+      </div>
+      <span class="pill amber">Do not mix blindly</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Eater</th><th>Google behavior</th><th>Fit</th><th>Best Google layer</th><th>Keyword / query shape</th><th>Proof in ad</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Legacy Hamza Loyalist</b></td>
+            <td>May not search generic food terms; uses branded memory, Maps, or known route.</td>
+            <td><span class="score med">Medium</span></td>
+            <td>Branded Search later; PMax/Maps presence now.</td>
+            <td><span class="tag">hamza express</span><span class="tag">hamza hotel hkp road</span><span class="tag">ghee rice hamza</span></td>
+            <td>Hamza name, HKP Road, Ghee Rice + Kabab, new Express face.</td>
+            <td>Directions / menu</td>
+          </tr>
+          <tr>
+            <td><b>Late-Night Heavy Non-Veg</b></td>
+            <td>High active search at decision time: open now, near me, biryani, kabab, halal.</td>
+            <td><span class="score high">High</span></td>
+            <td>Fresh Search campaign now.</td>
+            <td><span class="tag">restaurants open now</span><span class="tag">biryani near me</span><span class="tag">kabab near me</span><span class="tag">late night food bangalore</span></td>
+            <td>Night board, Brain Dry/Kabab heat, Ghee Rice quantity, parcel.</td>
+            <td>Get directions tonight</td>
+          </tr>
+          <tr>
+            <td><b>Family Comfort Diner</b></td>
+            <td>Searches planned dinner and comfort: family restaurant, biryani, Shivajinagar.</td>
+            <td><span class="score med">Medium-high</span></td>
+            <td>Second Search layer after late-night proof.</td>
+            <td><span class="tag">family restaurant shivajinagar</span><span class="tag">biryani restaurant near me</span><span class="tag">non veg family restaurant</span></td>
+            <td>Seating, full spread, calm service, familiar food seriousness.</td>
+            <td>Bring family / directions</td>
+          </tr>
+          <tr>
+            <td><b>Fast Parcel / Pickup</b></td>
+            <td>Uses Maps, call, menu and branded/local queries more than long discovery searches.</td>
+            <td><span class="score med">Medium</span></td>
+            <td>Call/menu/directions Search; GBP actions; flyers stronger offline.</td>
+            <td><span class="tag">chicken kabab parcel</span><span class="tag">food near hkp road</span><span class="tag">hamza menu</span></td>
+            <td>Counter, parcel packing, fast handover, price/menu clarity.</td>
+            <td>Call / pick up</td>
+          </tr>
+          <tr>
+            <td><b>Shivajinagar Food Explorer</b></td>
+            <td>Searches destination food and local discovery, often before or during movement.</td>
+            <td><span class="score med">Medium-high</span></td>
+            <td>Explorer Search later; PMax broad discovery now.</td>
+            <td><span class="tag">best biryani shivajinagar</span><span class="tag">hkp road food</span><span class="tag">muslim restaurant bangalore</span></td>
+            <td>Street approach, board, 1918, signature dish, local texture.</td>
+            <td>Save / directions</td>
+          </tr>
+          <tr>
+            <td><b>Warm Retargeting Viewer</b></td>
+            <td>Already exposed elsewhere; Google should capture branded follow-up and remarketing.</td>
+            <td><span class="score med">Overlay</span></td>
+            <td>Customer Match, PMax signals, branded Search.</td>
+            <td><span class="tag">hamza express menu</span><span class="tag">hamza express directions</span></td>
+            <td>One dish, one time, one action.</td>
+            <td>Directions / call</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="late-night">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Configured Now: Late-Night Maps Footfall Search</div>
+        <div class="band-note">This is the first surgical campaign because it has the clearest Google behavior: active hungry users making a live choice between 10 PM and 3 AM.</div>
+      </div>
+      <span class="pill green">Ready as paused</span>
+    </div>
+    <div class="cols-2">
+      <div class="card">
+        <h2>Campaign Coordinates</h2>
+        <div class="row"><b>Name</b><span>HE - Late Night Maps Footfall Search - v1</span></div>
+        <div class="row"><b>Budget</b><span>Rs 300/day</span></div>
+        <div class="row"><b>Status on creation</b><span>PAUSED. No spend starts until owner enables.</span></div>
+        <div class="row"><b>Geo</b><span>Exact Hamza pin 12.9868469, 77.6044088. 7 km proximity only.</span></div>
+        <div class="row"><b>Schedule</b><span>Daily 22:00-03:00, split across midnight.</span></div>
+        <div class="row"><b>Network</b><span>Google Search only. No Display. No Search Partners at launch.</span></div>
+        <div class="row"><b>Measurement</b><span>Directions, calls, menu, corrected local spend, query terms, hour split.</span></div>
+      </div>
+      <div class="card">
+        <h2>Ad Group Logic</h2>
+        <div class="row"><b>Open Now Near Me</b><span>Captures the highest urgency local action search.</span></div>
+        <div class="row"><b>Biryani Kabab Late Night</b><span>Captures dish-specific hunger around biryani, kabab, ghee rice.</span></div>
+        <div class="row"><b>Non Veg Halal</b><span>Captures the cultural food-fit intent without over-broad restaurant noise.</span></div>
+        <div class="row"><b>Late Night Bangalore</b><span>Captures wider late-night destination search inside the 7 km radius.</span></div>
+      </div>
+    </div>
+    <div class="callout">Why this is not PMax: the late-night eater has a live query and a live time window. Search gives control over query, schedule, proximity, negatives, ad copy and audit. PMax stays on as broad discovery; it should not carry this Rs 300/day surgical budget yet.</div>
+  </section>
+
+  <section class="band" id="pmax">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Kept As-Is: PMax Store Goals Base Layer</div>
+        <div class="band-note">PMax is still useful, but its role is different. It is broad local presence and store-goal discovery, supported by the GBP location asset and Customer Match list.</div>
+      </div>
+      <span class="pill blue">Base discovery</span>
+    </div>
+    <div class="cols-3">
+      <div class="card"><h3>What PMax should do</h3><p>Keep HE visible across Google inventory, learn from local action goals, and use Customer Match as signal. It can support all eaters but should not pretend to isolate them surgically.</p></div>
+      <div class="card"><h3>What PMax should not do</h3><p>Do not use it to test late-night keywords, query negatives, or exact buyer psychology. It can spend into Display/Content and YouTube, so it needs observability.</p></div>
+      <div class="card"><h3>How to read it</h3><p>Use the cockpit guardrails: channel split, corrected local spend, hour split, Customer Match health, asset group state, Store Visits eligibility and conversions.</p></div>
+    </div>
+  </section>
+
+  <section class="band" id="roadmap">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Next Campaign Roadmap</div>
+        <div class="band-note">Only create a campaign when Google behavior is strong enough to justify separation. Otherwise use PMax, GBP, Meta, flyers or TV as the correct surface.</div>
+      </div>
+      <span class="pill amber">Sequence matters</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Priority</th><th>Campaign</th><th>Reason</th><th>Budget idea</th><th>Do now?</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Late Night Maps Footfall Search</td><td>Strongest active Google intent, time-bound, owner KPI maps to directions/calls.</td><td>Rs 300/day</td><td><span class="ok">Yes</span></td></tr>
+          <tr><td>2</td><td>Branded / Legacy Capture Search</td><td>Protects Hamza name, Express confusion, menu/direction searches.</td><td>Rs 100-150/day</td><td><span class="warn">After late-night audit</span></td></tr>
+          <tr><td>3</td><td>Family Comfort Dinner Search</td><td>Weekend/evening planned demand, but needs seating/family landing proof first.</td><td>Rs 200/day test</td><td><span class="warn">Needs asset/landing proof</span></td></tr>
+          <tr><td>4</td><td>Parcel / Pickup Search</td><td>Useful for calls/menu, but flyers/TV/counter flow likely stronger first.</td><td>Rs 100/day test</td><td><span class="warn">Later</span></td></tr>
+          <tr><td>5</td><td>Explorer PMax / Video Layer</td><td>Better after food explorer creative and local proof assets are selected.</td><td>Separate test</td><td><span class="bad">Not yet</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="sources">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Source Directory</div>
+        <div class="band-note">Operational sources used to build this Google Ads directory.</div>
+      </div>
+      <span class="pill blue">Traceable</span>
+    </div>
+    <div class="cols-2">
+      <div class="source-list">
+        <a href="/api/google-ads?action=late-night-search-intelligence">Live HE late-night Search intelligence JSON<span>Campaign spec, guardrails, live state and reset endpoint.</span></a>
+        <a href="/api/google-ads?action=pmax-observability&id=23834053403">Live PMax observability JSON<span>Corrected phase, channel split, hour split, Store Visits, Customer Match.</span></a>
+        <a href="/ops/google-cockpit/">HE Google Ads cockpit<span>Owner dashboard for live performance and guardrails.</span></a>
+      </div>
+      <div class="source-list">
+        <a href="https://support.google.com/google-ads/answer/10724817" target="_blank" rel="noopener noreferrer">Google: About Performance Max campaigns<span>PMax role across Google inventory and how it complements Search.</span></a>
+        <a href="https://support.google.com/google-ads/answer/12971048" target="_blank" rel="noopener noreferrer">Google: Performance Max for store goals<span>Store-goal PMax, local actions, store visits/sales/directions/calls.</span></a>
+        <a href="https://developers.google.com/google-ads/api/docs/targeting/location-targeting" target="_blank" rel="noopener noreferrer">Google Ads API: location targeting<span>Geo target constants, proximity targeting and advanced location settings.</span></a>
+        <a href="https://developers.google.com/google-ads/api/performance-max/asset-group-reporting" target="_blank" rel="noopener noreferrer">Google Ads API: PMax asset group reporting<span>Channel and asset-group reporting used for cockpit observability.</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => `Rs ${Number(n || 0).toFixed(0)}`;
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!res.ok || data.error || data.ok === false) throw new Error(data.error || data.message || res.statusText);
+  return data;
+}
+
+function card(title, value, note, tone = '') {
+  return `<div class="card"><h3>${esc(title)}</h3><p><b class="${tone}">${esc(value)}</b></p><p>${esc(note)}</p></div>`;
+}
+
+async function loadLiveState() {
+  const el = document.getElementById('liveState');
+  if (!el) return;
+  try {
+    const [late, pmax] = await Promise.all([
+      fetchJson('/api/google-ads?action=late-night-search-intelligence'),
+      fetchJson('/api/google-ads?action=pmax-observability&id=23834053403&from=2026-05-10&correctedFrom=2026-05-13'),
+    ]);
+    const pmaxLive = late.live?.currentPmax || {};
+    const lateSearch = late.live?.existingLateNight || null;
+    const legacy = late.live?.legacySearch || null;
+    const corrected = pmax.phases?.corrected || {};
+    const badGuards = (late.guardrails || []).filter(g => g.state === 'bad');
+    el.innerHTML = [
+      card('PMax Base', `${pmaxLive.status || 'UNKNOWN'} / ${money(pmaxLive.budgetINR || 300)}/day`, 'Broad store-goal discovery layer; keep reading channel and geo guardrails.', pmaxLive.status === 'ENABLED' ? 'ok' : 'warn'),
+      card('Late-Night Search', lateSearch ? `${lateSearch.status} / ${lateSearch.id}` : 'Not created yet', lateSearch ? 'Fresh surgical layer exists. Enable only after audit.' : (legacy ? `Legacy Search ${legacy.id} is ${legacy.status}; reset endpoint can create the fresh campaign paused.` : 'Ready to create fresh paused Search campaign.'), lateSearch ? 'warn' : 'ok'),
+      card('Corrected PMax Spend', `Rs ${Number(corrected.spend || 0).toFixed(2)}`, `${corrected.clicks || 0} clicks after corrected geo start.`, 'ok'),
+      card('Guardrails', badGuards.length ? `${badGuards.length} bad` : 'Clean enough to proceed', badGuards.length ? badGuards.map(g => g.label).join(', ') : 'No bad late-night launch guardrails returned by API.', badGuards.length ? 'bad' : 'ok'),
+    ].join('');
+  } catch (e) {
+    el.innerHTML = `<div class="card"><h3>Live read failed</h3><p>${esc(e.message)}</p><p>Use the API links above from production if this is a preview environment without Ads secrets.</p></div>`;
+  }
+}
+
+loadLiveState();
+</script>
+</body>
+</html>

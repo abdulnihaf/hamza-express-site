@@ -783,6 +783,7 @@ function renderDeploymentStrip(data) {
   links.innerHTML = [
     makeLink(GOOGLE_ADS_CONSOLE, 'Google Ads console', 'Open the live Ads account'),
     makeLink(GOOGLE_ADS_CAMPAIGNS, 'Campaigns list', 'View all live campaigns'),
+    makeLink('/ops/google-ads-directory/', 'Google Ads directory', 'Persona-led campaign architecture and launch map'),
     makeLink(`/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(currentId)}`, 'Current campaign criteria', 'Open the live primary campaign criteria'),
     makeLink('/api/google-ads?action=campaign-criteria&id=23834053403', 'PMax criteria', 'PMax proximity / geo targeting'),
     makeLink('/api/google-ads?action=late-night-search-intelligence', 'Late-night Search plan', 'Fresh campaign intelligence, guardrails and execution endpoint'),
@@ -887,6 +888,7 @@ function renderCampaignViews(data, intel) {
         </div>
         <div class="view-desc">This layer stays as broad local discovery across PMax inventory. Its job is not surgical keyword control; it keeps the store visible while Search captures late-night intent.</div>
         <div class="view-actions">
+          <a href="/ops/google-ads-directory/" target="_blank">Architecture directory</a>
           <a href="/api/google-ads?action=pmax-observability&id=23834053403" target="_blank">PMax audit JSON</a>
           <a href="/api/google-ads?action=campaign-criteria&id=23834053403" target="_blank">PMax criteria</a>
         </div>
@@ -907,6 +909,7 @@ function renderCampaignViews(data, intel) {
         <div class="view-desc">${esc(intel.decision?.recommendation || 'Fresh Search campaign for controlled late-night Maps footfall.')} ${groups.length} ad groups · ${keywordCount} exact/phrase keywords · final URL ${esc(spec.finalUrl || '')}.</div>
         <div class="guard-list">${guardRows}</div>
         <div class="view-actions">
+          <a href="/ops/google-ads-directory/" target="_blank">Architecture directory</a>
           <a href="${esc(LATE_NIGHT_SEARCH_API)}" target="_blank">Search intelligence JSON</a>
           <a href="/go/google-night" target="_blank">Late-night landing</a>
           ${search ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(search.id)}" target="_blank">Search criteria</a>` : ''}
