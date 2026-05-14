@@ -476,6 +476,7 @@ async function createSearchCampaign(accessToken, env) {
         name: 'HE — Ghee Rice & Kabab — Local Search',
         status: 'PAUSED',
         advertisingChannelType: 'SEARCH',
+        containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
         campaignBudget: budgetResource,
         manualCpc: { enhancedCpcEnabled: false },
         networkSettings: {
@@ -1045,6 +1046,7 @@ async function resetLateNightSearch(accessToken, env, request) {
       name: LATE_NIGHT_SEARCH_CAMPAIGN_NAME,
       status: 'PAUSED',
       advertisingChannelType: 'SEARCH',
+      containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
       campaignBudget: budgetResource,
       manualCpc: { enhancedCpcEnabled: false },
       networkSettings: {
