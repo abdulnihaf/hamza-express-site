@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hamza Express · Dine-In Ambience Photo Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #201a14;
+      --muted: #6f665d;
+      --line: #ded5c8;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --soft: #f3eee6;
+      --brand: #8b4d1f;
+      --brand-dark: #5d2e12;
+      --good: #1f6b43;
+      --warn: #9a5a12;
+      --bad: #8d2f22;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 24px clamp(16px, 4vw, 40px) 18px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(24px, 3.4vw, 38px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 980px;
+      color: var(--muted);
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--brand-dark);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    main {
+      padding: 22px clamp(16px, 4vw, 40px) 56px;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr);
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .decision > div,
+    .platforms,
+    .section-note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .decision h2,
+    section h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .decision p,
+    .section-note p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .primary-callout {
+      border-color: #d6a569 !important;
+      background: #fff8ef !important;
+    }
+
+    .primary-callout strong {
+      color: var(--brand-dark);
+    }
+
+    .platform-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .platform-list div {
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      font-size: 13px;
+    }
+
+    .platform-list b {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    section {
+      margin-top: 34px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      margin: 0;
+      max-width: 900px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+      gap: 16px;
+    }
+
+    .photo-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .photo-card.primary {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(139, 77, 31, 0.14);
+    }
+
+    .photo-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: #eee8df;
+    }
+
+    .photo-body {
+      padding: 11px 12px 13px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .rank {
+      background: var(--brand);
+      color: #fff;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .tag {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--muted);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .tag.good { color: var(--good); }
+    .tag.warn { color: var(--warn); }
+    .tag.bad { color: var(--bad); }
+
+    .photo-card h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.25;
+      letter-spacing: 0;
+      word-break: break-word;
+    }
+
+    .photo-card p {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .open {
+      color: var(--brand);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .sheet-link {
+      color: var(--brand);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: var(--panel);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      padding: 18px clamp(16px, 4vw, 40px) 32px;
+      font-size: 12px;
+      background: var(--panel);
+    }
+
+    @media (max-width: 780px) {
+      .decision {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topline">
+      <div>
+        <h1>Dine-In Ambience Photo Review</h1>
+        <p class="lede">Hamza Express outlet photo shortlist for GMB, EazyDiner, Zomato Dining, and Swiggy Dineout. This is an internal reference page for selecting which ambience and facade photos to enhance and upload.</p>
+      </div>
+    </div>
+    <div class="status" id="statusPills"></div>
+  </header>
+
+  <main>
+    <div class="decision">
+      <div class="primary-callout">
+        <h2>Refine First</h2>
+        <p><strong>IMG_0498.JPG</strong> is the best raw facade candidate right now: centered Hamza Express signboard, visible entrance, strong night presence, and enough storefront context. Enhance this first for the GMB cover candidate and then reuse it for EazyDiner, Zomato Dining, and Swiggy Dineout.</p>
+      </div>
+      <div class="platforms">
+        <h2>Platform Picks</h2>
+        <div class="platform-list" id="platformList"></div>
+      </div>
+    </div>
+
+    <div class="section-note">
+      <h2>Working Rule</h2>
+      <p>Keep the final ambience/outlet upload pack to 12-16 images. Use the first 10 as the core pack. Enhance raw photos marked <b>REFINE_FIRST</b>, <b>ENHANCE</b>, or <b>ENHANCE_OPTIONAL</b> before upload. Already enhanced interiors can be used as references or uploaded if the visual review passes.</p>
+    </div>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Recommended 16-Image Upload Set</h2>
+          <p>Ranked shortlist. The raw facade/interior files here are the ones to enhance if we want a complete ambience set.</p>
+        </div>
+        <a class="sheet-link" href="recommended-contact-sheet.jpg" target="_blank" rel="noopener">Open Contact Sheet</a>
+      </div>
+      <div class="grid" id="recommendedGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Already Enhanced External References</h2>
+          <p>The three external/facade references copied out earlier. Two GBP references are duplicate image content, so treat them as audit/reference assets rather than three separate upload choices.</p>
+        </div>
+      </div>
+      <div class="grid" id="referenceGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>All Raw Facade Candidates</h2>
+          <p>The full facade pool from the new ZIP. Use this section when choosing alternate exterior angles after the primary image is enhanced.</p>
+        </div>
+      </div>
+      <div class="grid" id="rawFacadeGrid"></div>
+    </section>
+  </main>
+
+  <footer>
+    Local/static page. No production deploy was run by Codex. Source paths and hashes are in <a href="manifest.csv">manifest.csv</a>.
+  </footer>
+
+  <script>
+    const tagClass = (decision) => {
+      if (decision === 'REFINE_FIRST' || decision === 'UPLOAD_READY') return 'good';
+      if (decision && decision.includes('REFERENCE')) return 'warn';
+      if (decision && decision.includes('DUPLICATE')) return 'bad';
+      return '';
+    };
+
+    const card = (item) => {
+      const primary = item.decision === 'REFINE_FIRST' ? ' primary' : '';
+      const rank = item.rank ? `<span class="rank">${item.rank}</span>` : '';
+      return `
+        <article class="photo-card${primary}">
+          <a href="${item.full}" target="_blank" rel="noopener">
+            <img src="${item.thumb}" alt="${escapeHtml(item.title)}" loading="lazy">
+          </a>
+          <div class="photo-body">
+            <div class="meta">
+              ${rank}
+              <span class="tag ${tagClass(item.decision)}">${item.decision}</span>
+              <span class="tag">${item.kind}</span>
+            </div>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p><b>${escapeHtml(item.platform)}</b></p>
+            <p>${escapeHtml(item.analysis)}</p>
+            <a class="open" href="${item.full}" target="_blank" rel="noopener">Open full image</a>
+          </div>
+        </article>
+      `;
+    };
+
+    const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[ch]));
+
+    const render = async () => {
+      const res = await fetch('manifest.json');
+      const data = await res.json();
+      const records = data.records.filter((item) => !item.missing);
+      const recommended = records.filter((item) => item.group === 'recommended');
+      const references = records.filter((item) => item.group === 'reference');
+      const rawFacade = records.filter((item) => item.group === 'raw-facade');
+
+      document.getElementById('statusPills').innerHTML = [
+        `${data.recommendedCount} recommended images`,
+        `${rawFacade.length} raw facade candidates`,
+        `Target after deploy: ${data.targetUrlAfterDeploy}`
+      ].map((text) => `<span class="pill">${escapeHtml(text)}</span>`).join('');
+
+      document.getElementById('platformList').innerHTML = Object.entries(data.platformPicks).map(([name, picks]) => `
+        <div><b>${escapeHtml(name)}</b><span>${escapeHtml(picks.join(', '))}</span></div>
+      `).join('');
+
+      document.getElementById('recommendedGrid').innerHTML = recommended.map(card).join('');
+      document.getElementById('referenceGrid').innerHTML = references.map(card).join('');
+      document.getElementById('rawFacadeGrid').innerHTML = rawFacade.map(card).join('');
+    };
+
+    render().catch((err) => {
+      document.querySelector('main').insertAdjacentHTML('afterbegin', `<div class="section-note"><h2>Load Error</h2><p>${escapeHtml(err.message)}</p></div>`);
+    });
+  </script>
+</body>
+</html>
