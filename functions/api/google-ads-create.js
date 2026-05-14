@@ -169,10 +169,10 @@ export async function onRequest(context) {
     // ── Step 7: Assets ──
     step(7, 'Creating assets');
     const assetRes = await mutate('assets', [
-      { create: { sitelinkAsset: { linkText: 'View Our Menu', description1: '100+ dishes, 9 categories', description2: 'Ghee Rice, Kebab, Biryani', finalUrls: ['https://hamzaexpress.in/#menu'] } } },
-      { create: { sitelinkAsset: { linkText: 'Order on WhatsApp', description1: 'Skip the queue', description2: 'Pay UPI, collect in 15 min', finalUrls: ['https://hamzaexpress.in/go/google-ad'] } } },
-      { create: { sitelinkAsset: { linkText: 'Our 108-Year Legacy', description1: 'Same recipes since 1918', description2: 'Dakhni cuisine heritage', finalUrls: ['https://hamzaexpress.in/#legacy'] } } },
-      { create: { sitelinkAsset: { linkText: 'Get Directions', description1: 'HKP Road, Shivajinagar', description2: 'Near Russell Market', finalUrls: ['https://hamzaexpress.in/go/maps'] } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/#menu'], sitelinkAsset: { linkText: 'View Our Menu', description1: '100+ dishes, 9 categories', description2: 'Ghee Rice, Kebab, Biryani' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/go/google-ad'], sitelinkAsset: { linkText: 'Order on WhatsApp', description1: 'Skip the queue', description2: 'Pay UPI, collect in 15 min' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/#legacy'], sitelinkAsset: { linkText: 'Our 108-Year Legacy', description1: 'Same recipes since 1918', description2: 'Dakhni cuisine heritage' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/go/maps'], sitelinkAsset: { linkText: 'Get Directions', description1: 'HKP Road, Shivajinagar', description2: 'Near Russell Market' } } },
       { create: { calloutAsset: { calloutText: 'Est. 1918' } } },
       { create: { calloutAsset: { calloutText: '5.0 on Google' } } },
       { create: { calloutAsset: { calloutText: '108-Year Legacy' } } },
