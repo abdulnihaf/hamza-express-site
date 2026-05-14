@@ -628,10 +628,10 @@ async function createSearchCampaign(accessToken, env) {
     step(7, 'Creating sitelink, callout, structured snippet assets');
     const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
       // 4 Sitelinks
-      { create: { sitelinkAsset: { linkText: 'View Our Menu', description1: '100+ dishes across 9 categories', description2: 'Ghee Rice, Kebab, Biryani & more', finalUrls: ['https://hamzaexpress.in/#menu'] } } },
-      { create: { sitelinkAsset: { linkText: 'Order on WhatsApp', description1: 'Skip the queue', description2: 'Pay UPI, collect in 15 min', finalUrls: ['https://hamzaexpress.in/go/google-ad'] } } },
-      { create: { sitelinkAsset: { linkText: 'Our 108-Year Legacy', description1: 'Same recipes since 1918', description2: 'Dakhni cuisine heritage', finalUrls: ['https://hamzaexpress.in/#legacy'] } } },
-      { create: { sitelinkAsset: { linkText: 'Get Directions', description1: 'HKP Road, Shivajinagar', description2: 'Near Russell Market', finalUrls: ['https://hamzaexpress.in/go/maps'] } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/#menu'], sitelinkAsset: { linkText: 'View Our Menu', description1: '100+ dishes across 9 categories', description2: 'Ghee Rice, Kebab, Biryani & more' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/go/google-ad'], sitelinkAsset: { linkText: 'Order on WhatsApp', description1: 'Skip the queue', description2: 'Pay UPI, collect in 15 min' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/#legacy'], sitelinkAsset: { linkText: 'Our 108-Year Legacy', description1: 'Same recipes since 1918', description2: 'Dakhni cuisine heritage' } } },
+      { create: { finalUrls: ['https://hamzaexpress.in/go/maps'], sitelinkAsset: { linkText: 'Get Directions', description1: 'HKP Road, Shivajinagar', description2: 'Near Russell Market' } } },
       // 5 Callouts
       { create: { calloutAsset: { calloutText: 'Est. 1918' } } },
       { create: { calloutAsset: { calloutText: '5.0 on Google' } } },
@@ -1157,9 +1157,9 @@ async function resetLateNightSearch(accessToken, env, request) {
   step(`Attached shared negative list ${HE_WALK_IN_NEGATIVE_SET_ID}`);
 
   const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
-    { create: { sitelinkAsset: { linkText: 'Get Directions', description1: 'Open Maps', description2: 'HKP Road pin', finalUrls: ['https://hamzaexpress.in/go/maps'] } } },
-    { create: { sitelinkAsset: { linkText: 'Late Night Menu', description1: 'Ghee Rice & Kabab', description2: 'Biryani and parcel', finalUrls: [LATE_NIGHT_SEARCH_FINAL_URL] } } },
-    { create: { sitelinkAsset: { linkText: 'View Full Menu', description1: 'Non-veg favorites', description2: 'Before you visit', finalUrls: ['https://hamzaexpress.in/menu/'] } } },
+    { create: { finalUrls: ['https://hamzaexpress.in/go/maps'], sitelinkAsset: { linkText: 'Get Directions', description1: 'Open Maps', description2: 'HKP Road pin' } } },
+    { create: { finalUrls: [LATE_NIGHT_SEARCH_FINAL_URL], sitelinkAsset: { linkText: 'Late Night Menu', description1: 'Ghee Rice & Kabab', description2: 'Biryani and parcel' } } },
+    { create: { finalUrls: ['https://hamzaexpress.in/menu/'], sitelinkAsset: { linkText: 'View Full Menu', description1: 'Non-veg favorites', description2: 'Before you visit' } } },
     { create: { calloutAsset: { calloutText: 'HKP Road' } } },
     { create: { calloutAsset: { calloutText: 'Since 1918' } } },
     { create: { calloutAsset: { calloutText: 'Dine-In' } } },
