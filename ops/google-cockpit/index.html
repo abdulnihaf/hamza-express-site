@@ -231,6 +231,32 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .obs-kv strong{color:var(--text);font-family:'JetBrains Mono',monospace}
 .obs-muted{font-size:10px;color:var(--muted);line-height:1.5}
 .obs-error{font-size:10px;color:var(--orange);margin-top:8px;font-family:'JetBrains Mono',monospace;line-height:1.4}
+.campaign-views-section{border-color:rgba(139,92,246,.22);background:linear-gradient(135deg,rgba(139,92,246,.055),rgba(66,133,244,.035))}
+.view-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.view-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:0}
+.view-card.pmax{border-color:rgba(52,168,83,.28)}
+.view-card.search{border-color:rgba(66,133,244,.34)}
+.view-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px}
+.view-title{font-size:12px;font-weight:800;line-height:1.3}
+.view-kicker{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px}
+.view-pill{font-size:9px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;border-radius:999px;padding:3px 7px;border:1px solid var(--border);white-space:nowrap}
+.view-pill.ok{color:var(--ggreen);border-color:rgba(52,168,83,.38);background:rgba(52,168,83,.12)}
+.view-pill.warn{color:var(--gyellow);border-color:rgba(251,188,5,.42);background:rgba(251,188,5,.12)}
+.view-pill.bad{color:var(--gred);border-color:rgba(234,67,53,.42);background:rgba(234,67,53,.12)}
+.view-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0}
+.view-metric{border:1px solid var(--border);border-radius:6px;padding:7px;background:rgba(0,0,0,.12)}
+.view-metric span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.view-metric strong{font-family:'JetBrains Mono',monospace;font-size:13px}
+.view-desc{font-size:11px;color:var(--text2);line-height:1.5;margin-top:8px}
+.guard-list{display:grid;gap:5px;margin-top:8px}
+.guard-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;color:var(--text2);border-top:1px dashed rgba(45,58,79,.8);padding-top:5px}
+.guard-row:first-child{border-top:none;padding-top:0}
+.guard-row b{color:var(--text);font-weight:700}
+.guard-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.guard-dot.ok{background:var(--ggreen)}.guard-dot.warn{background:var(--gyellow)}.guard-dot.bad{background:var(--gred)}
+.view-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.view-actions a{color:var(--text);text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:800;background:rgba(255,255,255,.025)}
+.view-actions a:hover{border-color:var(--gblue)}
 
 /* Campaign controls strip (Wave 2.1) */
 .ctrl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px}
@@ -288,7 +314,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .qs.unrated{background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
 
 /* Responsive */
-@media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}.obs-summary{grid-template-columns:repeat(2,1fr)}.obs-panels{grid-template-columns:1fr}}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}.obs-summary{grid-template-columns:repeat(2,1fr)}.obs-panels{grid-template-columns:1fr}.view-grid{grid-template-columns:1fr}}
 @media(max-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}.pos-grid{grid-template-columns:repeat(2,1fr)}.obs-summary{grid-template-columns:1fr}}
 </style>
@@ -315,13 +341,19 @@ tr:hover td{background:rgba(66,133,244,.04)}
       <div class="deploy-pill" id="deployPill">LIVE</div>
     </div>
     <div class="deploy-links" id="deployLinks"></div>
-    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Search 5 km</div>
+    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km</div>
   </div>
 
   <!-- PMax observability guardrails — read-only diagnostics -->
   <div class="section obs-section" id="pmaxObsSection">
     <div class="section-title">PMax Observability Guardrails <span class="tip">— read-only audit · corrected phase · no spend changes</span></div>
     <div id="pmaxObsBody" class="obs-muted">Loading PMax observability…</div>
+  </div>
+
+  <!-- Two-campaign operating view: PMax base layer + late-night Search layer -->
+  <div class="section campaign-views-section" id="campaignViewsSection">
+    <div class="section-title">Campaign Views <span class="tip">— PMax broad discovery vs late-night Maps/Search footfall</span></div>
+    <div id="campaignViewsBody" class="obs-muted">Loading campaign architecture…</div>
   </div>
 
   <!-- Campaign controls (Wave 2.1) -->
@@ -446,6 +478,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 <script>
 const API = '/api/google-cockpit';
 const PMAX_OBS_API = '/api/google-ads?action=pmax-observability&id=23834053403';
+const LATE_NIGHT_SEARCH_API = '/api/google-ads?action=late-night-search-intelligence';
 const ORGANIC_API = '/api/organic-insights';
 const GOOGLE_ADS_CONSOLE = 'https://ads.google.com/aw/overview?__c=3681710084';
 const GOOGLE_ADS_CAMPAIGNS = 'https://ads.google.com/aw/campaigns?__c=3681710084';
@@ -483,6 +516,7 @@ async function loadData() {
       return;
     }
     render(data);
+    loadLateNightIntelligence(data);
     loadPmaxObservability(data);
     statusDot.classList.remove('red');
     statusText.textContent = `Updated ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST`;
@@ -751,7 +785,8 @@ function renderDeploymentStrip(data) {
     makeLink(GOOGLE_ADS_CAMPAIGNS, 'Campaigns list', 'View all live campaigns'),
     makeLink(`/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(currentId)}`, 'Current campaign criteria', 'Open the live primary campaign criteria'),
     makeLink('/api/google-ads?action=campaign-criteria&id=23834053403', 'PMax criteria', 'PMax proximity / geo targeting'),
-    makeLink('/api/google-ads?action=campaign-criteria&id=23748431244', 'Search criteria', 'Search proximity / geo targeting'),
+    makeLink('/api/google-ads?action=late-night-search-intelligence', 'Late-night Search plan', 'Fresh campaign intelligence, guardrails and execution endpoint'),
+    makeLink('/api/google-ads?action=campaign-criteria&id=23748431244', 'Legacy Search criteria', 'Old Search proximity / geo targeting if not removed yet'),
     makeLink('/api/google-ads-create-pmax?action=preflight', 'PMax preflight', 'Read the current PMax launch gaps'),
     makeLink(GOOGLE_ADS_CONVERSIONS, 'Conversions', 'Check STORE_VISITS / conversion setup'),
     makeLink(HE_MAPS_CANONICAL, 'Canonical Maps pin', 'Hamza Express Maps place_id'),
@@ -788,6 +823,97 @@ async function loadPmaxObservability(data) {
   } catch (e) {
     body.innerHTML = `<div class="obs-error">Could not load PMax observability: ${e.message}</div>`;
   }
+}
+
+async function loadLateNightIntelligence(data) {
+  const body = document.getElementById('campaignViewsBody');
+  if (!body) return;
+  try {
+    const resp = await fetch(LATE_NIGHT_SEARCH_API);
+    const intel = await resp.json();
+    if (!intel.ok) {
+      body.innerHTML = `<div class="obs-error">Campaign architecture failed: ${intel.error || 'unknown error'}</div>`;
+      return;
+    }
+    renderCampaignViews(data, intel);
+  } catch (e) {
+    body.innerHTML = `<div class="obs-error">Could not load campaign architecture: ${e.message}</div>`;
+  }
+}
+
+function renderCampaignViews(data, intel) {
+  const body = document.getElementById('campaignViewsBody');
+  if (!body) return;
+  const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+  const money = n => `₹${Number(n || 0).toFixed(0)}`;
+  const pmax = (intel.live?.currentPmax) || (data.allCampaigns || []).find(c => c.id === '23834053403') || {};
+  const search = intel.live?.existingLateNight || null;
+  const legacy = intel.live?.legacySearch || null;
+  const spec = intel.spec || {};
+  const groups = spec.adGroups || [];
+  const keywordCount = groups.reduce((s, g) => s + (g.keywordCount || 0), 0);
+  const guardRows = (intel.guardrails || []).map(g => `
+    <div class="guard-row">
+      <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
+      <span>${esc(g.detail)}</span>
+    </div>
+  `).join('');
+  const searchState =
+    search?.status === 'ENABLED' ? 'bad' :
+    search?.status === 'PAUSED' ? 'ok' :
+    legacy?.status === 'PAUSED' ? 'warn' : 'ok';
+  const searchLabel =
+    search ? `${search.status} · ${search.id}` :
+    legacy?.status === 'PAUSED' ? 'Ready to reset' :
+    'Ready to create';
+  const pmaxState = pmax.status === 'ENABLED' ? 'ok' : 'warn';
+  const pmaxSpend = data.overview?.spend || 0;
+  const pmaxClicks = data.overview?.clicks || 0;
+
+  body.innerHTML = `
+    <div class="view-grid">
+      <div class="view-card pmax">
+        <div class="view-head">
+          <div>
+            <div class="view-kicker">View 1 · Broad discovery</div>
+            <div class="view-title">${esc(pmax.name || 'HE — PMax Store Goals — v1')}</div>
+          </div>
+          <div class="view-pill ${pmaxState}">${esc(pmax.status || 'UNKNOWN')}</div>
+        </div>
+        <div class="view-metrics">
+          <div class="view-metric"><span>Budget</span><strong>${money(pmax.budgetINR || 300)}/d</strong></div>
+          <div class="view-metric"><span>${esc(currentPeriod)}</span><strong>₹${Number(pmaxSpend || 0).toFixed(2)}</strong></div>
+          <div class="view-metric"><span>Clicks</span><strong>${fmt(pmaxClicks || 0)}</strong></div>
+        </div>
+        <div class="view-desc">This layer stays as broad local discovery across PMax inventory. Its job is not surgical keyword control; it keeps the store visible while Search captures late-night intent.</div>
+        <div class="view-actions">
+          <a href="/api/google-ads?action=pmax-observability&id=23834053403" target="_blank">PMax audit JSON</a>
+          <a href="/api/google-ads?action=campaign-criteria&id=23834053403" target="_blank">PMax criteria</a>
+        </div>
+      </div>
+      <div class="view-card search">
+        <div class="view-head">
+          <div>
+            <div class="view-kicker">View 2 · Late-night Maps/Search</div>
+            <div class="view-title">${esc(spec.campaignName || 'HE — Late Night Maps Footfall Search — v1')}</div>
+          </div>
+          <div class="view-pill ${searchState}">${esc(searchLabel)}</div>
+        </div>
+        <div class="view-metrics">
+          <div class="view-metric"><span>Budget</span><strong>${money(spec.budgetINR || 300)}/d</strong></div>
+          <div class="view-metric"><span>Window</span><strong>22-03</strong></div>
+          <div class="view-metric"><span>Radius</span><strong>${esc(spec.geo?.radiusKm || 7)} km</strong></div>
+        </div>
+        <div class="view-desc">${esc(intel.decision?.recommendation || 'Fresh Search campaign for controlled late-night Maps footfall.')} ${groups.length} ad groups · ${keywordCount} exact/phrase keywords · final URL ${esc(spec.finalUrl || '')}.</div>
+        <div class="guard-list">${guardRows}</div>
+        <div class="view-actions">
+          <a href="${esc(LATE_NIGHT_SEARCH_API)}" target="_blank">Search intelligence JSON</a>
+          <a href="/go/google-night" target="_blank">Late-night landing</a>
+          ${search ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(search.id)}" target="_blank">Search criteria</a>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderPmaxObservability(obs) {
