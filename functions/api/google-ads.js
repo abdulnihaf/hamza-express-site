@@ -5,6 +5,10 @@
 
 const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v23';
 const CUSTOMER_ID = '3681710084'; // 368-171-0084 without dashes
+const PMAX_CAMPAIGN_ID = '23834053403';
+const PMAX_FIRST_TRAFFIC_DATE = '2026-05-10';
+const PMAX_CORRECTED_GEO_DATE = '2026-05-13';
+const HAMZA_PIN = { lat: 12.9868469, lng: 77.6044088 };
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -49,6 +53,8 @@ export async function onRequest(context) {
         return await listAllCampaigns(accessToken, env);
       case 'campaign-criteria':
         return await getCampaignCriteria(accessToken, env, url.searchParams.get('id'));
+      case 'pmax-observability':
+        return await getPmaxObservability(accessToken, env, url.searchParams);
       case 'geo-suggest':
         return await geoSuggest(accessToken, env, url.searchParams.get('q'), url.searchParams.get('cc') || 'IN');
       case 'set-campaign-location':
@@ -591,6 +597,8 @@ async function getCampaignCriteria(accessToken, env, id) {
       campaign_criterion.proximity.address.country_code,
       campaign_criterion.proximity.address.postal_code,
       campaign_criterion.proximity.address.city_name,
+      campaign_criterion.proximity.geo_point.latitude_in_micro_degrees,
+      campaign_criterion.proximity.geo_point.longitude_in_micro_degrees,
       campaign_criterion.proximity.radius,
       campaign_criterion.proximity.radius_units
     FROM campaign_criterion
@@ -649,7 +657,19 @@ async function getCampaignCriteria(accessToken, env, id) {
       item.languageConstant = c.language?.languageConstant;
       buckets.LANGUAGE.push(item);
     } else if (type === 'PROXIMITY') {
+      const geoPoint = c.proximity?.geoPoint || {};
+      const latitude = microToDegrees(geoPoint.latitudeInMicroDegrees);
+      const longitude = microToDegrees(geoPoint.longitudeInMicroDegrees);
       item.address = c.proximity?.address;
+      item.geoPoint = {
+        latitude,
+        longitude,
+        latitudeInMicroDegrees: geoPoint.latitudeInMicroDegrees,
+        longitudeInMicroDegrees: geoPoint.longitudeInMicroDegrees,
+      };
+      item.hamzaPinDeltaMeters = latitude && longitude
+        ? Math.round(distanceMeters(latitude, longitude, HAMZA_PIN.lat, HAMZA_PIN.lng))
+        : null;
       item.radius = c.proximity?.radius;
       item.radiusUnits = c.proximity?.radiusUnits;
       buckets.PROXIMITY.push(item);
@@ -668,6 +688,310 @@ async function getCampaignCriteria(accessToken, env, id) {
       proximities: buckets.PROXIMITY.length,
       negativeLocations: buckets.LOCATION.filter(l => l.negative).length,
     },
+  });
+}
+
+// Action: Read-only PMax observability pack for the cockpit guardrails.
+// No mutations, no budget changes, no recommendation application.
+async function getPmaxObservability(accessToken, env, params) {
+  const campaignId = params.get('id') || PMAX_CAMPAIGN_ID;
+  const from = params.get('from') || PMAX_FIRST_TRAFFIC_DATE;
+  const to = params.get('to') || todayIST();
+  const correctedFrom = params.get('correctedFrom') || PMAX_CORRECTED_GEO_DATE;
+
+  const safeQuery = async (name, query) => {
+    try {
+      return { name, rows: await queryGoogleAds(accessToken, env, query), error: null };
+    } catch (e) {
+      return { name, rows: [], error: e.message };
+    }
+  };
+
+  const [
+    campaignQ,
+    criteriaQ,
+    dailyQ,
+    networkQ,
+    hourQ,
+    conversionQ,
+    conversionActionsQ,
+    userListQ,
+    assetGroupQ,
+  ] = await Promise.all([
+    safeQuery('campaign', `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.serving_status,
+        campaign.advertising_channel_type,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.id = '${campaignId}'
+    `),
+    safeQuery('criteria', `
+      SELECT
+        campaign_criterion.criterion_id,
+        campaign_criterion.type,
+        campaign_criterion.negative,
+        campaign_criterion.location.geo_target_constant,
+        campaign_criterion.language.language_constant,
+        campaign_criterion.proximity.geo_point.latitude_in_micro_degrees,
+        campaign_criterion.proximity.geo_point.longitude_in_micro_degrees,
+        campaign_criterion.proximity.radius,
+        campaign_criterion.proximity.radius_units
+      FROM campaign_criterion
+      WHERE campaign.id = '${campaignId}'
+    `),
+    safeQuery('daily', `
+      SELECT
+        segments.date,
+        metrics.impressions,
+        metrics.clicks,
+        metrics.cost_micros,
+        metrics.conversions,
+        metrics.interactions,
+        metrics.average_cpc,
+        metrics.average_cpm
+      FROM campaign
+      WHERE campaign.id = '${campaignId}'
+        AND segments.date BETWEEN '${from}' AND '${to}'
+      ORDER BY segments.date ASC
+    `),
+    safeQuery('network', `
+      SELECT
+        segments.ad_network_type,
+        metrics.impressions,
+        metrics.clicks,
+        metrics.cost_micros,
+        metrics.conversions,
+        metrics.interactions
+      FROM campaign
+      WHERE campaign.id = '${campaignId}'
+        AND segments.date BETWEEN '${from}' AND '${to}'
+      ORDER BY metrics.cost_micros DESC
+    `),
+    safeQuery('hour', `
+      SELECT
+        segments.hour,
+        metrics.impressions,
+        metrics.clicks,
+        metrics.cost_micros,
+        metrics.conversions,
+        metrics.interactions
+      FROM campaign
+      WHERE campaign.id = '${campaignId}'
+        AND segments.date BETWEEN '${from}' AND '${to}'
+      ORDER BY segments.hour ASC
+    `),
+    safeQuery('conversionSegments', `
+      SELECT
+        segments.conversion_action,
+        segments.conversion_action_name,
+        segments.conversion_action_category,
+        metrics.conversions,
+        metrics.conversions_value
+      FROM campaign
+      WHERE campaign.id = '${campaignId}'
+        AND segments.date BETWEEN '${from}' AND '${to}'
+      ORDER BY metrics.conversions DESC
+    `),
+    safeQuery('conversionActions', `
+      SELECT
+        conversion_action.id,
+        conversion_action.name,
+        conversion_action.status,
+        conversion_action.type,
+        conversion_action.category,
+        conversion_action.primary_for_goal
+      FROM conversion_action
+      WHERE conversion_action.status = 'ENABLED'
+    `),
+    safeQuery('userLists', `
+      SELECT
+        user_list.id,
+        user_list.name,
+        user_list.size_for_display,
+        user_list.size_for_search,
+        user_list.membership_status
+      FROM user_list
+      WHERE user_list.read_only = false
+      ORDER BY user_list.id DESC
+    `),
+    safeQuery('assetGroups', `
+      SELECT
+        asset_group.id,
+        asset_group.name,
+        asset_group.status,
+        asset_group.primary_status,
+        asset_group.primary_status_reasons,
+        metrics.impressions,
+        metrics.clicks,
+        metrics.cost_micros,
+        metrics.conversions
+      FROM asset_group
+      WHERE campaign.id = '${campaignId}'
+        AND segments.date BETWEEN '${from}' AND '${to}'
+      ORDER BY metrics.impressions DESC
+    `),
+  ]);
+
+  const campaignRow = campaignQ.rows[0] || {};
+  const campaign = {
+    id: campaignRow.campaign?.id || campaignId,
+    name: campaignRow.campaign?.name || '',
+    status: campaignRow.campaign?.status || '',
+    servingStatus: campaignRow.campaign?.servingStatus || '',
+    type: campaignRow.campaign?.advertisingChannelType || '',
+    budgetINR: campaignRow.campaignBudget?.amountMicros
+      ? +(parseInt(campaignRow.campaignBudget.amountMicros) / 1e6).toFixed(0)
+      : null,
+  };
+
+  const criteria = parseCriteriaRows(criteriaQ.rows);
+  const daily = dailyQ.rows.map(r => metricRow({
+    date: r.segments?.date,
+    metrics: r.metrics,
+  })).filter(r => r.date);
+  const total = aggregateMetrics(daily);
+  const preCorrection = aggregateMetrics(daily.filter(r => r.date < correctedFrom));
+  const corrected = aggregateMetrics(daily.filter(r => r.date >= correctedFrom));
+
+  const byNetwork = networkQ.rows.map(r => metricRow({
+    label: r.segments?.adNetworkType || 'UNKNOWN',
+    metrics: r.metrics,
+  })).sort((a, b) => b.spend - a.spend);
+  const byHour = hourQ.rows.map(r => metricRow({
+    label: String(r.segments?.hour ?? ''),
+    hour: r.segments?.hour,
+    metrics: r.metrics,
+  })).filter(r => r.label !== '');
+
+  const conversionsByAction = conversionQ.rows.map(r => ({
+    action: r.segments?.conversionActionName || r.segments?.conversionAction || 'UNKNOWN',
+    category: r.segments?.conversionActionCategory || '',
+    conversions: +(parseFloat(r.metrics?.conversions) || 0).toFixed(2),
+    value: +(parseFloat(r.metrics?.conversionsValue) || 0).toFixed(2),
+  }));
+
+  const conversionActions = conversionActionsQ.rows.map(r => ({
+    id: r.conversionAction?.id,
+    name: r.conversionAction?.name,
+    status: r.conversionAction?.status,
+    type: r.conversionAction?.type,
+    category: r.conversionAction?.category,
+    primaryForGoal: !!r.conversionAction?.primaryForGoal,
+  }));
+  const hasStoreVisits = conversionActions.some(a =>
+    a.type === 'STORE_VISITS' || a.category === 'STORE_VISIT'
+  );
+
+  const userLists = userListQ.rows.map(r => ({
+    id: r.userList?.id,
+    name: r.userList?.name,
+    sizeForDisplay: parseInt(r.userList?.sizeForDisplay) || 0,
+    sizeForSearch: parseInt(r.userList?.sizeForSearch) || 0,
+    membershipStatus: r.userList?.membershipStatus,
+  }));
+  const customerMatchSize = Math.max(
+    ...userLists.map(u => Math.max(u.sizeForDisplay, u.sizeForSearch)),
+    0,
+  );
+
+  const assetGroups = assetGroupQ.rows.map(r => ({
+    id: r.assetGroup?.id,
+    name: r.assetGroup?.name,
+    status: r.assetGroup?.status,
+    primaryStatus: r.assetGroup?.primaryStatus,
+    primaryStatusReasons: r.assetGroup?.primaryStatusReasons || [],
+    ...metricRow({ metrics: r.metrics }),
+  }));
+
+  const primaryProximity = criteria.proximities[0] || null;
+  const pinDelta = primaryProximity?.hamzaPinDeltaMeters;
+  const guardrails = [
+    {
+      id: 'campaign-live',
+      label: 'PMax live',
+      state: campaign.status === 'ENABLED' && campaign.servingStatus === 'SERVING' ? 'ok' : 'bad',
+      detail: `${campaign.status || 'UNKNOWN'} / ${campaign.servingStatus || 'UNKNOWN'}`,
+    },
+    {
+      id: 'exact-pin',
+      label: 'Exact Hamza pin',
+      state: pinDelta != null && pinDelta <= 25 ? 'ok' : 'warn',
+      detail: pinDelta == null
+        ? 'proximity center not exposed'
+        : `${pinDelta}m from 12.9868469,77.6044088`,
+    },
+    {
+      id: 'no-city-target',
+      label: 'No city target',
+      state: criteria.locations.length === 0 ? 'ok' : 'bad',
+      detail: `${criteria.locations.length} LOCATION criteria`,
+    },
+    {
+      id: 'single-proximity',
+      label: 'Single 2 km radius',
+      state: criteria.proximities.length === 1
+        && Number(primaryProximity?.radius) === 2
+        && primaryProximity?.radiusUnits === 'KILOMETERS'
+        ? 'ok'
+        : 'warn',
+      detail: primaryProximity ? `${primaryProximity.radius} ${primaryProximity.radiusUnits}` : 'missing',
+    },
+    {
+      id: 'store-visits',
+      label: 'Store Visits',
+      state: hasStoreVisits ? 'ok' : 'warn',
+      detail: hasStoreVisits ? 'available' : 'missing — Google eligibility gate',
+    },
+    {
+      id: 'conversions',
+      label: 'Reported conversions',
+      state: total.conversions > 0 ? 'ok' : 'warn',
+      detail: `${total.conversions} from ${from} to ${to}`,
+    },
+    {
+      id: 'customer-match',
+      label: 'Customer Match',
+      state: customerMatchSize >= 100 ? 'ok' : customerMatchSize > 0 ? 'warn' : 'bad',
+      detail: `${customerMatchSize} matched users`,
+    },
+    {
+      id: 'corrected-phase',
+      label: 'Corrected geo phase',
+      state: corrected.spend > 0 ? 'ok' : 'warn',
+      detail: `from ${correctedFrom}: ₹${corrected.spend}`,
+    },
+  ];
+
+  const errors = [
+    campaignQ, criteriaQ, dailyQ, networkQ, hourQ, conversionQ,
+    conversionActionsQ, userListQ, assetGroupQ,
+  ].filter(q => q.error).map(q => ({ section: q.name, error: q.error }));
+
+  return json({
+    ok: true,
+    asOf: todayIST(),
+    campaignId,
+    dateRange: { from, to },
+    correctedFrom,
+    badGeoPhase: { from: PMAX_FIRST_TRAFFIC_DATE, to: previousDate(correctedFrom) },
+    canonicalPin: HAMZA_PIN,
+    campaign,
+    criteria,
+    phases: { total, preCorrection, corrected },
+    daily,
+    byNetwork,
+    byHour,
+    conversionsByAction,
+    conversionActions,
+    hasStoreVisits,
+    userLists,
+    assetGroups,
+    guardrails,
+    errors,
   });
 }
 
@@ -1024,6 +1348,108 @@ function todayIST() {
   const now = new Date();
   const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
   return ist.toISOString().split('T')[0];
+}
+
+function previousDate(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function metricRow({ date, label, hour, metrics }) {
+  const impressions = parseInt(metrics?.impressions) || 0;
+  const clicks = parseInt(metrics?.clicks) || 0;
+  const spend = moneyMicros(metrics?.costMicros);
+  const conversions = +(parseFloat(metrics?.conversions) || 0).toFixed(2);
+  return {
+    ...(date ? { date } : {}),
+    ...(label != null ? { label } : {}),
+    ...(hour != null ? { hour } : {}),
+    impressions,
+    clicks,
+    spend,
+    conversions,
+    interactions: parseInt(metrics?.interactions) || 0,
+    ctr: impressions > 0 ? +((clicks / impressions) * 100).toFixed(2) : 0,
+    avgCPC: clicks > 0 ? +(spend / clicks).toFixed(2) : 0,
+    avgCPM: impressions > 0 ? +((spend / impressions) * 1000).toFixed(2) : 0,
+  };
+}
+
+function aggregateMetrics(rows) {
+  const impressions = rows.reduce((s, r) => s + (r.impressions || 0), 0);
+  const clicks = rows.reduce((s, r) => s + (r.clicks || 0), 0);
+  const spend = +rows.reduce((s, r) => s + (r.spend || 0), 0).toFixed(2);
+  const conversions = +rows.reduce((s, r) => s + (r.conversions || 0), 0).toFixed(2);
+  return {
+    impressions,
+    clicks,
+    spend,
+    conversions,
+    interactions: rows.reduce((s, r) => s + (r.interactions || 0), 0),
+    ctr: impressions > 0 ? +((clicks / impressions) * 100).toFixed(2) : 0,
+    avgCPC: clicks > 0 ? +(spend / clicks).toFixed(2) : 0,
+    avgCPM: impressions > 0 ? +((spend / impressions) * 1000).toFixed(2) : 0,
+  };
+}
+
+function parseCriteriaRows(rows) {
+  const out = { locations: [], languages: [], proximities: [], other: [] };
+  for (const r of rows) {
+    const c = r.campaignCriterion || {};
+    const item = {
+      criterionId: c.criterionId,
+      type: c.type,
+      negative: !!c.negative,
+    };
+    if (c.type === 'LOCATION') {
+      item.geoTargetConstant = c.location?.geoTargetConstant;
+      out.locations.push(item);
+    } else if (c.type === 'LANGUAGE') {
+      item.languageConstant = c.language?.languageConstant;
+      out.languages.push(item);
+    } else if (c.type === 'PROXIMITY') {
+      const geoPoint = c.proximity?.geoPoint || {};
+      const latitude = microToDegrees(geoPoint.latitudeInMicroDegrees);
+      const longitude = microToDegrees(geoPoint.longitudeInMicroDegrees);
+      out.proximities.push({
+        ...item,
+        radius: c.proximity?.radius,
+        radiusUnits: c.proximity?.radiusUnits,
+        geoPoint: {
+          latitude,
+          longitude,
+          latitudeInMicroDegrees: geoPoint.latitudeInMicroDegrees,
+          longitudeInMicroDegrees: geoPoint.longitudeInMicroDegrees,
+        },
+        hamzaPinDeltaMeters: latitude && longitude
+          ? Math.round(distanceMeters(latitude, longitude, HAMZA_PIN.lat, HAMZA_PIN.lng))
+          : null,
+      });
+    } else {
+      out.other.push(item);
+    }
+  }
+  return out;
+}
+
+function moneyMicros(v) {
+  return v ? +(parseInt(v) / 1e6).toFixed(2) : 0;
+}
+
+function microToDegrees(v) {
+  const n = parseInt(v);
+  return Number.isFinite(n) ? +(n / 1_000_000).toFixed(7) : null;
+}
+
+function distanceMeters(lat1, lng1, lat2, lng2) {
+  const toRad = d => d * Math.PI / 180;
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function json(data, status = 200) {
