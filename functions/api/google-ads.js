@@ -9,6 +9,155 @@ const PMAX_CAMPAIGN_ID = '23834053403';
 const PMAX_FIRST_TRAFFIC_DATE = '2026-05-10';
 const PMAX_CORRECTED_GEO_DATE = '2026-05-13';
 const HAMZA_PIN = { lat: 12.9868469, lng: 77.6044088 };
+const LEGACY_SEARCH_CAMPAIGN_ID = '23748431244';
+const LATE_NIGHT_SEARCH_CAMPAIGN_NAME = 'HE — Late Night Maps Footfall Search — v1';
+const LATE_NIGHT_SEARCH_CONFIRM = 'RESET_LATE_NIGHT_SEARCH_V1';
+const LATE_NIGHT_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-night';
+const LATE_NIGHT_SEARCH_BUDGET_INR = 300;
+const LATE_NIGHT_SEARCH_RADIUS_KM = 7;
+const HE_WALK_IN_NEGATIVE_SET_ID = '12074853990';
+const ADS_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+const LATE_NIGHT_AD_GROUPS = [
+  {
+    key: 'open_now_near_me',
+    name: 'Open Now Near Me',
+    cpcINR: 35,
+    path1: 'open-now',
+    path2: 'maps',
+    keywords: [
+      ['restaurants near me open now', 'PHRASE'],
+      ['food open now near me', 'PHRASE'],
+      ['restaurants open now near me', 'PHRASE'],
+      ['open restaurant near me', 'PHRASE'],
+      ['food places near me open now', 'PHRASE'],
+      ['restaurants nearby open now', 'PHRASE'],
+      ['restaurants near me open now', 'EXACT'],
+      ['food open now near me', 'EXACT'],
+    ],
+    headlines: [
+      'Late Night Non-Veg',
+      'Open Now Near You',
+      'Hamza Express HKP Road',
+      'Get Directions Now',
+      'Ghee Rice & Kabab',
+      'Biryani Near Shivajinagar',
+      'Dine-In Or Parcel',
+      'Same Hamza Food Memory',
+      'Near Commercial Street',
+      'Since 1918',
+    ],
+  },
+  {
+    key: 'biryani_kabab_now',
+    name: 'Biryani Kabab Late Night',
+    cpcINR: 30,
+    path1: 'biryani',
+    path2: 'kabab',
+    keywords: [
+      ['biryani near me open now', 'PHRASE'],
+      ['biryani near me', 'PHRASE'],
+      ['kabab near me', 'PHRASE'],
+      ['chicken kabab near me', 'PHRASE'],
+      ['chicken kebab near me', 'PHRASE'],
+      ['ghee rice near me', 'PHRASE'],
+      ['biryani near me open now', 'EXACT'],
+      ['kabab near me', 'EXACT'],
+    ],
+    headlines: [
+      'Biryani & Kabab Nearby',
+      'Ghee Rice & Kabab',
+      'Hamza Express HKP Road',
+      'Get Directions Now',
+      'Late Night Biryani',
+      'Kabab Near Shivajinagar',
+      'Dine-In Or Parcel',
+      'Same Hamza Food Memory',
+      'Since 1918',
+      'HKP Road Non-Veg',
+    ],
+  },
+  {
+    key: 'non_veg_halal',
+    name: 'Non Veg Halal',
+    cpcINR: 25,
+    path1: 'non-veg',
+    path2: 'halal',
+    keywords: [
+      ['non veg restaurant near me', 'PHRASE'],
+      ['non veg restaurants near me open now', 'PHRASE'],
+      ['halal restaurant near me', 'PHRASE'],
+      ['muslim restaurant near me', 'PHRASE'],
+      ['non veg restaurant near me', 'EXACT'],
+      ['halal restaurant near me', 'EXACT'],
+    ],
+    headlines: [
+      'Late Night Non-Veg',
+      'Halal Food Near You',
+      'Hamza Express HKP Road',
+      'Get Directions Now',
+      'Ghee Rice & Kabab',
+      'Biryani Near Shivajinagar',
+      'Dine-In Or Parcel',
+      'Same Hamza Food Memory',
+      'Since 1918',
+      'HKP Road Non-Veg',
+    ],
+  },
+  {
+    key: 'late_night_bangalore',
+    name: 'Late Night Bangalore',
+    cpcINR: 22,
+    path1: 'late-night',
+    path2: 'hkp-road',
+    keywords: [
+      ['late night food bangalore', 'PHRASE'],
+      ['late night restaurants bangalore', 'PHRASE'],
+      ['midnight food bangalore', 'PHRASE'],
+      ['late night biryani bangalore', 'PHRASE'],
+      ['late night food near me', 'PHRASE'],
+      ['late night food bangalore', 'EXACT'],
+      ['late night food near me', 'EXACT'],
+    ],
+    headlines: [
+      'Late Night Food',
+      'Late Night Non-Veg',
+      'Hamza Express HKP Road',
+      'Get Directions Now',
+      'Ghee Rice & Kabab',
+      'Biryani Near Shivajinagar',
+      'Near Commercial Street',
+      'Dine-In Or Parcel',
+      'Since 1918',
+      'Same Hamza Food Memory',
+    ],
+  },
+];
+const LATE_NIGHT_DESCRIPTIONS = [
+  'Late-night hunger near Shivajinagar? Ghee Rice, Kabab and Biryani at Hamza Express.',
+  'Tap for directions to HKP Road. Dine-in, parcel, calls and menu from one place.',
+  'Same Hamza food memory, new Express face. Non-veg meals on HKP Road.',
+  'Near Commercial Street and Shivajinagar. Get directions before you come.',
+];
+const LATE_NIGHT_EXTRA_NEGATIVES = [
+  'hotel room',
+  'rooms',
+  'lodge',
+  'lodging',
+  'pg',
+  'hostel',
+  'oyo',
+  'recipe',
+  'how to make',
+  'jobs',
+  'salary',
+  'franchise',
+  'swiggy',
+  'zomato',
+  'home delivery',
+  'online order',
+  'veg only',
+  'vegetarian',
+];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -43,6 +192,10 @@ export async function onRequest(context) {
         return await getKeywordVolumes(accessToken, env, url.searchParams);
       case 'create-search-campaign':
         return await createSearchCampaign(accessToken, env);
+      case 'late-night-search-intelligence':
+        return await getLateNightSearchIntelligence(accessToken, env);
+      case 'reset-late-night-search':
+        return await resetLateNightSearch(accessToken, env, request);
       case 'pause-campaign':
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'PAUSED');
       case 'enable-campaign':
@@ -517,6 +670,547 @@ async function createSearchCampaign(accessToken, env) {
   } catch (err) {
     return json({ success: false, error: err.message, stepsCompleted: log, stack: err.stack }, 500);
   }
+}
+
+// ============================================================
+// LATE NIGHT MAPS FOOTFALL SEARCH — Intelligence + safe reset
+// Creates the fresh campaign PAUSED first, then removes only the old paused Search.
+// No enable/resume is performed here.
+// ============================================================
+function lateNightSearchSpec() {
+  return {
+    campaignName: LATE_NIGHT_SEARCH_CAMPAIGN_NAME,
+    ownerObjective: 'Maximum physical footfall to Hamza Express from late-night hungry customers.',
+    roleInAccount: 'Surgical Search + Maps-intent layer. Existing PMax remains broad discovery.',
+    budgetINR: LATE_NIGHT_SEARCH_BUDGET_INR,
+    createStatus: 'PAUSED',
+    finalUrl: LATE_NIGHT_SEARCH_FINAL_URL,
+    geo: {
+      type: 'PROXIMITY_ONLY',
+      lat: HAMZA_PIN.lat,
+      lng: HAMZA_PIN.lng,
+      radiusKm: LATE_NIGHT_SEARCH_RADIUS_KM,
+      locationOption: 'PRESENCE',
+      blockedGeoShape: 'No city geo target. No Bengaluru city ID. No Gurugram ID.',
+    },
+    schedule: {
+      timezone: 'Asia/Calcutta',
+      ownerWindow: '22:00-03:00 daily',
+      apiShape: ADS_DAYS.flatMap(day => [
+        { day, startHour: 0, startMinute: 'ZERO', endHour: 3, endMinute: 'ZERO' },
+        { day, startHour: 22, startMinute: 'ZERO', endHour: 24, endMinute: 'ZERO' },
+      ]),
+    },
+    mapsFocus: [
+      'Account-level Google Business Profile location asset must remain linked.',
+      'Final URL is a direction-first late-night page.',
+      'Ad copy pushes Get Directions, HKP Road, Shivajinagar, dine-in and parcel.',
+      'Direction/call/menu local actions remain the realistic proxy conversions until Store Visits unlocks.',
+    ],
+    adGroups: LATE_NIGHT_AD_GROUPS.map(g => ({
+      name: g.name,
+      cpcINR: g.cpcINR,
+      path1: g.path1,
+      path2: g.path2,
+      keywordCount: g.keywords.length,
+      keywords: g.keywords.map(([text, matchType]) => ({ text, matchType })),
+      headlines: g.headlines,
+      descriptions: LATE_NIGHT_DESCRIPTIONS,
+    })),
+    sharedNegativeListId: HE_WALK_IN_NEGATIVE_SET_ID,
+    extraNegativeKeywords: LATE_NIGHT_EXTRA_NEGATIVES,
+    safetyRules: [
+      `Delete old Search only if campaign ${LEGACY_SEARCH_CAMPAIGN_ID} is PAUSED.`,
+      'Abort if a same-name late-night campaign already exists and replaceExisting is not true.',
+      'Create the new campaign PAUSED first; enabling is a separate owner action after audit.',
+      'Use exact Hamza micro-degree pin from Google Maps metadata, not geo-target city IDs.',
+      'Use Search Network only; no Display Network and no Search Partners at launch.',
+    ],
+  };
+}
+
+function validateLateNightSearchSpec(spec) {
+  const issues = [];
+  for (const g of spec.adGroups || []) {
+    for (const h of g.headlines || []) {
+      if (h.length > 30) issues.push(`Headline too long in ${g.name}: "${h}" (${h.length}/30)`);
+    }
+    for (const d of g.descriptions || []) {
+      if (d.length > 90) issues.push(`Description too long in ${g.name}: "${d}" (${d.length}/90)`);
+    }
+  }
+  if (spec.geo.radiusKm !== 7) issues.push(`Expected 7km radius, got ${spec.geo.radiusKm}`);
+  if (spec.budgetINR !== 300) issues.push(`Expected ₹300/day, got ₹${spec.budgetINR}`);
+  if (spec.createStatus !== 'PAUSED') issues.push('New campaign must be created PAUSED');
+  return issues;
+}
+
+async function getLateNightSearchIntelligence(accessToken, env) {
+  const spec = lateNightSearchSpec();
+  const textIssues = validateLateNightSearchSpec(spec);
+  const safeQuery = async (name, query) => {
+    try {
+      return { name, rows: await queryGoogleAds(accessToken, env, query), error: null };
+    } catch (e) {
+      return { name, rows: [], error: e.message };
+    }
+  };
+
+  const [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ] = await Promise.all([
+    safeQuery('campaigns', `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.serving_status,
+        campaign.advertising_channel_type,
+        campaign.geo_target_type_setting.positive_geo_target_type,
+        campaign.geo_target_type_setting.negative_geo_target_type,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `),
+    safeQuery('locationAssets', `
+      SELECT
+        asset.id,
+        asset.type,
+        asset.location_asset.business_profile_locations,
+        asset.location_asset.location_ownership_type
+      FROM asset
+      WHERE asset.type = 'LOCATION'
+    `),
+    safeQuery('conversionActions', `
+      SELECT
+        conversion_action.id,
+        conversion_action.name,
+        conversion_action.status,
+        conversion_action.type,
+        conversion_action.category,
+        conversion_action.primary_for_goal
+      FROM conversion_action
+      WHERE conversion_action.status = 'ENABLED'
+    `),
+    safeQuery('sharedSets', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_set.type,
+        shared_set.member_count,
+        shared_set.reference_count,
+        shared_set.status
+      FROM shared_set
+      WHERE shared_set.status != 'REMOVED'
+    `),
+    safeQuery('sharedCriteria', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_criterion.keyword.text,
+        shared_criterion.keyword.match_type,
+        shared_criterion.type
+      FROM shared_criterion
+      WHERE shared_set.id = ${HE_WALK_IN_NEGATIVE_SET_ID}
+      LIMIT 200
+    `),
+  ]);
+
+  const errors = [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ]
+    .filter(q => q.error)
+    .map(q => ({ name: q.name, error: q.error }));
+
+  const campaigns = campaignQ.rows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    servingStatus: r.campaign?.servingStatus,
+    type: r.campaign?.advertisingChannelType,
+    positiveGeoTargetType: r.campaign?.geoTargetTypeSetting?.positiveGeoTargetType,
+    negativeGeoTargetType: r.campaign?.geoTargetTypeSetting?.negativeGeoTargetType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const legacySearch = campaigns.find(c => c.id === LEGACY_SEARCH_CAMPAIGN_ID) || null;
+  const currentPmax = campaigns.find(c => c.id === PMAX_CAMPAIGN_ID) || null;
+  const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME) || null;
+  const locationAssets = locationQ.rows.map(r => ({
+    id: r.asset?.id,
+    type: r.asset?.type,
+    ownership: r.asset?.locationAsset?.locationOwnershipType,
+    businessProfileLocations: r.asset?.locationAsset?.businessProfileLocations || [],
+  }));
+  const conversionActions = conversionQ.rows.map(r => ({
+    id: r.conversionAction?.id,
+    name: r.conversionAction?.name,
+    type: r.conversionAction?.type,
+    category: r.conversionAction?.category,
+    primaryForGoal: !!r.conversionAction?.primaryForGoal,
+  }));
+  const sharedSets = sharedSetQ.rows.map(r => ({
+    id: r.sharedSet?.id,
+    name: r.sharedSet?.name,
+    type: r.sharedSet?.type,
+    memberCount: parseInt(r.sharedSet?.memberCount) || 0,
+    referenceCount: parseInt(r.sharedSet?.referenceCount) || 0,
+    status: r.sharedSet?.status,
+  }));
+  const sharedNegatives = sharedCritQ.rows.map(r => ({
+    text: r.sharedCriterion?.keyword?.text,
+    matchType: r.sharedCriterion?.keyword?.matchType,
+  })).filter(k => k.text);
+  const sharedSet = sharedSets.find(s => String(s.id) === HE_WALK_IN_NEGATIVE_SET_ID) || null;
+  const localActionCount = conversionActions.filter(a =>
+    ['GET_DIRECTIONS', 'CONTACT', 'PHONE_CALL_LEAD', 'PAGE_VIEW', 'ENGAGEMENT'].includes(a.category)
+  ).length;
+
+  const guardrails = [
+    {
+      id: 'pmax-kept',
+      label: 'PMax remains base layer',
+      state: currentPmax?.status === 'ENABLED' ? 'ok' : 'warn',
+      detail: currentPmax ? `${currentPmax.status} / ₹${currentPmax.budgetINR}/day` : 'PMax missing',
+    },
+    {
+      id: 'old-search-removable',
+      label: 'Old Search safe to delete',
+      state: !legacySearch || legacySearch.status === 'PAUSED' ? 'ok' : 'bad',
+      detail: legacySearch ? `${legacySearch.name} is ${legacySearch.status}` : 'already removed',
+    },
+    {
+      id: 'no-duplicate-late-night',
+      label: 'No duplicate late-night campaign',
+      state: existingLateNight ? 'warn' : 'ok',
+      detail: existingLateNight ? `${existingLateNight.id} is ${existingLateNight.status}` : 'none exists',
+    },
+    {
+      id: 'exact-pin',
+      label: 'Exact pin locked',
+      state: spec.geo.lat === HAMZA_PIN.lat && spec.geo.lng === HAMZA_PIN.lng ? 'ok' : 'bad',
+      detail: `${spec.geo.lat},${spec.geo.lng}`,
+    },
+    {
+      id: 'radius',
+      label: 'Launch radius',
+      state: spec.geo.radiusKm === 7 ? 'ok' : 'bad',
+      detail: `${spec.geo.radiusKm} km proximity only`,
+    },
+    {
+      id: 'schedule',
+      label: 'Late-night only',
+      state: spec.schedule.apiShape.length === 14 ? 'ok' : 'bad',
+      detail: '22:00-03:00 daily, split across midnight',
+    },
+    {
+      id: 'location-asset',
+      label: 'GBP location asset',
+      state: locationAssets.length ? 'ok' : 'bad',
+      detail: locationAssets.length ? `${locationAssets.length} asset(s) linked at account` : 'missing',
+    },
+    {
+      id: 'local-actions',
+      label: 'Local action goals',
+      state: localActionCount >= 3 ? 'ok' : 'warn',
+      detail: `${localActionCount} enabled local/call/menu actions`,
+    },
+    {
+      id: 'negative-list',
+      label: 'Walk-in negative list',
+      state: sharedSet && sharedNegatives.length >= 30 ? 'ok' : 'warn',
+      detail: sharedSet ? `${sharedNegatives.length} keywords · ${sharedSet.referenceCount} refs` : 'missing',
+    },
+    {
+      id: 'ad-text-policy-shape',
+      label: 'Ad text length check',
+      state: textIssues.length ? 'bad' : 'ok',
+      detail: textIssues.length ? `${textIssues.length} issue(s)` : 'all headlines/descriptions within limits',
+    },
+  ];
+
+  return json({
+    ok: true,
+    asOf: todayIST(),
+    decision: {
+      recommendation: 'Use fresh Late Night Maps Footfall Search, not another PMax, for the ₹300/day layer.',
+      reason: 'PMax is already live as broad discovery; the new layer needs keyword, schedule, query, and Maps-action control.',
+    },
+    spec,
+    live: {
+      campaigns,
+      currentPmax,
+      legacySearch,
+      existingLateNight,
+      locationAssets,
+      conversionActions,
+      sharedNegativeList: sharedSet,
+      sharedNegatives,
+    },
+    guardrails,
+    textIssues,
+    execution: {
+      endpoint: '/api/google-ads?action=reset-late-night-search',
+      method: 'POST',
+      requiredBody: { confirm: LATE_NIGHT_SEARCH_CONFIRM },
+      result: 'Creates the new Search campaign PAUSED, then removes old paused Search if still present, and returns resource IDs for audit.',
+    },
+    errors,
+  });
+}
+
+async function resetLateNightSearch(accessToken, env, request) {
+  if (request.method !== 'POST') {
+    return json({ error: 'POST required', requiredBody: { confirm: LATE_NIGHT_SEARCH_CONFIRM } }, 405);
+  }
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== LATE_NIGHT_SEARCH_CONFIRM) {
+    return json({
+      error: 'confirmation_required',
+      required: LATE_NIGHT_SEARCH_CONFIRM,
+      note: 'This endpoint removes the old paused Search campaign and creates the new campaign PAUSED. Re-submit with confirm after reviewing late-night-search-intelligence.',
+    }, 409);
+  }
+
+  const log = [];
+  const step = msg => log.push(`[${new Date().toISOString()}] ${msg}`);
+  const spec = lateNightSearchSpec();
+  const textIssues = validateLateNightSearchSpec(spec);
+  if (textIssues.length) return json({ success: false, error: 'spec_validation_failed', textIssues }, 500);
+
+  const campaignRows = await queryGoogleAds(accessToken, env, `
+    SELECT
+      campaign.id,
+      campaign.name,
+      campaign.status,
+      campaign.advertising_channel_type,
+      campaign_budget.amount_micros
+    FROM campaign
+    WHERE campaign.status != 'REMOVED'
+    ORDER BY campaign.id DESC
+  `);
+  const campaigns = campaignRows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    type: r.campaign?.advertisingChannelType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const legacySearch = campaigns.find(c => c.id === LEGACY_SEARCH_CAMPAIGN_ID);
+  const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME);
+
+  if (legacySearch && legacySearch.status !== 'PAUSED') {
+    return json({
+      success: false,
+      error: 'legacy_search_not_paused',
+      detail: `Refusing to remove ${LEGACY_SEARCH_CAMPAIGN_ID} because it is ${legacySearch.status}. Pause it first.`,
+      legacySearch,
+      log,
+    }, 409);
+  }
+
+  if (existingLateNight && !body.replaceExisting) {
+    return json({
+      success: false,
+      error: 'late_night_campaign_already_exists',
+      detail: 'Refusing to create a duplicate. Pass replaceExisting:true only if the existing late-night campaign is PAUSED and should be removed first.',
+      existingLateNight,
+      log,
+    }, 409);
+  }
+
+  if (existingLateNight && body.replaceExisting) {
+    if (existingLateNight.status !== 'PAUSED') {
+      return json({
+        success: false,
+        error: 'existing_late_night_not_paused',
+        detail: `Refusing to replace existing late-night campaign ${existingLateNight.id} because it is ${existingLateNight.status}.`,
+        existingLateNight,
+        log,
+      }, 409);
+    }
+    await removeCampaign(accessToken, env, existingLateNight.id);
+    step(`Removed existing paused late-night campaign ${existingLateNight.id}`);
+  }
+
+  const budgetResults = await mutateGoogleAds(accessToken, env, 'campaignBudgets', [{
+    create: {
+      name: `HE Late Night Search INR${LATE_NIGHT_SEARCH_BUDGET_INR}/day ${todayIST()} ${Date.now()}`,
+      amountMicros: rupeesToMicros(LATE_NIGHT_SEARCH_BUDGET_INR),
+      deliveryMethod: 'STANDARD',
+      explicitlyShared: false,
+    },
+  }]);
+  const budgetResource = budgetResults[0].resourceName;
+  step(`Created ₹${LATE_NIGHT_SEARCH_BUDGET_INR}/day budget ${budgetResource}`);
+
+  const campaignResults = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+    create: {
+      name: LATE_NIGHT_SEARCH_CAMPAIGN_NAME,
+      status: 'PAUSED',
+      advertisingChannelType: 'SEARCH',
+      campaignBudget: budgetResource,
+      manualCpc: { enhancedCpcEnabled: false },
+      networkSettings: {
+        targetGoogleSearch: true,
+        targetSearchNetwork: false,
+        targetContentNetwork: false,
+        targetPartnerSearchNetwork: false,
+      },
+      geoTargetTypeSetting: {
+        positiveGeoTargetType: 'PRESENCE',
+        negativeGeoTargetType: 'PRESENCE',
+      },
+    },
+  }]);
+  const campaignResource = campaignResults[0].resourceName;
+  const campaignId = campaignResource.split('/').pop();
+  step(`Created new Search campaign ${campaignId} as PAUSED`);
+
+  const adGroupResults = await mutateGoogleAds(accessToken, env, 'adGroups',
+    LATE_NIGHT_AD_GROUPS.map(g => ({
+      create: {
+        name: g.name,
+        campaign: campaignResource,
+        status: 'ENABLED',
+        type: 'SEARCH_STANDARD',
+        cpcBidMicros: rupeesToMicros(g.cpcINR),
+      },
+    })),
+  );
+  const adGroupResources = Object.fromEntries(
+    LATE_NIGHT_AD_GROUPS.map((g, i) => [g.key, adGroupResults[i].resourceName]),
+  );
+  step(`Created ${adGroupResults.length} ad groups`);
+
+  const keywordOps = [];
+  for (const group of LATE_NIGHT_AD_GROUPS) {
+    for (const [text, matchType] of group.keywords) {
+      keywordOps.push({
+        create: {
+          adGroup: adGroupResources[group.key],
+          status: 'ENABLED',
+          keyword: { text, matchType },
+        },
+      });
+    }
+  }
+  await mutateGoogleAds(accessToken, env, 'adGroupCriteria', keywordOps);
+  step(`Created ${keywordOps.length} exact/phrase keywords`);
+
+  const adOps = LATE_NIGHT_AD_GROUPS.map(group => ({
+    create: {
+      adGroup: adGroupResources[group.key],
+      status: 'ENABLED',
+      ad: {
+        responsiveSearchAd: {
+          headlines: group.headlines.map(text => ({
+            text,
+            ...(text === 'Hamza Express HKP Road' ? { pinnedField: 'HEADLINE_1' } : {}),
+          })),
+          descriptions: LATE_NIGHT_DESCRIPTIONS.map(text => ({ text })),
+          path1: group.path1,
+          path2: group.path2,
+        },
+        finalUrls: [LATE_NIGHT_SEARCH_FINAL_URL],
+      },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'adGroupAds', adOps);
+  step(`Created ${adOps.length} responsive search ads`);
+
+  const proximityOp = {
+    create: {
+      campaign: campaignResource,
+      proximity: {
+        geoPoint: {
+          latitudeInMicroDegrees: Math.round(HAMZA_PIN.lat * 1_000_000),
+          longitudeInMicroDegrees: Math.round(HAMZA_PIN.lng * 1_000_000),
+        },
+        radius: LATE_NIGHT_SEARCH_RADIUS_KM,
+        radiusUnits: 'KILOMETERS',
+      },
+    },
+  };
+  const scheduleOps = ADS_DAYS.flatMap(day => [
+    { create: { campaign: campaignResource, adSchedule: { dayOfWeek: day, startHour: 0, startMinute: 'ZERO', endHour: 3, endMinute: 'ZERO' } } },
+    { create: { campaign: campaignResource, adSchedule: { dayOfWeek: day, startHour: 22, startMinute: 'ZERO', endHour: 24, endMinute: 'ZERO' } } },
+  ]);
+  const negativeOps = LATE_NIGHT_EXTRA_NEGATIVES.map(kw => ({
+    create: {
+      campaign: campaignResource,
+      negative: true,
+      keyword: { text: kw, matchType: 'PHRASE' },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'campaignCriteria', [
+    proximityOp,
+    ...scheduleOps,
+    ...negativeOps,
+  ]);
+  step(`Set exact ${LATE_NIGHT_SEARCH_RADIUS_KM}km proximity, ${scheduleOps.length} schedule blocks, ${negativeOps.length} extra negatives`);
+
+  await mutateGoogleAds(accessToken, env, 'campaignSharedSets', [{
+    create: {
+      campaign: campaignResource,
+      sharedSet: `customers/${CUSTOMER_ID}/sharedSets/${HE_WALK_IN_NEGATIVE_SET_ID}`,
+    },
+  }]);
+  step(`Attached shared negative list ${HE_WALK_IN_NEGATIVE_SET_ID}`);
+
+  const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
+    { create: { sitelinkAsset: { linkText: 'Get Directions', description1: 'Open Maps', description2: 'HKP Road pin', finalUrls: ['https://hamzaexpress.in/go/maps'] } } },
+    { create: { sitelinkAsset: { linkText: 'Late Night Menu', description1: 'Ghee Rice & Kabab', description2: 'Biryani and parcel', finalUrls: [LATE_NIGHT_SEARCH_FINAL_URL] } } },
+    { create: { sitelinkAsset: { linkText: 'View Full Menu', description1: 'Non-veg favorites', description2: 'Before you visit', finalUrls: ['https://hamzaexpress.in/menu/'] } } },
+    { create: { calloutAsset: { calloutText: 'HKP Road' } } },
+    { create: { calloutAsset: { calloutText: 'Since 1918' } } },
+    { create: { calloutAsset: { calloutText: 'Dine-In' } } },
+    { create: { calloutAsset: { calloutText: 'Parcel' } } },
+    { create: { calloutAsset: { calloutText: 'Directions' } } },
+  ]);
+  await mutateGoogleAds(accessToken, env, 'campaignAssets', assetResults.map((r, i) => ({
+    create: {
+      campaign: campaignResource,
+      asset: r.resourceName,
+      fieldType: i < 3 ? 'SITELINK' : 'CALLOUT',
+    },
+  })));
+  step(`Created and linked ${assetResults.length} sitelink/callout assets`);
+
+  let oldSearchRemoved = false;
+  if (legacySearch) {
+    await removeCampaign(accessToken, env, LEGACY_SEARCH_CAMPAIGN_ID);
+    oldSearchRemoved = true;
+    step(`Removed old paused Search campaign ${LEGACY_SEARCH_CAMPAIGN_ID} after new campaign creation succeeded`);
+  } else {
+    step(`Old Search campaign ${LEGACY_SEARCH_CAMPAIGN_ID} already removed or not visible`);
+  }
+
+  return json({
+    success: true,
+    campaignName: LATE_NIGHT_SEARCH_CAMPAIGN_NAME,
+    status: 'PAUSED',
+    oldSearchRemoved,
+    budgetINR: LATE_NIGHT_SEARCH_BUDGET_INR,
+    finalUrl: LATE_NIGHT_SEARCH_FINAL_URL,
+    geo: spec.geo,
+    schedule: spec.schedule.ownerWindow,
+    resources: {
+      budget: budgetResource,
+      campaign: campaignResource,
+      campaignId,
+      adGroups: adGroupResources,
+    },
+    auditLinks: {
+      criteria: `/api/google-ads?action=campaign-criteria&id=${campaignId}`,
+      intelligence: '/api/google-ads?action=late-night-search-intelligence',
+      cockpit: '/ops/google-cockpit/',
+    },
+    log,
+  });
+}
+
+async function removeCampaign(accessToken, env, campaignId) {
+  if (!campaignId) throw new Error('campaignId required');
+  return await mutateGoogleAds(accessToken, env, 'campaigns', [{
+    remove: `customers/${CUSTOMER_ID}/campaigns/${campaignId}`,
+  }]);
 }
 
 // Action: Get all campaigns with status
@@ -1435,6 +2129,10 @@ function parseCriteriaRows(rows) {
 
 function moneyMicros(v) {
   return v ? +(parseInt(v) / 1e6).toFixed(2) : 0;
+}
+
+function rupeesToMicros(v) {
+  return String(Math.round(Number(v || 0) * 1_000_000));
 }
 
 function microToDegrees(v) {
