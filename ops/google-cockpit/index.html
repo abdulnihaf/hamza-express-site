@@ -171,6 +171,67 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .urg-chip.info .urg-dot{background:var(--gblue)}
 .urg-src{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
 
+/* Live deployment strip */
+.deploy-section{background:linear-gradient(135deg,rgba(66,133,244,.05),rgba(52,168,83,.05));border:1px solid rgba(66,133,244,.16)}
+.deploy-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.deploy-meta{font-size:11px;color:var(--text2);line-height:1.55;margin-top:2px}
+.deploy-pill{padding:5px 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.deploy-pill.live{background:rgba(52,168,83,.18);color:var(--ggreen);border:1px solid rgba(52,168,83,.35)}
+.deploy-pill.paused{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.deploy-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.deploy-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:10px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .12s}
+.deploy-chip:hover{border-color:var(--gblue);color:#fff;transform:translateY(-1px)}
+.deploy-note{margin-top:8px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.5}
+
+/* PMax observability + guardrails */
+.obs-section{border-color:rgba(52,168,83,.2);background:linear-gradient(135deg,rgba(52,168,83,.05),rgba(6,182,212,.035))}
+.obs-summary{display:grid;grid-template-columns:minmax(190px,.95fr) repeat(4,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.obs-verdict,.obs-metric{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:0}
+.obs-verdict.ok{border-color:rgba(52,168,83,.45);background:linear-gradient(135deg,rgba(52,168,83,.12),rgba(52,168,83,.03))}
+.obs-verdict.warn{border-color:rgba(251,188,5,.48);background:linear-gradient(135deg,rgba(251,188,5,.12),rgba(251,188,5,.03))}
+.obs-verdict.bad{border-color:rgba(234,67,53,.5);background:linear-gradient(135deg,rgba(234,67,53,.13),rgba(234,67,53,.03))}
+.obs-kicker,.obs-metric-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:800;margin-bottom:5px}
+.obs-verdict-title{font-size:18px;font-weight:800;color:var(--text);line-height:1.15}
+.obs-verdict-detail,.obs-metric-sub{font-size:10px;color:var(--text2);line-height:1.4;margin-top:5px}
+.obs-metric-value{font-size:18px;font-weight:800;color:var(--text);line-height:1.2;font-family:'JetBrains Mono',monospace}
+.obs-metric.ok .obs-metric-value{color:var(--ggreen)}
+.obs-metric.warn .obs-metric-value{color:var(--gyellow)}
+.obs-metric.bad .obs-metric-value{color:var(--gred)}
+.obs-bar{height:5px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:8px}
+.obs-bar span{display:block;height:100%;background:var(--ggreen);border-radius:999px}
+.obs-metric.warn .obs-bar span{background:var(--gyellow)}
+.obs-metric.bad .obs-bar span{background:var(--gred)}
+.obs-watchlist{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.obs-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:999px;background:var(--bg2);font-size:10px;color:var(--text2);line-height:1.2}
+.obs-chip strong{color:var(--text);font-weight:800}
+.obs-chip.ok{border-color:rgba(52,168,83,.38)}
+.obs-chip.warn{border-color:rgba(251,188,5,.42)}
+.obs-chip.bad{border-color:rgba(234,67,53,.42)}
+.obs-chip.ok::before,.obs-chip.warn::before,.obs-chip.bad::before{content:'';width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.obs-chip.ok::before{background:var(--ggreen)}
+.obs-chip.warn::before{background:var(--gyellow)}
+.obs-chip.bad::before{background:var(--gred)}
+.obs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:12px}
+.obs-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;min-height:78px}
+.obs-card.ok{border-color:rgba(52,168,83,.38)}
+.obs-card.warn{border-color:rgba(251,188,5,.42)}
+.obs-card.bad{border-color:rgba(234,67,53,.42)}
+.obs-state{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.obs-card.ok .obs-state{color:var(--ggreen)}
+.obs-card.warn .obs-state{color:var(--gyellow)}
+.obs-card.bad .obs-state{color:var(--gred)}
+.obs-label{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
+.obs-detail{font-size:10px;color:var(--text2);margin-top:4px;line-height:1.4}
+.obs-panels{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+.obs-panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;min-width:0}
+.obs-panel h3{font-size:11px;margin-bottom:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.obs-table{width:100%;font-size:10px}
+.obs-table td,.obs-table th{padding:5px 6px}
+.obs-kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;font-size:10px;color:var(--text2)}
+.obs-kv strong{color:var(--text);font-family:'JetBrains Mono',monospace}
+.obs-muted{font-size:10px;color:var(--muted);line-height:1.5}
+.obs-error{font-size:10px;color:var(--orange);margin-top:8px;font-family:'JetBrains Mono',monospace;line-height:1.4}
+
 /* Campaign controls strip (Wave 2.1) */
 .ctrl-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px}
 .ctrl-bar label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
@@ -227,9 +288,9 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .qs.unrated{background:var(--bg2);color:var(--muted);border:1px solid var(--border)}
 
 /* Responsive */
-@media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}.pos-grid{grid-template-columns:repeat(2,1fr)}.obs-summary{grid-template-columns:repeat(2,1fr)}.obs-panels{grid-template-columns:1fr}}
 @media(max-width:768px){.kpis{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}.pos-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.kpis{grid-template-columns:repeat(2,1fr)}.pos-grid{grid-template-columns:repeat(2,1fr)}.obs-summary{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -243,6 +304,25 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
   <!-- Urgency bar (cross-dashboard) -->
   <div class="urg-bar" id="urgBar"></div>
+
+  <!-- Live deployment strip -->
+  <div class="section deploy-section" id="deploySection">
+    <div class="deploy-head">
+      <div>
+        <div class="section-title">Live Deployment Status <span class="tip">— current campaign · exact Hamza pin · live links</span></div>
+        <div class="deploy-meta" id="deployMeta">Loading deployment state…</div>
+      </div>
+      <div class="deploy-pill" id="deployPill">LIVE</div>
+    </div>
+    <div class="deploy-links" id="deployLinks"></div>
+    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Search 5 km</div>
+  </div>
+
+  <!-- PMax observability guardrails — read-only diagnostics -->
+  <div class="section obs-section" id="pmaxObsSection">
+    <div class="section-title">PMax Observability Guardrails <span class="tip">— read-only audit · corrected phase · no spend changes</span></div>
+    <div id="pmaxObsBody" class="obs-muted">Loading PMax observability…</div>
+  </div>
 
   <!-- Campaign controls (Wave 2.1) -->
   <div class="ctrl-bar">
@@ -365,7 +445,18 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
 <script>
 const API = '/api/google-cockpit';
+const PMAX_OBS_API = '/api/google-ads?action=pmax-observability&id=23834053403';
 const ORGANIC_API = '/api/organic-insights';
+const GOOGLE_ADS_CONSOLE = 'https://ads.google.com/aw/overview?__c=3681710084';
+const GOOGLE_ADS_CAMPAIGNS = 'https://ads.google.com/aw/campaigns?__c=3681710084';
+const GOOGLE_ADS_CONVERSIONS = 'https://ads.google.com/aw/conversions?__c=3681710084';
+const GOOGLE_ADS_AUDIENCES = 'https://ads.google.com/aw/audiences?__c=3681710084';
+const GOOGLE_ADS_MCC = 'https://ads.google.com/aw/overview?__c=5104561813';
+const HE_MAPS_CANONICAL = 'https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg';
+const HE_MAPS_EXACT = 'https://www.google.com/maps/place/Hamza+Express/@12.9868521,77.6018339,1106m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3bae1771b42304f9:0xb86ab64920519df9!8m2!3d12.9868469!4d77.6044088!16s%2Fg%2F11z0yk3x5g?entry=ttu&g_ep=EgoyMDI2MDUwNi4wIKXMDSoASAFQAw%3D%3D';
+const HE_MAPS_SHARE = 'https://maps.app.goo.gl/3SmgL9orbv8oJsccA';
+const CF_PAGES_HE = 'https://dash.cloudflare.com/3d506f78b08b3d95c667b82ef6ee7ab8/pages/view/hamza-express-site';
+const CF_PAGES_HN = 'https://dash.cloudflare.com/3d506f78b08b3d95c667b82ef6ee7ab8/pages/view/hn-hotels-site';
 let currentPeriod = 'today';
 let organicData = null;
 let orgTab = 'gbp';
@@ -392,6 +483,7 @@ async function loadData() {
       return;
     }
     render(data);
+    loadPmaxObservability(data);
     statusDot.classList.remove('red');
     statusText.textContent = `Updated ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} IST`;
   } catch (err) {
@@ -416,6 +508,8 @@ function render(data) {
   const typeBadge = isPMax ? ' · PMAX' : ' · SEARCH';
   document.getElementById('campaignBadge').textContent =
     `Campaign: ${data.campaignName || data.campaignId} (${data.campaignId})${typeBadge} · ${servingLabel}`;
+
+  renderDeploymentStrip(data);
 
   // Toggle Search-only sections — PMax has no ad_groups / keywords / search_terms
   // / search_position metrics. Hide those sections to avoid showing all-zeros
@@ -630,6 +724,200 @@ function render(data) {
   } else {
     document.getElementById('searchTerms').innerHTML = `<div class="empty">No search terms yet<small>Google reports these after a few hours of impressions</small></div>`;
   }
+}
+
+function renderDeploymentStrip(data) {
+  const o = data.overview || {};
+  const currentStatus = o.status || 'UNKNOWN';
+  const currentServing = o.servingStatus || 'UNKNOWN';
+  const currentLive = currentStatus === 'ENABLED' && currentServing === 'SERVING';
+  const currentName = data.campaignName || 'Campaign';
+  const currentType = data.campaignType === 'PERFORMANCE_MAX' ? 'PMax' : 'Search';
+  const currentId = data.campaignId || '—';
+  const meta = document.getElementById('deployMeta');
+  const pill = document.getElementById('deployPill');
+  const links = document.getElementById('deployLinks');
+  if (meta) {
+    meta.textContent = `${currentType} ${currentName} (${currentId}) · status ${currentStatus} · serving ${currentServing}`;
+  }
+  if (pill) {
+    pill.textContent = currentLive ? 'LIVE' : currentStatus;
+    pill.className = `deploy-pill ${currentLive ? 'live' : 'paused'}`;
+  }
+  if (!links) return;
+  const makeLink = (href, label, title) => `<a class="deploy-chip" href="${href}" target="_blank" rel="noopener noreferrer" title="${title || label}">${label}</a>`;
+  links.innerHTML = [
+    makeLink(GOOGLE_ADS_CONSOLE, 'Google Ads console', 'Open the live Ads account'),
+    makeLink(GOOGLE_ADS_CAMPAIGNS, 'Campaigns list', 'View all live campaigns'),
+    makeLink(`/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(currentId)}`, 'Current campaign criteria', 'Open the live primary campaign criteria'),
+    makeLink('/api/google-ads?action=campaign-criteria&id=23834053403', 'PMax criteria', 'PMax proximity / geo targeting'),
+    makeLink('/api/google-ads?action=campaign-criteria&id=23748431244', 'Search criteria', 'Search proximity / geo targeting'),
+    makeLink('/api/google-ads-create-pmax?action=preflight', 'PMax preflight', 'Read the current PMax launch gaps'),
+    makeLink(GOOGLE_ADS_CONVERSIONS, 'Conversions', 'Check STORE_VISITS / conversion setup'),
+    makeLink(HE_MAPS_CANONICAL, 'Canonical Maps pin', 'Hamza Express Maps place_id'),
+    makeLink(HE_MAPS_SHARE, 'Maps share link', 'Short Maps share URL'),
+    makeLink(HE_MAPS_EXACT, 'Exact pin link', 'Exact Hamza Express coordinates'),
+    makeLink(CF_PAGES_HE, 'HE deploys', 'Cloudflare Pages deploys + logs'),
+    makeLink(CF_PAGES_HN, 'HN deploys', 'HN site deploys + logs'),
+    makeLink(GOOGLE_ADS_AUDIENCES, 'Audiences', 'Customer Match and audience layer'),
+    makeLink(GOOGLE_ADS_MCC, 'MCC', 'Manager account overview'),
+  ].join('');
+}
+
+async function loadPmaxObservability(data) {
+  const section = document.getElementById('pmaxObsSection');
+  const body = document.getElementById('pmaxObsBody');
+  if (!section || !body) return;
+
+  if (data.campaignType !== 'PERFORMANCE_MAX') {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  body.innerHTML = '<div class="obs-muted">Loading live PMax guardrails…</div>';
+  try {
+    const to = data.asOf || new Date().toISOString().slice(0, 10);
+    const resp = await fetch(`${PMAX_OBS_API}&from=2026-05-10&correctedFrom=2026-05-13&to=${encodeURIComponent(to)}`);
+    const obs = await resp.json();
+    if (!obs.ok) {
+      body.innerHTML = `<div class="obs-error">PMax observability failed: ${obs.error || 'unknown error'}</div>`;
+      return;
+    }
+    renderPmaxObservability(obs);
+  } catch (e) {
+    body.innerHTML = `<div class="obs-error">Could not load PMax observability: ${e.message}</div>`;
+  }
+}
+
+function renderPmaxObservability(obs) {
+  const body = document.getElementById('pmaxObsBody');
+  if (!body) return;
+  const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
+  const money = n => `₹${Number(n || 0).toFixed(2)}`;
+  const num = n => fmt(Number(n || 0));
+  const guards = obs.guardrails || [];
+  const phases = obs.phases || {};
+  const total = phases.total || {};
+  const corrected = phases.corrected || {};
+  const preCorrection = phases.preCorrection || {};
+  const severityRank = { ok: 0, warn: 1, bad: 2 };
+  const severity = guards.reduce((worst, g) =>
+    severityRank[g.state] > severityRank[worst] ? g.state : worst, 'ok');
+  const badCount = guards.filter(g => g.state === 'bad').length;
+  const warnCount = guards.filter(g => g.state === 'warn').length;
+  const share = (part, base) => base > 0 ? Math.max(0, Math.min(100, (part / base) * 100)) : 0;
+  const correctedSpendShare = share(corrected.spend || 0, total.spend || 0);
+  const correctedClickShare = share(corrected.clicks || 0, total.clicks || 0);
+  const topNetwork = (obs.byNetwork || []).filter(n => n.spend || n.clicks || n.impressions)[0];
+  const topHour = (obs.byHour || [])
+    .filter(h => h.spend || h.clicks || h.impressions)
+    .sort((a, b) => (b.spend || 0) - (a.spend || 0))[0];
+  const verdictTitle = severity === 'bad' ? 'Fix Now' : severity === 'warn' ? 'Watch' : 'Healthy';
+  const verdictDetail = badCount
+    ? `${badCount} red guardrail${badCount === 1 ? '' : 's'}`
+    : warnCount
+      ? `${warnCount} watch item${warnCount === 1 ? '' : 's'}`
+      : 'all guardrails green';
+  const row = (label, p) => `<tr>
+    <td>${esc(label)}</td>
+    <td class="mono">${num(p?.impressions)}</td>
+    <td class="mono">${num(p?.clicks)}</td>
+    <td class="mono">${money(p?.spend)}</td>
+    <td class="mono">${Number(p?.ctr || 0).toFixed(2)}%</td>
+    <td class="mono">${money(p?.avgCPC)}</td>
+    <td class="mono">${Number(p?.conversions || 0).toFixed(2)}</td>
+  </tr>`;
+
+  const guardrailChips = guards.map(g => `
+    <div class="obs-chip ${esc(g.state || 'warn')}" title="${esc(g.detail)}">
+      <strong>${esc(g.label)}</strong><span>${esc(g.detail)}</span>
+    </div>
+  `).join('');
+
+  const phaseTable = `<table class="obs-table">
+    <tr><th>Phase</th><th>Impr</th><th>Clicks</th><th>Spend</th><th>CTR</th><th>CPC</th><th>Conv</th></tr>
+    ${row('Bad geo isolated', preCorrection)}
+    ${row(`Corrected local (${obs.correctedFrom || '—'}+)`, corrected)}
+    ${row('Total since launch', total)}
+  </table>`;
+
+  const networkRows = (obs.byNetwork || []).slice(0, 8).map(n => row(n.label || 'UNKNOWN', n)).join('');
+  const networkTable = networkRows
+    ? `<table class="obs-table"><tr><th>Network</th><th>Impr</th><th>Clicks</th><th>Spend</th><th>CTR</th><th>CPC</th><th>Conv</th></tr>${networkRows}</table>`
+    : '<div class="obs-muted">Network split not returned by Google Ads API for this campaign yet.</div>';
+
+  const hourRows = (obs.byHour || [])
+    .filter(h => h.impressions || h.clicks || h.spend)
+    .sort((a, b) => Number(a.hour) - Number(b.hour))
+    .slice(0, 24)
+    .map(h => row(`${String(h.hour).padStart(2, '0')}:00`, h)).join('');
+  const hourTable = hourRows
+    ? `<table class="obs-table"><tr><th>Hour</th><th>Impr</th><th>Clicks</th><th>Spend</th><th>CTR</th><th>CPC</th><th>Conv</th></tr>${hourRows}</table>`
+    : '<div class="obs-muted">Hourly split not returned yet.</div>';
+
+  const errors = (obs.errors || []).length
+    ? `<div class="obs-error">Partial diagnostics unavailable: ${(obs.errors || []).map(e => `${esc(e.section)}: ${esc(e.error).slice(0, 160)}`).join(' · ')}</div>`
+    : '';
+
+  body.innerHTML = `
+    <div class="obs-summary">
+      <div class="obs-verdict ${severity}">
+        <div class="obs-kicker">PMax owner view</div>
+        <div class="obs-verdict-title">${verdictTitle}</div>
+        <div class="obs-verdict-detail">${esc(verdictDetail)} · refreshed ${esc(obs.asOf || 'today')}</div>
+      </div>
+      <div class="obs-metric ${corrected.spend ? 'ok' : 'warn'}">
+        <div class="obs-metric-label">Corrected local spend</div>
+        <div class="obs-metric-value">${money(corrected.spend)}</div>
+        <div class="obs-metric-sub">${correctedSpendShare.toFixed(1)}% of report spend</div>
+        <div class="obs-bar"><span style="width:${correctedSpendShare.toFixed(1)}%"></span></div>
+      </div>
+      <div class="obs-metric ${corrected.clicks ? 'ok' : 'warn'}">
+        <div class="obs-metric-label">Corrected local clicks</div>
+        <div class="obs-metric-value">${num(corrected.clicks)}</div>
+        <div class="obs-metric-sub">${correctedClickShare.toFixed(1)}% of report clicks</div>
+        <div class="obs-bar"><span style="width:${correctedClickShare.toFixed(1)}%"></span></div>
+      </div>
+      <div class="obs-metric ${preCorrection.spend ? 'warn' : 'ok'}">
+        <div class="obs-metric-label">Bad geo isolated</div>
+        <div class="obs-metric-value">${money(preCorrection.spend)}</div>
+        <div class="obs-metric-sub">${num(preCorrection.clicks)} clicks before correction</div>
+      </div>
+      <div class="obs-metric ${total.conversions > 0 || obs.hasStoreVisits ? 'ok' : 'warn'}">
+        <div class="obs-metric-label">Measurement signal</div>
+        <div class="obs-metric-value">${Number(total.conversions || 0).toFixed(2)}</div>
+        <div class="obs-metric-sub">${obs.hasStoreVisits ? 'Store Visits available' : 'Store Visits missing'}</div>
+      </div>
+    </div>
+    <div class="obs-watchlist">${guardrailChips}</div>
+    <div class="obs-panels">
+      <div class="obs-panel">
+        <h3>Corrected-Phase Split</h3>
+        ${phaseTable}
+        <div class="obs-muted" style="margin-top:8px">Top network: ${esc(topNetwork?.label || 'not reported')} · top spend hour: ${topHour ? `${String(topHour.hour).padStart(2, '0')}:00` : 'not reported'}</div>
+      </div>
+      <div class="obs-panel">
+        <h3>Network Split</h3>
+        ${networkTable}
+      </div>
+      <div class="obs-panel">
+        <h3>Hour Of Day</h3>
+        ${hourTable}
+      </div>
+      <div class="obs-panel">
+        <h3>Measurement</h3>
+        <div class="obs-kv">
+          <span>Campaign</span><strong>${esc(obs.campaign?.status || 'UNKNOWN')} / ${esc(obs.campaign?.servingStatus || 'UNKNOWN')}</strong>
+          <span>Daily budget</span><strong>${obs.campaign?.budgetINR == null ? '—' : money(obs.campaign.budgetINR)}</strong>
+          <span>Store Visits</span><strong style="color:${obs.hasStoreVisits ? 'var(--ggreen)' : 'var(--gyellow)'}">${obs.hasStoreVisits ? 'available' : 'missing'}</strong>
+          <span>Customer Match</span><strong>${(obs.userLists || []).map(u => `${esc(u.name)} (${Math.max(u.sizeForDisplay || 0, u.sizeForSearch || 0)})`).join(', ') || 'none'}</strong>
+          <span>Asset groups reporting</span><strong>${(obs.assetGroups || []).length || 0}</strong>
+        </div>
+        ${errors}
+      </div>
+    </div>
+  `;
 }
 
 // Wave 2.2: one-click block from search-term row.
