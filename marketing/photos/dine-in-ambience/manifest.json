@@ -1,5 +1,5 @@
 {
-  "generatedAtIst": "2026-05-15T04:01:50.882093",
+  "generatedAtIst": "2026-05-15T08:49:00+05:30",
   "pagePath": "/marketing/photos/dine-in-ambience/",
   "targetUrlAfterDeploy": "https://hamzaexpress.in/marketing/photos/dine-in-ambience/",
   "primaryRefineFirst": "recommended-01",
@@ -551,5 +551,61 @@
       "10",
       "15"
     ]
-  }
+  },
+  "enhancementTests": [
+    {
+      "id": "04E-V1",
+      "sourceId": "04",
+      "title": "Gemini enhanced IMG 0501 - v1 warm facade style",
+      "kind": "facade-enhancement-test",
+      "decision": "GEMINI_V1_STYLE_TEST",
+      "platform": "Internal review for GMB, EazyDiner, Zomato Dining, Swiggy Dineout",
+      "analysis": "First Gemini Pro pass. Strong warm storefront mood but widened the composition too much; keep as style benchmark, not upload-ready.",
+      "group": "enhancement-test",
+      "sourcePath": "/Users/nihaf/Desktop/HE_Facade_Prompt_Pack_2026-05-15/00_PROMPT_READY/01_new_raw_facade_from_zip/IMG_0501.JPG",
+      "full": "media/full/enhanced-04-img-0501-v1.jpg",
+      "thumb": "media/thumb/enhanced-04-img-0501-v1.jpg",
+      "missing": false,
+      "hash": "4e5f98132eb8598cf35fc5423a7cfe4fc66c5d67151d57cd733caeb16c63c4ac",
+      "width": 1518,
+      "height": 688,
+      "bytes_original": null,
+      "bytes_full": 246382,
+      "model": "gemini-3-pro-image-preview",
+      "promptVersion": "facade-restoration-v1",
+      "references": [
+        "06",
+        "07",
+        "08",
+        "09",
+        "10"
+      ]
+    },
+    {
+      "id": "04E-V2",
+      "sourceId": "04",
+      "title": "Gemini enhanced IMG 0501 - v2 portrait faithful",
+      "kind": "facade-enhancement-test",
+      "decision": "GEMINI_V2_REVIEW",
+      "platform": "Internal review for GMB, EazyDiner, Zomato Dining, Swiggy Dineout",
+      "analysis": "Second Gemini Pro pass. Better preservation of the original portrait angle with warm listing-ready facade/interior grade; review before platform upload.",
+      "group": "enhancement-test",
+      "sourcePath": "/Users/nihaf/Desktop/HE_Facade_Prompt_Pack_2026-05-15/00_PROMPT_READY/01_new_raw_facade_from_zip/IMG_0501.JPG",
+      "full": "media/full/enhanced-04-img-0501-v2.jpg",
+      "thumb": "media/thumb/enhanced-04-img-0501-v2.jpg",
+      "missing": false,
+      "hash": "193c6eff4bbac8734ad88ff805c7448ec9c54c1e6c2a29a86b1815865a635d99",
+      "width": 848,
+      "height": 1264,
+      "bytes_original": null,
+      "bytes_full": 272174,
+      "model": "gemini-3-pro-image-preview",
+      "promptVersion": "facade-restoration-v2-portrait-lock",
+      "references": [
+        "06",
+        "08"
+      ]
+    }
+  ],
+  "enhancementComparisonSheet": "enhancement-04-comparison-v2.jpg"
 }

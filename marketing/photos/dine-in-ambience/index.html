@@ -174,6 +174,11 @@
       box-shadow: 0 0 0 2px rgba(139, 77, 31, 0.14);
     }
 
+    .photo-card.enhanced {
+      border-color: var(--good);
+      box-shadow: 0 0 0 2px rgba(31, 107, 67, 0.14);
+    }
+
     .photo-card img {
       display: block;
       width: 100%;
@@ -249,6 +254,12 @@
       background: var(--panel);
     }
 
+    .section-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     footer {
       border-top: 1px solid var(--line);
       color: var(--muted);
@@ -299,6 +310,19 @@
     <section>
       <div class="section-head">
         <div>
+          <h2>Gemini Enhancement Test #1</h2>
+          <p>First executed enhancement for IMG 0501. V1 is retained as a warm style benchmark; V2 is the more faithful portrait candidate to review before uploading anywhere.</p>
+        </div>
+        <div class="section-actions">
+          <a class="sheet-link" id="enhancementSheetLink" href="enhancement-04-comparison-v2.jpg" target="_blank" rel="noopener">Open Comparison</a>
+        </div>
+      </div>
+      <div class="grid" id="enhancementGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
           <h2>Recommended 16-Image Upload Set</h2>
           <p>Ranked shortlist. The raw facade/interior files here are the ones to enhance if we want a complete ambience set.</p>
         </div>
@@ -329,7 +353,7 @@
   </main>
 
   <footer>
-    Local/static page. No production deploy was run by Codex. Source paths and hashes are in <a href="manifest.csv">manifest.csv</a>.
+    Static review page. Source paths, generated variants, and hashes are in <a href="manifest.csv">manifest.csv</a>.
   </footer>
 
   <script>
@@ -342,9 +366,10 @@
 
     const card = (item) => {
       const primary = item.decision === 'REFINE_FIRST' ? ' primary' : '';
+      const enhanced = item.group === 'enhancement-test' ? ' enhanced' : '';
       const rank = item.rank ? `<span class="rank">${item.rank}</span>` : '';
       return `
-        <article class="photo-card${primary}">
+        <article class="photo-card${primary}${enhanced}">
           <a href="${item.full}" target="_blank" rel="noopener">
             <img src="${item.thumb}" alt="${escapeHtml(item.title)}" loading="lazy">
           </a>
@@ -375,12 +400,14 @@
       const res = await fetch('manifest.json');
       const data = await res.json();
       const records = data.records.filter((item) => !item.missing);
+      const enhancements = (data.enhancementTests || []).filter((item) => !item.missing);
       const recommended = records.filter((item) => item.group === 'recommended');
       const references = records.filter((item) => item.group === 'reference');
       const rawFacade = records.filter((item) => item.group === 'raw-facade');
 
       document.getElementById('statusPills').innerHTML = [
         `${data.recommendedCount} recommended images`,
+        `${enhancements.length} Gemini test outputs`,
         `${rawFacade.length} raw facade candidates`,
         `Target after deploy: ${data.targetUrlAfterDeploy}`
       ].map((text) => `<span class="pill">${escapeHtml(text)}</span>`).join('');
@@ -389,6 +416,10 @@
         <div><b>${escapeHtml(name)}</b><span>${escapeHtml(picks.join(', '))}</span></div>
       `).join('');
 
+      document.getElementById('enhancementGrid').innerHTML = enhancements.map(card).join('');
+      if (data.enhancementComparisonSheet) {
+        document.getElementById('enhancementSheetLink').href = data.enhancementComparisonSheet;
+      }
       document.getElementById('recommendedGrid').innerHTML = recommended.map(card).join('');
       document.getElementById('referenceGrid').innerHTML = references.map(card).join('');
       document.getElementById('rawFacadeGrid').innerHTML = rawFacade.map(card).join('');
