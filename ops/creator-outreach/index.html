@@ -458,6 +458,10 @@ async function loadCampaign(includeReview) {
     if (!r.ok || !d.success) throw new Error(d.error || 'campaign load failed');
     CAMPAIGN_META = d.meta || null;
     REVIEW_ROWS = Array.isArray(d.review_master) ? d.review_master : [];
+    if (includeReview && d.review_state && typeof d.review_state === 'object') {
+      REVIEW_STATE = { ...REVIEW_STATE, ...d.review_state };
+      saveReviewState();
+    }
     setMode(includeReview ? 'review' : 'campaign');
     CURRENT = includeReview ? normalizeReviewRows(REVIEW_ROWS) : (d.creators || []);
     renderCampaignKpis(d);
@@ -725,6 +729,11 @@ function setReviewDecision(handle, decision) {
   renderCampaignKpis();
   renderCurrentList();
   toast(`@${handle} marked ${decision}`);
+  fetch(API + '?action=save-review-decision', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
+    body: JSON.stringify({ handle, decision }),
+  }).catch(() => toast('Review decision saved locally, but server sync failed', true));
 }
 
 function firstCsvValue(v) {
