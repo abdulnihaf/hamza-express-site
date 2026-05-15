@@ -341,7 +341,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
       <div class="deploy-pill" id="deployPill">LIVE</div>
     </div>
     <div class="deploy-links" id="deployLinks"></div>
-    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km · Dinner Search 3 km</div>
+    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km · Dinner Search 3 km · Brand/Legacy Search 5 km</div>
   </div>
 
   <!-- PMax observability guardrails — read-only diagnostics -->
@@ -352,7 +352,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
   <!-- Multi-campaign operating view: PMax base layer + surgical Search layers -->
   <div class="section campaign-views-section" id="campaignViewsSection">
-    <div class="section-title">Campaign Views <span class="tip">— PMax broad discovery vs surgical Maps/Search footfall layers</span></div>
+    <div class="section-title">Campaign Views <span class="tip">— PMax base visibility plus the three surgical Search footfall layers</span></div>
     <div id="campaignViewsBody" class="obs-muted">Loading campaign architecture…</div>
   </div>
 
@@ -480,6 +480,7 @@ const API = '/api/google-cockpit';
 const PMAX_OBS_API = '/api/google-ads?action=pmax-observability&id=23834053403';
 const LATE_NIGHT_SEARCH_API = '/api/google-ads?action=late-night-search-intelligence';
 const DINNER_SEARCH_API = '/api/google-ads?action=dinner-search-intelligence';
+const BRAND_SEARCH_API = '/api/google-ads?action=brand-search-intelligence';
 const ORGANIC_API = '/api/organic-insights';
 const GOOGLE_ADS_CONSOLE = 'https://ads.google.com/aw/overview?__c=3681710084';
 const GOOGLE_ADS_CAMPAIGNS = 'https://ads.google.com/aw/campaigns?__c=3681710084';
@@ -553,8 +554,8 @@ function render(data) {
   document.body.classList.toggle('is-pmax', isPMax);
 
   // KPIs — pull the actual primary-campaign budget from allCampaigns (was
-  // hardcoded ₹500 which is the legacy Search campaign — wrong when PMax is
-  // primary at ₹300/d).
+  // hardcoded ₹500 which was the legacy Search campaign — wrong when the
+  // primary view is PMax or a surgical Search layer with its own budget.
   const primaryCamp = (data.allCampaigns || []).find(c => c.id === data.campaignId);
   const primaryBudget = primaryCamp?.budgetINR;
   const budgetInfo = (currentPeriod === 'today' && primaryBudget) ? `₹${primaryBudget} daily budget` : '';
@@ -788,6 +789,9 @@ function renderDeploymentStrip(data) {
     makeLink(`/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(currentId)}`, 'Current campaign criteria', 'Open the live primary campaign criteria'),
     makeLink('/api/google-ads?action=campaign-criteria&id=23834053403', 'PMax criteria', 'PMax proximity / geo targeting'),
     makeLink('/api/google-ads?action=late-night-search-intelligence', 'Late-night Search plan', 'Fresh campaign intelligence, guardrails and execution endpoint'),
+    makeLink('/api/google-ads?action=dinner-search-intelligence', 'Dinner Search plan', 'Dinner campaign intelligence, guardrails and execution endpoint'),
+    makeLink('/api/google-ads?action=brand-search-intelligence', 'Brand Search plan', 'Brand/legacy Hamza campaign intelligence and guardrails'),
+    makeLink('/go/google-brand-search', 'Brand landing', 'Brand/legacy Hamza direction-first landing page'),
     makeLink('/api/google-ads?action=campaign-criteria&id=23748431244', 'Legacy Search criteria', 'Old Search proximity / geo targeting if not removed yet'),
     makeLink('/api/google-ads-create-pmax?action=preflight', 'PMax preflight', 'Read the current PMax launch gaps'),
     makeLink(GOOGLE_ADS_CONVERSIONS, 'Conversions', 'Check STORE_VISITS / conversion setup'),
@@ -831,22 +835,23 @@ async function loadLateNightIntelligence(data) {
   const body = document.getElementById('campaignViewsBody');
   if (!body) return;
   try {
-    const [lateResp, dinnerResp] = await Promise.all([
+    const [lateResp, dinnerResp, brandResp] = await Promise.all([
       fetch(LATE_NIGHT_SEARCH_API),
       fetch(DINNER_SEARCH_API),
+      fetch(BRAND_SEARCH_API),
     ]);
-    const [intel, dinnerIntel] = await Promise.all([lateResp.json(), dinnerResp.json()]);
-    if (!intel.ok || !dinnerIntel.ok) {
-      body.innerHTML = `<div class="obs-error">Campaign architecture failed: ${intel.error || dinnerIntel.error || 'unknown error'}</div>`;
+    const [intel, dinnerIntel, brandIntel] = await Promise.all([lateResp.json(), dinnerResp.json(), brandResp.json()]);
+    if (!intel.ok || !dinnerIntel.ok || !brandIntel.ok) {
+      body.innerHTML = `<div class="obs-error">Campaign architecture failed: ${intel.error || dinnerIntel.error || brandIntel.error || 'unknown error'}</div>`;
       return;
     }
-    renderCampaignViews(data, intel, dinnerIntel);
+    renderCampaignViews(data, intel, dinnerIntel, brandIntel);
   } catch (e) {
     body.innerHTML = `<div class="obs-error">Could not load campaign architecture: ${e.message}</div>`;
   }
 }
 
-function renderCampaignViews(data, intel, dinnerIntel) {
+function renderCampaignViews(data, intel, dinnerIntel, brandIntel) {
   const body = document.getElementById('campaignViewsBody');
   if (!body) return;
   const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
@@ -861,6 +866,10 @@ function renderCampaignViews(data, intel, dinnerIntel) {
   const dinnerSpec = dinnerIntel?.spec || {};
   const dinnerGroups = dinnerSpec.adGroups || [];
   const dinnerKeywordCount = dinnerGroups.reduce((s, g) => s + (g.keywordCount || 0), 0);
+  const brandSearch = brandIntel?.live?.existingBrand || null;
+  const brandSpec = brandIntel?.spec || {};
+  const brandGroups = brandSpec.adGroups || [];
+  const brandKeywordCount = brandGroups.reduce((s, g) => s + (g.keywordCount || 0), 0);
   const guardRows = (intel.guardrails || []).map(g => `
     <div class="guard-row">
       <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
@@ -868,6 +877,12 @@ function renderCampaignViews(data, intel, dinnerIntel) {
     </div>
   `).join('');
   const dinnerGuardRows = (dinnerIntel?.guardrails || []).map(g => `
+    <div class="guard-row">
+      <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
+      <span>${esc(g.detail)}</span>
+    </div>
+  `).join('');
+  const brandGuardRows = (brandIntel?.guardrails || []).map(g => `
     <div class="guard-row">
       <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
       <span>${esc(g.detail)}</span>
@@ -886,6 +901,11 @@ function renderCampaignViews(data, intel, dinnerIntel) {
     dinnerSearch?.status === 'PAUSED' ? 'warn' :
     'ok';
   const dinnerLabel = dinnerSearch ? `${dinnerSearch.status} · ${dinnerSearch.id}` : 'Ready to create';
+  const brandState =
+    brandSearch?.status === 'ENABLED' ? 'ok' :
+    brandSearch?.status === 'PAUSED' ? 'warn' :
+    'ok';
+  const brandLabel = brandSearch ? `${brandSearch.status} · ${brandSearch.id}` : 'Ready to create';
   const pmaxState = pmax.status === 'ENABLED' ? 'ok' : 'warn';
   const pmaxSpend = data.overview?.spend || 0;
   const pmaxClicks = data.overview?.clicks || 0;
@@ -954,6 +974,28 @@ function renderCampaignViews(data, intel, dinnerIntel) {
           <a href="${esc(DINNER_SEARCH_API)}" target="_blank">Dinner intelligence JSON</a>
           <a href="/go/google-dinner-search" target="_blank">Dinner landing</a>
           ${dinnerSearch ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(dinnerSearch.id)}" target="_blank">Dinner criteria</a>` : ''}
+        </div>
+      </div>
+      <div class="view-card search">
+        <div class="view-head">
+          <div>
+            <div class="view-kicker">View 4 · Brand/Legacy Search</div>
+            <div class="view-title">${esc(brandSpec.campaignName || 'HE — Brand/Legacy Hamza Search — v1')}</div>
+          </div>
+          <div class="view-pill ${brandState}">${esc(brandLabel)}</div>
+        </div>
+        <div class="view-metrics">
+          <div class="view-metric"><span>Budget</span><strong>${money(brandSearch?.budgetINR || brandSpec.budgetINR || 75)}/d</strong></div>
+          <div class="view-metric"><span>Window</span><strong>07-23</strong></div>
+          <div class="view-metric"><span>Radius</span><strong>${esc(brandSpec.geo?.radiusKm || 5)} km</strong></div>
+        </div>
+        <div class="view-desc">${esc(brandIntel?.decision?.recommendation || 'Brand/Legacy Search protects Hamza searches and routes them to the correct HE pin.')} ${brandGroups.length} ad groups · ${brandKeywordCount} exact/phrase keywords · final URL ${esc(brandSpec.finalUrl || '')}.</div>
+        <div class="guard-list">${brandGuardRows}</div>
+        <div class="view-actions">
+          <a href="/ops/google-ads-directory/" target="_blank">Architecture directory</a>
+          <a href="${esc(BRAND_SEARCH_API)}" target="_blank">Brand intelligence JSON</a>
+          <a href="/go/google-brand-search" target="_blank">Brand landing</a>
+          ${brandSearch ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(brandSearch.id)}" target="_blank">Brand criteria</a>` : ''}
         </div>
       </div>
     </div>

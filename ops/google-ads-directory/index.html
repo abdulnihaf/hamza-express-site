@@ -81,6 +81,8 @@ tr:last-child td{border-bottom:0}
     <a href="#config">Config Dictionary</a>
     <a href="#persona">Persona Matrix</a>
     <a href="#late-night">Late-Night Search</a>
+    <a href="#dinner">Dinner Search</a>
+    <a href="#brand">Brand Search</a>
     <a href="#pmax">PMax Base</a>
     <a href="#roadmap">Next Campaigns</a>
     <a href="#sources">Sources</a>
@@ -96,14 +98,15 @@ tr:last-child td{border-bottom:0}
     <div class="actions">
       <a class="btn primary" href="/ops/google-cockpit/">Open Cockpit</a>
       <a class="btn" href="/api/google-ads?action=late-night-search-intelligence">Late-Night JSON</a>
-      <a class="btn" href="/go/google-night">Landing Page</a>
+      <a class="btn" href="/api/google-ads?action=dinner-search-intelligence">Dinner JSON</a>
+      <a class="btn" href="/api/google-ads?action=brand-search-intelligence">Brand JSON</a>
     </div>
   </div>
 
   <section class="grid kpis" id="owner">
     <div class="kpi"><b>Objective</b><span>Maximum physical footfall to Hamza Express, not generic clicks.</span></div>
-    <div class="kpi"><b>Base Layer</b><span>PMax stays broad discovery with store goals and local actions.</span></div>
-    <div class="kpi"><b>Surgical Layer</b><span>Late-night Search captures active hungry users from 22:00-03:00.</span></div>
+    <div class="kpi"><b>Active Stack</b><span>Three Search campaigns: late-night Rs 250, dinner Rs 175, brand Rs 75.</span></div>
+    <div class="kpi"><b>PMax Guardrail</b><span>PMax remains visible for audit, but current controlled spend is Search-led.</span></div>
     <div class="kpi"><b>Safety Lock</b><span>Exact pin proximity only. No city geo ID. No Gurugram path.</span></div>
   </section>
 
@@ -179,7 +182,7 @@ tr:last-child td{border-bottom:0}
         <tbody>
           <tr><td><b>Owner objective</b></td><td>Directly map campaign to one active intent.</td><td>Map campaign to store-goal optimization and broad reach.</td><td>Late-night footfall gets Search; PMax remains base discovery.</td></tr>
           <tr><td><b>Status</b></td><td>Create PAUSED, audit, then enable manually.</td><td>Existing PMax can stay ENABLED if guardrails stay clean.</td><td>No new spend starts automatically from this directory.</td></tr>
-          <tr><td><b>Budget</b></td><td>Exact daily budget by campaign.</td><td>Exact daily budget, but channel allocation is automated.</td><td>Rs 300/day assigned to late-night Search, not another PMax.</td></tr>
+          <tr><td><b>Budget</b></td><td>Exact daily budget by campaign.</td><td>Exact daily budget, but channel allocation is automated.</td><td>Rs 500/day active Search stack: Late Rs 250 + Dinner Rs 175 + Brand Rs 75.</td></tr>
           <tr><td><b>Geo</b></td><td>Exact proximity radius + presence-only setting.</td><td>Exact proximity radius + location asset, but delivery still optimizes broadly.</td><td>No city geo IDs. Use Hamza pin only.</td></tr>
           <tr><td><b>Time</b></td><td>Ad schedule blocks by day/hour.</td><td>Limited surgical time control for intent isolation.</td><td>Late-night Search runs only 22:00-03:00.</td></tr>
           <tr><td><b>Network</b></td><td>Google Search only, Search partners off, Display off.</td><td>Search, Maps, YouTube, Display, Discover, Gmail and other eligible inventory.</td><td>Keep Search clean for query audit; read PMax by channel split.</td></tr>
@@ -208,7 +211,7 @@ tr:last-child td{border-bottom:0}
             <td><b>Legacy Hamza Loyalist</b></td>
             <td>May not search generic food terms; uses branded memory, Maps, or known route.</td>
             <td><span class="score med">Medium</span></td>
-            <td>Branded Search later; PMax/Maps presence now.</td>
+            <td>Brand/Legacy Search now; PMax/Maps visibility remains as guardrail.</td>
             <td><span class="tag">hamza express</span><span class="tag">hamza hotel hkp road</span><span class="tag">ghee rice hamza</span></td>
             <td>Hamza name, HKP Road, Ghee Rice + Kabab, new Express face.</td>
             <td>Directions / menu</td>
@@ -269,14 +272,14 @@ tr:last-child td{border-bottom:0}
         <div class="band-title">Configured Now: Late-Night Maps Footfall Search</div>
         <div class="band-note">This is the first surgical campaign because it has the clearest Google behavior: active hungry users making a live choice between 10 PM and 3 AM.</div>
       </div>
-      <span class="pill green">Ready as paused</span>
+      <span class="pill green">Live layer</span>
     </div>
     <div class="cols-2">
       <div class="card">
         <h2>Campaign Coordinates</h2>
         <div class="row"><b>Name</b><span>HE - Late Night Maps Footfall Search - v1</span></div>
-        <div class="row"><b>Budget</b><span>Rs 300/day</span></div>
-        <div class="row"><b>Status on creation</b><span>PAUSED. No spend starts until owner enables.</span></div>
+        <div class="row"><b>Budget</b><span>Rs 250/day</span></div>
+        <div class="row"><b>Status</b><span>Created paused, audited, then enabled after criteria passed.</span></div>
         <div class="row"><b>Geo</b><span>Exact Hamza pin 12.9868469, 77.6044088. 7 km proximity only.</span></div>
         <div class="row"><b>Schedule</b><span>Daily 22:00-03:00, split across midnight.</span></div>
         <div class="row"><b>Network</b><span>Google Search only. No Display. No Search Partners at launch.</span></div>
@@ -290,14 +293,66 @@ tr:last-child td{border-bottom:0}
         <div class="row"><b>Late Night Bangalore</b><span>Captures wider late-night destination search inside the 7 km radius.</span></div>
       </div>
     </div>
-    <div class="callout">Why this is not PMax: the late-night eater has a live query and a live time window. Search gives control over query, schedule, proximity, negatives, ad copy and audit. PMax stays on as broad discovery; it should not carry this Rs 300/day surgical budget yet.</div>
+    <div class="callout">Why this is not PMax: the late-night eater has a live query and a live time window. Search gives control over query, schedule, proximity, negatives, ad copy and audit. It carries Rs 250/day because this is the widest and strongest active intent.</div>
+  </section>
+
+  <section class="band" id="dinner">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Configured Now: Dinner Dish-Led Non-Veg Search</div>
+        <div class="band-note">This catches nearby 6-10 PM dish decisions before the late-night mode begins. It is tight because Bangalore traffic makes 5-7 km too broad for normal dinner intent.</div>
+      </div>
+      <span class="pill green">Live layer</span>
+    </div>
+    <div class="cols-2">
+      <div class="card">
+        <h2>Campaign Coordinates</h2>
+        <div class="row"><b>Name</b><span>HE - Dinner Dish-Led Non-Veg Search - v1</span></div>
+        <div class="row"><b>Budget</b><span>Rs 175/day</span></div>
+        <div class="row"><b>Geo</b><span>Exact Hamza pin 12.9868469, 77.6044088. 3 km proximity only.</span></div>
+        <div class="row"><b>Schedule</b><span>Daily 18:00-22:00.</span></div>
+        <div class="row"><b>Network</b><span>Google Search only. No Display. No Search Partners at launch.</span></div>
+      </div>
+      <div class="card">
+        <h2>Ad Group Logic</h2>
+        <div class="row"><b>Biryani Kabab Ghee Rice</b><span>Dish-led dinner intent around the actual HE menu winners.</span></div>
+        <div class="row"><b>Non Veg Restaurant</b><span>Category-level dinner intent, still narrowed by 3 km and copy.</span></div>
+        <div class="row"><b>Shivajinagar Dinner</b><span>Destination/locality queries for people already choosing the area.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="brand">
+    <div class="band-head">
+      <div>
+        <div class="band-title">Configured Now: Brand/Legacy Hamza Search</div>
+        <div class="band-note">This protects high-intent Hamza searches and routes legacy Hamza Hotel/Hamza Express demand to the correct HE pin, menu, call and directions.</div>
+      </div>
+      <span class="pill green">Final slot</span>
+    </div>
+    <div class="cols-2">
+      <div class="card">
+        <h2>Campaign Coordinates</h2>
+        <div class="row"><b>Name</b><span>HE - Brand/Legacy Hamza Search - v1</span></div>
+        <div class="row"><b>Budget</b><span>Rs 75/day</span></div>
+        <div class="row"><b>Geo</b><span>Exact Hamza pin 12.9868469, 77.6044088. 5 km proximity only.</span></div>
+        <div class="row"><b>Schedule</b><span>Daily 07:00-23:00.</span></div>
+        <div class="row"><b>Final URL</b><span>/go/google-brand-search, a direction-first brand page.</span></div>
+      </div>
+      <div class="card">
+        <h2>Ad Group Logic</h2>
+        <div class="row"><b>Hamza Express Brand</b><span>hamza express, menu, directions, location, Shivajinagar.</span></div>
+        <div class="row"><b>Hamza Hotel Legacy</b><span>hamza hotel, Hamza restaurant, legacy searches, exact hamza.</span></div>
+        <div class="row"><b>Why separate?</b><span>Brand demand is already warm. Mixing it with dinner/late-night would hide real campaign learning.</span></div>
+      </div>
+    </div>
   </section>
 
   <section class="band" id="pmax">
     <div class="band-head">
       <div>
-        <div class="band-title">Kept As-Is: PMax Store Goals Base Layer</div>
-        <div class="band-note">PMax is still useful, but its role is different. It is broad local presence and store-goal discovery, supported by the GBP location asset and Customer Match list.</div>
+        <div class="band-title">Kept Visible: PMax Store Goals Base Layer</div>
+        <div class="band-note">PMax is still useful, but current spend control is Search-led. The cockpit keeps PMax visible so geo, store-goal, Customer Match and asset-group guardrails are not forgotten.</div>
       </div>
       <span class="pill blue">Base discovery</span>
     </div>
@@ -320,9 +375,9 @@ tr:last-child td{border-bottom:0}
       <table>
         <thead><tr><th>Priority</th><th>Campaign</th><th>Reason</th><th>Budget idea</th><th>Do now?</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>Late Night Maps Footfall Search</td><td>Strongest active Google intent, time-bound, owner KPI maps to directions/calls.</td><td>Rs 300/day</td><td><span class="ok">Yes</span></td></tr>
-          <tr><td>2</td><td>Branded / Legacy Capture Search</td><td>Protects Hamza name, Express confusion, menu/direction searches.</td><td>Rs 100-150/day</td><td><span class="warn">After late-night audit</span></td></tr>
-          <tr><td>3</td><td>Family Comfort Dinner Search</td><td>Weekend/evening planned demand, but needs seating/family landing proof first.</td><td>Rs 200/day test</td><td><span class="warn">Needs asset/landing proof</span></td></tr>
+          <tr><td>1</td><td>Late Night Maps Footfall Search</td><td>Strongest active Google intent, time-bound, owner KPI maps to directions/calls.</td><td>Rs 250/day</td><td><span class="ok">Live</span></td></tr>
+          <tr><td>2</td><td>Dinner Dish-Led Non-Veg Search</td><td>Nearby 6-10 PM biryani/kabab/ghee-rice and non-veg dinner demand.</td><td>Rs 175/day</td><td><span class="ok">Live</span></td></tr>
+          <tr><td>3</td><td>Brand / Legacy Hamza Search</td><td>Protects Hamza name, Express confusion, menu/direction searches.</td><td>Rs 75/day</td><td><span class="ok">Final slot</span></td></tr>
           <tr><td>4</td><td>Parcel / Pickup Search</td><td>Useful for calls/menu, but flyers/TV/counter flow likely stronger first.</td><td>Rs 100/day test</td><td><span class="warn">Later</span></td></tr>
           <tr><td>5</td><td>Explorer PMax / Video Layer</td><td>Better after food explorer creative and local proof assets are selected.</td><td>Separate test</td><td><span class="bad">Not yet</span></td></tr>
         </tbody>
@@ -341,6 +396,8 @@ tr:last-child td{border-bottom:0}
     <div class="cols-2">
       <div class="source-list">
         <a href="/api/google-ads?action=late-night-search-intelligence">Live HE late-night Search intelligence JSON<span>Campaign spec, guardrails, live state and reset endpoint.</span></a>
+        <a href="/api/google-ads?action=dinner-search-intelligence">Live HE dinner Search intelligence JSON<span>Campaign spec, guardrails, live state and creation endpoint.</span></a>
+        <a href="/api/google-ads?action=brand-search-intelligence">Live HE Brand/Legacy Search intelligence JSON<span>Brand campaign spec, guardrails, live state and creation endpoint.</span></a>
         <a href="/api/google-ads?action=pmax-observability&id=23834053403">Live PMax observability JSON<span>Corrected phase, channel split, hour split, Store Visits, Customer Match.</span></a>
         <a href="/ops/google-cockpit/">HE Google Ads cockpit<span>Owner dashboard for live performance and guardrails.</span></a>
       </div>
@@ -372,20 +429,29 @@ async function loadLiveState() {
   const el = document.getElementById('liveState');
   if (!el) return;
   try {
-    const [late, pmax] = await Promise.all([
+    const [late, dinner, brand, pmax] = await Promise.all([
       fetchJson('/api/google-ads?action=late-night-search-intelligence'),
+      fetchJson('/api/google-ads?action=dinner-search-intelligence'),
+      fetchJson('/api/google-ads?action=brand-search-intelligence'),
       fetchJson('/api/google-ads?action=pmax-observability&id=23834053403&from=2026-05-10&correctedFrom=2026-05-13'),
     ]);
     const pmaxLive = late.live?.currentPmax || {};
     const lateSearch = late.live?.existingLateNight || null;
-    const legacy = late.live?.legacySearch || null;
+    const dinnerSearch = dinner.live?.existingDinner || null;
+    const brandSearch = brand.live?.existingBrand || null;
     const corrected = pmax.phases?.corrected || {};
-    const badGuards = (late.guardrails || []).filter(g => g.state === 'bad');
+    const badGuards = [...(late.guardrails || []), ...(dinner.guardrails || []), ...(brand.guardrails || [])].filter(g => g.state === 'bad');
+    const searchBudget = [lateSearch, dinnerSearch, brandSearch]
+      .filter(c => c?.status === 'ENABLED')
+      .reduce((sum, c) => sum + Number(c.budgetINR || 0), 0);
     el.innerHTML = [
-      card('PMax Base', `${pmaxLive.status || 'UNKNOWN'} / ${money(pmaxLive.budgetINR || 300)}/day`, 'Broad store-goal discovery layer; keep reading channel and geo guardrails.', pmaxLive.status === 'ENABLED' ? 'ok' : 'warn'),
-      card('Late-Night Search', lateSearch ? `${lateSearch.status} / ${lateSearch.id}` : 'Not created yet', lateSearch ? 'Fresh surgical layer exists. Enable only after audit.' : (legacy ? `Legacy Search ${legacy.id} is ${legacy.status}; reset endpoint can create the fresh campaign paused.` : 'Ready to create fresh paused Search campaign.'), lateSearch ? 'warn' : 'ok'),
+      card('Active Search Budget', `${money(searchBudget)}/day`, 'Late Night + Dinner + Brand should total Rs 500/day when all three are enabled.', searchBudget === 500 ? 'ok' : 'warn'),
+      card('Late-Night Search', lateSearch ? `${lateSearch.status} / ${lateSearch.id}` : 'Not created yet', 'Rs 250/day · 22:00-03:00 · 7 km exact pin.', lateSearch?.status === 'ENABLED' ? 'ok' : 'warn'),
+      card('Dinner Search', dinnerSearch ? `${dinnerSearch.status} / ${dinnerSearch.id}` : 'Not created yet', 'Rs 175/day · 18:00-22:00 · 3 km exact pin.', dinnerSearch?.status === 'ENABLED' ? 'ok' : 'warn'),
+      card('Brand Search', brandSearch ? `${brandSearch.status} / ${brandSearch.id}` : 'Not created yet', 'Rs 75/day · 07:00-23:00 · 5 km exact pin.', brandSearch?.status === 'ENABLED' ? 'ok' : 'warn'),
+      card('PMax Base', `${pmaxLive.status || 'UNKNOWN'} / ${money(pmaxLive.budgetINR || 300)}/day`, 'Broad store-goal layer visible for audit; not part of the Rs 500 active Search stack.', pmaxLive.status === 'ENABLED' ? 'ok' : 'warn'),
       card('Corrected PMax Spend', `Rs ${Number(corrected.spend || 0).toFixed(2)}`, `${corrected.clicks || 0} clicks after corrected geo start.`, 'ok'),
-      card('Guardrails', badGuards.length ? `${badGuards.length} bad` : 'Clean enough to proceed', badGuards.length ? badGuards.map(g => g.label).join(', ') : 'No bad late-night launch guardrails returned by API.', badGuards.length ? 'bad' : 'ok'),
+      card('Guardrails', badGuards.length ? `${badGuards.length} bad` : 'Clean enough to proceed', badGuards.length ? badGuards.map(g => g.label).join(', ') : 'No bad Search launch guardrails returned by API.', badGuards.length ? 'bad' : 'ok'),
     ].join('');
   } catch (e) {
     el.innerHTML = `<div class="card"><h3>Live read failed</h3><p>${esc(e.message)}</p><p>Use the API links above from production if this is a preview environment without Ads secrets.</p></div>`;
