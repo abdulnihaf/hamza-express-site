@@ -24,7 +24,7 @@ export async function onRequest(context) {
       ? `campaign.id = ${escapeNumber(campaignId)}`
       : `campaign.status != 'REMOVED'`;
 
-    const [campaigns, ads, campaignAssets, adGroupAssets, assetGroupAssets] = await Promise.all([
+    const [campaigns, ads, campaignAssets, adGroupAssets, assetPolicies, assetGroupAssets] = await Promise.all([
       runQuery(accessToken, env, 'campaigns', `
         SELECT
           campaign.id,
@@ -66,11 +66,9 @@ export async function onRequest(context) {
           campaign_asset.asset,
           campaign_asset.field_type,
           campaign_asset.status,
-          campaign_asset.policy_summary.approval_status,
-          campaign_asset.policy_summary.review_status,
-          campaign_asset.policy_summary.policy_topic_entries,
           asset.id,
           asset.name,
+          asset.type,
           asset.final_urls,
           asset.tracking_url_template,
           asset.sitelink_asset.link_text,
@@ -91,17 +89,35 @@ export async function onRequest(context) {
           ad_group_asset.asset,
           ad_group_asset.field_type,
           ad_group_asset.status,
-          ad_group_asset.policy_summary.approval_status,
-          ad_group_asset.policy_summary.review_status,
-          ad_group_asset.policy_summary.policy_topic_entries,
           asset.id,
           asset.name,
+          asset.type,
           asset.final_urls,
           asset.tracking_url_template,
           asset.sitelink_asset.link_text,
           asset.callout_asset.callout_text
         FROM ad_group_asset
         WHERE ${where}
+      `),
+      runQuery(accessToken, env, 'asset_policies', `
+        SELECT
+          asset.id,
+          asset.name,
+          asset.type,
+          asset.status,
+          asset.final_urls,
+          asset.tracking_url_template,
+          asset.policy_summary.approval_status,
+          asset.policy_summary.review_status,
+          asset.policy_summary.policy_topic_entries,
+          asset.sitelink_asset.link_text,
+          asset.sitelink_asset.description1,
+          asset.sitelink_asset.description2,
+          asset.callout_asset.callout_text,
+          asset.text_asset.text,
+          asset.youtube_video_asset.youtube_video_id
+        FROM asset
+        WHERE asset.status != 'REMOVED'
       `),
       runQuery(accessToken, env, 'asset_group_assets', `
         SELECT
@@ -128,16 +144,17 @@ export async function onRequest(context) {
       `),
     ]);
 
+    const assetLinks = linkAssetsToCampaigns([...campaignAssets.rows, ...adGroupAssets.rows, ...assetGroupAssets.rows]);
     const issues = [
       ...collectPolicyIssues('ad', ads.rows),
-      ...collectPolicyIssues('campaign_asset', campaignAssets.rows),
-      ...collectPolicyIssues('ad_group_asset', adGroupAssets.rows),
+      ...collectAssetPolicyIssues(assetPolicies.rows, assetLinks),
       ...collectPolicyIssues('asset_group_asset', assetGroupAssets.rows),
     ];
     const urls = uniqueUrls([
       ...collectUrls(ads.rows),
       ...collectUrls(campaignAssets.rows),
       ...collectUrls(adGroupAssets.rows),
+      ...collectUrls(assetPolicies.rows),
       ...collectUrls(assetGroupAssets.rows),
     ]);
     const urlAudit = await auditUrls(urls);
@@ -151,7 +168,7 @@ export async function onRequest(context) {
         campaigns: campaigns.rows.length,
         policyIssues: issues.length,
         urlChecks: urlAudit.length,
-        queryErrors: [campaigns, ads, campaignAssets, adGroupAssets, assetGroupAssets]
+        queryErrors: [campaigns, ads, campaignAssets, adGroupAssets, assetPolicies, assetGroupAssets]
           .filter(q => !q.ok)
           .map(q => ({ name: q.name, error: q.error })),
       },
@@ -166,7 +183,7 @@ export async function onRequest(context) {
         primaryStatusReasons: row.campaign?.primaryStatusReasons || [],
         servingStatus: row.campaign?.servingStatus,
       })),
-      queryStatus: [campaigns, ads, campaignAssets, adGroupAssets, assetGroupAssets].map(q => ({
+      queryStatus: [campaigns, ads, campaignAssets, adGroupAssets, assetPolicies, assetGroupAssets].map(q => ({
         name: q.name,
         ok: q.ok,
         rows: q.rows.length,
@@ -214,6 +231,58 @@ async function runQuery(accessToken, env, name, query) {
   }
 }
 
+function linkAssetsToCampaigns(rows) {
+  const out = {};
+  for (const row of rows) {
+    const assetId = row.asset?.id || assetIdFromResource(row.campaignAsset?.asset || row.adGroupAsset?.asset || row.assetGroupAsset?.asset);
+    if (!assetId) continue;
+    out[assetId] ||= [];
+    const campaign = {
+      campaignId: row.campaign?.id,
+      campaignName: row.campaign?.name,
+      campaignStatus: row.campaign?.status,
+      campaignType: row.campaign?.advertisingChannelType,
+      adGroupId: row.adGroup?.id || row.assetGroup?.id || null,
+      adGroupName: row.adGroup?.name || row.assetGroup?.name || null,
+      fieldType: row.campaignAsset?.fieldType || row.adGroupAsset?.fieldType || row.assetGroupAsset?.fieldType || null,
+      linkStatus: row.campaignAsset?.status || row.adGroupAsset?.status || row.assetGroupAsset?.status || null,
+    };
+    if (!out[assetId].some(item => JSON.stringify(item) === JSON.stringify(campaign))) {
+      out[assetId].push(campaign);
+    }
+  }
+  return out;
+}
+
+function collectAssetPolicyIssues(rows, assetLinks) {
+  return rows
+    .map(row => {
+      const policy = row.asset?.policySummary || {};
+      const approval = policy.approvalStatus || '';
+      const review = policy.reviewStatus || '';
+      const topics = policyTopicNames(policy.policyTopicEntries || []);
+      const isIssue = approval && !['APPROVED', 'APPROVED_LIMITED'].includes(approval);
+      if (!isIssue && !topics.length) return null;
+      const assetId = row.asset?.id;
+      return {
+        source: 'asset',
+        assetId,
+        assetName: row.asset?.name || null,
+        assetType: row.asset?.type || null,
+        assetStatus: row.asset?.status || null,
+        approvalStatus: approval || null,
+        reviewStatus: review || null,
+        policyTopics: topics,
+        finalUrls: finalUrls(row),
+        trackingUrlTemplate: row.asset?.trackingUrlTemplate || null,
+        text: row.asset?.sitelinkAsset?.linkText || row.asset?.calloutAsset?.calloutText || row.asset?.textAsset?.text || null,
+        linkedCampaigns: assetLinks[assetId] || [],
+        rawPolicy: policy,
+      };
+    })
+    .filter(Boolean);
+}
+
 function collectPolicyIssues(source, rows) {
   return rows
     .map(row => {
@@ -248,6 +317,11 @@ function collectPolicyIssues(source, rows) {
       };
     })
     .filter(Boolean);
+}
+
+function assetIdFromResource(resourceName) {
+  const match = String(resourceName || '').match(/\/assets\/(\d+)$/);
+  return match ? match[1] : null;
 }
 
 function collectUrls(rows) {
