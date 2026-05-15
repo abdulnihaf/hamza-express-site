@@ -341,18 +341,18 @@ tr:hover td{background:rgba(66,133,244,.04)}
       <div class="deploy-pill" id="deployPill">LIVE</div>
     </div>
     <div class="deploy-links" id="deployLinks"></div>
-    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km · Dinner Search 3 km · Brand/Legacy Search 5 km</div>
+    <div class="deploy-note">Active Search stack only · Exact Hamza pin: 12.9868469, 77.6044088 · Late-night 7 km · Dinner 3 km · Brand/Legacy 5 km</div>
   </div>
 
   <!-- PMax observability guardrails — read-only diagnostics -->
-  <div class="section obs-section" id="pmaxObsSection">
+  <div class="section obs-section" id="pmaxObsSection" style="display:none">
     <div class="section-title">PMax Observability Guardrails <span class="tip">— read-only audit · corrected phase · no spend changes</span></div>
     <div id="pmaxObsBody" class="obs-muted">Loading PMax observability…</div>
   </div>
 
-  <!-- Multi-campaign operating view: PMax base layer + surgical Search layers -->
+  <!-- Multi-campaign operating view: active surgical Search layers only -->
   <div class="section campaign-views-section" id="campaignViewsSection">
-    <div class="section-title">Campaign Views <span class="tip">— PMax base visibility plus the three surgical Search footfall layers</span></div>
+    <div class="section-title">Campaign Views <span class="tip">— active surgical Search footfall layers only</span></div>
     <div id="campaignViewsBody" class="obs-muted">Loading campaign architecture…</div>
   </div>
 
@@ -411,7 +411,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 
   <!-- Layered Intelligence Status — surfaces full audience layer state -->
   <div class="section" id="layerSection">
-    <div class="section-title">Layered Intelligence Status <span class="tip">— PMax campaign readiness · audience signals · negative-kw lists</span></div>
+    <div class="section-title">Layered Intelligence Status <span class="tip">— active campaign readiness · audience signals · negative-kw lists</span></div>
     <div class="layer-grid" id="layerGrid"></div>
     <div class="layer-bakrid" id="layerBakrid"></div>
   </div>
@@ -787,13 +787,10 @@ function renderDeploymentStrip(data) {
     makeLink(GOOGLE_ADS_CAMPAIGNS, 'Campaigns list', 'View all live campaigns'),
     makeLink('/ops/google-ads-directory/', 'Google Ads directory', 'Persona-led campaign architecture and launch map'),
     makeLink(`/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(currentId)}`, 'Current campaign criteria', 'Open the live primary campaign criteria'),
-    makeLink('/api/google-ads?action=campaign-criteria&id=23834053403', 'PMax criteria', 'PMax proximity / geo targeting'),
     makeLink('/api/google-ads?action=late-night-search-intelligence', 'Late-night Search plan', 'Fresh campaign intelligence, guardrails and execution endpoint'),
     makeLink('/api/google-ads?action=dinner-search-intelligence', 'Dinner Search plan', 'Dinner campaign intelligence, guardrails and execution endpoint'),
     makeLink('/api/google-ads?action=brand-search-intelligence', 'Brand Search plan', 'Brand/legacy Hamza campaign intelligence and guardrails'),
     makeLink('/go/google-brand-search', 'Brand landing', 'Brand/legacy Hamza direction-first landing page'),
-    makeLink('/api/google-ads?action=campaign-criteria&id=23748431244', 'Legacy Search criteria', 'Old Search proximity / geo targeting if not removed yet'),
-    makeLink('/api/google-ads-create-pmax?action=preflight', 'PMax preflight', 'Read the current PMax launch gaps'),
     makeLink(GOOGLE_ADS_CONVERSIONS, 'Conversions', 'Check STORE_VISITS / conversion setup'),
     makeLink(HE_MAPS_CANONICAL, 'Canonical Maps pin', 'Hamza Express Maps place_id'),
     makeLink(HE_MAPS_SHARE, 'Maps share link', 'Short Maps share URL'),
@@ -810,7 +807,7 @@ async function loadPmaxObservability(data) {
   const body = document.getElementById('pmaxObsBody');
   if (!section || !body) return;
 
-  if (data.campaignType !== 'PERFORMANCE_MAX') {
+  if (data.campaignType !== 'PERFORMANCE_MAX' || data.overview?.status !== 'ENABLED') {
     section.style.display = 'none';
     return;
   }
@@ -856,7 +853,6 @@ function renderCampaignViews(data, intel, dinnerIntel, brandIntel) {
   if (!body) return;
   const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
   const money = n => `₹${Number(n || 0).toFixed(0)}`;
-  const pmax = (intel.live?.currentPmax) || (data.allCampaigns || []).find(c => c.id === '23834053403') || {};
   const search = intel.live?.existingLateNight || null;
   const legacy = intel.live?.legacySearch || null;
   const spec = intel.spec || {};
@@ -906,36 +902,13 @@ function renderCampaignViews(data, intel, dinnerIntel, brandIntel) {
     brandSearch?.status === 'PAUSED' ? 'warn' :
     'ok';
   const brandLabel = brandSearch ? `${brandSearch.status} · ${brandSearch.id}` : 'Ready to create';
-  const pmaxState = pmax.status === 'ENABLED' ? 'ok' : 'warn';
-  const pmaxSpend = data.overview?.spend || 0;
-  const pmaxClicks = data.overview?.clicks || 0;
 
   body.innerHTML = `
     <div class="view-grid">
-      <div class="view-card pmax">
-        <div class="view-head">
-          <div>
-            <div class="view-kicker">View 1 · Broad discovery</div>
-            <div class="view-title">${esc(pmax.name || 'HE — PMax Store Goals — v1')}</div>
-          </div>
-          <div class="view-pill ${pmaxState}">${esc(pmax.status || 'UNKNOWN')}</div>
-        </div>
-        <div class="view-metrics">
-          <div class="view-metric"><span>Budget</span><strong>${money(pmax.budgetINR || 300)}/d</strong></div>
-          <div class="view-metric"><span>${esc(currentPeriod)}</span><strong>₹${Number(pmaxSpend || 0).toFixed(2)}</strong></div>
-          <div class="view-metric"><span>Clicks</span><strong>${fmt(pmaxClicks || 0)}</strong></div>
-        </div>
-        <div class="view-desc">This layer stays as broad local discovery across PMax inventory. Its job is not surgical keyword control; it keeps the store visible while Search captures late-night intent.</div>
-        <div class="view-actions">
-          <a href="/ops/google-ads-directory/" target="_blank">Architecture directory</a>
-          <a href="/api/google-ads?action=pmax-observability&id=23834053403" target="_blank">PMax audit JSON</a>
-          <a href="/api/google-ads?action=campaign-criteria&id=23834053403" target="_blank">PMax criteria</a>
-        </div>
-      </div>
       <div class="view-card search">
         <div class="view-head">
           <div>
-            <div class="view-kicker">View 2 · Late-night Maps/Search</div>
+            <div class="view-kicker">View 1 · Late-night Maps/Search</div>
             <div class="view-title">${esc(spec.campaignName || 'HE — Late Night Maps Footfall Search — v1')}</div>
           </div>
           <div class="view-pill ${searchState}">${esc(searchLabel)}</div>
@@ -957,7 +930,7 @@ function renderCampaignViews(data, intel, dinnerIntel, brandIntel) {
       <div class="view-card search">
         <div class="view-head">
           <div>
-            <div class="view-kicker">View 3 · Dinner dish-led Search</div>
+            <div class="view-kicker">View 2 · Dinner dish-led Search</div>
             <div class="view-title">${esc(dinnerSpec.campaignName || 'HE — Dinner Dish-Led Non-Veg Search — v1')}</div>
           </div>
           <div class="view-pill ${dinnerState}">${esc(dinnerLabel)}</div>
@@ -979,7 +952,7 @@ function renderCampaignViews(data, intel, dinnerIntel, brandIntel) {
       <div class="view-card search">
         <div class="view-head">
           <div>
-            <div class="view-kicker">View 4 · Brand/Legacy Search</div>
+            <div class="view-kicker">View 3 · Brand/Legacy Search</div>
             <div class="view-title">${esc(brandSpec.campaignName || 'HE — Brand/Legacy Hamza Search — v1')}</div>
           </div>
           <div class="view-pill ${brandState}">${esc(brandLabel)}</div>
@@ -1309,32 +1282,24 @@ function renderLayer(data) {
   const grid = document.getElementById('layerGrid');
   if (!grid) return;
   const camps = data.allCampaigns || [];
+  const activeCamps = camps.filter(c => c.status === 'ENABLED');
   const userLists = (data.audiences && data.audiences.userLists) || [];
   const customAuds = (data.audiences && data.audiences.customAudiences) || [];
   const sharedSets = data.sharedSets || [];
 
   // Group campaigns by serving state
-  const servingCount = camps.filter(c => c.servingStatus === 'SERVING' && c.status === 'ENABLED').length;
-  const pausedCount  = camps.filter(c => c.status === 'PAUSED').length;
-  const removedCount = camps.filter(c => c.status === 'REMOVED').length;
+  const servingCount = activeCamps.filter(c => c.servingStatus === 'SERVING').length;
 
   const escapeHTML = s => String(s || '').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
   const truncate = (s, n) => s && s.length > n ? s.slice(0, n-1) + '…' : (s || '');
 
   // Campaign card
-  const campRows = camps.length === 0
-    ? '<div class="lc-empty">No campaigns yet — create PMax Store Goals via ads.google.com</div>'
-    : camps.slice(0, 5).map(c => {
+  const campRows = activeCamps.length === 0
+    ? '<div class="lc-empty">No active campaigns visible</div>'
+    : activeCamps.slice(0, 5).map(c => {
         const stateClass = c.status === 'ENABLED' && c.servingStatus === 'SERVING' ? 'lc-on'
-          : c.status === 'PAUSED' ? 'lc-warn'
-          : c.status === 'REMOVED' ? 'lc-off'
           : 'lc-warn';
-        // Show actual status — Google keeps servingStatus='SERVING' even for
-        // paused campaigns (it means "would serve if enabled"). Always check
-        // status first so paused campaigns label correctly.
         const stateLabel =
-          c.status === 'PAUSED'  ? 'PAUSED' :
-          c.status === 'REMOVED' ? 'REMOVED' :
           c.status === 'ENABLED' && c.servingStatus === 'SERVING' ? 'SERVING' :
           c.status === 'ENABLED' ? 'ENABLED' : (c.status || '?');
         const sub = c.budgetINR ? `₹${c.budgetINR}/d · ${c.channelType||'?'}` : (c.channelType || '?');
@@ -1346,11 +1311,11 @@ function renderLayer(data) {
       }).join('');
   const campCard = `<div class="layer-card">
     <div class="lc-head">
-      <span class="lc-title">Campaigns</span>
-      <span class="lc-count">${camps.length}</span>
+      <span class="lc-title">Active campaigns</span>
+      <span class="lc-count">${activeCamps.length}</span>
     </div>
     ${campRows}
-    <div class="lc-foot">${servingCount} serving · ${pausedCount} paused · ${removedCount} removed</div>
+    <div class="lc-foot">${servingCount} serving · active-only view</div>
   </div>`;
 
   // Customer Match cards (user lists)
