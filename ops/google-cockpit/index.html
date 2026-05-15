@@ -921,7 +921,7 @@ function renderCampaignViews(data, intel, dinnerIntel) {
           <div class="view-pill ${searchState}">${esc(searchLabel)}</div>
         </div>
         <div class="view-metrics">
-          <div class="view-metric"><span>Budget</span><strong>${money(spec.budgetINR || 300)}/d</strong></div>
+          <div class="view-metric"><span>Budget</span><strong>${money(search?.budgetINR || spec.budgetINR || 250)}/d</strong></div>
           <div class="view-metric"><span>Window</span><strong>22-03</strong></div>
           <div class="view-metric"><span>Radius</span><strong>${esc(spec.geo?.radiusKm || 7)} km</strong></div>
         </div>
@@ -943,7 +943,7 @@ function renderCampaignViews(data, intel, dinnerIntel) {
           <div class="view-pill ${dinnerState}">${esc(dinnerLabel)}</div>
         </div>
         <div class="view-metrics">
-          <div class="view-metric"><span>Budget</span><strong>${money(dinnerSpec.budgetINR || 300)}/d</strong></div>
+          <div class="view-metric"><span>Budget</span><strong>${money(dinnerSearch?.budgetINR || dinnerSpec.budgetINR || 175)}/d</strong></div>
           <div class="view-metric"><span>Window</span><strong>18-22</strong></div>
           <div class="view-metric"><span>Radius</span><strong>${esc(dinnerSpec.geo?.radiusKm || 3)} km</strong></div>
         </div>
