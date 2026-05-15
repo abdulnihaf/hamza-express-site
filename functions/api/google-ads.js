@@ -20,6 +20,11 @@ const DINNER_SEARCH_CONFIRM = 'CREATE_DINNER_SEARCH_V1';
 const DINNER_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-dinner-search';
 const DINNER_SEARCH_BUDGET_INR = 175;
 const DINNER_SEARCH_RADIUS_KM = 3;
+const BRAND_SEARCH_CAMPAIGN_NAME = 'HE — Brand/Legacy Hamza Search — v1';
+const BRAND_SEARCH_CONFIRM = 'CREATE_BRAND_SEARCH_V1';
+const BRAND_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-brand-search';
+const BRAND_SEARCH_BUDGET_INR = 75;
+const BRAND_SEARCH_RADIUS_KM = 5;
 const HE_WALK_IN_NEGATIVE_SET_ID = '12074853990';
 const ADS_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const LATE_NIGHT_AD_GROUPS = [
@@ -292,6 +297,97 @@ const DINNER_SEARCH_EXTRA_NEGATIVES = [
   'breakfast',
 ];
 
+const BRAND_SEARCH_AD_GROUPS = [
+  {
+    key: 'hamza_express_brand',
+    name: 'Hamza Express Brand',
+    cpcINR: 12,
+    path1: 'hamza',
+    path2: 'express',
+    keywords: [
+      ['hamza express', 'PHRASE'],
+      ['hamza express', 'EXACT'],
+      ['hamza express bangalore', 'PHRASE'],
+      ['hamza express shivajinagar', 'PHRASE'],
+      ['hamza express hkp road', 'PHRASE'],
+      ['hamza express menu', 'PHRASE'],
+      ['hamza express directions', 'PHRASE'],
+      ['hamza express location', 'PHRASE'],
+    ],
+    headlines: [
+      'Hamza Express HKP Road',
+      'Searching Hamza?',
+      'Get Directions',
+      'Same Hamza Food Memory',
+      'Biryani Kabab Ghee Rice',
+      'Shivajinagar Hamza',
+      'Since 1918',
+      'Menu And Directions',
+      'Dine-In Or Parcel',
+      'Near Commercial Street',
+    ],
+  },
+  {
+    key: 'hamza_hotel_legacy',
+    name: 'Hamza Hotel Legacy',
+    cpcINR: 10,
+    path1: 'hamza',
+    path2: 'hotel',
+    keywords: [
+      ['hamza hotel', 'PHRASE'],
+      ['hamza hotel', 'EXACT'],
+      ['hamza hotel bangalore', 'PHRASE'],
+      ['hamza hotel shivajinagar', 'PHRASE'],
+      ['hamza hotel hkp road', 'PHRASE'],
+      ['hamza hotel menu', 'PHRASE'],
+      ['hamza restaurant shivajinagar', 'PHRASE'],
+      ['hamza', 'EXACT'],
+    ],
+    headlines: [
+      'Hamza Hotel Legacy',
+      'Hamza Express HKP Road',
+      'Correct Hamza Pin',
+      'Get Directions',
+      'Same Hamza Food Memory',
+      'Biryani Kabab Ghee Rice',
+      'Shivajinagar Hamza',
+      'Since 1918',
+      'Menu And Directions',
+      'Dine-In Or Parcel',
+    ],
+  },
+];
+
+const BRAND_SEARCH_DESCRIPTIONS = [
+  'Searching for Hamza? Hamza Express is on HKP Road with biryani, kabab and ghee rice.',
+  'Tap for exact Google Maps directions to Hamza Express on HKP Road, Shivajinagar.',
+  'Brand and legacy searches go to the correct Hamza Express pin, menu and call actions.',
+  'Same Hamza food memory, new Express face. Dine-in or parcel from HKP Road.',
+];
+
+const BRAND_SEARCH_EXTRA_NEGATIVES = [
+  'hotel room',
+  'rooms',
+  'lodge',
+  'lodging',
+  'pg',
+  'hostel',
+  'oyo',
+  'recipe',
+  'how to make',
+  'jobs',
+  'salary',
+  'franchise',
+  'owner',
+  'contact number job',
+  'free',
+  'coupon',
+  'discount',
+  'pure veg',
+  'veg only',
+  'vegetarian',
+];
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -333,6 +429,10 @@ export async function onRequest(context) {
         return await getDinnerSearchIntelligence(accessToken, env);
       case 'create-dinner-search':
         return await createDinnerSearch(accessToken, env, request);
+      case 'brand-search-intelligence':
+        return await getBrandSearchIntelligence(accessToken, env);
+      case 'create-brand-search':
+        return await createBrandSearch(accessToken, env, request);
       case 'pause-campaign':
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'PAUSED');
       case 'enable-campaign':
@@ -1072,7 +1172,7 @@ async function getLateNightSearchIntelligence(accessToken, env) {
     ok: true,
     asOf: todayIST(),
     decision: {
-      recommendation: 'Use fresh Late Night Maps Footfall Search, not another PMax, for the ₹300/day layer.',
+      recommendation: 'Use Late Night Maps Footfall Search as the ₹250/day surgical layer.',
       reason: 'PMax is already live as broad discovery; the new layer needs keyword, schedule, query, and Maps-action control.',
     },
     spec,
@@ -1617,7 +1717,7 @@ async function getDinnerSearchIntelligence(accessToken, env) {
     ok: true,
     asOf: todayIST(),
     decision: {
-      recommendation: 'Use Dinner Dish-Led Non-Veg Search as the second ₹300/day surgical layer.',
+      recommendation: 'Use Dinner Dish-Led Non-Veg Search as the ₹175/day surgical layer.',
       reason: 'Dinner intent is dish-led and distance-sensitive; a 3 km Search campaign gives tighter control than PMax for this eater bucket.',
     },
     spec,
@@ -1877,6 +1977,564 @@ async function createDinnerSearch(accessToken, env, request) {
     auditLinks: {
       criteria: `/api/google-ads?action=campaign-criteria&id=${campaignId}`,
       intelligence: '/api/google-ads?action=dinner-search-intelligence',
+      cockpit: '/ops/google-cockpit/',
+    },
+    log,
+  });
+}
+
+// ============================================================
+// BRAND / LEGACY HAMZA SEARCH — Intelligence + safe create
+// Captures people searching Hamza, Hamza Hotel, or Hamza Express and routes
+// them to the correct HE Maps-first page. Create PAUSED, audit, then enable.
+// ============================================================
+function brandSearchSpec() {
+  return {
+    campaignName: BRAND_SEARCH_CAMPAIGN_NAME,
+    ownerObjective: 'Capture existing Hamza/Hamza Hotel/Hamza Express demand and route it to the correct Hamza Express pin.',
+    roleInAccount: 'Brand-defense and legacy-memory Search layer. This does not compete with generic dinner or late-night intent.',
+    budgetINR: BRAND_SEARCH_BUDGET_INR,
+    createStatus: 'PAUSED',
+    finalUrl: BRAND_SEARCH_FINAL_URL,
+    geo: {
+      type: 'PROXIMITY_ONLY',
+      lat: HAMZA_PIN.lat,
+      lng: HAMZA_PIN.lng,
+      radiusKm: BRAND_SEARCH_RADIUS_KM,
+      locationOption: 'PRESENCE',
+      blockedGeoShape: 'No city geo target. No Bengaluru city ID. No Gurugram ID.',
+    },
+    schedule: {
+      timezone: 'Asia/Calcutta',
+      ownerWindow: '07:00-23:00 daily',
+      apiShape: ADS_DAYS.map(day => ({
+        day,
+        startHour: 7,
+        startMinute: 'ZERO',
+        endHour: 23,
+        endMinute: 'ZERO',
+      })),
+    },
+    mapsFocus: [
+      'Brand searcher already knows Hamza; the job is to remove confusion and give exact directions.',
+      'Final URL is a direction-first brand page, not a generic website or WhatsApp-only redirect.',
+      'Ad copy says Hamza Express HKP Road, Same Hamza food memory, Get Directions, menu and call.',
+      'Brand campaign stays separate from dinner/late-night so we can measure protected demand cleanly.',
+    ],
+    adGroups: BRAND_SEARCH_AD_GROUPS.map(g => ({
+      name: g.name,
+      cpcINR: g.cpcINR,
+      path1: g.path1,
+      path2: g.path2,
+      keywordCount: g.keywords.length,
+      keywords: g.keywords.map(([text, matchType]) => ({ text, matchType })),
+      headlines: g.headlines,
+      descriptions: BRAND_SEARCH_DESCRIPTIONS,
+    })),
+    sharedNegativeListId: HE_WALK_IN_NEGATIVE_SET_ID,
+    extraNegativeKeywords: BRAND_SEARCH_EXTRA_NEGATIVES,
+    safetyRules: [
+      'Create the Brand/Legacy campaign PAUSED first; enable only after criteria audit.',
+      'Abort if a same-name brand campaign already exists and replaceExisting is not true.',
+      'Use exact Hamza micro-degree pin from Google Maps metadata, not geo-target city IDs.',
+      'Use Search Network only; no Display Network and no Search Partners at launch.',
+      'Keep brand terms separate from dinner and late-night campaigns so spend intent stays readable.',
+    ],
+  };
+}
+
+function validateBrandSearchSpec(spec) {
+  const issues = [];
+  for (const g of spec.adGroups || []) {
+    for (const h of g.headlines || []) {
+      if (h.length > 30) issues.push(`Headline too long in ${g.name}: "${h}" (${h.length}/30)`);
+    }
+    for (const d of g.descriptions || []) {
+      if (d.length > 90) issues.push(`Description too long in ${g.name}: "${d}" (${d.length}/90)`);
+    }
+  }
+  if (spec.geo.radiusKm !== BRAND_SEARCH_RADIUS_KM) {
+    issues.push(`Expected ${BRAND_SEARCH_RADIUS_KM}km radius, got ${spec.geo.radiusKm}`);
+  }
+  if (spec.budgetINR !== BRAND_SEARCH_BUDGET_INR) {
+    issues.push(`Expected ₹${BRAND_SEARCH_BUDGET_INR}/day, got ₹${spec.budgetINR}`);
+  }
+  if (spec.createStatus !== 'PAUSED') issues.push('New campaign must be created PAUSED');
+  if (spec.finalUrl !== BRAND_SEARCH_FINAL_URL) issues.push(`Unexpected final URL: ${spec.finalUrl}`);
+  if ((spec.schedule?.apiShape || []).length !== 7) issues.push('Expected 7 daily schedule blocks');
+  return issues;
+}
+
+async function getBrandSearchIntelligence(accessToken, env) {
+  const spec = brandSearchSpec();
+  const textIssues = validateBrandSearchSpec(spec);
+  const safeQuery = async (name, query) => {
+    try {
+      return { name, rows: await queryGoogleAds(accessToken, env, query), error: null };
+    } catch (e) {
+      return { name, rows: [], error: e.message };
+    }
+  };
+
+  const [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ] = await Promise.all([
+    safeQuery('campaigns', `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.serving_status,
+        campaign.advertising_channel_type,
+        campaign.geo_target_type_setting.positive_geo_target_type,
+        campaign.geo_target_type_setting.negative_geo_target_type,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `),
+    safeQuery('locationAssets', `
+      SELECT
+        asset.id,
+        asset.type,
+        asset.location_asset.business_profile_locations,
+        asset.location_asset.location_ownership_type
+      FROM asset
+      WHERE asset.type = 'LOCATION'
+    `),
+    safeQuery('conversionActions', `
+      SELECT
+        conversion_action.id,
+        conversion_action.name,
+        conversion_action.status,
+        conversion_action.type,
+        conversion_action.category,
+        conversion_action.primary_for_goal
+      FROM conversion_action
+      WHERE conversion_action.status = 'ENABLED'
+    `),
+    safeQuery('sharedSets', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_set.type,
+        shared_set.member_count,
+        shared_set.reference_count,
+        shared_set.status
+      FROM shared_set
+      WHERE shared_set.status != 'REMOVED'
+    `),
+    safeQuery('sharedCriteria', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_criterion.keyword.text,
+        shared_criterion.keyword.match_type,
+        shared_criterion.type
+      FROM shared_criterion
+      WHERE shared_set.id = ${HE_WALK_IN_NEGATIVE_SET_ID}
+      LIMIT 200
+    `),
+  ]);
+
+  const errors = [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ]
+    .filter(q => q.error)
+    .map(q => ({ name: q.name, error: q.error }));
+
+  const campaigns = campaignQ.rows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    servingStatus: r.campaign?.servingStatus,
+    type: r.campaign?.advertisingChannelType,
+    positiveGeoTargetType: r.campaign?.geoTargetTypeSetting?.positiveGeoTargetType,
+    negativeGeoTargetType: r.campaign?.geoTargetTypeSetting?.negativeGeoTargetType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const currentPmax = campaigns.find(c => c.id === PMAX_CAMPAIGN_ID) || null;
+  const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME) || null;
+  const existingDinner = campaigns.find(c => c.name === DINNER_SEARCH_CAMPAIGN_NAME) || null;
+  const brandCampaigns = campaigns.filter(c => c.name === BRAND_SEARCH_CAMPAIGN_NAME);
+  const existingBrand = brandCampaigns[0] || null;
+  const plannedSearchBudget = LATE_NIGHT_SEARCH_BUDGET_INR + DINNER_SEARCH_BUDGET_INR + BRAND_SEARCH_BUDGET_INR;
+  const enabledSearchBudget = campaigns
+    .filter(c => c.type === 'SEARCH' && c.status === 'ENABLED')
+    .reduce((sum, c) => sum + Number(c.budgetINR || 0), 0);
+  const locationAssets = locationQ.rows.map(r => ({
+    id: r.asset?.id,
+    type: r.asset?.type,
+    ownership: r.asset?.locationAsset?.locationOwnershipType,
+    businessProfileLocations: r.asset?.locationAsset?.businessProfileLocations || [],
+  }));
+  const conversionActions = conversionQ.rows.map(r => ({
+    id: r.conversionAction?.id,
+    name: r.conversionAction?.name,
+    type: r.conversionAction?.type,
+    category: r.conversionAction?.category,
+    primaryForGoal: !!r.conversionAction?.primaryForGoal,
+  }));
+  const sharedSets = sharedSetQ.rows.map(r => ({
+    id: r.sharedSet?.id,
+    name: r.sharedSet?.name,
+    type: r.sharedSet?.type,
+    memberCount: parseInt(r.sharedSet?.memberCount) || 0,
+    referenceCount: parseInt(r.sharedSet?.referenceCount) || 0,
+    status: r.sharedSet?.status,
+  }));
+  const sharedNegatives = sharedCritQ.rows.map(r => ({
+    text: r.sharedCriterion?.keyword?.text,
+    matchType: r.sharedCriterion?.keyword?.matchType,
+  })).filter(k => k.text);
+  const sharedSet = sharedSets.find(s => String(s.id) === HE_WALK_IN_NEGATIVE_SET_ID) || null;
+  const localActionCount = conversionActions.filter(a =>
+    ['GET_DIRECTIONS', 'CONTACT', 'PHONE_CALL_LEAD', 'PAGE_VIEW', 'ENGAGEMENT'].includes(a.category)
+  ).length;
+
+  const guardrails = [
+    {
+      id: 'no-duplicate-brand',
+      label: 'No duplicate brand campaign',
+      state: brandCampaigns.length > 1 ? 'bad' : 'ok',
+      detail: existingBrand
+        ? `${brandCampaigns.length} campaign(s): ${existingBrand.id} is ${existingBrand.status}`
+        : 'none exists',
+    },
+    {
+      id: 'search-stack-budget',
+      label: '₹500/day Search stack',
+      state: existingBrand
+        ? (enabledSearchBudget === plannedSearchBudget ? 'ok' : 'warn')
+        : 'ok',
+      detail: existingBrand
+        ? `enabled Search budget ₹${enabledSearchBudget}/day · planned ₹${plannedSearchBudget}/day`
+        : `planned ₹${plannedSearchBudget}/day after brand launch`,
+    },
+    {
+      id: 'late-night-separated',
+      label: 'Late-night separated',
+      state: existingLateNight ? 'ok' : 'warn',
+      detail: existingLateNight ? `${existingLateNight.status} · ${existingLateNight.id}` : 'late-night campaign not found',
+    },
+    {
+      id: 'dinner-separated',
+      label: 'Dinner separated',
+      state: existingDinner ? 'ok' : 'warn',
+      detail: existingDinner ? `${existingDinner.status} · ${existingDinner.id}` : 'dinner campaign not found',
+    },
+    {
+      id: 'exact-pin',
+      label: 'Exact pin locked',
+      state: spec.geo.lat === HAMZA_PIN.lat && spec.geo.lng === HAMZA_PIN.lng ? 'ok' : 'bad',
+      detail: `${spec.geo.lat},${spec.geo.lng}`,
+    },
+    {
+      id: 'radius',
+      label: 'Brand radius',
+      state: spec.geo.radiusKm === BRAND_SEARCH_RADIUS_KM ? 'ok' : 'bad',
+      detail: `${spec.geo.radiusKm} km proximity only`,
+    },
+    {
+      id: 'schedule',
+      label: 'Opening-hours coverage',
+      state: spec.schedule.apiShape.length === 7 ? 'ok' : 'bad',
+      detail: '07:00-23:00 daily',
+    },
+    {
+      id: 'location-asset',
+      label: 'GBP location asset',
+      state: locationAssets.length ? 'ok' : 'bad',
+      detail: locationAssets.length ? `${locationAssets.length} asset(s) linked at account` : 'missing',
+    },
+    {
+      id: 'local-actions',
+      label: 'Local action goals',
+      state: localActionCount >= 3 ? 'ok' : 'warn',
+      detail: `${localActionCount} enabled local/call/menu actions`,
+    },
+    {
+      id: 'negative-list',
+      label: 'Walk-in negative list',
+      state: sharedSet && sharedNegatives.length >= 30 ? 'ok' : 'warn',
+      detail: sharedSet ? `${sharedNegatives.length} keywords · ${sharedSet.referenceCount} refs` : 'missing',
+    },
+    {
+      id: 'ad-text-policy-shape',
+      label: 'Ad text length check',
+      state: textIssues.length ? 'bad' : 'ok',
+      detail: textIssues.length ? `${textIssues.length} issue(s)` : 'all headlines/descriptions within limits',
+    },
+    {
+      id: 'pmax-state',
+      label: 'PMax base layer visible',
+      state: currentPmax ? 'ok' : 'warn',
+      detail: currentPmax ? `${currentPmax.status} / ₹${currentPmax.budgetINR}/day` : 'PMax missing',
+    },
+  ];
+
+  return json({
+    ok: true,
+    asOf: todayIST(),
+    decision: {
+      recommendation: 'Use Brand/Legacy Hamza Search as the ₹75/day protection layer.',
+      reason: 'People searching Hamza are already warm; the campaign should correct the pin, preserve legacy demand, and avoid mixing this high-intent traffic into dinner or late-night reporting.',
+    },
+    spec,
+    live: {
+      campaigns,
+      currentPmax,
+      existingLateNight,
+      existingDinner,
+      existingBrand,
+      locationAssets,
+      conversionActions,
+      sharedNegativeList: sharedSet,
+      sharedNegatives,
+    },
+    guardrails,
+    textIssues,
+    execution: {
+      endpoint: '/api/google-ads?action=create-brand-search',
+      method: 'POST',
+      requiredBody: { confirm: BRAND_SEARCH_CONFIRM },
+      result: 'Creates the new Brand/Legacy Search campaign PAUSED and returns resource IDs for audit.',
+    },
+    errors,
+  });
+}
+
+async function createBrandSearch(accessToken, env, request) {
+  if (request.method !== 'POST') {
+    return json({ error: 'POST required', requiredBody: { confirm: BRAND_SEARCH_CONFIRM } }, 405);
+  }
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== BRAND_SEARCH_CONFIRM) {
+    return json({
+      error: 'confirmation_required',
+      required: BRAND_SEARCH_CONFIRM,
+      note: 'This endpoint creates the Brand/Legacy Search campaign PAUSED. Re-submit with confirm after reviewing brand-search-intelligence.',
+    }, 409);
+  }
+
+  const log = [];
+  const step = msg => log.push(`[${new Date().toISOString()}] ${msg}`);
+  const spec = brandSearchSpec();
+  const textIssues = validateBrandSearchSpec(spec);
+  if (textIssues.length) return json({ success: false, error: 'spec_validation_failed', textIssues }, 500);
+
+  const campaignRows = await queryGoogleAds(accessToken, env, `
+    SELECT
+      campaign.id,
+      campaign.name,
+      campaign.status,
+      campaign.advertising_channel_type,
+      campaign_budget.amount_micros
+    FROM campaign
+    WHERE campaign.status != 'REMOVED'
+    ORDER BY campaign.id DESC
+  `);
+  const campaigns = campaignRows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    type: r.campaign?.advertisingChannelType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const existingBrand = campaigns.find(c => c.name === BRAND_SEARCH_CAMPAIGN_NAME);
+
+  if (existingBrand && !body.replaceExisting) {
+    return json({
+      success: false,
+      error: 'brand_campaign_already_exists',
+      detail: 'Refusing to create a duplicate. Pass replaceExisting:true only if the existing brand campaign is PAUSED and should be removed first.',
+      existingBrand,
+      log,
+    }, 409);
+  }
+
+  if (existingBrand && body.replaceExisting) {
+    if (existingBrand.status !== 'PAUSED') {
+      return json({
+        success: false,
+        error: 'existing_brand_not_paused',
+        detail: `Refusing to replace existing brand campaign ${existingBrand.id} because it is ${existingBrand.status}.`,
+        existingBrand,
+        log,
+      }, 409);
+    }
+    await removeCampaign(accessToken, env, existingBrand.id);
+    step(`Removed existing paused brand campaign ${existingBrand.id}`);
+  }
+
+  const budgetResults = await mutateGoogleAds(accessToken, env, 'campaignBudgets', [{
+    create: {
+      name: `HE Brand Search INR${BRAND_SEARCH_BUDGET_INR}/day ${todayIST()} ${Date.now()}`,
+      amountMicros: rupeesToMicros(BRAND_SEARCH_BUDGET_INR),
+      deliveryMethod: 'STANDARD',
+      explicitlyShared: false,
+    },
+  }]);
+  const budgetResource = budgetResults[0].resourceName;
+  step(`Created ₹${BRAND_SEARCH_BUDGET_INR}/day budget ${budgetResource}`);
+
+  const campaignResults = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+    create: {
+      name: BRAND_SEARCH_CAMPAIGN_NAME,
+      status: 'PAUSED',
+      advertisingChannelType: 'SEARCH',
+      containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
+      campaignBudget: budgetResource,
+      manualCpc: { enhancedCpcEnabled: false },
+      networkSettings: {
+        targetGoogleSearch: true,
+        targetSearchNetwork: false,
+        targetContentNetwork: false,
+        targetPartnerSearchNetwork: false,
+      },
+      geoTargetTypeSetting: {
+        positiveGeoTargetType: 'PRESENCE',
+        negativeGeoTargetType: 'PRESENCE',
+      },
+    },
+  }]);
+  const campaignResource = campaignResults[0].resourceName;
+  const campaignId = campaignResource.split('/').pop();
+  step(`Created Brand/Legacy Search campaign ${campaignId} as PAUSED`);
+
+  const adGroupResults = await mutateGoogleAds(accessToken, env, 'adGroups',
+    BRAND_SEARCH_AD_GROUPS.map(g => ({
+      create: {
+        name: g.name,
+        campaign: campaignResource,
+        status: 'ENABLED',
+        type: 'SEARCH_STANDARD',
+        cpcBidMicros: rupeesToMicros(g.cpcINR),
+      },
+    })),
+  );
+  const adGroupResources = Object.fromEntries(
+    BRAND_SEARCH_AD_GROUPS.map((g, i) => [g.key, adGroupResults[i].resourceName]),
+  );
+  step(`Created ${adGroupResults.length} brand ad groups`);
+
+  const keywordOps = [];
+  for (const group of BRAND_SEARCH_AD_GROUPS) {
+    for (const [text, matchType] of group.keywords) {
+      keywordOps.push({
+        create: {
+          adGroup: adGroupResources[group.key],
+          status: 'ENABLED',
+          keyword: { text, matchType },
+        },
+      });
+    }
+  }
+  await mutateGoogleAds(accessToken, env, 'adGroupCriteria', keywordOps);
+  step(`Created ${keywordOps.length} brand/legacy exact/phrase keywords`);
+
+  const adOps = BRAND_SEARCH_AD_GROUPS.map(group => ({
+    create: {
+      adGroup: adGroupResources[group.key],
+      status: 'ENABLED',
+      ad: {
+        responsiveSearchAd: {
+          headlines: group.headlines.map(text => ({
+            text,
+            ...(text === 'Hamza Express HKP Road' ? { pinnedField: 'HEADLINE_1' } : {}),
+          })),
+          descriptions: BRAND_SEARCH_DESCRIPTIONS.map(text => ({ text })),
+          path1: group.path1,
+          path2: group.path2,
+        },
+        finalUrls: [BRAND_SEARCH_FINAL_URL],
+      },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'adGroupAds', adOps);
+  step(`Created ${adOps.length} brand responsive search ads`);
+
+  const proximityOp = {
+    create: {
+      campaign: campaignResource,
+      proximity: {
+        geoPoint: {
+          latitudeInMicroDegrees: Math.round(HAMZA_PIN.lat * 1_000_000),
+          longitudeInMicroDegrees: Math.round(HAMZA_PIN.lng * 1_000_000),
+        },
+        radius: BRAND_SEARCH_RADIUS_KM,
+        radiusUnits: 'KILOMETERS',
+      },
+    },
+  };
+  const scheduleOps = ADS_DAYS.map(day => ({
+    create: {
+      campaign: campaignResource,
+      adSchedule: {
+        dayOfWeek: day,
+        startHour: 7,
+        startMinute: 'ZERO',
+        endHour: 23,
+        endMinute: 'ZERO',
+      },
+    },
+  }));
+  const negativeOps = BRAND_SEARCH_EXTRA_NEGATIVES.map(kw => ({
+    create: {
+      campaign: campaignResource,
+      negative: true,
+      keyword: { text: kw, matchType: 'PHRASE' },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'campaignCriteria', [
+    proximityOp,
+    ...scheduleOps,
+    ...negativeOps,
+  ]);
+  step(`Set exact ${BRAND_SEARCH_RADIUS_KM}km proximity, ${scheduleOps.length} schedule blocks, ${negativeOps.length} brand negatives`);
+
+  await mutateGoogleAds(accessToken, env, 'campaignSharedSets', [{
+    create: {
+      campaign: campaignResource,
+      sharedSet: `customers/${CUSTOMER_ID}/sharedSets/${HE_WALK_IN_NEGATIVE_SET_ID}`,
+    },
+  }]);
+  step(`Attached shared negative list ${HE_WALK_IN_NEGATIVE_SET_ID}`);
+
+  const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
+    { create: { finalUrls: ['https://hamzaexpress.in/go/maps'], sitelinkAsset: { linkText: 'Get Directions', description1: 'Open Maps', description2: 'Correct Hamza pin' } } },
+    { create: { finalUrls: [BRAND_SEARCH_FINAL_URL], sitelinkAsset: { linkText: 'Hamza Express', description1: 'HKP Road location', description2: 'Menu, call, directions' } } },
+    { create: { finalUrls: ['https://hamzaexpress.in/menu/'], sitelinkAsset: { linkText: 'View Full Menu', description1: 'Biryani, Kabab', description2: 'Ghee Rice and more' } } },
+    { create: { finalUrls: [BRAND_SEARCH_FINAL_URL], sitelinkAsset: { linkText: 'Same Hamza Memory', description1: 'Since 1918', description2: 'Now Hamza Express' } } },
+    { create: { calloutAsset: { calloutText: 'HKP Road' } } },
+    { create: { calloutAsset: { calloutText: 'Since 1918' } } },
+    { create: { calloutAsset: { calloutText: 'Same Hamza' } } },
+    { create: { calloutAsset: { calloutText: 'Biryani' } } },
+    { create: { calloutAsset: { calloutText: 'Kabab' } } },
+    { create: { calloutAsset: { calloutText: 'Ghee Rice' } } },
+  ]);
+  await mutateGoogleAds(accessToken, env, 'campaignAssets', assetResults.map((r, i) => ({
+    create: {
+      campaign: campaignResource,
+      asset: r.resourceName,
+      fieldType: i < 4 ? 'SITELINK' : 'CALLOUT',
+    },
+  })));
+  step(`Created and linked ${assetResults.length} brand sitelink/callout assets`);
+
+  return json({
+    success: true,
+    campaignName: BRAND_SEARCH_CAMPAIGN_NAME,
+    status: 'PAUSED',
+    budgetINR: BRAND_SEARCH_BUDGET_INR,
+    finalUrl: BRAND_SEARCH_FINAL_URL,
+    geo: spec.geo,
+    schedule: spec.schedule.ownerWindow,
+    resources: {
+      budget: budgetResource,
+      campaign: campaignResource,
+      campaignId,
+      adGroups: adGroupResources,
+    },
+    auditLinks: {
+      criteria: `/api/google-ads?action=campaign-criteria&id=${campaignId}`,
+      intelligence: '/api/google-ads?action=brand-search-intelligence',
       cockpit: '/ops/google-cockpit/',
     },
     log,
