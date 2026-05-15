@@ -578,6 +578,19 @@
           "url": "assets/DESKTOP_FINAL/Kathi/Final_v3_TV-V13_Kathi_Pair_K1_KT.png",
           "_state": "WIP_FINAL",
           "_id": "Final_v3_TV-V13_Kathi_Pair_K1_KT"
+        },
+        {
+          "category": "Kathi",
+          "filename": "Video_v3_TV-V13_Kathi_Pair_K1_KT.mp4",
+          "stem": "Video_v3_TV-V13_Kathi_Pair_K1_KT",
+          "ext": ".mp4",
+          "isImage": false,
+          "isVideo": true,
+          "size": 1507855,
+          "mtime": 1778505588,
+          "url": "assets/DESKTOP_FINAL/Kathi/Video_v3_TV-V13_Kathi_Pair_K1_KT.mp4",
+          "_state": "WIP_FINAL",
+          "_id": "Video_v3_TV-V13_Kathi_Pair_K1_KT"
         }
       ],
       "deviceId": null,
