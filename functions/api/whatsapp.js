@@ -13,6 +13,23 @@ import { classifyIntent } from '../_lib/wa-intents.js';
 // parentCatId = parent KDS routing category (22=Indian,23=Biryani,24=Chinese,25=Tandoor,26=FC,27=Juices,28=BM,29=Shawarma,30=Grill)
 const CATALOG_ID = '1639757440737691';
 
+const CREATOR_OPS_ZOYA_BUSINESS = '918008004202';
+
+function normalizeWaPhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+function creatorOpsZoyaPhones(env) {
+  const configured = String(env.CREATOR_OPS_ZOYA_PHONES || '')
+    .split(/[,\s]+/)
+    .map(normalizeWaPhone)
+    .filter(Boolean);
+  return Array.from(new Set(configured.length ? configured : [CREATOR_OPS_ZOYA_BUSINESS]));
+}
+
 const PRODUCTS = {
   // ── Indian — Chicken Starters (cat 77 → parent 22) ──
   'HE-1140': { name: 'American Chops',             price: 257, odooId: 1158, catId: 22 },
@@ -1072,6 +1089,16 @@ async function processWebhook(context, body) {
     new Date().toISOString()
   ).run().catch(() => {});
 
+  context.waitUntil(
+    notifyCreatorOpsForInboundReply(context.env, {
+      waId,
+      messageId: message.id || null,
+      content: inContent,
+      msgType: msgType.type,
+      profileName: value.contacts?.[0]?.profile?.name || '',
+    }).catch((e) => console.error('creator-ops-inbound-alert error:', e.message))
+  );
+
   // ── Phase 2 media vault: download Meta media → R2 before URL expires ──
   // The pre-signed URL from Meta dies in ~5 minutes. waitUntil lets the
   // download run AFTER the webhook returns 200, so we never delay Meta
@@ -1094,6 +1121,17 @@ async function processWebhook(context, body) {
       console.error('cascade-check error:', e.message)
     )
   );
+
+  // Creator replies are human-operated by Zoya. Once the message is logged and
+  // the Zoya alert is queued, do not let the food-ordering bot answer them.
+  if (context.env.HIRING_DB) {
+    try {
+      const match = await findCreatorByWaPhone(context.env.HIRING_DB, normalizeWaPhone(waId).slice(-10));
+      if (match.app || match.outreach) return;
+    } catch (e) {
+      console.warn('creator bot-skip check failed:', e.message);
+    }
+  }
 
   // ── Phase 3 bot-pause gate: if this conversation has been handed to an
   // Ops agent, skip all bot routing. The inbound message is already logged
@@ -6835,6 +6873,158 @@ function extFromMime(mime, filename) {
   if (m.includes('wordprocessingml')) return '.docx';
   if (m.includes('plain')) return '.txt';
   return '';
+}
+
+function waTemplateParam(value, max = 220) {
+  return String(value || '-')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, max) || '-';
+}
+
+function appendSqlNote(prefix, text) {
+  return `[${new Date().toISOString()}] ${prefix}: ${String(text || '').replace(/[\r\n]+/g, ' ').slice(0, 240)}`;
+}
+
+async function findCreatorByWaPhone(hiringDb, last10) {
+  if (!hiringDb || !last10) return { app: null, outreach: null };
+  const phoneExpr = `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(contact_phone,''), '+', ''), ' ', ''), '-', ''), '(', ''), ')', '')`;
+  const contactExpr = `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(contact_value,''), '+', ''), ' ', ''), '-', ''), '(', ''), ')', '')`;
+
+  const app = await hiringDb.prepare(`
+    SELECT id, username, full_name, status, preferred_slot_id, preferred_window_code,
+           contact_phone, submitted_at
+    FROM influencer_applications
+    WHERE ${phoneExpr} LIKE ?
+    ORDER BY submitted_at DESC
+    LIMIT 1
+  `).bind(`%${last10}`).first();
+
+  const outreach = await hiringDb.prepare(`
+    SELECT id, handle, channel, contact_value, sent_at, reply_state, updated_at
+    FROM creator_outreach_log
+    WHERE channel = 'wa' AND ${contactExpr} LIKE ?
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `).bind(`%${last10}`).first();
+
+  return { app, outreach };
+}
+
+async function sendCreatorOpsFollowupTemplate(env, to, fields) {
+  if (!env.WA_PHONE_ID || !env.WA_ACCESS_TOKEN) return { ok: false, error: 'WABA not configured' };
+  const payload = {
+    messaging_product: 'whatsapp',
+    to,
+    type: 'template',
+    template: {
+      name: 'zoya_creator_followup_v1',
+      language: { code: 'en' },
+      components: [{
+        type: 'body',
+        parameters: fields.map((text) => ({ type: 'text', text: waTemplateParam(text) })),
+      }],
+    },
+  };
+  const response = await sendWhatsApp(env.WA_PHONE_ID, env.WA_ACCESS_TOKEN, payload);
+  if (response?.ok) return { ok: true, via: 'template:zoya_creator_followup_v1' };
+
+  const fallback = [
+    'Creator coordination update needed.',
+    '',
+    `Handle: @${waTemplateParam(fields[0], 80)}`,
+    `Slot: ${waTemplateParam(fields[1], 120)}`,
+    `Current status: ${waTemplateParam(fields[2], 180)}`,
+    `Next action: ${waTemplateParam(fields[3], 180)}`,
+  ].join('\n');
+  const fallbackResponse = await sendWhatsApp(env.WA_PHONE_ID, env.WA_ACCESS_TOKEN, buildText(to, fallback));
+  return {
+    ok: Boolean(fallbackResponse?.ok),
+    via: fallbackResponse?.ok ? 'fallback_text' : 'failed',
+    template_error: response?._errorText || response?.status || 'no response',
+    fallback_error: fallbackResponse?.ok ? null : (fallbackResponse?._errorText || fallbackResponse?.status || 'no response'),
+  };
+}
+
+async function notifyCreatorOpsForInboundReply(env, { waId, messageId, content, msgType, profileName }) {
+  const hiringDb = env.HIRING_DB;
+  if (!hiringDb) return { skipped: 'HIRING_DB not configured' };
+
+  const normalized = normalizeWaPhone(waId);
+  const last10 = normalized.slice(-10);
+  const { app, outreach } = await findCreatorByWaPhone(hiringDb, last10);
+  if (!app && !outreach) return { skipped: 'not creator application/outreach' };
+
+  if (messageId) {
+    const inserted = await hiringDb.prepare(`
+      INSERT OR IGNORE INTO programme_config (config_key, config_value, updated_at, updated_by)
+      VALUES (?, ?, datetime('now'), 'creator-wa-webhook')
+    `).bind(
+      `creator_ops_inbound_alert_${messageId}`,
+      JSON.stringify({ waId: normalized, app_id: app?.id || null, outreach_id: outreach?.id || null }).slice(0, 1000),
+    ).run();
+    if (inserted?.meta?.changes === 0) return { skipped: 'duplicate webhook' };
+  }
+
+  const handle = String(app?.username || outreach?.handle || profileName || last10 || 'creator').replace(/^@/, '');
+  const slot = app?.preferred_slot_id
+    ? `${app.preferred_window_code || 'slot'} #${app.preferred_slot_id}`
+    : (outreach?.sent_at ? `outreach sent ${outreach.sent_at}` : 'not booked yet');
+  const replyExcerpt = content && content !== msgType ? content : msgType;
+  const status = app
+    ? `Application ${app.status || 'submitted'}; creator replied: ${replyExcerpt}`
+    : `WABA outreach reply from ${profileName || '+' + normalized}: ${replyExcerpt}`;
+  const nextAction = 'Zoya to reply from HE WhatsApp and update the creator dashboard.';
+
+  const phones = creatorOpsZoyaPhones(env);
+  const results = [];
+  for (const phone of phones) {
+    const r = await sendCreatorOpsFollowupTemplate(env, phone, [handle, slot, status, nextAction]);
+    results.push({ phone, ...r });
+  }
+
+  try {
+    if (outreach?.id) {
+      await hiringDb.prepare(`
+        UPDATE creator_outreach_log
+        SET reply_state = 'replied',
+            reply_at = COALESCE(reply_at, datetime('now')),
+            notes = COALESCE(notes, '') ||
+              (CASE WHEN COALESCE(notes,'') = '' THEN '' ELSE char(10) END) ||
+              ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(appendSqlNote('inbound-waba', content), outreach.id).run();
+    } else if (app?.username) {
+      await hiringDb.prepare(`
+        UPDATE creator_outreach_log
+        SET reply_state = 'replied',
+            reply_at = COALESCE(reply_at, datetime('now')),
+            notes = COALESCE(notes, '') ||
+              (CASE WHEN COALESCE(notes,'') = '' THEN '' ELSE char(10) END) ||
+              ?,
+            updated_at = datetime('now')
+        WHERE handle = ? AND channel = 'wa'
+      `).bind(appendSqlNote('inbound-waba', content), app.username).run();
+    }
+    if (app?.id) {
+      await hiringDb.prepare(`
+        UPDATE influencer_applications
+        SET notes_owner = COALESCE(notes_owner, '') ||
+          (CASE WHEN COALESCE(notes_owner,'') = '' THEN '' ELSE char(10) END) ||
+          ?
+        WHERE id = ?
+      `).bind(
+        appendSqlNote('inbound-waba-zoya-alert', `${results.filter(r => r.ok).length}/${results.length} sent; ${content}`),
+        app.id,
+      ).run();
+    }
+  } catch (e) {
+    console.warn('creator inbound reply state update failed:', e.message);
+  }
+
+  return { ok: results.some(r => r.ok), results };
 }
 
 // ═══════════════════════════════════════════════════════════════════
