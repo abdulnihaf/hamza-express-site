@@ -969,7 +969,8 @@ async function getLateNightSearchIntelligence(accessToken, env) {
   }));
   const legacySearch = campaigns.find(c => c.id === LEGACY_SEARCH_CAMPAIGN_ID) || null;
   const currentPmax = campaigns.find(c => c.id === PMAX_CAMPAIGN_ID) || null;
-  const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME) || null;
+  const lateNightCampaigns = campaigns.filter(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME);
+  const existingLateNight = lateNightCampaigns[0] || null;
   const locationAssets = locationQ.rows.map(r => ({
     id: r.asset?.id,
     type: r.asset?.type,
@@ -1016,8 +1017,10 @@ async function getLateNightSearchIntelligence(accessToken, env) {
     {
       id: 'no-duplicate-late-night',
       label: 'No duplicate late-night campaign',
-      state: existingLateNight ? 'warn' : 'ok',
-      detail: existingLateNight ? `${existingLateNight.id} is ${existingLateNight.status}` : 'none exists',
+      state: lateNightCampaigns.length > 1 ? 'bad' : 'ok',
+      detail: existingLateNight
+        ? `${lateNightCampaigns.length} campaign(s): ${existingLateNight.id} is ${existingLateNight.status}`
+        : 'none exists',
     },
     {
       id: 'exact-pin',
@@ -1509,7 +1512,8 @@ async function getDinnerSearchIntelligence(accessToken, env) {
   }));
   const currentPmax = campaigns.find(c => c.id === PMAX_CAMPAIGN_ID) || null;
   const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME) || null;
-  const existingDinner = campaigns.find(c => c.name === DINNER_SEARCH_CAMPAIGN_NAME) || null;
+  const dinnerCampaigns = campaigns.filter(c => c.name === DINNER_SEARCH_CAMPAIGN_NAME);
+  const existingDinner = dinnerCampaigns[0] || null;
   const locationAssets = locationQ.rows.map(r => ({
     id: r.asset?.id,
     type: r.asset?.type,
@@ -1544,8 +1548,10 @@ async function getDinnerSearchIntelligence(accessToken, env) {
     {
       id: 'no-duplicate-dinner',
       label: 'No duplicate dinner campaign',
-      state: existingDinner ? 'warn' : 'ok',
-      detail: existingDinner ? `${existingDinner.id} is ${existingDinner.status}` : 'none exists',
+      state: dinnerCampaigns.length > 1 ? 'bad' : 'ok',
+      detail: existingDinner
+        ? `${dinnerCampaigns.length} campaign(s): ${existingDinner.id} is ${existingDinner.status}`
+        : 'none exists',
     },
     {
       id: 'late-night-separated',
