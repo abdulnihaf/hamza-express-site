@@ -87,6 +87,13 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .action-btn:hover:not(.disabled):not(.sent){border-color:var(--tan);color:var(--tan)}
 .action-btn.ig.sent{background:rgba(229,46,110,.1);border-color:rgba(229,46,110,.4);color:#e52e6e}
 .action-btn .check{font-size:9px}
+.copy-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-top:4px}
+.copy-card{border:1px solid var(--line);background:rgba(26,34,52,.58);border-radius:5px;overflow:hidden}
+.copy-card summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--tan);user-select:none}
+.copy-card summary span{color:var(--mute);font-size:9px}
+.copy-card pre{white-space:pre-wrap;word-break:break-word;padding:10px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.55;color:var(--text);max-height:220px;overflow:auto;background:rgba(10,15,26,.42)}
+.copy-card .copy-actions{display:flex;justify-content:flex-end;padding:8px 10px;border-top:1px solid var(--line)}
+.copy-card .copy-actions .action-btn{flex:0 0 auto;min-width:92px}
 .row .reply-pill{display:inline-block;padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;border-radius:99px;margin-top:4px}
 .reply-pill.replied{background:rgba(34,197,94,.15);color:var(--green)}
 .reply-pill.applied{background:rgba(251,191,36,.15);color:var(--gold)}
@@ -244,6 +251,7 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 <script>
 const API = '/api/creator-outreach';
 const REVIEW_STORE = 'he_creator_review_may15_v1';
+const CREATOR_APPLY_URL = 'https://hamzaexpress.in/creators/apply/';
 let MODE = 'live';
 let CAMPAIGN_META = null;
 let REVIEW_ROWS = [];
@@ -397,13 +405,13 @@ async function testInstagram() {
   btn.disabled = true;
   const orig = btn.textContent;
   btn.textContent = 'Opening…';
-  const text = render(LOADED_TEMPLATE.body || '(IG template not set — paste it in the Templates panel above)', {
+  const text = ensureCreatorApplyLink(render(LOADED_TEMPLATE.body || '(IG template not set — paste it in the Templates panel above)', {
     first_name: handle.split(/[._]/)[0] || handle,
     handle,
     followers: '12K',
     tier: 'T2 · Micro',
     full_name: handle,
-  });
+  }));
 
   try {
     const copied = await copyToClipboard(text);
@@ -538,7 +546,7 @@ function renderCampaignKpis(data) {
 }
 
 async function copyVisibleIgMessages() {
-  const rows = (VISIBLE.length ? VISIBLE : CURRENT).filter(c => !c.review_mode);
+  const rows = (VISIBLE.length ? VISIBLE : CURRENT).filter(c => !c.review_mode && channelAvailable(c, 'ig'));
   if (!rows.length) return toast('No visible campaign rows to copy', true);
   await copyToClipboard(rows.map(c => `@${c.handle}\n${messageFor(c, 'ig')}`).join('\n\n---\n\n'));
   toast(`Copied ${rows.length} visible IG messages`);
@@ -551,6 +559,76 @@ async function copyApprovedReviewHandles() {
   if (!handles.length) return toast('No approved review handles yet', true);
   await copyToClipboard(handles.join('\n'));
   toast(`Copied ${handles.length} approved review handles`);
+}
+
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function rowVars(c) {
+  return {
+    first_name: c.first_name || c.full_name || c.handle,
+    handle: c.handle,
+    followers: fmt(c.followers_count),
+    tier: c.tier,
+    full_name: c.full_name || '',
+  };
+}
+
+function ensureCreatorApplyLink(text) {
+  const body = String(text || '').trim();
+  if (!body) return `Apply here: ${CREATOR_APPLY_URL}`;
+  if (/hamzaexpress\.in\/creators\/apply\/?/i.test(body)) return body;
+  return `${body}\n\nApply here: ${CREATOR_APPLY_URL}`;
+}
+
+function emailSubjectFor(c, vars = rowVars(c), templates = loadTemplates()) {
+  return c.messages?.email_subject || render(templates.email_subj || 'An invitation from Hamza Hotel', vars);
+}
+
+function channelAvailable(c, channel) {
+  if (channel === 'ig') return !c.review_mode && (MODE !== 'campaign' || c.campaign_channels?.instagram_dm);
+  if (channel === 'wa') return !c.review_mode && !!c.contact?.whatsapp && (MODE !== 'campaign' || c.campaign_channels?.waba);
+  if (channel === 'email') return !c.review_mode && !!c.contact?.email && (MODE !== 'campaign' || c.campaign_channels?.email);
+  return false;
+}
+
+function channelCopyText(c, channel, templates = loadTemplates(), vars = rowVars(c)) {
+  if (channel === 'email') return `Subject: ${emailSubjectFor(c, vars, templates)}\n\n${messageFor(c, 'email', templates, vars)}`;
+  return messageFor(c, channel, templates, vars);
+}
+
+function copyDetailsHTML(c) {
+  const templates = loadTemplates();
+  const vars = rowVars(c);
+  const channels = [
+    { key: 'ig', label: 'Instagram DM', meta: 'copy + open DM' },
+    { key: 'email', label: 'Email', meta: c.contact?.email || 'not available' },
+    { key: 'wa', label: 'WhatsApp', meta: c.contact?.whatsapp ? '+' + c.contact.whatsapp : 'not available' },
+  ].filter(ch => channelAvailable(c, ch.key));
+
+  if (!channels.length) return '';
+  return `
+    <div class="copy-panel">
+      ${channels.map(ch => {
+        const text = channelCopyText(c, ch.key, templates, vars);
+        return `
+          <details class="copy-card">
+            <summary>${ch.label}<span>${escapeHTML(ch.meta)}</span></summary>
+            <pre>${escapeHTML(text)}</pre>
+            <div class="copy-actions">
+              <button class="action-btn" data-act="copy-channel" data-channel="${ch.key}" data-handle="${c.handle}">Copy text</button>
+            </div>
+          </details>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function skippedCount(summary) {
@@ -935,6 +1013,7 @@ function rowHTML(c) {
         ${waBtn}
         ${emBtn}
       </div>
+      ${copyDetailsHTML(c)}
     </div>
   `;
 }
@@ -952,13 +1031,7 @@ function bindRow(c) {
     return;
   }
   const t = loadTemplates();
-  const vars = {
-    first_name: c.first_name || c.full_name || c.handle,
-    handle: c.handle,
-    followers: fmt(c.followers_count),
-    tier: c.tier,
-    full_name: c.full_name || '',
-  };
+  const vars = rowVars(c);
 
   // IG: copy to clipboard + open DM entry point
   const igBtn = row.querySelector('[data-act="ig"]');
@@ -992,7 +1065,7 @@ function bindRow(c) {
   const emBtn = row.querySelector('[data-act="email"]');
   if (emBtn) {
     emBtn.addEventListener('click', async () => {
-      const subj = c.messages?.email_subject || render(t.email_subj || 'An invitation from Hamza Hotel', vars);
+      const subj = emailSubjectFor(c, vars, t);
       const body = messageFor(c, 'email', t, vars);
       const email = emBtn.dataset.email;
       const url = `mailto:${email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
@@ -1002,10 +1075,19 @@ function bindRow(c) {
       setTimeout(loadList, 600);
     });
   }
+
+  row.querySelectorAll('[data-act="copy-channel"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const channel = btn.dataset.channel;
+      const text = channelCopyText(c, channel, t, vars);
+      await copyToClipboard(text);
+      toast(`${channel.toUpperCase()} copy copied for @${c.handle}`);
+    });
+  });
 }
 
 function messageFor(c, channel, templates = loadTemplates(), vars = {}) {
-  if (channel === 'ig' && c.messages?.instagram_dm) return c.messages.instagram_dm;
+  if (channel === 'ig' && c.messages?.instagram_dm) return ensureCreatorApplyLink(c.messages.instagram_dm);
   if (channel === 'wa' && (c.messages?.waba_body || c.messages?.instagram_dm)) {
     return c.messages.waba_body || c.messages.instagram_dm;
   }
@@ -1013,7 +1095,8 @@ function messageFor(c, channel, templates = loadTemplates(), vars = {}) {
     return c.messages.email_body || c.messages.instagram_dm;
   }
   const key = channel === 'email' ? 'email' : channel;
-  return render(templates[key] || `(${channel.toUpperCase()} template not set — paste it in the Templates panel above)`, vars);
+  const text = render(templates[key] || `(${channel.toUpperCase()} template not set — paste it in the Templates panel above)`, vars);
+  return channel === 'ig' ? ensureCreatorApplyLink(text) : text;
 }
 
 async function logSend(handle, channel, snapshot, contactValue) {
