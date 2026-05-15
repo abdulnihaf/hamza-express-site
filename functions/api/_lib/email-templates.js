@@ -29,7 +29,7 @@ const BRAND = {
 const LOGO_URL = 'https://hamzaexpress.in/assets/brand/he-emblem.png';
 const CREATORS_HOME = 'https://hamzaexpress.in/creators/';
 const APPLY_URL = 'https://hamzaexpress.in/creators/apply/';
-const ADDRESS = '151 TO 154, HKP Road, Sulthangunta · Shivajinagar · Bangalore 560051';
+const ADDRESS = '#19, H.K.P. Road · Shivajinagar · Bangalore 560051';
 const WABA_NUMBER = '+91 80080 02049';
 const MAP_URL = 'https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg';
 
@@ -65,7 +65,7 @@ function shell({ preheader, body }) {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="x-apple-disable-message-reformatting" />
 <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
-<title>An invitation from Hamza Hotel</title>
+<title>An invitation from Hamza Express</title>
 <!--[if mso]><style type="text/css">body,table,td{font-family:Georgia,serif !important}</style><![endif]-->
 <style type="text/css">
   /* Mobile breakpoint — Apple Mail iOS / Gmail Android / Outlook Mobile honor this. */
@@ -126,8 +126,8 @@ ${preheader}
           Web: <a href="${CREATORS_HOME}" style="color:${BRAND.sienna};text-decoration:underline;">hamzaexpress.in/creators</a>
         </div>
         <div style="margin-top:18px;padding-top:14px;border-top:1px solid ${BRAND.sienna};border-top-style:dotted;font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:11px;line-height:1.6;opacity:.7;">
-          Hamza Hotel · cooking on H.K.P. Road since 1918<br/>
-          Hamza Express is the modern, refreshed avatar of Hamza Hotel.<br/>
+          Hamza naam. Express andaaz.<br/>
+          Hamza Express carries the Hamza family food memory in a new Express format.<br/>
           Operated by HN Hotels Pvt Ltd · CIN U55101KA2023PTC182051
         </div>
       </td></tr>
@@ -197,7 +197,7 @@ function heritageStrip() {
     <tr><td style="padding:22px 28px;">
       <div style="font-family:Georgia,serif;color:${BRAND.sienna};font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;margin-bottom:10px;">A note on the heritage</div>
       <p style="font-family:Georgia,'Times New Roman',Times,serif;color:${BRAND.sienna};font-size:14px;line-height:1.7;margin:0;font-style:italic;">
-        Hamza Hotel has been on H.K.P. Road, Shivajinagar, since 1918 — one hundred and eight years, four generations of the same family. Through partition, license raj, through Bangalore turning from a sleepy cantonment into the metropolis we know today, the kitchen has not gone dark for a single evening. Hamza Express is the recently refreshed avatar of that kitchen. The recipes did not move an inch.
+        The Hamza family food memory has lived on H.K.P. Road since 1918. Hamza Express is the newer Express-format table from that same lineage: familiar food confidence, clearer ordering, and a Shivajinagar visit that creators can tell in their own voice.
       </p>
     </td></tr>
   </table>`;
@@ -216,7 +216,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
   if (isApproved) {
     pill = statusPill({ label: '✓ Confirmed instantly', color: '#0a6645', bg: '#e0f4e8' });
     headline = `Your invitation is confirmed, ${first_name}.`;
-    leadCopy = `<p style="margin:0 0 20px 0;">Welcome to the Hamza Hotel table. Your slot is reserved and the kitchen will be expecting you.</p>`;
+    leadCopy = `<p style="margin:0 0 20px 0;">Welcome to the Hamza Express table. Your visit is reserved and the kitchen will be expecting you.</p>`;
   } else if (isDeclined) {
     pill = statusPill({ label: 'Decision · Not this round', color: '#8b1d1d', bg: '#fbe5e5' });
     headline = `Thank you for applying, ${first_name}.`;
@@ -224,7 +224,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
   } else {
     pill = statusPill({ label: 'Application received · awaiting review', color: BRAND.sienna, bg: BRAND.tan });
     headline = `Thank you for applying, ${first_name}.`;
-    leadCopy = `<p style="margin:0 0 20px 0;">Your application has reached the kitchen. The family will personally review it and respond within twenty-four hours — we host one creator per slot, so each invitation is decided by hand.</p>`;
+    leadCopy = `<p style="margin:0 0 20px 0;">Your request has reached the Hamza Express team. We review each creator fit by hand before confirming the visit.</p>`;
   }
 
   const subject = isApproved
@@ -234,21 +234,21 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
       : 'Application received — Hamza Express, est. 1918';
 
   const preheader = isApproved
-    ? `Your slot is reserved at the table the city has been sitting at since 1918.`
+    ? `Your visit is reserved at the Hamza Express table.`
     : isDeclined
       ? `Thank you for the consideration. Apply again as your audience grows.`
-      : `The family will review and respond within 24 hours. One creator per slot.`;
+      : `We will review and respond within 24 hours.`;
 
   const body = `
-    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${eyebrow('Hamza naam · Express andaaz')}
     ${bigHeading(headline)}
     ${pill}
     ${leadCopy}
 
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:8px 0 16px 0;border-top:1px solid ${BRAND.line};">
       ${detailRow('Creator', `@${handle}`)}
-      ${detailRow('Tier', tier)}
-      ${detailRow('Slot ' + (isApproved ? 'reserved' : 'requested'), slot)}
+      ${detailRow('Invite', tier)}
+      ${detailRow((isApproved ? 'Visit reserved' : 'Preferred visit'), slot)}
       ${detailRow('Address', ADDRESS)}
     </table>
 
@@ -256,7 +256,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
       ${eyebrow('What we are hosting you with')}
       ${bulletList(hosting)}
       ${cash_inr ? `<div style="margin:14px 0 0 0;padding:12px 16px;background:#fdf6e3;border-left:3px solid ${BRAND.gold};font-family:Georgia,serif;color:${BRAND.sienna};font-size:14px;">
-        <strong>Cash on top of the meal:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
+        <strong>Approved commercial component:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
       </div>` : ''}
       ${divider()}
       ${eyebrow('What we ask, in return')}
@@ -268,7 +268,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
 
     ${!isApproved && !isDeclined ? `
       <p style="margin:14px 0 0 0;font-size:14px;line-height:1.7;color:${BRAND.mute};">
-        <strong style="color:${BRAND.sienna};">What happens next:</strong> we review every application by hand. You'll hear back from us via WhatsApp on <strong>${WABA_NUMBER}</strong> and email — typically within twenty-four hours. Save the WhatsApp number now so our reply doesn't land in spam.
+        <strong style="color:${BRAND.sienna};">What happens next:</strong> we review every creator request by hand. You'll hear back from us via WhatsApp on <strong>${WABA_NUMBER}</strong> and email — typically within twenty-four hours. Save the WhatsApp number now so our reply doesn't land in spam.
       </p>
     ` : ''}
 
@@ -292,7 +292,7 @@ export function buildReceivedEmail({ first_name, handle, tier, slot, status, hos
 // Supported template variables in the body: {first_name} {handle} {tier} {full_name}
 // ───────────────────────────────────────────────────────────────────
 export function buildOutreachEmail({ first_name, handle, tier, full_name, body_text, subject }) {
-  const subj = subject || 'An invitation from Hamza Hotel — est. 1918, Shivajinagar';
+  const subj = subject || 'An invitation from Hamza Express — HKP Road, Shivajinagar';
   // Substitute placeholders in the body
   const vars = { first_name, handle, tier, full_name };
   let body = String(body_text || '');
@@ -311,7 +311,7 @@ export function buildOutreachEmail({ first_name, handle, tier, full_name, body_t
   const preheader = `An invitation to sit at the Hamza family table — by selection only`;
 
   const innerBody = `
-    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${eyebrow('Hamza naam · Express andaaz')}
     ${paragraphs}
 
     ${ctaButton(APPLY_URL, 'View your invitation card →')}
@@ -333,15 +333,15 @@ export function buildTentativeEmail({ first_name, handle, tier, slot, hosting, a
   const preheader = `Your slot is held for ${slotLabel}. One last tap to lock it in.`;
 
   const body = `
-    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${eyebrow('Hamza naam · Express andaaz')}
     ${bigHeading(`We'd be honoured to host you, ${first_name}.`)}
     ${statusPill({ label: '🎉 Outlet approved · awaiting your confirmation', color: BRAND.sienna, bg: '#fdf6e3' })}
     <p style="margin:0 0 20px 0;">The family has personally reviewed your application and we'd love to have you at our table. Your slot is on hold — one last tap from you and the kitchen prepares for your arrival.</p>
 
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:8px 0 16px 0;border-top:1px solid ${BRAND.line};">
       ${detailRow('Creator', `@${handle}`)}
-      ${detailRow('Tier', tier)}
-      ${detailRow('Slot held', slotLabel)}
+      ${detailRow('Invite', tier)}
+      ${detailRow('Visit held', slotLabel)}
       ${detailRow('Address', ADDRESS)}
     </table>
 
@@ -361,7 +361,7 @@ export function buildTentativeEmail({ first_name, handle, tier, slot, hosting, a
       ${eyebrow('What we will host you with')}
       ${bulletList(hosting)}
       ${cash_inr ? `<div style="margin:14px 0 0 0;padding:12px 16px;background:#fdf6e3;border-left:3px solid ${BRAND.gold};font-family:Georgia,serif;color:${BRAND.sienna};font-size:14px;">
-        <strong>Cash on top of the meal:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
+        <strong>Approved commercial component:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
       </div>` : ''}
       ${divider()}
       ${eyebrow('What we ask, in return')}
@@ -404,11 +404,11 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
     : 'Hamza Express — application update';
 
   const preheader = isApproved
-    ? `${slotLabel} · 151 TO 154 HKP Road, Shivajinagar`
+    ? `${slotLabel} · #19 HKP Road, Shivajinagar`
     : `Thank you for the consideration. We'd love you to apply again.`;
 
   const body = `
-    ${eyebrow('An invitation from Hamza Hotel · est. 1918')}
+    ${eyebrow('Hamza naam · Express andaaz')}
     ${bigHeading(headline)}
     ${pill}
     ${leadCopy}
@@ -433,15 +433,15 @@ export function buildDecisionEmail({ first_name, handle, tier, slot, hosting, as
 
     <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin:8px 0 16px 0;border-top:1px solid ${BRAND.line};">
       ${detailRow('Creator', `@${handle}`)}
-      ${detailRow('Tier', tier)}
-      ${!isApproved ? detailRow('Slot requested', slotLabel) : ''}
+      ${detailRow('Invite', tier)}
+      ${!isApproved ? detailRow('Preferred visit', slotLabel) : ''}
     </table>
 
     ${isApproved && hosting ? `
       ${eyebrow('What we are hosting you with')}
       ${bulletList(hosting)}
       ${cash_inr ? `<div style="margin:14px 0 0 0;padding:12px 16px;background:#fdf6e3;border-left:3px solid ${BRAND.gold};font-family:Georgia,serif;color:${BRAND.sienna};font-size:14px;">
-        <strong>Cash on top of the meal:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
+        <strong>Approved commercial component:</strong> <span style="font-weight:700;color:${BRAND.gold};">₹ ${Number(cash_inr).toLocaleString('en-IN')}</span>
       </div>` : ''}
       ${divider()}
       ${eyebrow('What we ask, in return')}
