@@ -518,9 +518,9 @@ function renderCampaignKpis(data) {
     return;
   }
   const rows = CURRENT || [];
-  const email = rows.filter(c => c.contact?.email && !c.review_mode).length;
-  const wa = rows.filter(c => c.contact?.whatsapp && !c.review_mode).length;
-  const ig = rows.filter(c => !c.review_mode).length;
+  const email = rows.filter(c => c.contact?.email && !c.review_mode && (MODE !== 'campaign' || c.campaign_channels?.email)).length;
+  const wa = rows.filter(c => c.contact?.whatsapp && !c.review_mode && (MODE !== 'campaign' || c.campaign_channels?.waba)).length;
+  const ig = rows.filter(c => !c.review_mode && (MODE !== 'campaign' || c.campaign_channels?.instagram_dm)).length;
   const reviewApproved = Object.values(REVIEW_STATE || {}).filter(v => v === 'approve_for_outreach').length;
   const meta = CAMPAIGN_META || {};
   el.innerHTML = `
@@ -549,12 +549,18 @@ async function copyApprovedReviewHandles() {
   toast(`Copied ${handles.length} approved review handles`);
 }
 
+function skippedCount(summary) {
+  return Object.entries(summary || {})
+    .filter(([key]) => key.startsWith('skipped_'))
+    .reduce((sum, [, value]) => sum + Number(value || 0), 0);
+}
+
 // ── Bulk WhatsApp — Meta-approved Marketing template
 async function bulkWhatsApp() {
   const status = document.getElementById('bulk-status');
   const btn = document.getElementById('btn-bulk-wa');
   const rows = VISIBLE.length ? VISIBLE : CURRENT;
-  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.whatsapp && !c.sent.wa);
+  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.whatsapp && !c.sent.wa && (MODE !== 'campaign' || c.campaign_channels?.waba));
   if (!eligible.length) {
     toast('No eligible creators (need WhatsApp number + not-yet-sent)', true);
     return;
@@ -576,7 +582,7 @@ async function bulkWhatsApp() {
     const d = await r.json();
     if (!r.ok || !d.success) throw new Error(d.error || 'bulk WA send failed');
     const s = d.summary;
-    status.innerHTML = `✓ Sent ${s.sent} · skipped ${s.skipped_already_sent + s.skipped_no_phone} · failed ${s.failed}`;
+    status.innerHTML = `✓ Sent ${s.sent} · skipped ${skippedCount(s)} · failed ${s.failed}`;
     toast(`📱 ${s.sent} WhatsApp messages sent`);
     await loadList();
   } catch (e) {
@@ -610,7 +616,7 @@ async function bulkEmail() {
   }
   // Build handle list — use creators currently visible AND with email AND not-yet-emailed
   const rows = VISIBLE.length ? VISIBLE : CURRENT;
-  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.email && !c.sent.email);
+  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.email && !c.sent.email && (MODE !== 'campaign' || c.campaign_channels?.email));
   if (!eligible.length) {
     toast('No eligible creators (need email + not-yet-sent)', true);
     return;
@@ -632,7 +638,7 @@ async function bulkEmail() {
     const d = await r.json();
     if (!r.ok || !d.success) throw new Error(d.error || 'bulk send failed');
     const s = d.summary;
-    status.innerHTML = `✓ Sent ${s.sent} · skipped ${s.skipped_already_emailed + s.skipped_no_email} · failed ${s.failed}`;
+    status.innerHTML = `✓ Sent ${s.sent} · skipped ${skippedCount(s)} · failed ${s.failed}`;
     toast(`📩 ${s.sent} emails sent`);
     await loadList();
   } catch (e) {
