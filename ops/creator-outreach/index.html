@@ -50,7 +50,9 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .tmpl-cell input.subj{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--text);padding:8px 10px;font-size:12px;border-radius:4px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
 .tmpl-help{font-size:11px;color:var(--mute);margin-top:8px;line-height:1.5}
 .tmpl-help code{background:var(--card2);padding:1px 6px;border-radius:3px;color:var(--tan);font-family:'JetBrains Mono',monospace;font-size:10px}
+.test-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
 @media (max-width:900px){.tmpl-grid{grid-template-columns:1fr}}
+@media (max-width:900px){.test-grid{grid-template-columns:1fr}}
 
 /* ============== FILTER BAR ============== */
 .filter{padding:12px 22px;background:transparent;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px}
@@ -67,6 +69,8 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .avatar{width:48px;height:48px;border-radius:50%;background:var(--card2);object-fit:cover;flex-shrink:0;border:1px solid var(--line)}
 .who .handle{font-weight:700;font-size:14px}
 .who .handle::before{content:'@';color:var(--mute);font-weight:400}
+.who .handle a{color:inherit;text-decoration:none}
+.who .handle a:hover{color:var(--tan);text-decoration:underline;text-underline-offset:3px}
 .who .name{font-size:11px;color:var(--mute);margin-top:2px}
 .followers{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;text-align:center}
 .followers small{display:block;font-size:9px;color:var(--mute);text-transform:uppercase;letter-spacing:.12em;margin-top:2px;font-weight:400}
@@ -142,7 +146,7 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
       <br><br>
       <strong style="color:var(--tan)">📩 Bulk Email:</strong> click the green button below to fire this template via Gmail API to every creator with an email who hasn't been emailed yet — wraps the body in our HE-branded HTML shell.
       <br>
-      <strong style="color:var(--tan)">📷 IG row button:</strong> opens the creator's profile + copies rendered text to clipboard. Paste, send.
+      <strong style="color:var(--tan)">📷 IG row button:</strong> copies rendered text to clipboard + opens the Instagram DM entry point. If Instagram blocks direct DM, click the handle to view profile and paste manually.
       <br>
       <strong style="color:var(--tan)">💬 WA row button:</strong> opens wa.me with text pre-filled. Tap send manually.
     </div>
@@ -158,8 +162,8 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   </details>
 
   <details class="tmpl-panel" open>
-    <summary>🧪 Test send — verify the current template lands on your own email/phone before firing bulk</summary>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px">
+    <summary>🧪 Test send — verify email, WhatsApp, and Instagram handoff before firing bulk</summary>
+    <div class="test-grid">
       <div class="tmpl-cell">
         <label>✉ Test email address</label>
         <input class="subj" id="test_email" placeholder="you@example.com" autocomplete="email">
@@ -170,6 +174,11 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
         <input class="subj" id="test_phone" placeholder="+91 9XXXXXXXXX" autocomplete="tel">
         <button class="btn" id="btn-test-wa" style="background:#25d366;color:#fff;margin-top:8px;width:100%">📱 Send test WhatsApp</button>
       </div>
+      <div class="tmpl-cell">
+        <label>📷 Test Instagram handle</label>
+        <input class="subj" id="test_ig" placeholder="@creator or instagram.com/creator" autocomplete="off">
+        <button class="btn" id="btn-test-ig" style="background:#e52e6e;color:#fff;margin-top:8px;width:100%">📋 Copy + open DM</button>
+      </div>
     </div>
     <div class="tmpl-help" style="margin-top:12px;font-size:11px;color:var(--mute)">
       Email: sends the SAVED template body wrapped in the HE-branded HTML shell to your address, with sample
@@ -177,7 +186,9 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
       <br>
       WhatsApp: sends the same Meta-approved Marketing template chain (<code>v3 → v2 → v1</code>) that Bulk WA uses, with handle=<code>test_creator</code>. Costs ~₹0.78 per test (1 marketing conversation).
       <br>
-      <strong style="color:var(--tan)">Neither test logs to creator_outreach_log</strong> — your bulk-send dedup state is untouched.
+      Instagram: copies the exact rendered message to clipboard and opens <code>ig.me/m/{handle}</code>. Instagram does not reliably accept a pre-filled DM body for arbitrary accounts, so paste remains the final manual step.
+      <br>
+      <strong style="color:var(--tan)">Tests do not log to creator_outreach_log</strong> — your bulk-send dedup state is untouched.
     </div>
     <div id="test-status" style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;word-break:break-all"></div>
   </details>
@@ -268,8 +279,10 @@ function bindTemplates() {
   // Test send buttons
   const testEmailBtn = document.getElementById('btn-test-email');
   const testWaBtn    = document.getElementById('btn-test-wa');
+  const testIgBtn    = document.getElementById('btn-test-ig');
   if (testEmailBtn) testEmailBtn.addEventListener('click', testEmail);
   if (testWaBtn)    testWaBtn.addEventListener('click', testWhatsApp);
+  if (testIgBtn)    testIgBtn.addEventListener('click', testInstagram);
 }
 
 // ── Test send: same template, single recipient, no log write
@@ -333,6 +346,43 @@ async function testWhatsApp() {
   } catch (e) {
     status.innerHTML = '<span style="color:var(--red)">Error: ' + (e.message || e) + '</span>';
     toast('Test WhatsApp failed: ' + (e.message || e), true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+async function testInstagram() {
+  const raw = (document.getElementById('test_ig').value || '').trim();
+  const status = document.getElementById('test-status');
+  const handle = cleanInstagramHandle(raw);
+  if (!handle) {
+    toast('Enter a valid Instagram handle', true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-test-ig');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Opening…';
+  const text = render(LOADED_TEMPLATE.body || '(IG template not set — paste it in the Templates panel above)', {
+    first_name: handle.split(/[._]/)[0] || handle,
+    handle,
+    followers: '12K',
+    tier: 'T2 · Micro',
+    full_name: handle,
+  });
+
+  try {
+    const copied = await copyToClipboard(text);
+    window.open(instagramDmUrl(handle), '_blank', 'noopener');
+    status.innerHTML = copied
+      ? `✓ IG message copied for @${handle} · opened DM entry point. If Instagram shows a login/profile screen, paste from clipboard manually.`
+      : `Opened IG DM entry point for @${handle}, but clipboard copy failed.`;
+    toast(copied ? '📋 IG message copied · DM opened' : 'IG opened · clipboard failed');
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--red)">Error: ' + (e.message || e) + '</span>';
+    toast('Instagram test failed: ' + (e.message || e), true);
   } finally {
     btn.disabled = false;
     btn.textContent = orig;
@@ -483,6 +533,27 @@ function render(template, vars) {
   return s;
 }
 
+function cleanInstagramHandle(input) {
+  let value = String(input || '').trim();
+  if (!value) return '';
+  value = value
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+    .replace(/^https?:\/\/ig\.me\/m\//i, '')
+    .replace(/^@/, '')
+    .split(/[/?#]/)[0]
+    .trim()
+    .toLowerCase();
+  return /^[a-z0-9._]{1,30}$/.test(value) ? value : '';
+}
+
+function instagramProfileUrl(handle) {
+  return `https://www.instagram.com/${encodeURIComponent(handle)}/`;
+}
+
+function instagramDmUrl(handle) {
+  return `https://ig.me/m/${encodeURIComponent(handle)}`;
+}
+
 function fmt(n) {
   if (!n && n !== 0) return '—';
   if (n >= 1000) return (n/1000).toFixed(n>=10000 ? 0 : 1) + 'K';
@@ -582,7 +653,7 @@ function rowHTML(c) {
     : `<div class="avatar"></div>`;
 
   // Channel button states
-  const igBtn = `<button class="action-btn ig${c.sent.ig ? ' sent' : ''}" data-act="ig" data-handle="${handle}">📷 IG${c.sent.ig ? ' <span class="check">✓</span>' : ''}</button>`;
+  const igBtn = `<button class="action-btn ig${c.sent.ig ? ' sent' : ''}" data-act="ig" data-handle="${handle}">📷 DM${c.sent.ig ? ' <span class="check">✓</span>' : ''}</button>`;
   const waBtn = c.contact.whatsapp
     ? `<a class="action-btn wa${c.sent.wa ? ' sent' : ''}" data-act="wa" data-handle="${handle}" data-phone="${c.contact.whatsapp}" target="_blank" rel="noopener">💬 WA${c.sent.wa ? ' <span class="check">✓</span>' : ''}</a>`
     : `<span class="action-btn disabled">💬 —</span>`;
@@ -594,7 +665,7 @@ function rowHTML(c) {
     <div class="${cls}" data-handle="${handle}">
       ${avatar}
       <div class="who">
-        <div class="handle">${handle}</div>
+        <div class="handle"><a href="${instagramProfileUrl(handle)}" target="_blank" rel="noopener" title="Open Instagram profile">${handle}</a></div>
         <div class="name">${safeName}${replyPill ? ' ' + replyPill : ''}</div>
       </div>
       <div class="followers">${fmt(c.followers_count)}<small>followers</small></div>
@@ -621,16 +692,16 @@ function bindRow(c) {
     full_name: c.full_name || '',
   };
 
-  // IG: copy to clipboard + open profile
+  // IG: copy to clipboard + open DM entry point
   const igBtn = row.querySelector('[data-act="ig"]');
   if (igBtn && !igBtn.classList.contains('disabled')) {
     igBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       const text = render(t.ig || '(IG template not set — paste it in the Templates panel above)', vars);
       const ok = await copyToClipboard(text);
-      window.open(`https://www.instagram.com/${c.handle}/`, '_blank');
+      window.open(instagramDmUrl(c.handle), '_blank', 'noopener');
       await logSend(c.handle, 'ig', text, c.handle);
-      toast(ok ? '📋 IG message copied · profile opened. Paste & send.' : 'Profile opened (clipboard failed).');
+      toast(ok ? '📋 IG message copied · DM opened. Paste & send.' : 'DM opened (clipboard failed).');
       setTimeout(loadList, 600);
     });
   }
