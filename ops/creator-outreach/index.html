@@ -168,7 +168,7 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
       <span id="bulk-status" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;flex:1"></span>
     </div>
     <div class="tmpl-help" style="margin-top:10px;font-size:11px;color:var(--mute)">
-      <strong style="color:#25d366">📱 Bulk WhatsApp</strong> uses the Meta-approved Marketing template <code>creator_outreach_invitation_v1</code> — body has the heritage paragraph + "View my invitation" URL button. Only the {handle} variable is dynamic; the body text itself can't be edited (it's locked by Meta approval). To change body, submit a new template + wait 6-24h.
+      <strong style="color:#25d366">📱 Bulk WhatsApp</strong> uses the approved Marketing template chain <code>creator_outreach_invitation_v3 → v2 → v1</code>. The sender tries v3 first, then falls back to v2/v1 only if Meta rejects the newer template shape. Template body text is locked by Meta approval.
     </div>
   </details>
 
@@ -476,7 +476,7 @@ async function loadCampaign(includeReview) {
     renderCurrentList();
     campaignStatus(includeReview
       ? `Loaded ${d.count || 0} campaign creators + ${REVIEW_ROWS.length} review rows.`
-      : `Loaded ${d.count || 0} prepared campaign creators.`);
+      : `Loaded ${d.count || 0} prepared campaign creators. Bulk Email uses May 15 prepared copy; Bulk WhatsApp uses v3 → v2 → v1.`);
   } catch (e) {
     campaignStatus('Campaign load failed: ' + (e.message || e), true);
     toast('Campaign load failed: ' + (e.message || e), true);
@@ -647,7 +647,7 @@ async function bulkWhatsApp() {
     toast('No eligible creators (need WhatsApp number + not-yet-sent)', true);
     return;
   }
-  const ok = confirm(`Send the Marketing-template WhatsApp to ${eligible.length} visible eligible creators?\n\nFrom: +91 80080 02049 (Hamza Express WABA)\nMode: ${MODE}\nTemplate: creator_outreach_invitation_v1\nButton: "View my invitation"\n\nThis cannot be undone.`);
+  const ok = confirm(`Send the Marketing-template WhatsApp to ${eligible.length} visible eligible creators?\n\nFrom: +91 80080 02049 (Hamza Express WABA)\nMode: ${MODE}\nTemplate chain: creator_outreach_invitation_v3 → v2 → v1\nButton: "View my invitation"\n\nThis cannot be undone.`);
   if (!ok) return;
 
   btn.disabled = true;
@@ -703,7 +703,7 @@ async function bulkEmail() {
     toast('No eligible creators (need email + not-yet-sent)', true);
     return;
   }
-  const ok = confirm(`Send the outreach email to ${eligible.length} visible eligible creators via Gmail API?\n\nFrom: nihaf@hnhotels.in\nMode: ${MODE}\nSubject: ${MODE === 'campaign' ? 'prepared per-creator subjects' : LOADED_TEMPLATE.subject}\n\nThis cannot be undone.`);
+  const ok = confirm(`Send the outreach email to ${eligible.length} visible eligible creators via Gmail API?\n\nFrom: nihaf@hnhotels.in\nMode: ${MODE}\nSource: ${MODE === 'campaign' ? 'May 15 prepared per-creator email bodies' : 'saved generic dashboard template'}\nSubject: ${MODE === 'campaign' ? 'prepared per-creator subjects' : LOADED_TEMPLATE.subject}\n\nThis cannot be undone.`);
   if (!ok) return;
 
   btn.disabled = true;
