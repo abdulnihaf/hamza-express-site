@@ -726,6 +726,31 @@ const BIZ = {
   waba_phone: '+91 80080 02049',
 };
 
+// Creator applications are operated by Zoya, while Nihaf remains copied on
+// owner review alerts. Keep the default explicit so the flow works even if the
+// Pages env has only the older OWNER_PHONE variable.
+const CREATOR_OPS_OWNER_PHONES = ['917010426808', '918008004202'];
+
+function normOpsPhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+function creatorOpsOwnerPhones(env) {
+  const configured = String(env.CREATOR_OPS_OWNER_PHONES || '')
+    .split(/[,\s]+/)
+    .map(normOpsPhone)
+    .filter(Boolean);
+  const defaults = [
+    env.OWNER_PHONE,
+    env.HE_OWNER_PHONE,
+    ...CREATOR_OPS_OWNER_PHONES,
+  ].map(normOpsPhone).filter(Boolean);
+  return Array.from(new Set([...configured, ...defaults]));
+}
+
 // Window code → human-readable label
 const WINDOW_LABELS = {
   AFTERNOON: { time: '4 PM', label: 'Afternoon' },
@@ -1016,10 +1041,10 @@ function notifyCreatorText(app, slot, tierMeta) {
 }
 
 async function notifyOwner(env, db, app, decisionReason, slot) {
-  const ownerPhone = env.OWNER_PHONE || env.HE_OWNER_PHONE;
-  if (!ownerPhone) {
-    console.warn('OWNER_PHONE env not set — skipping owner WABA notification');
-    return { skipped: 'OWNER_PHONE not configured' };
+  const ownerPhones = creatorOpsOwnerPhones(env);
+  if (!ownerPhones.length) {
+    console.warn('Creator ops phones not set — skipping owner WABA notification');
+    return { skipped: 'CREATOR_OPS_OWNER_PHONES not configured' };
   }
   const text = notifyOwnerText(app, decisionReason, slot);
 
@@ -1045,9 +1070,15 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
       : `⏳ NEEDS REVIEW. ${decisionReason || 'Manual approval required for this tier.'}`;
   const reviewUrl = `https://hnhotels.in/ops/influencer-applications/?app_id=${app.id || ''}`;
 
-  const r = await sendWabaSmart(env, ownerPhone, 'creator_owner_alert_v2', [
-    profile, slotReq, statusLong, reviewUrl,
-  ], text);
+  const results = [];
+  for (const ownerPhone of ownerPhones) {
+    const r = await sendWabaSmart(env, ownerPhone, 'creator_owner_alert_v2', [
+      profile, slotReq, statusLong, reviewUrl,
+    ], text);
+    results.push({ phone: ownerPhone, ...r });
+  }
+  const sent = results.filter(r => r.ok);
+  const failed = results.filter(r => !r.ok);
   // best-effort log into the application row
   try {
     await db.prepare(`
@@ -1057,11 +1088,11 @@ async function notifyOwner(env, db, app, decisionReason, slot) {
           ?
       WHERE id = ?
     `).bind(
-      `[${new Date().toISOString()}] owner-waba: ${r.ok ? 'sent ' + (r.message_id||'') : 'FAILED ' + JSON.stringify(r).slice(0,200)}`,
+      `[${new Date().toISOString()}] owner-waba: sent ${sent.length}/${results.length} phones=${sent.map(r => r.phone).join(',') || '-'} failed=${failed.map(r => r.phone).join(',') || '-'}`,
       app.id
     ).run();
   } catch {}
-  return r;
+  return { ok: sent.length > 0, results };
 }
 
 // ─────────────────────────────────────────────────────────────────────
