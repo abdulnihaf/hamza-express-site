@@ -232,7 +232,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 .obs-muted{font-size:10px;color:var(--muted);line-height:1.5}
 .obs-error{font-size:10px;color:var(--orange);margin-top:8px;font-family:'JetBrains Mono',monospace;line-height:1.4}
 .campaign-views-section{border-color:rgba(139,92,246,.22);background:linear-gradient(135deg,rgba(139,92,246,.055),rgba(66,133,244,.035))}
-.view-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.view-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
 .view-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:0}
 .view-card.pmax{border-color:rgba(52,168,83,.28)}
 .view-card.search{border-color:rgba(66,133,244,.34)}
@@ -341,7 +341,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
       <div class="deploy-pill" id="deployPill">LIVE</div>
     </div>
     <div class="deploy-links" id="deployLinks"></div>
-    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km</div>
+    <div class="deploy-note">Exact Hamza pin: 12.9868469, 77.6044088 · PMax 2 km · Late-night Search 7 km · Dinner Search 3 km</div>
   </div>
 
   <!-- PMax observability guardrails — read-only diagnostics -->
@@ -350,9 +350,9 @@ tr:hover td{background:rgba(66,133,244,.04)}
     <div id="pmaxObsBody" class="obs-muted">Loading PMax observability…</div>
   </div>
 
-  <!-- Two-campaign operating view: PMax base layer + late-night Search layer -->
+  <!-- Multi-campaign operating view: PMax base layer + surgical Search layers -->
   <div class="section campaign-views-section" id="campaignViewsSection">
-    <div class="section-title">Campaign Views <span class="tip">— PMax broad discovery vs late-night Maps/Search footfall</span></div>
+    <div class="section-title">Campaign Views <span class="tip">— PMax broad discovery vs surgical Maps/Search footfall layers</span></div>
     <div id="campaignViewsBody" class="obs-muted">Loading campaign architecture…</div>
   </div>
 
@@ -479,6 +479,7 @@ tr:hover td{background:rgba(66,133,244,.04)}
 const API = '/api/google-cockpit';
 const PMAX_OBS_API = '/api/google-ads?action=pmax-observability&id=23834053403';
 const LATE_NIGHT_SEARCH_API = '/api/google-ads?action=late-night-search-intelligence';
+const DINNER_SEARCH_API = '/api/google-ads?action=dinner-search-intelligence';
 const ORGANIC_API = '/api/organic-insights';
 const GOOGLE_ADS_CONSOLE = 'https://ads.google.com/aw/overview?__c=3681710084';
 const GOOGLE_ADS_CAMPAIGNS = 'https://ads.google.com/aw/campaigns?__c=3681710084';
@@ -830,19 +831,22 @@ async function loadLateNightIntelligence(data) {
   const body = document.getElementById('campaignViewsBody');
   if (!body) return;
   try {
-    const resp = await fetch(LATE_NIGHT_SEARCH_API);
-    const intel = await resp.json();
-    if (!intel.ok) {
-      body.innerHTML = `<div class="obs-error">Campaign architecture failed: ${intel.error || 'unknown error'}</div>`;
+    const [lateResp, dinnerResp] = await Promise.all([
+      fetch(LATE_NIGHT_SEARCH_API),
+      fetch(DINNER_SEARCH_API),
+    ]);
+    const [intel, dinnerIntel] = await Promise.all([lateResp.json(), dinnerResp.json()]);
+    if (!intel.ok || !dinnerIntel.ok) {
+      body.innerHTML = `<div class="obs-error">Campaign architecture failed: ${intel.error || dinnerIntel.error || 'unknown error'}</div>`;
       return;
     }
-    renderCampaignViews(data, intel);
+    renderCampaignViews(data, intel, dinnerIntel);
   } catch (e) {
     body.innerHTML = `<div class="obs-error">Could not load campaign architecture: ${e.message}</div>`;
   }
 }
 
-function renderCampaignViews(data, intel) {
+function renderCampaignViews(data, intel, dinnerIntel) {
   const body = document.getElementById('campaignViewsBody');
   if (!body) return;
   const esc = s => String(s == null ? '' : s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
@@ -853,20 +857,35 @@ function renderCampaignViews(data, intel) {
   const spec = intel.spec || {};
   const groups = spec.adGroups || [];
   const keywordCount = groups.reduce((s, g) => s + (g.keywordCount || 0), 0);
+  const dinnerSearch = dinnerIntel?.live?.existingDinner || null;
+  const dinnerSpec = dinnerIntel?.spec || {};
+  const dinnerGroups = dinnerSpec.adGroups || [];
+  const dinnerKeywordCount = dinnerGroups.reduce((s, g) => s + (g.keywordCount || 0), 0);
   const guardRows = (intel.guardrails || []).map(g => `
     <div class="guard-row">
       <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
       <span>${esc(g.detail)}</span>
     </div>
   `).join('');
+  const dinnerGuardRows = (dinnerIntel?.guardrails || []).map(g => `
+    <div class="guard-row">
+      <span style="display:flex;align-items:center;gap:7px"><i class="guard-dot ${esc(g.state || 'warn')}"></i><b>${esc(g.label)}</b></span>
+      <span>${esc(g.detail)}</span>
+    </div>
+  `).join('');
   const searchState =
-    search?.status === 'ENABLED' ? 'bad' :
-    search?.status === 'PAUSED' ? 'ok' :
+    search?.status === 'ENABLED' ? 'ok' :
+    search?.status === 'PAUSED' ? 'warn' :
     legacy?.status === 'PAUSED' ? 'warn' : 'ok';
   const searchLabel =
     search ? `${search.status} · ${search.id}` :
     legacy?.status === 'PAUSED' ? 'Ready to reset' :
     'Ready to create';
+  const dinnerState =
+    dinnerSearch?.status === 'ENABLED' ? 'ok' :
+    dinnerSearch?.status === 'PAUSED' ? 'warn' :
+    'ok';
+  const dinnerLabel = dinnerSearch ? `${dinnerSearch.status} · ${dinnerSearch.id}` : 'Ready to create';
   const pmaxState = pmax.status === 'ENABLED' ? 'ok' : 'warn';
   const pmaxSpend = data.overview?.spend || 0;
   const pmaxClicks = data.overview?.clicks || 0;
@@ -913,6 +932,28 @@ function renderCampaignViews(data, intel) {
           <a href="${esc(LATE_NIGHT_SEARCH_API)}" target="_blank">Search intelligence JSON</a>
           <a href="/go/google-night" target="_blank">Late-night landing</a>
           ${search ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(search.id)}" target="_blank">Search criteria</a>` : ''}
+        </div>
+      </div>
+      <div class="view-card search">
+        <div class="view-head">
+          <div>
+            <div class="view-kicker">View 3 · Dinner dish-led Search</div>
+            <div class="view-title">${esc(dinnerSpec.campaignName || 'HE — Dinner Dish-Led Non-Veg Search — v1')}</div>
+          </div>
+          <div class="view-pill ${dinnerState}">${esc(dinnerLabel)}</div>
+        </div>
+        <div class="view-metrics">
+          <div class="view-metric"><span>Budget</span><strong>${money(dinnerSpec.budgetINR || 300)}/d</strong></div>
+          <div class="view-metric"><span>Window</span><strong>18-22</strong></div>
+          <div class="view-metric"><span>Radius</span><strong>${esc(dinnerSpec.geo?.radiusKm || 3)} km</strong></div>
+        </div>
+        <div class="view-desc">${esc(dinnerIntel?.decision?.recommendation || 'Dinner Search captures nearby dish-led non-veg intent.')} ${dinnerGroups.length} ad groups · ${dinnerKeywordCount} exact/phrase keywords · final URL ${esc(dinnerSpec.finalUrl || '')}.</div>
+        <div class="guard-list">${dinnerGuardRows}</div>
+        <div class="view-actions">
+          <a href="/ops/google-ads-directory/" target="_blank">Architecture directory</a>
+          <a href="${esc(DINNER_SEARCH_API)}" target="_blank">Dinner intelligence JSON</a>
+          <a href="/go/google-dinner-search" target="_blank">Dinner landing</a>
+          ${dinnerSearch ? `<a href="/api/google-ads?action=campaign-criteria&id=${encodeURIComponent(dinnerSearch.id)}" target="_blank">Dinner criteria</a>` : ''}
         </div>
       </div>
     </div>

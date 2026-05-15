@@ -15,6 +15,11 @@ const LATE_NIGHT_SEARCH_CONFIRM = 'RESET_LATE_NIGHT_SEARCH_V1';
 const LATE_NIGHT_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-night';
 const LATE_NIGHT_SEARCH_BUDGET_INR = 300;
 const LATE_NIGHT_SEARCH_RADIUS_KM = 7;
+const DINNER_SEARCH_CAMPAIGN_NAME = 'HE — Dinner Dish-Led Non-Veg Search — v1';
+const DINNER_SEARCH_CONFIRM = 'CREATE_DINNER_SEARCH_V1';
+const DINNER_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-dinner-search';
+const DINNER_SEARCH_BUDGET_INR = 300;
+const DINNER_SEARCH_RADIUS_KM = 3;
 const HE_WALK_IN_NEGATIVE_SET_ID = '12074853990';
 const ADS_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const LATE_NIGHT_AD_GROUPS = [
@@ -159,6 +164,134 @@ const LATE_NIGHT_EXTRA_NEGATIVES = [
   'vegetarian',
 ];
 
+const DINNER_SEARCH_AD_GROUPS = [
+  {
+    key: 'biryani_kabab_ghee_rice',
+    name: 'Biryani Kabab Ghee Rice',
+    cpcINR: 30,
+    path1: 'biryani',
+    path2: 'kabab',
+    keywords: [
+      ['biryani near me', 'PHRASE'],
+      ['biryani near me', 'EXACT'],
+      ['chicken biryani near me', 'PHRASE'],
+      ['mutton biryani near me', 'PHRASE'],
+      ['kabab near me', 'PHRASE'],
+      ['kabab near me', 'EXACT'],
+      ['chicken kabab near me', 'PHRASE'],
+      ['chicken kebab near me', 'PHRASE'],
+      ['ghee rice near me', 'PHRASE'],
+      ['ghee rice near me', 'EXACT'],
+    ],
+    headlines: [
+      'Hamza Express HKP Road',
+      'Biryani & Kabab Dinner',
+      'Ghee Rice Near You',
+      'Get Directions',
+      'Mutton Biryani Nearby',
+      'Chicken Kabab Nearby',
+      'Dine-In Or Parcel',
+      'Since 1918',
+      'HKP Road Non-Veg',
+      'Dinner Near Shivajinagar',
+    ],
+  },
+  {
+    key: 'non_veg_restaurant',
+    name: 'Non Veg Restaurant Near Me',
+    cpcINR: 24,
+    path1: 'non-veg',
+    path2: 'dinner',
+    keywords: [
+      ['non veg restaurant near me', 'PHRASE'],
+      ['non veg restaurant near me', 'EXACT'],
+      ['non veg restaurants near me', 'PHRASE'],
+      ['non veg dinner near me', 'PHRASE'],
+      ['chicken restaurant near me', 'PHRASE'],
+      ['halal restaurant near me', 'PHRASE'],
+      ['halal restaurant near me', 'EXACT'],
+      ['muslim restaurant near me', 'PHRASE'],
+    ],
+    headlines: [
+      'Hamza Express HKP Road',
+      'Non-Veg Dinner',
+      'Halal Dinner Near You',
+      'Get Directions',
+      'Ghee Rice & Kabab',
+      'Biryani Near You',
+      'Dine-In Or Parcel',
+      'Since 1918',
+      'HKP Road Non-Veg',
+      'Dinner Near Shivajinagar',
+    ],
+  },
+  {
+    key: 'shivajinagar_dinner',
+    name: 'Shivajinagar Dinner',
+    cpcINR: 18,
+    path1: 'shivajinagar',
+    path2: 'dinner',
+    keywords: [
+      ['biryani shivajinagar', 'PHRASE'],
+      ['biryani shivajinagar', 'EXACT'],
+      ['kabab shivajinagar', 'PHRASE'],
+      ['restaurant shivajinagar', 'PHRASE'],
+      ['restaurants in shivajinagar', 'PHRASE'],
+      ['non veg restaurant shivajinagar', 'PHRASE'],
+      ['dinner shivajinagar', 'PHRASE'],
+      ['shivajinagar dinner', 'PHRASE'],
+    ],
+    headlines: [
+      'Hamza Express HKP Road',
+      'Shivajinagar Dinner',
+      'Biryani & Kabab Dinner',
+      'Get Directions',
+      'Ghee Rice Near You',
+      'Non-Veg Dinner',
+      'Dine-In Or Parcel',
+      'Since 1918',
+      'HKP Road Non-Veg',
+      'Near Commercial Street',
+    ],
+  },
+];
+
+const DINNER_SEARCH_DESCRIPTIONS = [
+  'Dinner near Shivajinagar: biryani, kabab and ghee rice. Tap for directions.',
+  'Hamza Express on HKP Road. Dine-in or parcel for evening non-veg dinner.',
+  'Built for 6-10 PM dinner searches within 3 km of the Hamza Express pin.',
+  'Same Hamza food memory, focused on biryani, kabab, ghee rice and non-veg meals.',
+];
+
+const DINNER_SEARCH_EXTRA_NEGATIVES = [
+  'late night',
+  'midnight',
+  '24 hours',
+  '24 hour',
+  'open 24 hours',
+  'hotel room',
+  'rooms',
+  'lodge',
+  'lodging',
+  'pg',
+  'hostel',
+  'oyo',
+  'recipe',
+  'how to make',
+  'jobs',
+  'salary',
+  'franchise',
+  'bar',
+  'pub',
+  'beer',
+  'alcohol',
+  'pure veg',
+  'veg only',
+  'vegetarian',
+  'buffet',
+  'breakfast',
+];
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -196,6 +329,10 @@ export async function onRequest(context) {
         return await getLateNightSearchIntelligence(accessToken, env);
       case 'reset-late-night-search':
         return await resetLateNightSearch(accessToken, env, request);
+      case 'dinner-search-intelligence':
+        return await getDinnerSearchIntelligence(accessToken, env);
+      case 'create-dinner-search':
+        return await createDinnerSearch(accessToken, env, request);
       case 'pause-campaign':
         return await setCampaignStatus(accessToken, env, url.searchParams.get('id'), 'PAUSED');
       case 'enable-campaign':
@@ -1202,6 +1339,534 @@ async function resetLateNightSearch(accessToken, env, request) {
     auditLinks: {
       criteria: `/api/google-ads?action=campaign-criteria&id=${campaignId}`,
       intelligence: '/api/google-ads?action=late-night-search-intelligence',
+      cockpit: '/ops/google-cockpit/',
+    },
+    log,
+  });
+}
+
+// ============================================================
+// DINNER DISH-LED NON-VEG SEARCH — Intelligence + safe create
+// Creates the campaign PAUSED first. Enabling is a separate mutation after
+// the criteria audit passes.
+// ============================================================
+function dinnerSearchSpec() {
+  return {
+    campaignName: DINNER_SEARCH_CAMPAIGN_NAME,
+    ownerObjective: 'Maximum 18:00-22:00 physical dinner footfall from nearby non-veg dish seekers.',
+    roleInAccount: 'Surgical Search layer for biryani, kabab, ghee rice and non-veg dinner intent inside a tight 3 km radius.',
+    budgetINR: DINNER_SEARCH_BUDGET_INR,
+    createStatus: 'PAUSED',
+    finalUrl: DINNER_SEARCH_FINAL_URL,
+    geo: {
+      type: 'PROXIMITY_ONLY',
+      lat: HAMZA_PIN.lat,
+      lng: HAMZA_PIN.lng,
+      radiusKm: DINNER_SEARCH_RADIUS_KM,
+      locationOption: 'PRESENCE',
+      blockedGeoShape: 'No city geo target. No Bengaluru city ID. No Gurugram ID.',
+    },
+    schedule: {
+      timezone: 'Asia/Calcutta',
+      ownerWindow: '18:00-22:00 daily',
+      apiShape: ADS_DAYS.map(day => ({
+        day,
+        startHour: 18,
+        startMinute: 'ZERO',
+        endHour: 22,
+        endMinute: 'ZERO',
+      })),
+    },
+    mapsFocus: [
+      'Account-level Google Business Profile location asset must remain linked.',
+      'Final URL is a direction-first dinner page, not the generic WhatsApp redirect.',
+      'Ad copy pushes HKP Road, Shivajinagar, Get Directions, dine-in and parcel.',
+      'Direction/call/menu local actions remain the practical proxy conversions until Store Visits unlocks.',
+    ],
+    adGroups: DINNER_SEARCH_AD_GROUPS.map(g => ({
+      name: g.name,
+      cpcINR: g.cpcINR,
+      path1: g.path1,
+      path2: g.path2,
+      keywordCount: g.keywords.length,
+      keywords: g.keywords.map(([text, matchType]) => ({ text, matchType })),
+      headlines: g.headlines,
+      descriptions: DINNER_SEARCH_DESCRIPTIONS,
+    })),
+    sharedNegativeListId: HE_WALK_IN_NEGATIVE_SET_ID,
+    extraNegativeKeywords: DINNER_SEARCH_EXTRA_NEGATIVES,
+    safetyRules: [
+      'Create the new dinner campaign PAUSED first; enable only after criteria audit.',
+      'Abort if a same-name dinner campaign already exists and replaceExisting is not true.',
+      'Use exact Hamza micro-degree pin from Google Maps metadata, not geo-target city IDs.',
+      'Use Search Network only; no Display Network and no Search Partners at launch.',
+      'Keep late-night intent separated with late-night/midnight/24-hour negatives.',
+    ],
+  };
+}
+
+function validateDinnerSearchSpec(spec) {
+  const issues = [];
+  for (const g of spec.adGroups || []) {
+    for (const h of g.headlines || []) {
+      if (h.length > 30) issues.push(`Headline too long in ${g.name}: "${h}" (${h.length}/30)`);
+    }
+    for (const d of g.descriptions || []) {
+      if (d.length > 90) issues.push(`Description too long in ${g.name}: "${d}" (${d.length}/90)`);
+    }
+  }
+  if (spec.geo.radiusKm !== 3) issues.push(`Expected 3km radius, got ${spec.geo.radiusKm}`);
+  if (spec.budgetINR !== 300) issues.push(`Expected ₹300/day, got ₹${spec.budgetINR}`);
+  if (spec.createStatus !== 'PAUSED') issues.push('New campaign must be created PAUSED');
+  if (spec.finalUrl !== DINNER_SEARCH_FINAL_URL) issues.push(`Unexpected final URL: ${spec.finalUrl}`);
+  if ((spec.schedule?.apiShape || []).length !== 7) issues.push('Expected 7 daily schedule blocks');
+  return issues;
+}
+
+async function getDinnerSearchIntelligence(accessToken, env) {
+  const spec = dinnerSearchSpec();
+  const textIssues = validateDinnerSearchSpec(spec);
+  const safeQuery = async (name, query) => {
+    try {
+      return { name, rows: await queryGoogleAds(accessToken, env, query), error: null };
+    } catch (e) {
+      return { name, rows: [], error: e.message };
+    }
+  };
+
+  const [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ] = await Promise.all([
+    safeQuery('campaigns', `
+      SELECT
+        campaign.id,
+        campaign.name,
+        campaign.status,
+        campaign.serving_status,
+        campaign.advertising_channel_type,
+        campaign.geo_target_type_setting.positive_geo_target_type,
+        campaign.geo_target_type_setting.negative_geo_target_type,
+        campaign_budget.amount_micros
+      FROM campaign
+      WHERE campaign.status != 'REMOVED'
+      ORDER BY campaign.id DESC
+    `),
+    safeQuery('locationAssets', `
+      SELECT
+        asset.id,
+        asset.type,
+        asset.location_asset.business_profile_locations,
+        asset.location_asset.location_ownership_type
+      FROM asset
+      WHERE asset.type = 'LOCATION'
+    `),
+    safeQuery('conversionActions', `
+      SELECT
+        conversion_action.id,
+        conversion_action.name,
+        conversion_action.status,
+        conversion_action.type,
+        conversion_action.category,
+        conversion_action.primary_for_goal
+      FROM conversion_action
+      WHERE conversion_action.status = 'ENABLED'
+    `),
+    safeQuery('sharedSets', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_set.type,
+        shared_set.member_count,
+        shared_set.reference_count,
+        shared_set.status
+      FROM shared_set
+      WHERE shared_set.status != 'REMOVED'
+    `),
+    safeQuery('sharedCriteria', `
+      SELECT
+        shared_set.id,
+        shared_set.name,
+        shared_criterion.keyword.text,
+        shared_criterion.keyword.match_type,
+        shared_criterion.type
+      FROM shared_criterion
+      WHERE shared_set.id = ${HE_WALK_IN_NEGATIVE_SET_ID}
+      LIMIT 200
+    `),
+  ]);
+
+  const errors = [campaignQ, locationQ, conversionQ, sharedSetQ, sharedCritQ]
+    .filter(q => q.error)
+    .map(q => ({ name: q.name, error: q.error }));
+
+  const campaigns = campaignQ.rows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    servingStatus: r.campaign?.servingStatus,
+    type: r.campaign?.advertisingChannelType,
+    positiveGeoTargetType: r.campaign?.geoTargetTypeSetting?.positiveGeoTargetType,
+    negativeGeoTargetType: r.campaign?.geoTargetTypeSetting?.negativeGeoTargetType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const currentPmax = campaigns.find(c => c.id === PMAX_CAMPAIGN_ID) || null;
+  const existingLateNight = campaigns.find(c => c.name === LATE_NIGHT_SEARCH_CAMPAIGN_NAME) || null;
+  const existingDinner = campaigns.find(c => c.name === DINNER_SEARCH_CAMPAIGN_NAME) || null;
+  const locationAssets = locationQ.rows.map(r => ({
+    id: r.asset?.id,
+    type: r.asset?.type,
+    ownership: r.asset?.locationAsset?.locationOwnershipType,
+    businessProfileLocations: r.asset?.locationAsset?.businessProfileLocations || [],
+  }));
+  const conversionActions = conversionQ.rows.map(r => ({
+    id: r.conversionAction?.id,
+    name: r.conversionAction?.name,
+    type: r.conversionAction?.type,
+    category: r.conversionAction?.category,
+    primaryForGoal: !!r.conversionAction?.primaryForGoal,
+  }));
+  const sharedSets = sharedSetQ.rows.map(r => ({
+    id: r.sharedSet?.id,
+    name: r.sharedSet?.name,
+    type: r.sharedSet?.type,
+    memberCount: parseInt(r.sharedSet?.memberCount) || 0,
+    referenceCount: parseInt(r.sharedSet?.referenceCount) || 0,
+    status: r.sharedSet?.status,
+  }));
+  const sharedNegatives = sharedCritQ.rows.map(r => ({
+    text: r.sharedCriterion?.keyword?.text,
+    matchType: r.sharedCriterion?.keyword?.matchType,
+  })).filter(k => k.text);
+  const sharedSet = sharedSets.find(s => String(s.id) === HE_WALK_IN_NEGATIVE_SET_ID) || null;
+  const localActionCount = conversionActions.filter(a =>
+    ['GET_DIRECTIONS', 'CONTACT', 'PHONE_CALL_LEAD', 'PAGE_VIEW', 'ENGAGEMENT'].includes(a.category)
+  ).length;
+
+  const guardrails = [
+    {
+      id: 'no-duplicate-dinner',
+      label: 'No duplicate dinner campaign',
+      state: existingDinner ? 'warn' : 'ok',
+      detail: existingDinner ? `${existingDinner.id} is ${existingDinner.status}` : 'none exists',
+    },
+    {
+      id: 'late-night-separated',
+      label: 'Late-night separated',
+      state: existingLateNight ? 'ok' : 'warn',
+      detail: existingLateNight ? `${existingLateNight.status} · ${existingLateNight.id}` : 'late-night campaign not found',
+    },
+    {
+      id: 'exact-pin',
+      label: 'Exact pin locked',
+      state: spec.geo.lat === HAMZA_PIN.lat && spec.geo.lng === HAMZA_PIN.lng ? 'ok' : 'bad',
+      detail: `${spec.geo.lat},${spec.geo.lng}`,
+    },
+    {
+      id: 'radius',
+      label: 'Launch radius',
+      state: spec.geo.radiusKm === 3 ? 'ok' : 'bad',
+      detail: `${spec.geo.radiusKm} km proximity only`,
+    },
+    {
+      id: 'schedule',
+      label: 'Dinner only',
+      state: spec.schedule.apiShape.length === 7 ? 'ok' : 'bad',
+      detail: '18:00-22:00 daily',
+    },
+    {
+      id: 'location-asset',
+      label: 'GBP location asset',
+      state: locationAssets.length ? 'ok' : 'bad',
+      detail: locationAssets.length ? `${locationAssets.length} asset(s) linked at account` : 'missing',
+    },
+    {
+      id: 'local-actions',
+      label: 'Local action goals',
+      state: localActionCount >= 3 ? 'ok' : 'warn',
+      detail: `${localActionCount} enabled local/call/menu actions`,
+    },
+    {
+      id: 'negative-list',
+      label: 'Walk-in negative list',
+      state: sharedSet && sharedNegatives.length >= 30 ? 'ok' : 'warn',
+      detail: sharedSet ? `${sharedNegatives.length} keywords · ${sharedSet.referenceCount} refs` : 'missing',
+    },
+    {
+      id: 'ad-text-policy-shape',
+      label: 'Ad text length check',
+      state: textIssues.length ? 'bad' : 'ok',
+      detail: textIssues.length ? `${textIssues.length} issue(s)` : 'all headlines/descriptions within limits',
+    },
+    {
+      id: 'pmax-state',
+      label: 'PMax base layer',
+      state: currentPmax ? 'ok' : 'warn',
+      detail: currentPmax ? `${currentPmax.status} / ₹${currentPmax.budgetINR}/day` : 'PMax missing',
+    },
+  ];
+
+  return json({
+    ok: true,
+    asOf: todayIST(),
+    decision: {
+      recommendation: 'Use Dinner Dish-Led Non-Veg Search as the second ₹300/day surgical layer.',
+      reason: 'Dinner intent is dish-led and distance-sensitive; a 3 km Search campaign gives tighter control than PMax for this eater bucket.',
+    },
+    spec,
+    live: {
+      campaigns,
+      currentPmax,
+      existingLateNight,
+      existingDinner,
+      locationAssets,
+      conversionActions,
+      sharedNegativeList: sharedSet,
+      sharedNegatives,
+    },
+    guardrails,
+    textIssues,
+    execution: {
+      endpoint: '/api/google-ads?action=create-dinner-search',
+      method: 'POST',
+      requiredBody: { confirm: DINNER_SEARCH_CONFIRM },
+      result: 'Creates the new dinner Search campaign PAUSED and returns resource IDs for audit.',
+    },
+    errors,
+  });
+}
+
+async function createDinnerSearch(accessToken, env, request) {
+  if (request.method !== 'POST') {
+    return json({ error: 'POST required', requiredBody: { confirm: DINNER_SEARCH_CONFIRM } }, 405);
+  }
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== DINNER_SEARCH_CONFIRM) {
+    return json({
+      error: 'confirmation_required',
+      required: DINNER_SEARCH_CONFIRM,
+      note: 'This endpoint creates the dinner Search campaign PAUSED. Re-submit with confirm after reviewing dinner-search-intelligence.',
+    }, 409);
+  }
+
+  const log = [];
+  const step = msg => log.push(`[${new Date().toISOString()}] ${msg}`);
+  const spec = dinnerSearchSpec();
+  const textIssues = validateDinnerSearchSpec(spec);
+  if (textIssues.length) return json({ success: false, error: 'spec_validation_failed', textIssues }, 500);
+
+  const campaignRows = await queryGoogleAds(accessToken, env, `
+    SELECT
+      campaign.id,
+      campaign.name,
+      campaign.status,
+      campaign.advertising_channel_type,
+      campaign_budget.amount_micros
+    FROM campaign
+    WHERE campaign.status != 'REMOVED'
+    ORDER BY campaign.id DESC
+  `);
+  const campaigns = campaignRows.map(r => ({
+    id: r.campaign?.id,
+    name: r.campaign?.name,
+    status: r.campaign?.status,
+    type: r.campaign?.advertisingChannelType,
+    budgetINR: moneyMicros(r.campaignBudget?.amountMicros),
+  }));
+  const existingDinner = campaigns.find(c => c.name === DINNER_SEARCH_CAMPAIGN_NAME);
+
+  if (existingDinner && !body.replaceExisting) {
+    return json({
+      success: false,
+      error: 'dinner_campaign_already_exists',
+      detail: 'Refusing to create a duplicate. Pass replaceExisting:true only if the existing dinner campaign is PAUSED and should be removed first.',
+      existingDinner,
+      log,
+    }, 409);
+  }
+
+  if (existingDinner && body.replaceExisting) {
+    if (existingDinner.status !== 'PAUSED') {
+      return json({
+        success: false,
+        error: 'existing_dinner_not_paused',
+        detail: `Refusing to replace existing dinner campaign ${existingDinner.id} because it is ${existingDinner.status}.`,
+        existingDinner,
+        log,
+      }, 409);
+    }
+    await removeCampaign(accessToken, env, existingDinner.id);
+    step(`Removed existing paused dinner campaign ${existingDinner.id}`);
+  }
+
+  const budgetResults = await mutateGoogleAds(accessToken, env, 'campaignBudgets', [{
+    create: {
+      name: `HE Dinner Search INR${DINNER_SEARCH_BUDGET_INR}/day ${todayIST()} ${Date.now()}`,
+      amountMicros: rupeesToMicros(DINNER_SEARCH_BUDGET_INR),
+      deliveryMethod: 'STANDARD',
+      explicitlyShared: false,
+    },
+  }]);
+  const budgetResource = budgetResults[0].resourceName;
+  step(`Created ₹${DINNER_SEARCH_BUDGET_INR}/day budget ${budgetResource}`);
+
+  const campaignResults = await mutateGoogleAds(accessToken, env, 'campaigns', [{
+    create: {
+      name: DINNER_SEARCH_CAMPAIGN_NAME,
+      status: 'PAUSED',
+      advertisingChannelType: 'SEARCH',
+      containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
+      campaignBudget: budgetResource,
+      manualCpc: { enhancedCpcEnabled: false },
+      networkSettings: {
+        targetGoogleSearch: true,
+        targetSearchNetwork: false,
+        targetContentNetwork: false,
+        targetPartnerSearchNetwork: false,
+      },
+      geoTargetTypeSetting: {
+        positiveGeoTargetType: 'PRESENCE',
+        negativeGeoTargetType: 'PRESENCE',
+      },
+    },
+  }]);
+  const campaignResource = campaignResults[0].resourceName;
+  const campaignId = campaignResource.split('/').pop();
+  step(`Created dinner Search campaign ${campaignId} as PAUSED`);
+
+  const adGroupResults = await mutateGoogleAds(accessToken, env, 'adGroups',
+    DINNER_SEARCH_AD_GROUPS.map(g => ({
+      create: {
+        name: g.name,
+        campaign: campaignResource,
+        status: 'ENABLED',
+        type: 'SEARCH_STANDARD',
+        cpcBidMicros: rupeesToMicros(g.cpcINR),
+      },
+    })),
+  );
+  const adGroupResources = Object.fromEntries(
+    DINNER_SEARCH_AD_GROUPS.map((g, i) => [g.key, adGroupResults[i].resourceName]),
+  );
+  step(`Created ${adGroupResults.length} dinner ad groups`);
+
+  const keywordOps = [];
+  for (const group of DINNER_SEARCH_AD_GROUPS) {
+    for (const [text, matchType] of group.keywords) {
+      keywordOps.push({
+        create: {
+          adGroup: adGroupResources[group.key],
+          status: 'ENABLED',
+          keyword: { text, matchType },
+        },
+      });
+    }
+  }
+  await mutateGoogleAds(accessToken, env, 'adGroupCriteria', keywordOps);
+  step(`Created ${keywordOps.length} exact/phrase dinner keywords`);
+
+  const adOps = DINNER_SEARCH_AD_GROUPS.map(group => ({
+    create: {
+      adGroup: adGroupResources[group.key],
+      status: 'ENABLED',
+      ad: {
+        responsiveSearchAd: {
+          headlines: group.headlines.map(text => ({
+            text,
+            ...(text === 'Hamza Express HKP Road' ? { pinnedField: 'HEADLINE_1' } : {}),
+          })),
+          descriptions: DINNER_SEARCH_DESCRIPTIONS.map(text => ({ text })),
+          path1: group.path1,
+          path2: group.path2,
+        },
+        finalUrls: [DINNER_SEARCH_FINAL_URL],
+      },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'adGroupAds', adOps);
+  step(`Created ${adOps.length} dinner responsive search ads`);
+
+  const proximityOp = {
+    create: {
+      campaign: campaignResource,
+      proximity: {
+        geoPoint: {
+          latitudeInMicroDegrees: Math.round(HAMZA_PIN.lat * 1_000_000),
+          longitudeInMicroDegrees: Math.round(HAMZA_PIN.lng * 1_000_000),
+        },
+        radius: DINNER_SEARCH_RADIUS_KM,
+        radiusUnits: 'KILOMETERS',
+      },
+    },
+  };
+  const scheduleOps = ADS_DAYS.map(day => ({
+    create: {
+      campaign: campaignResource,
+      adSchedule: {
+        dayOfWeek: day,
+        startHour: 18,
+        startMinute: 'ZERO',
+        endHour: 22,
+        endMinute: 'ZERO',
+      },
+    },
+  }));
+  const negativeOps = DINNER_SEARCH_EXTRA_NEGATIVES.map(kw => ({
+    create: {
+      campaign: campaignResource,
+      negative: true,
+      keyword: { text: kw, matchType: 'PHRASE' },
+    },
+  }));
+  await mutateGoogleAds(accessToken, env, 'campaignCriteria', [
+    proximityOp,
+    ...scheduleOps,
+    ...negativeOps,
+  ]);
+  step(`Set exact ${DINNER_SEARCH_RADIUS_KM}km proximity, ${scheduleOps.length} schedule blocks, ${negativeOps.length} dinner negatives`);
+
+  await mutateGoogleAds(accessToken, env, 'campaignSharedSets', [{
+    create: {
+      campaign: campaignResource,
+      sharedSet: `customers/${CUSTOMER_ID}/sharedSets/${HE_WALK_IN_NEGATIVE_SET_ID}`,
+    },
+  }]);
+  step(`Attached shared negative list ${HE_WALK_IN_NEGATIVE_SET_ID}`);
+
+  const assetResults = await mutateGoogleAds(accessToken, env, 'assets', [
+    { create: { finalUrls: ['https://hamzaexpress.in/go/maps'], sitelinkAsset: { linkText: 'Get Directions', description1: 'Open Maps', description2: 'HKP Road pin' } } },
+    { create: { finalUrls: [DINNER_SEARCH_FINAL_URL], sitelinkAsset: { linkText: 'Dinner Menu', description1: 'Biryani & Kabab', description2: 'Ghee Rice meals' } } },
+    { create: { finalUrls: ['https://hamzaexpress.in/menu/'], sitelinkAsset: { linkText: 'View Full Menu', description1: 'Non-veg favorites', description2: 'Before you visit' } } },
+    { create: { finalUrls: [DINNER_SEARCH_FINAL_URL], sitelinkAsset: { linkText: 'Call From Page', description1: 'Ask before coming', description2: 'Dinner availability' } } },
+    { create: { calloutAsset: { calloutText: 'HKP Road' } } },
+    { create: { calloutAsset: { calloutText: 'Since 1918' } } },
+    { create: { calloutAsset: { calloutText: 'Biryani' } } },
+    { create: { calloutAsset: { calloutText: 'Kabab' } } },
+    { create: { calloutAsset: { calloutText: 'Ghee Rice' } } },
+  ]);
+  await mutateGoogleAds(accessToken, env, 'campaignAssets', assetResults.map((r, i) => ({
+    create: {
+      campaign: campaignResource,
+      asset: r.resourceName,
+      fieldType: i < 4 ? 'SITELINK' : 'CALLOUT',
+    },
+  })));
+  step(`Created and linked ${assetResults.length} dinner sitelink/callout assets`);
+
+  return json({
+    success: true,
+    campaignName: DINNER_SEARCH_CAMPAIGN_NAME,
+    status: 'PAUSED',
+    budgetINR: DINNER_SEARCH_BUDGET_INR,
+    finalUrl: DINNER_SEARCH_FINAL_URL,
+    geo: spec.geo,
+    schedule: spec.schedule.ownerWindow,
+    resources: {
+      budget: budgetResource,
+      campaign: campaignResource,
+      campaignId,
+      adGroups: adGroupResources,
+    },
+    auditLinks: {
+      criteria: `/api/google-ads?action=campaign-criteria&id=${campaignId}`,
+      intelligence: '/api/google-ads?action=dinner-search-intelligence',
       cockpit: '/ops/google-cockpit/',
     },
     log,
