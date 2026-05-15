@@ -104,7 +104,6 @@ export async function onRequest(context) {
           asset.id,
           asset.name,
           asset.type,
-          asset.status,
           asset.final_urls,
           asset.tracking_url_template,
           asset.policy_summary.approval_status,
@@ -117,7 +116,6 @@ export async function onRequest(context) {
           asset.text_asset.text,
           asset.youtube_video_asset.youtube_video_id
         FROM asset
-        WHERE asset.status != 'REMOVED'
       `),
       runQuery(accessToken, env, 'asset_group_assets', `
         SELECT
@@ -269,7 +267,6 @@ function collectAssetPolicyIssues(rows, assetLinks) {
         assetId,
         assetName: row.asset?.name || null,
         assetType: row.asset?.type || null,
-        assetStatus: row.asset?.status || null,
         approvalStatus: approval || null,
         reviewStatus: review || null,
         policyTopics: topics,
