@@ -41,6 +41,7 @@ export async function onRequest(context) {
       if (action === 'list')         return await actionList(env, db, url);
       if (action === 'stats')        return await actionStats(env, db);
       if (action === 'load-config')  return await actionLoadConfig(env, db);
+      if (action === 'campaign')     return await actionCampaign(env, db, url);
     }
     if (request.method === 'POST') {
       const body = await safeJson(request);
@@ -50,6 +51,8 @@ export async function onRequest(context) {
       if (action === 'save-config')     return await actionSaveConfig(env, db, body);
       if (action === 'send-bulk-email') return await actionSendBulkEmail(env, db, body);
       if (action === 'send-bulk-whatsapp') return await actionSendBulkWhatsApp(env, db, body);
+      if (action === 'send-campaign-email') return await actionSendCampaignEmail(env, db, body);
+      if (action === 'send-campaign-whatsapp') return await actionSendCampaignWhatsApp(env, db, body);
       if (action === 'test-email')         return await actionTestEmail(env, db, body);
       if (action === 'test-whatsapp')      return await actionTestWhatsApp(env, db, body);
     }
@@ -282,6 +285,176 @@ function tierOf(f) {
 
 async function safeJson(req) { try { return await req.json(); } catch { return {}; } }
 
+function normPhone(p) {
+  if (!p) return null;
+  const d = String(p).replace(/\D/g, '');
+  if (d.length === 10) return '91' + d;
+  if (d.length === 12 && d.startsWith('91')) return d;
+  if (d.length === 11 && d.startsWith('0')) return '91' + d.slice(1);
+  return d.length >= 10 ? d : null;
+}
+
+function firstCsvValue(v) {
+  return String(v || '').split(/[;,]/).map(s => s.trim()).filter(Boolean)[0] || null;
+}
+
+function firstNameFrom(fullName, handle) {
+  if (fullName) {
+    const cleaned = String(fullName)
+      .replace(/[\u{1F600}-\u{1F6FF}\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, '')
+      .replace(/[|\-_·•★⭐👑📍🇮🇳]/g, ' ').trim();
+    const parts = cleaned.split(/\s+/).filter(p => p.length && /^[a-zA-Z]/.test(p));
+    if (parts[0]) return parts[0];
+  }
+  return (handle || 'there').split(/[._]/)[0] || 'there';
+}
+
+async function loadJsonConfig(db, key) {
+  const head = await db.prepare(
+    `SELECT config_value FROM programme_config WHERE config_key = ?`
+  ).bind(key).first();
+  if (!head?.config_value) return null;
+
+  let meta;
+  try { meta = JSON.parse(head.config_value); } catch { meta = null; }
+  if (meta?.encoding === 'plain-json-chunks') {
+    const chunkPrefix = key + '__chunk_';
+    const rows = await db.prepare(`
+      SELECT config_key, config_value
+      FROM programme_config
+      WHERE config_key >= ? AND config_key < ?
+      ORDER BY config_key
+    `).bind(chunkPrefix, chunkPrefix + '\uffff').all();
+    const text = (rows.results || []).map(r => r.config_value || '').join('');
+    if (meta.length && text.length !== meta.length) {
+      throw new Error(`campaign config ${key} incomplete: expected ${meta.length}, got ${text.length}`);
+    }
+    return JSON.parse(text);
+  }
+  return meta;
+}
+
+async function campaignParts(db, includeReview = false) {
+  const prefix = 'creator_campaign_2026_05_15';
+  const [meta, creators, schedule, reviewMaster] = await Promise.all([
+    loadJsonConfig(db, `${prefix}_meta`),
+    loadJsonConfig(db, `${prefix}_creators`),
+    loadJsonConfig(db, `${prefix}_schedule`),
+    includeReview ? loadJsonConfig(db, `${prefix}_review_master`) : Promise.resolve(null),
+  ]);
+  if (!meta || !Array.isArray(creators)) {
+    throw new Error('May 15 campaign payload missing from programme_config');
+  }
+  return { meta, creators, schedule: Array.isArray(schedule) ? schedule : [], reviewMaster };
+}
+
+function normalizeCampaignCreator(c, sentMap = {}) {
+  const handle = String(c.username || c.handle || '').replace(/^@/, '').toLowerCase();
+  const followers = Number(c.followers || c.followers_count || 0);
+  const email = firstCsvValue(c.emails || c.email);
+  const phone = normPhone(firstCsvValue(c.phones || c.phone));
+  return {
+    handle,
+    full_name: c.full_name || '',
+    first_name: firstNameFrom(c.full_name, handle),
+    followers_count: followers,
+    engagement_rate: null,
+    profile_pic_url: '',
+    biography: c.personalized_angle || c.bio || '',
+    category_name: c.bucket_label || '',
+    tier: tierOf(followers),
+    campaign_rank: Number(c.rank || 0),
+    campaign_priority: c.priority || '',
+    campaign_bucket: c.bucket || '',
+    campaign_bucket_label: c.bucket_label || '',
+    contact_route: c.contact_route || '',
+    route_instruction: c.route_instruction || '',
+    tomorrow_slot: c.tomorrow_slot || '',
+    external_url: c.external_url || '',
+    instagram_url: c.instagram_url || (handle ? `https://www.instagram.com/${handle}` : ''),
+    instagram_dm_url: c.instagram_dm_url || (handle ? `https://ig.me/m/${handle}` : ''),
+    contact: { email, phone, whatsapp: phone },
+    messages: {
+      email_subject: c.email_subject || '',
+      email_body: c.email_body || '',
+      waba_body: c.waba_body || '',
+      instagram_dm: c.instagram_dm || '',
+    },
+    sent: {
+      ig: sentMap[handle]?.ig || null,
+      wa: sentMap[handle]?.wa || null,
+      email: sentMap[handle]?.email || null,
+    },
+    reply_state: sentMap[handle]?.reply_state || 'none',
+    campaign_source: 'may15',
+  };
+}
+
+async function sentStateForHandles(db, handles) {
+  const unique = [...new Set(handles.map(h => String(h || '').toLowerCase()).filter(Boolean))];
+  if (!unique.length) return {};
+  const placeholders = unique.map(() => '?').join(',');
+  const rows = await db.prepare(`
+    SELECT handle, channel, sent_at, reply_state
+    FROM creator_outreach_log
+    WHERE handle IN (${placeholders})
+  `).bind(...unique).all();
+  const map = {};
+  for (const r of (rows.results || [])) {
+    const h = String(r.handle || '').toLowerCase();
+    if (!map[h]) map[h] = { reply_state: 'none' };
+    if (r.sent_at) map[h][r.channel] = r.sent_at;
+    if (r.reply_state && r.reply_state !== 'none') map[h].reply_state = r.reply_state;
+  }
+  return map;
+}
+
+async function actionCampaign(env, db, url) {
+  const includeReview = url.searchParams.get('include_review') === '1';
+  const parts = await campaignParts(db, includeReview);
+  const handles = parts.creators.map(c => c.username || c.handle);
+  const sentMap = await sentStateForHandles(db, handles);
+  const creators = parts.creators.map(c => normalizeCampaignCreator(c, sentMap));
+  return json({
+    success: true,
+    campaign_id: '2026-05-15',
+    meta: parts.meta,
+    count: creators.length,
+    creators,
+    schedule: parts.schedule,
+    review_master: includeReview ? (parts.reviewMaster || []) : undefined,
+  });
+}
+
+async function sendMarketingTemplate(env, phone, handle) {
+  const url = `https://graph.facebook.com/v21.0/${env.WA_PHONE_ID}/messages`;
+  const chain = [
+    { name: 'creator_outreach_invitation_v3', vars: [] },
+    { name: 'creator_outreach_invitation_v2', vars: [{ type: 'text', text: handle }] },
+    { name: 'creator_outreach_invitation_v1', vars: [{ type: 'text', text: handle }] },
+  ];
+  let lastErr = null;
+  for (const t of chain) {
+    const components = t.vars.length ? [{ type: 'body', parameters: t.vars }] : [];
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.WA_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'template',
+        template: { name: t.name, language: { code: 'en' }, components },
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok) return { ok: true, message_id: data?.messages?.[0]?.id, via: t.name };
+    lastErr = { status: resp.status, error: data?.error };
+    const code = data?.error?.code;
+    if (code !== 132000 && code !== 132001 && code !== 132012) break;
+  }
+  return { ok: false, ...(lastErr || { error: 'unknown' }) };
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // TEST-EMAIL — sends the CURRENT saved template to a single address,
 // using sample first_name/handle/tier values. Does NOT write to
@@ -386,6 +559,144 @@ async function actionTestWhatsApp(env, db, body) {
     if (code !== 132000 && code !== 132001 && code !== 132012) break;
   }
   return json({ error: 'send_failed', detail: lastErr }, 500);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SEND-CAMPAIGN-EMAIL — sends the prepared May 15 per-creator email copy.
+// This uses the uploaded execution artifact as source of truth, not the
+// generic saved template.
+// ─────────────────────────────────────────────────────────────────────
+async function actionSendCampaignEmail(env, db, body) {
+  const handles = Array.isArray(body.handles)
+    ? body.handles.map(h => String(h).replace(/^@/, '').toLowerCase()).filter(Boolean)
+    : [];
+  if (!handles.length) return json({ error: 'handles required' }, 400);
+  if (!env.GMAIL_REFRESH_TOKEN) {
+    return json({ error: 'gmail_not_configured', detail: 'Run /api/email-auth first.' }, 500);
+  }
+  const skipAlready = body.skip_already_emailed !== false;
+  const parts = await campaignParts(db, false);
+  const byHandle = new Map(parts.creators.map(c => [String(c.username || '').toLowerCase(), c]));
+  const prior = await sentStateForHandles(db, handles);
+  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_no_email: 0, skipped_already_emailed: 0, failed: 0 };
+  const results = [];
+
+  for (const handle of handles) {
+    const raw = byHandle.get(handle);
+    if (!raw) {
+      summary.skipped_not_in_campaign++;
+      results.push({ handle, status: 'skipped_not_in_campaign' });
+      continue;
+    }
+    if (skipAlready && prior[handle]?.email) {
+      summary.skipped_already_emailed++;
+      results.push({ handle, status: 'skipped_already_emailed' });
+      continue;
+    }
+    const c = normalizeCampaignCreator(raw);
+    const email = c.contact.email;
+    if (!email || !c.messages.email_body) {
+      summary.skipped_no_email++;
+      results.push({ handle, status: 'skipped_no_email' });
+      continue;
+    }
+
+    const subject = c.messages.email_subject || 'Invitation from Hamza Express — HKP Road, Shivajinagar';
+    const payload = buildOutreachEmail({
+      first_name: c.first_name,
+      handle,
+      tier: c.tier,
+      full_name: c.full_name || '',
+      body_text: c.messages.email_body,
+      subject,
+    });
+    const r = await sendEmail(env, {
+      to: email,
+      subject: payload.subject,
+      html: payload.html,
+      from_name: 'Abdul Nihaf',
+    });
+    if (r.ok) {
+      summary.sent++;
+      results.push({ handle, status: 'sent', message_id: r.message_id, email });
+      try {
+        await db.prepare(`
+          INSERT INTO creator_outreach_log (handle, channel, sent_at, sent_by, send_count, snapshot_text, contact_value)
+          VALUES (?, 'email', datetime('now'), 'campaign_may15', 1, ?, ?)
+          ON CONFLICT(handle, channel) DO UPDATE SET
+            sent_at=datetime('now'), send_count=send_count+1,
+            snapshot_text=excluded.snapshot_text, contact_value=excluded.contact_value, updated_at=datetime('now')
+        `).bind(handle, subject + '\n\n' + c.messages.email_body.slice(0, 1000), email).run();
+      } catch {}
+    } else {
+      summary.failed++;
+      results.push({ handle, status: 'failed', error: r.error || JSON.stringify(r.detail || r).slice(0, 200), email });
+    }
+    await new Promise(res => setTimeout(res, 250));
+  }
+
+  return json({ success: true, summary, results });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SEND-CAMPAIGN-WHATSAPP — sends the approved WABA template to May 15
+// campaign creators that have a phone route.
+// ─────────────────────────────────────────────────────────────────────
+async function actionSendCampaignWhatsApp(env, db, body) {
+  const handles = Array.isArray(body.handles)
+    ? body.handles.map(h => String(h).replace(/^@/, '').toLowerCase()).filter(Boolean)
+    : [];
+  if (!handles.length) return json({ error: 'handles required' }, 400);
+  if (!env.WA_ACCESS_TOKEN || !env.WA_PHONE_ID) {
+    return json({ error: 'waba_not_configured', detail: 'Set WA_ACCESS_TOKEN and WA_PHONE_ID secrets.' }, 500);
+  }
+  const skipAlready = body.skip_already_sent !== false;
+  const parts = await campaignParts(db, false);
+  const byHandle = new Map(parts.creators.map(c => [String(c.username || '').toLowerCase(), c]));
+  const prior = await sentStateForHandles(db, handles);
+  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_no_phone: 0, skipped_already_sent: 0, failed: 0 };
+  const results = [];
+
+  for (const handle of handles) {
+    const raw = byHandle.get(handle);
+    if (!raw) {
+      summary.skipped_not_in_campaign++;
+      results.push({ handle, status: 'skipped_not_in_campaign' });
+      continue;
+    }
+    if (skipAlready && prior[handle]?.wa) {
+      summary.skipped_already_sent++;
+      results.push({ handle, status: 'skipped_already_sent' });
+      continue;
+    }
+    const c = normalizeCampaignCreator(raw);
+    const phone = c.contact.whatsapp || c.contact.phone;
+    if (!phone) {
+      summary.skipped_no_phone++;
+      results.push({ handle, status: 'skipped_no_phone' });
+      continue;
+    }
+    const r = await sendMarketingTemplate(env, phone, handle);
+    if (r.ok) {
+      summary.sent++;
+      results.push({ handle, status: 'sent', message_id: r.message_id, via: r.via, phone });
+      try {
+        await db.prepare(`
+          INSERT INTO creator_outreach_log (handle, channel, sent_at, sent_by, send_count, snapshot_text, contact_value)
+          VALUES (?, 'wa', datetime('now'), 'campaign_may15', 1, ?, ?)
+          ON CONFLICT(handle, channel) DO UPDATE SET
+            sent_at=datetime('now'), send_count=send_count+1,
+            snapshot_text=excluded.snapshot_text, contact_value=excluded.contact_value, updated_at=datetime('now')
+        `).bind(handle, `${r.via} (May 15 campaign template)`, phone).run();
+      } catch {}
+    } else {
+      summary.failed++;
+      results.push({ handle, status: 'failed', error: r.error?.message || JSON.stringify(r.error || r).slice(0, 200), phone });
+    }
+    await new Promise(res => setTimeout(res, 300));
+  }
+
+  return json({ success: true, summary, results });
 }
 
 // ─────────────────────────────────────────────────────────────────────
