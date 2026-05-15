@@ -310,8 +310,8 @@
     <section>
       <div class="section-head">
         <div>
-          <h2>Gemini Enhancement Test #1</h2>
-          <p>First executed enhancement for IMG 0501. V1 is retained as a warm style benchmark; V2 is the more faithful portrait candidate to review before uploading anywhere.</p>
+          <h2>Gemini Enhancement Review Set</h2>
+          <p>IMG 0501 V3 is the approved facade style benchmark. The batch below adds the remaining selected facade/interior candidates, using geometry-locked Gemini passes plus controlled warm grading where needed.</p>
         </div>
         <div class="section-actions">
           <a class="sheet-link" id="enhancementSheetLink" href="enhancement-04-comparison-v2.jpg" target="_blank" rel="noopener">Open Comparison</a>
@@ -407,7 +407,7 @@
 
       document.getElementById('statusPills').innerHTML = [
         `${data.recommendedCount} recommended images`,
-        `${enhancements.length} Gemini test outputs`,
+        `${enhancements.length} enhancement review outputs`,
         `${rawFacade.length} raw facade candidates`,
         `Target after deploy: ${data.targetUrlAfterDeploy}`
       ].map((text) => `<span class="pill">${escapeHtml(text)}</span>`).join('');
