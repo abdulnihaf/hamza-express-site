@@ -487,7 +487,7 @@ async function actionCampaign(env, db, url) {
 async function actionSaveReviewDecision(env, db, body) {
   const handle = String(body.handle || '').replace(/^@/, '').toLowerCase();
   const decision = String(body.decision || '').toLowerCase();
-  const allowed = new Set(['unreviewed', 'approve_for_outreach', 'reject', 'hold']);
+  const allowed = new Set(['unreviewed', 'approve_for_outreach', 'reject', 'reject_not_food_relevant', 'hold']);
   if (!/^[a-z0-9._]{1,30}$/.test(handle)) return json({ error: 'invalid_handle' }, 400);
   if (!allowed.has(decision)) return json({ error: 'invalid_decision' }, 400);
   const value = JSON.stringify({
