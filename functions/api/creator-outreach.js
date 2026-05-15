@@ -19,6 +19,7 @@ const CORS = {
 const json = (b, s = 200) => new Response(JSON.stringify(b), {
   status: s, headers: { 'Content-Type': 'application/json', ...CORS },
 });
+const REVIEW_DECISION_PREFIX = 'creator_review_2026_05_15__';
 
 const requireOwner = (env, request, body) => {
   const k = request.headers.get('X-Dashboard-Key')
@@ -53,6 +54,7 @@ export async function onRequest(context) {
       if (action === 'send-bulk-whatsapp') return await actionSendBulkWhatsApp(env, db, body);
       if (action === 'send-campaign-email') return await actionSendCampaignEmail(env, db, body);
       if (action === 'send-campaign-whatsapp') return await actionSendCampaignWhatsApp(env, db, body);
+      if (action === 'save-review-decision') return await actionSaveReviewDecision(env, db, body);
       if (action === 'test-email')         return await actionTestEmail(env, db, body);
       if (action === 'test-whatsapp')      return await actionTestWhatsApp(env, db, body);
     }
@@ -374,6 +376,31 @@ function scheduledHandles(schedule = [], channel) {
     .map(([handle]) => handle));
 }
 
+async function loadReviewDecisions(db) {
+  const rows = await db.prepare(`
+    SELECT config_key, config_value, updated_at
+    FROM programme_config
+    WHERE config_key >= ? AND config_key < ?
+    ORDER BY config_key
+  `).bind(REVIEW_DECISION_PREFIX, REVIEW_DECISION_PREFIX + '\uffff').all();
+  const state = {};
+  const detail = {};
+  for (const r of (rows.results || [])) {
+    const handle = String(r.config_key || '').slice(REVIEW_DECISION_PREFIX.length);
+    if (!handle) continue;
+    try {
+      const parsed = JSON.parse(r.config_value || '{}');
+      const decision = parsed.decision || 'unreviewed';
+      state[handle] = decision;
+      detail[handle] = { ...parsed, updated_at: r.updated_at };
+    } catch {
+      state[handle] = 'unreviewed';
+      detail[handle] = { decision: 'unreviewed', updated_at: r.updated_at };
+    }
+  }
+  return { state, detail };
+}
+
 function normalizeCampaignCreator(c, sentMap = {}, channelMap = {}) {
   const handle = String(c.username || c.handle || '').replace(/^@/, '').toLowerCase();
   const followers = Number(c.followers || c.followers_count || 0);
@@ -442,6 +469,7 @@ async function actionCampaign(env, db, url) {
   const handles = parts.creators.map(c => c.username || c.handle);
   const sentMap = await sentStateForHandles(db, handles);
   const channelMap = scheduledChannelMap(parts.schedule);
+  const review = includeReview ? await loadReviewDecisions(db) : { state: {}, detail: {} };
   const creators = parts.creators.map(c => normalizeCampaignCreator(c, sentMap, channelMap));
   return json({
     success: true,
@@ -451,7 +479,32 @@ async function actionCampaign(env, db, url) {
     creators,
     schedule: parts.schedule,
     review_master: includeReview ? (parts.reviewMaster || []) : undefined,
+    review_state: includeReview ? review.state : undefined,
+    review_decisions: includeReview ? review.detail : undefined,
   });
+}
+
+async function actionSaveReviewDecision(env, db, body) {
+  const handle = String(body.handle || '').replace(/^@/, '').toLowerCase();
+  const decision = String(body.decision || '').toLowerCase();
+  const allowed = new Set(['unreviewed', 'approve_for_outreach', 'reject', 'hold']);
+  if (!/^[a-z0-9._]{1,30}$/.test(handle)) return json({ error: 'invalid_handle' }, 400);
+  if (!allowed.has(decision)) return json({ error: 'invalid_decision' }, 400);
+  const value = JSON.stringify({
+    handle,
+    decision,
+    notes: typeof body.notes === 'string' ? body.notes.slice(0, 500) : '',
+    updated_at: new Date().toISOString(),
+  });
+  await db.prepare(`
+    INSERT INTO programme_config (config_key, config_value, updated_at, updated_by)
+    VALUES (?, ?, datetime('now'), 'creator-outreach-ui')
+    ON CONFLICT(config_key) DO UPDATE SET
+      config_value=excluded.config_value,
+      updated_at=datetime('now'),
+      updated_by='creator-outreach-ui'
+  `).bind(REVIEW_DECISION_PREFIX + handle, value).run();
+  return json({ success: true, handle, decision });
 }
 
 async function sendMarketingTemplate(env, phone, handle) {
