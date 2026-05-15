@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HE Google Maps Config Directory</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#080b0f;--panel:#101722;--panel2:#151e2b;--line:#283447;--line2:#3a485d;
+  --text:#f6f8fb;--soft:#cbd5e1;--muted:#94a3b8;--faint:#66758a;
+  --blue:#4f8cff;--cyan:#27c7d9;--green:#28c76f;--amber:#f5b041;--red:#ff5c5c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.45}
+a{color:inherit}
+.topbar{position:sticky;top:0;z-index:10;border-bottom:1px solid rgba(148,163,184,.18);background:rgba(8,11,15,.95);backdrop-filter:blur(10px)}
+.nav{max-width:1380px;margin:0 auto;padding:8px 18px;display:flex;gap:8px;overflow-x:auto}
+.nav a{min-height:38px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);text-decoration:none;color:var(--soft);font-size:12px;font-weight:800;white-space:nowrap}
+.wrap{max-width:1380px;margin:0 auto;padding:18px}
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);gap:14px;align-items:stretch;margin-bottom:14px}
+.hero-main,.hero-side,.band,.card{border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.hero-main{padding:18px}
+.hero-side{padding:14px;background:linear-gradient(180deg,var(--panel),#0e141f)}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--cyan);font-weight:900;margin-bottom:5px}
+h1{font-size:28px;line-height:1.1;margin:0 0 8px;letter-spacing:0}
+.sub{max-width:900px;color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border:1px solid var(--line2);border-radius:8px;text-decoration:none;color:var(--text);background:var(--panel2);font-size:12px;font-weight:900}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#07101e}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}
+.kpi{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:13px;min-width:0}
+.kpi b{display:block;font-size:18px;line-height:1.15;margin-bottom:5px}
+.kpi span{display:block;color:var(--muted);font-size:11px}
+.band{padding:14px;margin-bottom:14px}
+.band-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:11px}
+.title{font-weight:950;font-size:16px;line-height:1.2}
+.note{font-size:12px;color:var(--muted);max-width:860px;margin-top:3px}
+.pill{display:inline-flex;align-items:center;min-height:26px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);white-space:nowrap}
+.pill.green{color:var(--green);border-color:rgba(40,199,111,.45);background:rgba(40,199,111,.08)}
+.pill.blue{color:var(--blue);border-color:rgba(79,140,255,.45);background:rgba(79,140,255,.08)}
+.pill.amber{color:var(--amber);border-color:rgba(245,176,65,.45);background:rgba(245,176,65,.08)}
+.pill.red{color:var(--red);border-color:rgba(255,92,92,.45);background:rgba(255,92,92,.08)}
+.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--panel2);padding:13px;min-width:0}
+.card h2,.card h3{margin:0 0 7px;letter-spacing:0;line-height:1.2}
+.card h2{font-size:15px}.card h3{font-size:13px}
+.card p{margin:0;color:var(--muted);font-size:12px}
+.row{display:grid;grid-template-columns:210px 1fr;gap:10px;padding:8px 0;border-top:1px dashed rgba(148,163,184,.24);font-size:12px}
+.row:first-child{border-top:0}.row b{color:var(--soft)}.row span{color:var(--muted)}
+.table-wrap{border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:980px;background:var(--panel2);font-size:12px}
+th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.18);vertical-align:top;text-align:left}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);background:rgba(255,255,255,.025)}
+td{color:var(--soft)}tr:last-child td{border-bottom:0}
+.tag{display:inline-flex;align-items:center;margin:2px 4px 2px 0;border:1px solid var(--line2);border-radius:999px;padding:3px 8px;font-size:11px;color:var(--soft);background:rgba(255,255,255,.025)}
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.step{border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.025);padding:10px;min-height:110px}
+.step b{display:block;font-size:11px;margin-bottom:6px}.step span{display:block;font-size:11px;color:var(--muted)}
+.callout{border-left:3px solid var(--amber);background:rgba(245,176,65,.08);border-radius:0 8px 8px 0;padding:11px 12px;color:var(--soft);font-size:12px;margin-top:10px}
+.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}.muted{color:var(--muted)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+@media(max-width:980px){.hero,.kpis,.cols-2,.cols-3,.cols-4,.flow{grid-template-columns:1fr}.row{grid-template-columns:1fr}.wrap{padding:14px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <nav class="nav" aria-label="Page sections">
+    <a href="#live">Live State</a>
+    <a href="#map">Maps Model</a>
+    <a href="#dictionary">Config Dictionary</a>
+    <a href="#rings">Radius Rings</a>
+    <a href="#keywords">Query Config</a>
+    <a href="#assets">Maps Assets</a>
+    <a href="#ownership">API vs Owner</a>
+    <a href="#measurement">Measurement</a>
+    <a href="#guardrails">Guardrails</a>
+    <a href="#tomorrow">Tomorrow Flow</a>
+  </nav>
+</div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-main">
+      <div class="eyebrow">Hamza Express · Google Maps Config Directory</div>
+      <h1>Every Maps-facing Google Ads coordinate in one owner-readable UI</h1>
+      <div class="sub">This is the directory for deciding and auditing Google Maps/local-intent campaigns before spending. It separates listing truth, location assets, Search campaign controls, map-action measurement, proof assets, and failure guardrails so no configuration layer gets missed.</div>
+      <div class="actions">
+        <a class="btn primary" href="/ops/google-cockpit/">Google Ads Cockpit</a>
+        <a class="btn" href="https://hnhotels.in/marketing/he/gbp/">GBP Cockpit</a>
+        <a class="btn" href="/ops/google-ads-directory/">Ads Intelligence Directory</a>
+        <a class="btn" href="https://www.google.com/maps/place/?q=place_id:ChIJ-QQjtHEXrjsR-Z1RIEm2arg">Open HE Maps Pin</a>
+      </div>
+    </div>
+    <aside class="hero-side">
+      <div class="title">Owner Rule</div>
+      <p class="note">Spend only when the configuration maps to a real customer action: search, see Maps result, trust the listing, tap directions/call/menu, reach HKP Road, and show up in POS lift.</p>
+      <div class="callout">PMax is paused for now. Search and Maps-facing local actions are the working surface until each rupee has query, time, radius, and proof accountability.</div>
+    </aside>
+  </section>
+
+  <section class="grid kpis">
+    <div class="kpi"><b>Pin</b><span>Exact Hamza Express coordinate: 12.9868469, 77.6044088.</span></div>
+    <div class="kpi"><b>Maps KPI</b><span>Directions, calls, menu views, and POS lift. Not blind clicks.</span></div>
+    <div class="kpi"><b>Ad Surface</b><span>Search with location asset and Maps intent. No Display expansion.</span></div>
+    <div class="kpi"><b>Safety</b><span>No city geo IDs. Radius only. Presence-only where supported.</span></div>
+  </section>
+
+  <section class="band" id="live">
+    <div class="band-head">
+      <div>
+        <div class="title">Live State Reader</div>
+        <div class="note">Reads current Google Ads campaign state from production APIs. This section does not mutate campaigns.</div>
+      </div>
+      <span class="pill green">Read only</span>
+    </div>
+    <div class="grid cols-4" id="liveCards">
+      <div class="card"><h3>Loading</h3><p>Fetching campaign state...</p></div>
+    </div>
+  </section>
+
+  <section class="band" id="map">
+    <div class="band-head">
+      <div>
+        <div class="title">Maps Conversion Model</div>
+        <div class="note">The customer does not experience this as "ads settings." They experience a chain from hunger to route choice.</div>
+      </div>
+      <span class="pill blue">Mental model</span>
+    </div>
+    <div class="flow">
+      <div class="step"><b>1. Hunger State</b><span>Late-night, dish-led, brand memory, family, parcel, explorer.</span></div>
+      <div class="step"><b>2. Search Shape</b><span>Open now, near me, dish, HKP/Shivajinagar, halal, Hamza.</span></div>
+      <div class="step"><b>3. Eligible Radius</b><span>Closer for broad terms, wider only for destination intent.</span></div>
+      <div class="step"><b>4. Maps Proof</b><span>Pin, hours, rating, photos, menu, phone, local relevance.</span></div>
+      <div class="step"><b>5. Physical Action</b><span>Directions, call, menu, parcel, dine-in route decision.</span></div>
+      <div class="step"><b>6. Owner Read</b><span>Ad spend by bucket, Maps actions, query terms, POS lift.</span></div>
+    </div>
+  </section>
+
+  <section class="band" id="dictionary">
+    <div class="band-head">
+      <div>
+        <div class="title">Exhaustive Config Dictionary</div>
+        <div class="note">All configurable layers that can affect Google Maps-facing ad performance for HE.</div>
+      </div>
+      <span class="pill amber">Do not skip</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>Config Options</th><th>Why It Matters For Maps</th><th>HE Rule</th></tr></thead>
+        <tbody>
+          <tr><td><b>Business Profile identity</b></td><td>Name, address, place ID, store code, category, phone, website, menu URL, opening date, labels.</td><td>This is the entity Google attaches to Maps/local actions.</td><td>Use Place ID <span class="mono">ChIJ-QQjtHEXrjsR-Z1RIEm2arg</span>; never title-match stale Hamza listings.</td></tr>
+          <tr><td><b>Coordinate / pin</b></td><td>Latitude, longitude, address, Maps URI, route destination.</td><td>A wrong pin wastes every local action.</td><td>Use <span class="mono">12.9868469,77.6044088</span>; verify 0m delta in API guardrail.</td></tr>
+          <tr><td><b>Hours</b></td><td>Regular hours, special hours, holiday hours, open-now state.</td><td>Open-now searches depend on trust that the listing is open.</td><td>Late-night campaigns must match live GBP hours; no ad if listing is closed.</td></tr>
+          <tr><td><b>Location asset</b></td><td>Linked GBP, account-level asset, campaign-level asset, phone/address display, directions action.</td><td>Turns Search ads into local/Maps actions.</td><td>Keep HE location asset linked; audit before every launch.</td></tr>
+          <tr><td><b>Campaign type</b></td><td>Search, PMax store goals, Demand Gen, Display, Video, Smart-style local flows.</td><td>Controls whether Maps behavior is query-driven or automated.</td><td>Use Search for surgical Maps intent; PMax stays paused until justified.</td></tr>
+          <tr><td><b>Objective / goals</b></td><td>Store visits, local actions, calls, leads, website traffic, custom goals.</td><td>Wrong goal optimizes for wrong behavior.</td><td>Primary read: directions, calls, menu; Store Visits only if Google unlocks it.</td></tr>
+          <tr><td><b>Bidding</b></td><td>Manual CPC, maximize clicks, maximize conversions, target CPA, target impression share, bid caps.</td><td>Controls how aggressively we enter Maps/Search auctions.</td><td>Start controlled; do not let weak conversion data auto-optimize blindly.</td></tr>
+          <tr><td><b>Budget</b></td><td>Daily campaign budget, shared budget, campaign-specific split, experiments.</td><td>Budget must map to an eater bucket.</td><td>No shared budget until each campaign proves cost per Maps action.</td></tr>
+          <tr><td><b>Location targeting</b></td><td>Radius, location includes/excludes, presence-only, presence-or-interest, negative locations, location groups.</td><td>Determines who physically can receive the ad.</td><td>Radius from HE pin only; broad city IDs are blocked.</td></tr>
+          <tr><td><b>Radius rings</b></td><td>0-3 km, 3-7 km, 7-10 km, query-dependent rings, distance reports.</td><td>Same keyword means different quality at different distances.</td><td>Broad hunger terms close; destination HKP terms can go wider.</td></tr>
+          <tr><td><b>Ad schedule</b></td><td>Days, hours, split midnight blocks, weekday/weekend variants, schedule bid adjustments.</td><td>Late-night traffic and dinner traffic are different markets.</td><td>Late night 22:00-03:00; dinner 18:00-22:00; brand 14:00-03:00.</td></tr>
+          <tr><td><b>Networks</b></td><td>Google Search, Search Partners, Display expansion, Maps/local surfaces through assets.</td><td>Network leakage causes blind spend.</td><td>Launch Search only. No Display expansion. Search Partners off until proven.</td></tr>
+          <tr><td><b>Keywords</b></td><td>Exact, phrase, broad, keyword bids, final URLs, ad-group themes.</td><td>Query is the main evidence of customer intent.</td><td>Separate open-now, dish, destination, halal, and brand.</td></tr>
+          <tr><td><b>Negatives</b></td><td>Campaign negatives, ad-group negatives, shared lists, delivery/jobs/recipe/lodging exclusions.</td><td>Prevents irrelevant Maps clicks.</td><td>Block rooms, jobs, recipes, delivery aggregators, veg-only, free/discount hunters.</td></tr>
+          <tr><td><b>Ad copy</b></td><td>Headlines, descriptions, display paths, pinning, language, policy-safe phrasing.</td><td>Converts search intent into route decision.</td><td>Use one belief shift, one food proof, one Maps action.</td></tr>
+          <tr><td><b>Assets</b></td><td>Sitelinks, call, location, callouts, structured snippets, image, price, promotion, business name/logo.</td><td>Creates directions/call/menu surfaces without forcing website visit.</td><td>Prioritize location, call, menu, directions, HKP Road, Ghee Rice + Kabab.</td></tr>
+          <tr><td><b>Landing / final URL</b></td><td>Maps URL, direction-first page, menu page, tracking template, UTM, mobile URL.</td><td>After click, customer must not get lost.</td><td>Use direction/menu pages; avoid generic homepage for Maps intent.</td></tr>
+          <tr><td><b>Photo proof</b></td><td>Food, night exterior, board, family seating, parcel counter, HKP street context, recent upload cadence.</td><td>Maps users inspect proof before directions.</td><td>Missing categories are owner asset tasks, not ad copy tasks.</td></tr>
+          <tr><td><b>Reviews / Q&A</b></td><td>Rating, review volume, review replies, Q&A for halal/open late/family/parcel/parking.</td><td>Maps trust is often decided before website click.</td><td>Seed owner-browser Q&A; answer reviews around food proof and service.</td></tr>
+          <tr><td><b>Measurement</b></td><td>Directions, calls, menu, website, local actions, Store Visits, search terms, hour, distance, POS lift.</td><td>Defines whether spend converted into physical movement.</td><td>Dashboard must show both ad and organic Maps action layers.</td></tr>
+          <tr><td><b>Change control</b></td><td>Paused creation, audit, enable, daily check, rollback, change history.</td><td>Prevents another wrong-geo or blind-spend incident.</td><td>Create paused, audit exact config, then enable only selected campaign.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="rings">
+    <div class="band-head">
+      <div>
+        <div class="title">Radius Ring Logic</div>
+        <div class="note">Radius is not a single setting. It changes by query quality and Bangalore traffic reality.</div>
+      </div>
+      <span class="pill blue">Distance control</span>
+    </div>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>0-3 km Inner Ring</h3>
+        <p>Use for broader open-now and near-me hunger. These users are close enough that "fastest valid option" can become directions.</p>
+        <div class="tag">food open now</div><div class="tag">biryani near me</div><div class="tag">restaurant open now</div>
+      </div>
+      <div class="card">
+        <h3>3-7 km Intent Ring</h3>
+        <p>Use when the query has food-category strength: kabab, non-veg, halal, late-night food, Shivajinagar.</p>
+        <div class="tag">kabab near me</div><div class="tag">non veg open now</div><div class="tag">halal restaurant</div>
+      </div>
+      <div class="card">
+        <h3>7-10 km Destination Ring</h3>
+        <p>Use only for HKP/Shivajinagar/late-night Bangalore destination terms, especially weekend and post-midnight behavior.</p>
+        <div class="tag">late night food bangalore</div><div class="tag">shivajinagar biryani</div><div class="tag">hamza</div>
+      </div>
+    </div>
+    <div class="callout">Do not use a 10 km radius for generic restaurant searches. Use 10 km only when the query proves the person is willing to travel to a known food destination.</div>
+  </section>
+
+  <section class="band" id="keywords">
+    <div class="band-head">
+      <div>
+        <div class="title">Maps Query Buckets</div>
+        <div class="note">Each bucket needs its own ad group so tomorrow's dashboard can tell which customer behavior is spending.</div>
+      </div>
+      <span class="pill green">Search control</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Bucket</th><th>Searcher Scenario</th><th>Keyword Shapes</th><th>Radius</th><th>Time</th><th>Ad Promise</th></tr></thead>
+        <tbody>
+          <tr><td><b>Open Now Hunger</b></td><td>Nearby hungry person wants any valid late-night option.</td><td><span class="tag">restaurants near me open now</span><span class="tag">food open now near me</span><span class="tag">biryani near me open now</span></td><td>0-3 km first</td><td>22:00-03:00</td><td>Open now on HKP Road. Get directions.</td></tr>
+          <tr><td><b>Heavy Non-Veg Dish</b></td><td>Dish is decided; outlet is not decided.</td><td><span class="tag">kabab near me</span><span class="tag">chicken kabab near me</span><span class="tag">ghee rice near me</span><span class="tag">non veg restaurants open now</span></td><td>3-7 km</td><td>22:00-03:00</td><td>Ghee Rice, Kabab, Biryani. Dine-in or parcel.</td></tr>
+          <tr><td><b>Destination Night</b></td><td>Customer knows Bangalore late-night food zones and is choosing where to go.</td><td><span class="tag">late night food bangalore</span><span class="tag">midnight food bangalore</span><span class="tag">shivajinagar food</span></td><td>7-10 km if query is strong</td><td>22:00-03:00, stronger weekends</td><td>HKP Road late-night non-veg.</td></tr>
+          <tr><td><b>Halal / Muslim Food Filter</b></td><td>Trust and food type matter before distance.</td><td><span class="tag">halal restaurant near me</span><span class="tag">muslim restaurant near me</span><span class="tag">non veg restaurant near me</span></td><td>3-7 km</td><td>18:00-03:00</td><td>Halal non-veg on HKP Road.</td></tr>
+          <tr><td><b>Hamza Legacy</b></td><td>Searcher has Hamza memory and needs correct Express direction.</td><td><span class="tag">hamza</span><span class="tag">hamza express</span><span class="tag">hamza hotel</span><span class="tag">hamza hkp road</span></td><td>0-10 km, low bid</td><td>14:00-03:00</td><td>Hamza Express, HKP Road. Same food memory, Express face.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="assets">
+    <div class="band-head">
+      <div>
+        <div class="title">Maps Proof Assets</div>
+        <div class="note">These are not decoration. They decide whether a Maps user trusts the route.</div>
+      </div>
+      <span class="pill amber">Owner + API</span>
+    </div>
+    <div class="grid cols-4">
+      <div class="card"><h3>Night Exterior</h3><p>Board, lights, visible open state, street context. Needed for open-now searches.</p></div>
+      <div class="card"><h3>Heavy Food</h3><p>Brain Dry, Kabab char, Ghee Rice quantity, Biryani, Naan/gravy.</p></div>
+      <div class="card"><h3>Parcel Counter</h3><p>Counter clarity, packing, handover, menu visibility. Needed for pickup intent.</p></div>
+      <div class="card"><h3>Family Seating</h3><p>Comfortable seating without premium/sterile framing. Needed before family ads.</p></div>
+    </div>
+  </section>
+
+  <section class="band" id="ownership">
+    <div class="band-head">
+      <div>
+        <div class="title">API-Doable vs Owner-Browser-Doable</div>
+        <div class="note">Some Maps work can be automated. Some work must be done in Google Business Profile / Google Ads UI because it is sensitive, gated, or visual.</div>
+      </div>
+      <span class="pill blue">Execution split</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Work</th><th>API-Doable</th><th>Owner-Browser-Doable</th><th>Decision Rule</th></tr></thead>
+        <tbody>
+          <tr><td><b>Read GBP performance</b></td><td>Impressions, calls, directions, website/menu where API exposes it.</td><td>Cross-check Google Business/Profile UI if API lag or quota issues appear.</td><td>Dashboard is enough for daily read.</td></tr>
+          <tr><td><b>Read Places competitor proof</b></td><td>Rating, review count, open state, distance, category, public photos.</td><td>Manual Maps inspection for true local-pack rank and visual judgment.</td><td>Use API for repeat scans, browser for final judgment.</td></tr>
+          <tr><td><b>Read Google Ads config</b></td><td>Campaigns, status, budget, radius criteria, conversion actions, assets, search terms where available.</td><td>Google Ads UI for visual preview, policy warnings, and recommendations.</td><td>API must be source for exact IDs and guardrails.</td></tr>
+          <tr><td><b>Mutate ads</b></td><td>Pause/enable, create paused campaigns, radius criteria, schedules, keywords, negatives, budgets, assets.</td><td>Owner approval before spend starts; browser review if the UI exposes warnings not in API.</td><td>Create paused, audit, then enable.</td></tr>
+          <tr><td><b>Photos / videos</b></td><td>Inventory and rough category read only.</td><td>Select, upload, reorder, and judge actual night/food/family/parcel proof.</td><td>Do not automate image choice until owner confirms asset.</td></tr>
+          <tr><td><b>Q&A</b></td><td>Read availability is limited and legacy APIs are inconsistent.</td><td>Seed and answer manually in Google Maps/Profile: halal, late-night, family seating, parcel, parking, directions.</td><td>Manual only for now.</td></tr>
+          <tr><td><b>Profile category</b></td><td>Potentially patchable but sensitive.</td><td>Preferred through Business Profile UI after checking available categories.</td><td>Do not change category without explicit approval.</td></tr>
+          <tr><td><b>Store Visits</b></td><td>Read eligibility/status if exposed.</td><td>Cannot force-create; Google eligibility gate.</td><td>Use directions/calls/menu/POS lift until eligible.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="measurement">
+    <div class="band-head">
+      <div>
+        <div class="title">Measurement Stack</div>
+        <div class="note">Until Store Visits unlocks, use practical proxies and POS correlation.</div>
+      </div>
+      <span class="pill blue">Owner read</span>
+    </div>
+    <div class="grid cols-3">
+      <div class="card"><h3>Google Ads</h3><p>Spend, clicks, search terms, hour, distance, calls, directions, menu, conversion action split.</p></div>
+      <div class="card"><h3>GBP Organic</h3><p>Maps/search impressions, directions, calls, menu, query buckets, photo inventory, profile health.</p></div>
+      <div class="card"><h3>Business Reality</h3><p>POS lift during matching hours, dine-in/takeaway split, AOV, item mix, staff observed rush.</p></div>
+    </div>
+  </section>
+
+  <section class="band" id="guardrails">
+    <div class="band-head">
+      <div>
+        <div class="title">Failure Guardrails</div>
+        <div class="note">These are the checks that must be green before enabling spend.</div>
+      </div>
+      <span class="pill red">Blockers</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Guardrail</th><th>Bad State</th><th>Required State</th></tr></thead>
+        <tbody>
+          <tr><td><b>Geo target</b></td><td>City ID, wrong city, broad Bengaluru without reason, any Gurugram trace.</td><td>Exact HE proximity pin only.</td></tr>
+          <tr><td><b>Location option</b></td><td>People interested in target location for local walk-in search.</td><td>Presence-only wherever Search supports it.</td></tr>
+          <tr><td><b>Network</b></td><td>Display expansion, Search Partners on at launch, PMax content spend.</td><td>Search only for surgical campaigns.</td></tr>
+          <tr><td><b>Keywords</b></td><td>Generic restaurant terms with 10 km radius.</td><td>Generic terms close; destination terms wider.</td></tr>
+          <tr><td><b>Negatives</b></td><td>Recipes, jobs, rooms, delivery, veg-only, discounts, aggregator intent allowed.</td><td>Shared negative list plus ad-group-specific negatives.</td></tr>
+          <tr><td><b>Proof</b></td><td>Ad says late-night but GBP/photos do not prove open-night food.</td><td>Night exterior + food proof visible in listing and landing.</td></tr>
+          <tr><td><b>Measurement</b></td><td>Only clicks tracked.</td><td>Directions, calls, menu, search terms, POS lift.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="band" id="tomorrow">
+    <div class="band-head">
+      <div>
+        <div class="title">Tomorrow Use Flow</div>
+        <div class="note">Use this sequence before enabling any Maps-facing campaign.</div>
+      </div>
+      <span class="pill green">Checklist</span>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Decision Flow</h3>
+        <div class="row"><b>1. Pick bucket</b><span>Open-now, heavy dish, destination night, halal, brand.</span></div>
+        <div class="row"><b>2. Pick radius</b><span>3 km for broad, 7 km for strong dish/night, 10 km only for destination/brand.</span></div>
+        <div class="row"><b>3. Pick time</b><span>Match customer state, not owner availability.</span></div>
+        <div class="row"><b>4. Pick proof</b><span>Food, board, route, parcel, or seating proof must match the bucket.</span></div>
+        <div class="row"><b>5. Enable paused</b><span>Only after guardrails and cockpit visibility are clean.</span></div>
+      </div>
+      <div class="card">
+        <h3>Owner Questions</h3>
+        <div class="row"><b>Can this person come?</b><span>If traffic/radius makes the visit unrealistic, do not bid.</span></div>
+        <div class="row"><b>Did they reveal intent?</b><span>Open-now, dish, HKP, halal, or Hamza memory must be visible in the query.</span></div>
+        <div class="row"><b>Will Maps convince them?</b><span>Listing proof must answer the doubt before the route tap.</span></div>
+        <div class="row"><b>Can we read the result?</b><span>If there is no query/hour/radius/POS read, the spend is too blind.</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const liveCards = document.getElementById('liveCards');
+const money = value => `Rs ${Number(value || 0).toFixed(0)}`;
+function stateClass(status){
+  if(status === 'ENABLED') return 'ok';
+  if(status === 'PAUSED') return 'warn';
+  return 'bad';
+}
+function card(title, value, detail, cls=''){
+  return `<div class="card"><h3>${title}</h3><p><b class="${cls}">${value}</b></p><p>${detail}</p></div>`;
+}
+async function getJson(url){
+  const res = await fetch(url, { cache: 'no-store' });
+  if(!res.ok) throw new Error(`${res.status} ${url}`);
+  return res.json();
+}
+async function loadLive(){
+  try{
+    const [campaigns, late, pmax] = await Promise.all([
+      getJson('/api/google-ads?action=campaigns'),
+      getJson('/api/google-ads?action=late-night-search-intelligence'),
+      getJson('/api/google-ads?action=pmax-observability&id=23834053403')
+    ]);
+    const rows = campaigns.campaigns || [];
+    const pmaxRow = rows.find(c => c.type === 'PERFORMANCE_MAX') || pmax.campaign || {};
+    const searchRow = rows.find(c => c.name === 'HE — Late Night Maps Footfall Search — v1') || late.live?.existingLateNight || {};
+    const pmaxGeo = (pmax.criteria?.proximities || [])[0];
+    const lateGeo = late.spec?.geo || {};
+    liveCards.innerHTML = [
+      card('PMax', `${pmaxRow.status || 'UNKNOWN'} / ${money(pmaxRow.budgetINR || 0)}`, 'Paused while Search-only Maps strategy is being configured.', stateClass(pmaxRow.status)),
+      card('Late-Night Search', `${searchRow.status || 'UNKNOWN'} / ${money(searchRow.budgetINR || late.specBudget || 300)}`, 'Existing campaign remains paused until final config approval.', stateClass(searchRow.status)),
+      card('PMax Pin', pmaxGeo ? `${pmaxGeo.radius} ${pmaxGeo.radiusUnits}` : 'Not read', pmaxGeo ? `${pmaxGeo.hamzaPinDeltaMeters}m from HE pin` : 'Check pmax-observability endpoint.', pmaxGeo ? 'ok' : 'warn'),
+      card('Late-Night Pin', `${lateGeo.radiusKm || 7} km`, `${lateGeo.lat || 'lat?'}, ${lateGeo.lng || 'lng?'} · ${lateGeo.locationOption || 'presence?'}`, 'ok')
+    ].join('');
+  }catch(err){
+    liveCards.innerHTML = card('Live Read Failed', 'Check API', err.message, 'bad');
+  }
+}
+loadLive();
+</script>
+</body>
+</html>
