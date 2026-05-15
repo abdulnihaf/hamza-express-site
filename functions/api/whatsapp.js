@@ -200,7 +200,7 @@ const PRODUCTS = {
   // ── Fried Chicken — Extras (cat 76 → parent 26) ──
   'HE-1371': { name: 'Extra Bun',                  price: 14,  odooId: 1389, catId: 26 },
   'HE-1372': { name: 'Extra Mayo',                 price: 19,  odooId: 1390, catId: 26 },
-  'HE-1367': { name: 'Shawarma Roll',              price: 76,  odooId: 1385, catId: 26 },
+  'HE-1367': { name: 'Shawarma Roll',              price: 94.29, odooId: 1385, catId: 29 },
   'HE-1373': { name: 'Soft Drink',                 price: 38,  odooId: 1391, catId: 26 },
 
   // ── Hamza Meals — Combos (cat 22 → Indian, for KDS routing) ──
@@ -254,7 +254,7 @@ const PRODUCTS = {
   'HE-S005': { name: 'Shawarma Fries',              price: 1,   odooId: 1434, catId: 29 }, // TEST ₹1 (was 95)
 
   // ── Grill Counter (cat 30) ──
-  'HE-G001': { name: 'Grilled Chicken',             price: 238, odooId: 1435, catId: 30 },
+  'HE-G001': { name: 'Grill Chicken',               price: 228.57, odooId: 1442, catId: 30 },
   'HE-G002': { name: 'Chicken Tikka',               price: 190, odooId: 1436, catId: 30 },
   'HE-G003': { name: 'Tandoori Chicken',            price: 267, odooId: 1437, catId: 30 },
   'HE-G004': { name: 'Chicken Seekh Kebab',         price: 1,   odooId: 1438, catId: 30 }, // TEST ₹1 (was 152)
@@ -265,6 +265,17 @@ const PRODUCTS = {
   'HE-K002': { name: 'Mutton Sheek Kabab (4 pcs)',  price: 210, odooId: 1441, catId: 30 },
   'HE-K003': { name: 'Sheek Kabab Roll',            price: 1,   odooId: 1442, catId: 30 }, // TEST ₹1 (was 114)
   'HE-K004': { name: 'Sheek Kabab Platter',         price: 333, odooId: 1443, catId: 30 },
+
+  // ── Outdoor QR UPI offer (Shawarma/Grill counters) ──
+  'HE-SHAWARMA-ROLL':         { name: 'Shawarma Roll',                    price: 94.29,  odooId: 1385, catId: 29 },
+  'HE-CHICKEN-KATHI-ROLL':    { name: 'Chicken Kathi Roll',               price: 114.29, odooId: 1438, catId: 29 },
+  'HE-CHICKEN-TIKKA-ROLL':    { name: 'Chicken Tikka Roll',               price: 114.29, odooId: 1439, catId: 29 },
+  'HE-SHEEKH-ROLL':           { name: 'Chicken Sheekh Roll',              price: 95.24,  odooId: 1450, catId: 29 },
+  'HE-BOGO-CHICKEN-SHAWARMA': { name: 'BOGO Chicken Shawarma (2 pcs)',    price: 94.29,  odooId: 1453, catId: 29 },
+  'HE-BOGO-KATHI-ROLL':       { name: 'BOGO Chicken Kathi Roll (2 pcs)',  price: 114.29, odooId: 1451, catId: 29 },
+  'HE-BOGO-TIKKA-ROLL':       { name: 'BOGO Chicken Tikka Roll (2 pcs)',  price: 114.29, odooId: 1452, catId: 29 },
+  'HE-BOGO-SHEEKH-ROLL':      { name: 'BOGO Chicken Sheekh Roll (2 pcs)', price: 95.24,  odooId: 1454, catId: 29 },
+  'HE-SHEEKH-PLATE':          { name: 'Chicken Sheekh Plate',             price: 0,      odooId: 1449, catId: 30 },
 
   // ── New Combos v2 (5 combos × 3 sizes, GST-exclusive base prices)
 'HE-CM01-1': { name: 'CM1 For You — Rice+Roti+Kabab+BC', price: 285, odooId: 1423, catId: 22 },
@@ -299,14 +310,14 @@ const COUNTER_CATS = {
 // Used to create pos.prep.state records when WABA orders are placed via API
 // (POS frontend does this automatically via sync_from_ui → _send_orders_to_preparation_display)
 const KDS_INITIAL_STAGES = {
-  22: [31, 75, 67, 94],  // Indian → KDS 11(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
-  24: [34, 75, 67, 94],  // Chinese → KDS 12(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
-  25: [37, 75, 67, 94],  // Tandoor → KDS 13(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
-  26: [40, 75, 67, 94],  // FC → KDS 14(To prepare), KDS 15(Preparing), KDS 21(Preparing), Assembly(Preparing)
-  27: [46, 94],           // Juice → KDS 16(To prepare), Assembly(Preparing)
-  28: [49, 69, 94],       // Bain Marie → KDS 17(To prepare), KDS 22(Preparing), Assembly(Preparing)
-  29: [52, 94],           // Shawarma → KDS 18(To prepare), Assembly(Preparing)
-  30: [55, 94],           // Grill → KDS 19(To prepare), Assembly(Preparing)
+  22: [31, 75, 67],  // Indian → KDS 11(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  24: [34, 75, 67],  // Chinese → KDS 12(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  25: [87, 75, 67],  // Tandoor → KDS 13(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  26: [90, 75, 67],  // FC → KDS 14(To prepare), KDS 15(Preparing), KDS 21(Preparing)
+  27: [46],           // Juice → KDS 16(To prepare)
+  28: [49, 69],       // Bain Marie → KDS 17(To prepare), KDS 22(Preparing)
+  29: [52],           // Shawarma → KDS 18(To prepare)
+  30: [55],           // Grill → KDS 19(To prepare)
 };
 
 // ── KDS stage → customer-facing counter name (for WhatsApp notifications) ──
@@ -677,6 +688,57 @@ const COUNTER_MENUS = {
     ],
   },
 };
+
+const OUTDOOR_BOGO_START_IST = '2026-05-17';
+
+function istDateString(date = new Date()) {
+  const ist = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+  return ist.toISOString().slice(0, 10);
+}
+
+function isOutdoorBogoActive(env) {
+  const override = String(env?.OUTDOOR_BOGO_ACTIVE || '').trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(override)) return true;
+  if (['0', 'false', 'no', 'off'].includes(override)) return false;
+  return istDateString() >= OUTDOOR_BOGO_START_IST;
+}
+
+function getOutdoorShawarmaMenu(env) {
+  const offerActive = isOutdoorBogoActive(env);
+  return {
+    title: offerActive ? 'QR UPI Offer' : 'Shawarma Counter',
+    counter: 'Shawarma Counter',
+    outdoorQr: true,
+    skipQuickReorder: true,
+    bodyText: offerActive
+      ? 'You unlocked the counter-only UPI offer.\n\nPick an offer, pay UPI in WhatsApp, collect here.'
+      : 'Pick your roll, pay UPI in WhatsApp, collect here.',
+    footerText: 'UPI only • Collect at Shawarma counter',
+    sections: offerActive ? [
+      { title: 'Buy 1 Get 1', items: ['HE-BOGO-CHICKEN-SHAWARMA','HE-BOGO-KATHI-ROLL','HE-BOGO-TIKKA-ROLL','HE-BOGO-SHEEKH-ROLL'] },
+    ] : [
+      { title: 'Rolls', items: ['HE-SHAWARMA-ROLL','HE-CHICKEN-KATHI-ROLL','HE-CHICKEN-TIKKA-ROLL','HE-SHEEKH-ROLL'] },
+    ],
+  };
+}
+
+const OUTDOOR_GRILL_MENU = {
+  title: 'Grill Counter',
+  counter: 'Grill Counter',
+  outdoorQr: true,
+  skipQuickReorder: true,
+  bodyText: 'Pick from the grill counter.\n\nPay UPI in WhatsApp, collect here.',
+  footerText: 'UPI only • Collect at Grill counter',
+  sections: [
+    { title: 'Grill', items: ['HE-G001'] },
+  ],
+};
+
+function getCounterMenu(counterKey, env) {
+  if (counterKey === 'shawarma_counter') return getOutdoorShawarmaMenu(env);
+  if (counterKey === 'grill_counter') return OUTDOOR_GRILL_MENU;
+  return COUNTER_MENUS[counterKey];
+}
 
 // ── Detect counter keyword from QR code text (e.g. "BM Counter") ──
 function detectCounterKeyword(text) {
@@ -2517,7 +2579,7 @@ async function handleMealIntent(context, user, intentKey, waId, phoneId, token, 
 }
 
 async function handleCounterMenu(context, user, counterKey, waId, phoneId, token, db, skipReorder) {
-  const counterMenu = COUNTER_MENUS[counterKey];
+  const counterMenu = getCounterMenu(counterKey, context.env);
   if (!counterMenu || counterMenu.sections.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
       `Sorry, ${counterMenu?.title || 'this counter'} menu isn\'t available for WhatsApp ordering yet.\n\n` +
@@ -2529,7 +2591,7 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
   const displayName = user.name ? user.name.split(' ')[0] : '';
 
   // Regular customers (10+ orders): check for recent order at this counter for quick re-order
-  if (tier === 'regular' && !skipReorder) {
+  if (tier === 'regular' && !skipReorder && !counterMenu.skipQuickReorder) {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const lastOrder = await db.prepare(
       `SELECT items, total FROM wa_orders WHERE wa_id = ? AND collection_point LIKE ? AND payment_status = 'paid' AND created_at > ? ORDER BY id DESC LIMIT 1`
@@ -2557,7 +2619,9 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
 
   // Tier-adaptive MPM body text — action-first, no branding
   let bodyText;
-  if (tier === 'new') {
+  if (counterMenu.bodyText) {
+    bodyText = counterMenu.bodyText;
+  } else if (tier === 'new') {
     bodyText = 'Pick items below, tap Send, pay UPI — done.';
   } else if (tier === 'learning') {
     bodyText = displayName
@@ -2581,7 +2645,7 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
       type: 'product_list',
       header: { type: 'text', text: counterMenu.title },
       body: { text: bodyText },
-      footer: { text: 'Collect right here after payment' },
+      footer: { text: counterMenu.footerText || 'Collect right here after payment' },
       action: { catalog_id: CATALOG_ID, sections },
     },
   };
@@ -2596,8 +2660,10 @@ async function handleCounterMenu(context, user, counterKey, waId, phoneId, token
       const p = PRODUCTS[rid];
       return p ? `• ${p.name} — ₹${Math.round(p.price * 1.05)}` : null;
     }).filter(Boolean);
-    const fallbackText = `*${counterMenu.title}*\n\n${lines.join('\n')}\n\n` +
-      `_Tap "menu" to browse, or tell us what you'd like to order._`;
+    const fallbackText = counterMenu.outdoorQr
+      ? `*${counterMenu.title}*\n\n${lines.join('\n')}\n\n_UPI-only QR menu. Say *"menu"* and scan again if the buttons did not open._`
+      : `*${counterMenu.title}*\n\n${lines.join('\n')}\n\n` +
+        `_Tap "menu" to browse, or tell us what you'd like to order._`;
     await sendWhatsApp(phoneId, token, buildText(waId, fallbackText));
   }
 
@@ -2647,7 +2713,7 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
   // If station order, verify all cart items belong to this station's menu
   // If customer added items from outside the station, treat as general order
   if (isStationOrder) {
-    const counterMenu = COUNTER_MENUS[session.counter_source];
+    const counterMenu = getCounterMenu(session.counter_source, context.env);
     if (counterMenu) {
       const stationItems = new Set(counterMenu.sections.flatMap(s => s.items));
       const allMatch = cart.items.every(item => stationItems.has(item.code));
@@ -2841,7 +2907,7 @@ async function initiateUpiPayment(context, session, user, waId, phoneId, token, 
 
   // Try native WhatsApp payment (order_details with Razorpay gateway)
   const counterKey = session.counter_source;
-  const counterMenu = counterKey ? COUNTER_MENUS[counterKey] : null;
+  const counterMenu = counterKey ? getCounterMenu(counterKey, context.env) : null;
   const counterName = counterMenu?.counter || null;
   const tier = getCustomerTier(user.total_orders || 0);
   const orderDetailsMsg = buildOrderDetailsPayment(waId, orderCode, cart, total, counterName, tier);
@@ -6303,14 +6369,8 @@ function buildOrderDetailsPayment(to, orderCode, cart, total, counterName, tier)
   let footerText;
   if (counterName) {
     // Station order — customer is physically present
-    if (tier === 'new') {
-      bodyText = `${orderCode} | ${counterName}\nTap "Review and Pay" below\n_Reply "cancel" to cancel_`;
-    } else if (tier === 'regular') {
-      bodyText = `${orderCode} | Rs.${total}\n_"cancel" to cancel_`;
-    } else {
-      bodyText = `${orderCode} | ${counterName}\n_Reply "cancel" to cancel_`;
-    }
-    footerText = 'Hamza Express';
+    bodyText = `${orderCode} | UPI-only QR offer\nReview and pay below.\nCollect at ${counterName}.\n\nReply "cancel" to cancel.`;
+    footerText = 'Hamza Express • UPI only';
   } else {
     // Full menu order
     if (tier === 'new') {
