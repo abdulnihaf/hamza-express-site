@@ -348,7 +348,33 @@ async function campaignParts(db, includeReview = false) {
   return { meta, creators, schedule: Array.isArray(schedule) ? schedule : [], reviewMaster };
 }
 
-function normalizeCampaignCreator(c, sentMap = {}) {
+function handleOfCampaignRow(row) {
+  return String(row?.username || row?.handle || '').replace(/^@/, '').toLowerCase();
+}
+
+function scheduledChannelMap(schedule = []) {
+  const map = {};
+  for (const row of schedule || []) {
+    const handle = handleOfCampaignRow(row);
+    const channel = String(row?.channel || row?.action_type || '').toLowerCase();
+    if (!handle || !channel) continue;
+    if (!map[handle]) map[handle] = {};
+    map[handle][channel] = true;
+    if (channel === 'waba' || channel === 'whatsapp') map[handle].waba = true;
+    if (channel === 'email') map[handle].email = true;
+    if (channel === 'instagram_dm' || channel === 'ig') map[handle].instagram_dm = true;
+  }
+  return map;
+}
+
+function scheduledHandles(schedule = [], channel) {
+  const channels = scheduledChannelMap(schedule);
+  return new Set(Object.entries(channels)
+    .filter(([, flags]) => flags[channel])
+    .map(([handle]) => handle));
+}
+
+function normalizeCampaignCreator(c, sentMap = {}, channelMap = {}) {
   const handle = String(c.username || c.handle || '').replace(/^@/, '').toLowerCase();
   const followers = Number(c.followers || c.followers_count || 0);
   const email = firstCsvValue(c.emails || c.email);
@@ -387,6 +413,7 @@ function normalizeCampaignCreator(c, sentMap = {}) {
     },
     reply_state: sentMap[handle]?.reply_state || 'none',
     campaign_source: 'may15',
+    campaign_channels: channelMap[handle] || {},
   };
 }
 
@@ -414,7 +441,8 @@ async function actionCampaign(env, db, url) {
   const parts = await campaignParts(db, includeReview);
   const handles = parts.creators.map(c => c.username || c.handle);
   const sentMap = await sentStateForHandles(db, handles);
-  const creators = parts.creators.map(c => normalizeCampaignCreator(c, sentMap));
+  const channelMap = scheduledChannelMap(parts.schedule);
+  const creators = parts.creators.map(c => normalizeCampaignCreator(c, sentMap, channelMap));
   return json({
     success: true,
     campaign_id: '2026-05-15',
@@ -577,8 +605,9 @@ async function actionSendCampaignEmail(env, db, body) {
   const skipAlready = body.skip_already_emailed !== false;
   const parts = await campaignParts(db, false);
   const byHandle = new Map(parts.creators.map(c => [String(c.username || '').toLowerCase(), c]));
+  const scheduled = scheduledHandles(parts.schedule, 'email');
   const prior = await sentStateForHandles(db, handles);
-  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_no_email: 0, skipped_already_emailed: 0, failed: 0 };
+  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_not_scheduled: 0, skipped_no_email: 0, skipped_already_emailed: 0, failed: 0 };
   const results = [];
 
   for (const handle of handles) {
@@ -586,6 +615,11 @@ async function actionSendCampaignEmail(env, db, body) {
     if (!raw) {
       summary.skipped_not_in_campaign++;
       results.push({ handle, status: 'skipped_not_in_campaign' });
+      continue;
+    }
+    if (!scheduled.has(handle)) {
+      summary.skipped_not_scheduled++;
+      results.push({ handle, status: 'skipped_not_scheduled' });
       continue;
     }
     if (skipAlready && prior[handle]?.email) {
@@ -653,8 +687,9 @@ async function actionSendCampaignWhatsApp(env, db, body) {
   const skipAlready = body.skip_already_sent !== false;
   const parts = await campaignParts(db, false);
   const byHandle = new Map(parts.creators.map(c => [String(c.username || '').toLowerCase(), c]));
+  const scheduled = scheduledHandles(parts.schedule, 'waba');
   const prior = await sentStateForHandles(db, handles);
-  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_no_phone: 0, skipped_already_sent: 0, failed: 0 };
+  const summary = { sent: 0, skipped_not_in_campaign: 0, skipped_not_scheduled: 0, skipped_no_phone: 0, skipped_already_sent: 0, failed: 0 };
   const results = [];
 
   for (const handle of handles) {
@@ -662,6 +697,11 @@ async function actionSendCampaignWhatsApp(env, db, body) {
     if (!raw) {
       summary.skipped_not_in_campaign++;
       results.push({ handle, status: 'skipped_not_in_campaign' });
+      continue;
+    }
+    if (!scheduled.has(handle)) {
+      summary.skipped_not_scheduled++;
+      results.push({ handle, status: 'skipped_not_scheduled' });
       continue;
     }
     if (skipAlready && prior[handle]?.wa) {
