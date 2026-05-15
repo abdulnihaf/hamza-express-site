@@ -4,17 +4,21 @@
 
 const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v23';
 const CUSTOMER_ID = '3681710084';
+const MAPS_SITELINK_ASSET_ID = '361293899595';
+const MAPS_SITELINK_FIX_CONFIRM = 'FIX_MAPS_SITELINK_DESTINATION_361293899595';
+const MAPS_SITELINK_FIXED_URL = 'https://hamzaexpress.in/go/maps?src=google_ads_sitelink';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  if (request.method !== 'GET') return json({ error: 'GET only' }, 405);
+  if (request.method === 'POST') return fixMapsSitelinkAsset(request, env);
+  if (request.method !== 'GET') return json({ error: 'GET or POST only' }, 405);
 
   try {
     const url = new URL(request.url);
@@ -193,6 +197,46 @@ export async function onRequest(context) {
   }
 }
 
+async function fixMapsSitelinkAsset(request, env) {
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== MAPS_SITELINK_FIX_CONFIRM) {
+    return json({
+      success: false,
+      error: 'confirmation_required',
+      required: MAPS_SITELINK_FIX_CONFIRM,
+      note: 'Exact one-asset mutation: updates the disapproved Get Directions sitelink final URL to the policy-clean hamzaexpress.in maps landing page.',
+    }, 409);
+  }
+
+  const accessToken = await getAccessToken(env);
+  const before = await getAssetById(accessToken, env, MAPS_SITELINK_ASSET_ID);
+  const resourceName = `customers/${CUSTOMER_ID}/assets/${MAPS_SITELINK_ASSET_ID}`;
+
+  const attempts = [];
+  for (const updateMask of ['finalUrls', 'final_urls']) {
+    const result = await mutateResource(accessToken, env, 'assets', [{
+      update: {
+        resourceName,
+        finalUrls: [MAPS_SITELINK_FIXED_URL],
+      },
+      updateMask,
+    }]);
+    attempts.push({ updateMask, ok: result.ok, error: result.error || null, results: result.results || [] });
+    if (result.ok) break;
+  }
+
+  const success = attempts.some(a => a.ok);
+  const after = await getAssetById(accessToken, env, MAPS_SITELINK_ASSET_ID);
+  return json({
+    success,
+    assetId: MAPS_SITELINK_ASSET_ID,
+    fixedFinalUrl: MAPS_SITELINK_FIXED_URL,
+    before,
+    after,
+    attempts,
+  }, success ? 200 : 500);
+}
+
 async function getAccessToken(env) {
   const resp = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -227,6 +271,49 @@ async function runQuery(accessToken, env, name, query) {
   } catch (err) {
     return { name, ok: false, rows: [], error: err.message };
   }
+}
+
+async function mutateResource(accessToken, env, resource, operations) {
+  try {
+    const resp = await fetch(`${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/${resource}:mutate`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ operations }),
+    });
+    if (!resp.ok) return { ok: false, error: await resp.text() };
+    const data = await resp.json();
+    return { ok: true, results: data.results || [] };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+async function getAssetById(accessToken, env, assetId) {
+  const result = await runQuery(accessToken, env, 'asset_by_id', `
+    SELECT
+      asset.id,
+      asset.name,
+      asset.type,
+      asset.final_urls,
+      asset.tracking_url_template,
+      asset.policy_summary.approval_status,
+      asset.policy_summary.review_status,
+      asset.policy_summary.policy_topic_entries,
+      asset.sitelink_asset.link_text,
+      asset.sitelink_asset.description1,
+      asset.sitelink_asset.description2
+    FROM asset
+    WHERE asset.id = ${escapeNumber(assetId)}
+  `);
+  return {
+    ok: result.ok,
+    error: result.error || null,
+    asset: result.rows[0]?.asset || null,
+  };
 }
 
 function linkAssetsToCampaigns(rows) {
