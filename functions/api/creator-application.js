@@ -23,40 +23,41 @@ import { buildReceivedEmail, buildDecisionEmail, buildTentativeEmail } from './_
 // Mirrors functions/api/_lib/influencer-tier.js in the HN repo.
 // ─────────────────────────────────────────────────────────────────────
 const TIER_MATRIX = {
-  T0: { label: '<1K · Newbie', min: 0, max: 999, covers: 0, cash_paise: 0, budget_paise: 0,
+  T0: { label: '<5K · Build audience', min: 0, max: 4999, covers: 0, cash_paise: 0, budget_paise: 0,
         add_ons: [], asks: [], auto_decline: true,
-        decline_reason: 'We work with creators who have at least 1K active followers. Build your audience and apply again!' },
-  T1: { label: '1K–5K · Nano', min: 1000, max: 4999, covers: 1, cash_paise: 0, budget_paise: 60000,
-        add_ons: [], asks: ['1 reel · 3 stories · tag @hamzaexpress1918'], auto_approve: false },
-  T2: { label: '5K–15K · Micro', min: 5000, max: 14999, covers: 2, cash_paise: 0, budget_paise: 120000,
-        add_ons: ['Welcome chai'], asks: ['1 reel · 5 stories · tag @hamzaexpress1918 · use the geotag pin'], auto_approve: false },
-  T3: { label: '15K–30K · Mid-Micro', min: 15000, max: 29999, covers: 3, cash_paise: 0, budget_paise: 180000,
-        add_ons: ['Welcome chai', 'Dessert'], asks: ['1 reel · 5 stories · tag · 24-hour bio link'], auto_approve: false },
-  T4: { label: '30K–60K · Upper-Micro', min: 30000, max: 59999, covers: 4, cash_paise: 0, budget_paise: 240000,
-        add_ons: ['Welcome chai', 'Dessert flight', 'Chef interaction'],
-        asks: ['1 reel · 1 permanent grid post · 5 stories · tag'], auto_approve: false },
-  T5: { label: '60K–100K · Macro-Micro', min: 60000, max: 99999, covers: 4, cash_paise: 50000, budget_paise: 290000,
-        // Generic category descriptors only — specific dishes pulled from /api/menu-top-sellers.
-        // Memory: feedback_never_invent_menu_items.md (2026-05-11).
-        add_ons: ['Signature heritage dish (comped)', 'Dessert flight', 'Chai', 'Chef interaction'],
-        asks: ['1 reel · 1 permanent grid post · 7 stories · 7-day bio tag'], auto_approve: false },
-  T6: { label: '100K–250K · Edge-Macro', min: 100000, max: 249999, covers: 4, cash_paise: 300000, budget_paise: 540000,
-        add_ons: ['Chef tasting (8 dishes)', 'Family photo', 'Chef interaction'],
-        asks: ['2 reels · 1 permanent grid post · collab post · IG live snippet'], auto_approve: false },
-  T7: { label: '250K+ · Macro', min: 250000, max: 99999999, covers: 6, cash_paise: 800000, budget_paise: 1064000,
-        add_ons: ['Full chef tasting menu', 'Brand brief', 'Behind-the-scenes access'],
-        asks: ['2 reels · 1 permanent grid · collab · IG live · 14-day bio tag'], auto_approve: false },
+        decline_reason: 'We are starting this creator table at 5K active followers. Build your audience and apply again.' },
+  T1: { label: '5K-10K · Creator table for 2', min: 5000, max: 9999, covers: 2, cash_paise: 0, budget_paise: 118000,
+        add_ons: ['1 biryani/rice category + 1 full starter/kabab category', 'Highest visible menu value up to ₹1,180'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T2: { label: '10K-15K · Fuller table for 2', min: 10000, max: 14999, covers: 2, cash_paise: 0, budget_paise: 226000,
+        add_ons: ['1 biryani/rice + 1 full starter + 1 main gravy + breads', 'Highest visible menu value up to ₹2,260'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T3: { label: '15K-25K · Premium table for 2', min: 15000, max: 24999, covers: 2, cash_paise: 0, budget_paise: 260000,
+        add_ons: ['Premium cover for 2 with one extra biryani/rice or add-on', 'Highest visible menu value up to ₹2,600'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T4: { label: '25K-50K · Creator table for 4', min: 25000, max: 49999, covers: 4, cash_paise: 0, budget_paise: 354000,
+        add_ons: ['2 biryani/rice + 2 full starters + 1 main gravy + breads', 'Highest visible menu value up to ₹3,540', 'Commercial or alternate format can be reviewed separately'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T5: { label: '50K-75K · Premium table for 4', min: 50000, max: 74999, covers: 4, cash_paise: 0, budget_paise: 452000,
+        add_ons: ['2 biryani/rice + 2 starters + 2 mains + breads', 'Highest visible menu value up to ₹4,520', 'Commercial or alternate format can be reviewed separately'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T6: { label: '75K-100K · Creator table for 6', min: 75000, max: 99999, covers: 6, cash_paise: 0, budget_paise: 580000,
+        add_ons: ['3 biryani/rice + 3 starters + 2 mains + breads', 'Highest visible menu value up to ₹5,800', 'Commercial or alternate format can be reviewed separately'],
+        asks: ['1 reel for one agreed eater mission', '3 stories: arrival/location, food spread, visit action', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
+  T7: { label: '100K+ · Manual collaboration review', min: 100000, max: 99999999, covers: 6, cash_paise: 0, budget_paise: 580000,
+        add_ons: ['Premium hosted table plus manual collaboration review', 'Creator may propose commercials, deliverables, and format'],
+        asks: ['1 reel + 3 stories unless a different format is agreed', 'Tag @hamzaexpress1918 and Hamza Express, HKP Road, Shivajinagar'], auto_approve: false },
 };
 
 function tierOf(followers) {
   const f = followers || 0;
-  if (f < 1000)   return 'T0';
-  if (f < 5000)   return 'T1';
+  if (f < 5000)   return 'T0';
+  if (f < 10000)  return 'T1';
   if (f < 15000)  return 'T2';
-  if (f < 30000)  return 'T3';
-  if (f < 60000)  return 'T4';
-  if (f < 100000) return 'T5';
-  if (f < 250000) return 'T6';
+  if (f < 25000)  return 'T3';
+  if (f < 50000)  return 'T4';
+  if (f < 75000)  return 'T5';
+  if (f < 100000) return 'T6';
   return 'T7';
 }
 
@@ -76,7 +77,7 @@ function approvalDecision({ tier, engagement_rate, is_private, last_post_at }) {
       return { decision: 'manual', reason: `Last post was ${Math.round(ageDays)} days ago. Sending to manual review.` };
     }
   }
-  if (!t.auto_approve) return { decision: 'manual', reason: 'High-tier creators get personalised review.' };
+  if (!t.auto_approve) return { decision: 'manual', reason: 'Every creator invitation is reviewed personally.' };
   if (t.auto_approve_min_er && er > 0 && er < t.auto_approve_min_er) {
     return { decision: 'manual', reason: `T4+ requires ER >= ${(t.auto_approve_min_er*100).toFixed(1)}%. Sending to manual review.` };
   }
@@ -280,21 +281,13 @@ async function actionSubmit(env, db, body) {
     audienceJson = JSON.stringify(body.audience.filter(t => typeof t === 'string').slice(0, 12));
   }
 
-  // Look up slot — exists + not blocked
+  // Look up slot — exists + not blocked. We do not hold capacity on application
+  // submit; owner approval is the moment a creator window is actually reserved.
   const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(slotId).first();
   if (!slot) return json({ error: 'slot_id not found' }, 400);
   if (slot.is_blocked) return json({ error: 'slot_blocked' }, 409);
-
-  // Optimistic lock — atomic UPDATE that fails if slot was just taken by another submitter.
-  // booked_count++ only succeeds if booked_count < capacity.
-  const bumpResult = await db.prepare(`
-    UPDATE influencer_slots
-    SET booked_count = booked_count + 1
-    WHERE id = ? AND booked_count < capacity AND is_blocked = 0
-  `).bind(slotId).run();
-
-  if (!bumpResult.meta.changes || bumpResult.meta.changes === 0) {
-    return json({ error: 'slot_full', detail: 'This slot was just taken by another applicant. Please pick another.' }, 409);
+  if (slot.booked_count >= slot.capacity) {
+    return json({ error: 'slot_full', detail: 'This preferred window is already full. Please pick another.' }, 409);
   }
 
   // EVERY application is manual review. Always pending. No auto-approve, no booking shell yet.
@@ -416,10 +409,21 @@ async function actionApprove(env, db, body, request) {
     return json({ error: 'already approved' }, 400);
   }
 
-  // Slot was already optimistically held at submit time (booked_count++) — don't re-bump here.
-  // We just need to read it to compose the message.
+  // Owner approval is the first real hold. This prevents unreviewed applications
+  // from blocking scarce creator windows.
   const slot = await db.prepare(`SELECT * FROM influencer_slots WHERE id = ?`).bind(app.preferred_slot_id).first();
   if (!slot) return json({ error: 'slot_not_found' }, 404);
+  const bump = await db.prepare(`
+    UPDATE influencer_slots
+    SET booked_count = booked_count + 1
+    WHERE id = ? AND booked_count < capacity AND is_blocked = 0
+  `).bind(app.preferred_slot_id).run();
+  if (!bump.meta.changes || bump.meta.changes === 0) {
+    return json({
+      error: 'slot_full',
+      detail: 'That preferred creator window is already full. Ask the creator for another window before approving.',
+    }, 409);
+  }
 
   // Two-step confirm flow:
   //   Owner approve → booking row status = 'tentative' (slot held but not finalised)
@@ -427,19 +431,25 @@ async function actionApprove(env, db, body, request) {
   //   Application row status = 'approved' (owner-side decision is done)
   const tierMeta = TIER_MATRIX[app.computed_tier] || TIER_MATRIX.T1;
   const outreachToken = genToken();
-  const bk = await db.prepare(`
-    INSERT INTO influencer_bookings
-      (creator_username, creator_name, creator_followers, creator_tier, cover_commitment, meal_budget_paise,
-       slot_id, slot_date, window_code, status, outreach_token, contact_phone, contact_email, notes_creator,
-       approved_by, approved_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'tentative', ?, ?, ?, ?, ?, datetime('now'))
-  `).bind(
-    app.username, app.full_name, app.followers_count, app.computed_tier, tierMeta.covers,
-    tierMeta.budget_paise + (tierMeta.cash_paise || 0),
-    app.preferred_slot_id, app.preferred_slot_date, app.preferred_window_code,
-    outreachToken, app.contact_phone, app.contact_email, app.why_us_text,
-    body.actor || 'owner'
-  ).run();
+  let bk;
+  try {
+    bk = await db.prepare(`
+      INSERT INTO influencer_bookings
+        (creator_username, creator_name, creator_followers, creator_tier, cover_commitment, meal_budget_paise,
+         slot_id, slot_date, window_code, status, outreach_token, contact_phone, contact_email, notes_creator,
+         approved_by, approved_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'tentative', ?, ?, ?, ?, ?, datetime('now'))
+    `).bind(
+      app.username, app.full_name, app.followers_count, app.computed_tier, tierMeta.covers,
+      tierMeta.budget_paise + (tierMeta.cash_paise || 0),
+      app.preferred_slot_id, app.preferred_slot_date, app.preferred_window_code,
+      outreachToken, app.contact_phone, app.contact_email, app.why_us_text,
+      body.actor || 'owner'
+    ).run();
+  } catch (e) {
+    await db.prepare(`UPDATE influencer_slots SET booked_count = MAX(0, booked_count - 1) WHERE id = ?`).bind(app.preferred_slot_id).run();
+    throw e;
+  }
 
   await db.prepare(`
     UPDATE influencer_applications
@@ -707,7 +717,7 @@ async function sendWaba(env, to, text) {
 // ─────────────────────────────────────────────────────────────────────
 const BIZ = {
   name: 'Hamza Express',
-  address: '151 TO 154, HKP Road, Sulthangunta, Shivajinagar, Bangalore 560051',
+  address: '#19, H.K.P. Road, Shivajinagar, Bangalore 560051',
   lat: 12.98475,
   lng: 77.60291,
   place_id: 'ChIJ-QQjtHEXrjsR-Z1RIEm2arg',
@@ -911,17 +921,17 @@ function notifyCreatorReceivedText(app, slot, tierMeta) {
   const lines = [
     `Hi @${app.username},`,
     ``,
-    `Thanks for applying to Hamza Express — the 108-year-old Dakhni kitchen on H.K.P. Road, Shivajinagar.`,
+    `Thanks for applying to Hamza Express — Hamza naam, Express andaaz on H.K.P. Road, Shivajinagar.`,
     ``,
     status,
     ``,
-    `Tier: ${tierLabel}`,
-    `Slot requested: ${slotLine}`,
+    `Invite: ${tierLabel}`,
+    `Preferred visit: ${slotLine}`,
   ];
   if (app.status === 'auto_approved') {
     lines.push(``, `Full confirmation with the menu + asks lands in your next message.`);
   } else if (app.status !== 'declined') {
-    lines.push(``, `If approved, we'll send the full confirmation here with the menu + what we'll be hosting you with.`);
+    lines.push(``, `If approved, we'll send the full confirmation here with what we are hosting you with and the creator brief.`);
   }
   lines.push(
     ``,
@@ -981,13 +991,13 @@ function notifyCreatorText(app, slot, tierMeta) {
     ``,
     `🗺  Get directions: ${BIZ.map_url}`,
     ``,
-    `Tier: ${m.label}`,
+    `Invite: ${m.label}`,
     ``,
     `What we're hosting you with:`,
     `· ${m.covers} ${m.covers === 1 ? 'cover' : 'covers'} (your party size)`,
   ];
   (m.add_ons || []).forEach(a => lines.push(`· ${a}`));
-  if (m.cash_paise) lines.push(`· ₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
+  if (m.cash_paise) lines.push(`· Approved commercial component: ₹${(m.cash_paise/100).toLocaleString('en-IN')}`);
   lines.push(``, `What we ask:`);
   (m.asks || []).forEach(a => lines.push(`· ${a}`));
   lines.push(
@@ -1149,7 +1159,7 @@ function notifyCreatorTentativeText(app, slot, tierMeta, token) {
     ``,
     `Hi @${app.username},`,
     ``,
-    `We've held your slot for:`,
+    `We've held your preferred visit window for:`,
     `📅 ${slotLine}`,
     `📍 ${BIZ.address}`,
     ``,
@@ -1220,7 +1230,7 @@ async function notifyCreator(env, db, app, slot, tierMeta) {
   // template path. The free-form fallback (`text`) keeps the multi-line bullets.
   const hostingItems = [`${m.covers} ${m.covers === 1 ? 'cover' : 'covers'}`];
   (m.add_ons || []).forEach(a => hostingItems.push(a));
-  if (m.cash_paise) hostingItems.push(`₹${(m.cash_paise/100).toLocaleString('en-IN')} cash on top of the meal`);
+  if (m.cash_paise) hostingItems.push(`approved commercial component ₹${(m.cash_paise/100).toLocaleString('en-IN')}`);
   const hostingWith = hostingItems.join(' · ');
 
   const asks = (m.asks || []).join(' · ');

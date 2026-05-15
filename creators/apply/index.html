@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Request your invitation · Hamza Express · Est. 1918</title>
 <meta name="description" content="A small, hand-picked invitation for Bangalore food creators to sit at the table the city has been sitting at since 1918.">
 <link rel="icon" href="/favicon.ico">
@@ -31,8 +31,10 @@ html,body{
   color:var(--sienna);
   font-family:'Times New Roman',Georgia,'Times',serif;
   -webkit-font-smoothing:antialiased;
-  line-height:1.55;
+  line-height:1.48;
   min-height:100vh;
+  width:100%;
+  overflow-x:hidden;
 }
 a{color:var(--sienna);text-decoration:underline}
 
@@ -57,13 +59,14 @@ a{color:var(--sienna);text-decoration:underline}
    STAGE
    ═══════════════════════════════════════════════════════════════════ */
 .stage{
+  width:100%;
   max-width:680px;
   margin:0 auto;
-  padding:48px 24px 80px;
+  padding:38px 24px 72px;
   min-height:calc(100vh - 70px);
 }
 .progress{
-  display:flex;gap:6px;margin-bottom:32px;
+  display:flex;gap:6px;margin-bottom:24px;
 }
 .progress-dot{
   flex:1;height:3px;background:var(--tan-light);border-radius:0;
@@ -86,7 +89,7 @@ a{color:var(--sienna);text-decoration:underline}
 }
 .step h1{
   font-family:'Times New Roman',Georgia,serif;
-  font-size:38px;font-weight:700;
+  font-size:36px;font-weight:700;
   line-height:1.15;letter-spacing:-.01em;
   color:var(--sienna);
   margin-bottom:14px;
@@ -94,8 +97,8 @@ a{color:var(--sienna);text-decoration:underline}
 .step h1 em{font-style:italic}
 .step p.sub{
   font-family:'Times New Roman',Georgia,serif;
-  font-size:18px;line-height:1.65;color:var(--ink-soft);
-  margin-bottom:30px;
+  font-size:17px;line-height:1.58;color:var(--ink-soft);
+  margin-bottom:24px;
 }
 .step p.sub em{font-style:italic}
 
@@ -140,6 +143,84 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
 .field-helper a{color:var(--sienna)}
 
 /* ═══════════════════════════════════════════════════════════════════
+   PERSONALIZED OFFER + CREATOR MISSION
+   ═══════════════════════════════════════════════════════════════════ */
+.offer-card{
+  display:none;
+  background:var(--offwhite);
+  border:1.5px solid var(--sienna);
+  padding:18px;
+  margin:16px 0 4px;
+}
+.offer-card.show{display:block;animation:fadeIn .25s ease}
+.offer-kicker{
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  font-weight:700;
+  color:var(--ink-mute);
+  margin-bottom:8px;
+}
+.offer-value{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  border-bottom:1px dotted var(--sienna);
+  padding-bottom:12px;
+  margin-bottom:12px;
+}
+.offer-value strong{
+  font-size:30px;
+  line-height:1;
+  color:var(--sienna);
+}
+.offer-value span{
+  font-size:13px;
+  color:var(--ink-mute);
+  text-align:right;
+  line-height:1.35;
+}
+.offer-list{
+  display:grid;
+  gap:8px;
+  font-size:15px;
+  color:var(--ink-soft);
+}
+.offer-list b{color:var(--sienna)}
+.mission-grid{
+  display:grid;
+  gap:10px;
+}
+.mission-card{
+  width:100%;
+  text-align:left;
+  font-family:'Times New Roman',Georgia,serif;
+  background:var(--offwhite);
+  color:var(--sienna);
+  border:1.5px solid var(--sienna);
+  padding:14px 16px;
+  cursor:pointer;
+}
+.mission-card strong{
+  display:block;
+  font-size:17px;
+  margin-bottom:4px;
+}
+.mission-card span{
+  display:block;
+  font-size:13px;
+  color:var(--ink-mute);
+  line-height:1.45;
+}
+.mission-card.on{
+  background:var(--sienna);
+  color:var(--offwhite);
+}
+.mission-card.on span{color:var(--offwhite)}
+.mission-card.on strong::before{content:'✓ '}
+
+/* ═══════════════════════════════════════════════════════════════════
    AUDIENCE CHIPS (multi-select)
    ═══════════════════════════════════════════════════════════════════ */
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
@@ -181,6 +262,43 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   font-family:'Times New Roman',Georgia,serif;
   overflow-x:auto;
 }
+.slot-list{display:none}
+.slot-day{
+  margin:0 0 12px;
+}
+.slot-day-title{
+  font-size:13px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:700;
+  color:var(--ink-mute);
+  margin-bottom:8px;
+}
+.slot-cards{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.slot-card{
+  min-height:46px;
+  padding:9px 10px;
+  border:1.5px solid var(--sienna);
+  background:var(--offwhite);
+  color:var(--sienna);
+  font-family:'Times New Roman',Georgia,serif;
+  text-align:left;
+  cursor:pointer;
+}
+.slot-card strong{display:block;font-size:15px;line-height:1.1}
+.slot-card span{display:block;font-size:11px;color:var(--ink-mute);margin-top:3px}
+.slot-card.selected{background:var(--sienna);color:var(--offwhite)}
+.slot-card.selected span{color:var(--offwhite)}
+.slot-card.taken,.slot-card.blocked{
+  background:var(--offwhite-dim);
+  color:var(--ink-mute);
+  cursor:not-allowed;
+  text-decoration:line-through;
+}
 .cal-cell{
   background:var(--offwhite);
   padding:14px 8px;text-align:center;
@@ -217,7 +335,7 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
 /* ═══════════════════════════════════════════════════════════════════
    ACTIONS
    ═══════════════════════════════════════════════════════════════════ */
-.actions{display:flex;gap:14px;margin-top:32px;align-items:center}
+.actions{display:flex;gap:14px;margin-top:32px;align-items:center;width:100%}
 .btn{
   font-family:'Times New Roman',Georgia,serif;
   font-size:15px;font-weight:700;
@@ -279,23 +397,50 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
    MOBILE
    ═══════════════════════════════════════════════════════════════════ */
 @media (max-width:680px){
-  .topbar{padding:14px 18px}
+  html,body{min-height:100dvh}
+  .topbar{padding:12px 18px}
+  .topbar img{height:24px}
   .topbar .since{display:none}
-  .stage{padding:32px 18px 60px}
-  .step h1{font-size:30px}
-  .step p.sub{font-size:16px}
+  .stage{padding:20px 18px 76px;min-height:calc(100dvh - 49px)}
+  .progress{margin-bottom:16px}
+  .eyebrow{font-size:10px;margin-bottom:12px}
+  .step h1{font-size:28px;line-height:1.08;margin-bottom:10px}
+  .step p.sub{font-size:15px;line-height:1.45;margin-bottom:18px}
+  .field{margin-bottom:14px}
+  .field-helper{font-size:13px}
   input,textarea,select{font-size:16px}
+  input[type="text"],input[type="tel"],input[type="email"],textarea,select{padding:13px 14px}
+  textarea{min-height:92px}
+  .offer-card{padding:14px;margin-top:12px}
+  .offer-value strong{font-size:26px}
+  .offer-list{font-size:14px;gap:6px}
+  .mission-grid{gap:8px}
+  .mission-card{padding:11px 13px}
+  .mission-card strong{font-size:16px}
+  .mission-card span{font-size:12px}
+  .cal-wrap{margin-top:0}
+  .cal-toolbar{margin-bottom:10px}
+  .cal-month{font-size:16px}
+  .cal-nav button{padding:7px 14px}
+  .cal-grid{display:none !important}
+  .slot-list{display:block}
+  .cal-legend{display:none}
   .cal-grid{grid-template-columns:70px repeat(var(--days,7),minmax(56px,1fr))}
   .cal-cell{padding:10px 4px;font-size:12px;min-height:48px}
   .cal-cell.head-time{font-size:11px}
   .cal-cell.head-day .day-num{font-size:18px}
   .cal-cell.head-day .day-name{font-size:10px}
   .cal-slot{font-size:11px}
-  .review-row{flex-direction:column;gap:6px}
+  .review-card{padding:18px 20px}
+  .review-row{flex-direction:column;gap:4px;padding:10px 0}
   .review-label{width:auto}
   .review-val{text-align:left}
-  .actions{flex-direction:column-reverse}
-  .actions .btn{width:100%;justify-content:center}
+  .actions{flex-direction:column-reverse;margin-top:20px;gap:10px}
+  .actions .btn{width:100%;justify-content:center;padding:15px 24px}
+  .confirm{padding:18px 6px}
+  .confirm img{height:54px;margin-bottom:14px}
+  .confirm h1{font-size:30px}
+  .confirm p{font-size:15px;line-height:1.55}
 }
 </style>
 </head>
@@ -316,16 +461,13 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
        STEP 1 · Welcome
        ═══════════════════════════════════════════════════════════════ -->
   <div class="step active" data-step="1">
-    <div class="eyebrow">An Invitation · By Selection</div>
-    <h1>Welcome.<br>You're at the <em>Hamza family table.</em></h1>
+    <div class="eyebrow">A selected creator invitation</div>
+    <h1>Hamza naam.<br><em>Express andaaz.</em></h1>
     <p class="sub">
-      Hamza Hotel has been on HKP Road in Shivajinagar since 1918. A hundred and eight years. Four generations of the same family. Through partition, license raj, through Bangalore turning from a sleepy cantonment into the city we know today — the kitchen has not gone dark for a single evening.
+      Hamza family food legacy since 1918. Hamza Express is the new Express-format table on HKP Road, Shivajinagar.
     </p>
     <p class="sub">
-      This year we facelifted the room. The recipes did not move an inch. We're inviting a small set of Bangalore food creators to come sit at the table the city has been sitting at for over a century, taste what four generations have been protecting, and tell that story in their own voice.
-    </p>
-    <p class="sub" style="font-style:italic">
-      The next few steps will take about ninety seconds. <em>Every application is read personally by us</em> — there's no auto-approve. We'll respond within twenty-four hours via WhatsApp + email.
+      We are inviting a small set of Bangalore creators to experience the food, the location, and the new face of the Hamza name.
     </p>
     <div class="actions">
       <button class="btn btn-primary" id="btn-start">Begin</button>
@@ -338,7 +480,7 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   <div class="step" data-step="2">
     <div class="eyebrow">Step 1 of 7</div>
     <h1>What's your <em>Instagram handle?</em></h1>
-    <p class="sub">Just the username — no @ needed. We'll use this to verify, tag, and reach you.</p>
+    <p class="sub">Just the username — no @ needed. We'll use this to review your food voice and audience fit.</p>
     <div class="field">
       <label class="field-label" for="handle-input">Instagram handle <span class="req">*</span></label>
       <div class="input-wrap">
@@ -359,20 +501,28 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   <div class="step" data-step="3">
     <div class="eyebrow">Step 2 of 7</div>
     <h1>Roughly <em>how many followers</em> do you have?</h1>
-    <p class="sub">Honesty please — we'll cross-check during review. The range determines what we host you with: bigger reach gets bigger covers, more on the table, and at the top tiers cash on top of the meal.</p>
+    <p class="sub">This lets us prepare the right creator invitation. Follower count is one signal; fit, audience, and content style matter too.</p>
     <div class="field">
       <label class="field-label" for="range-input">Follower range <span class="req">*</span></label>
       <select id="range-input">
         <option value="">— pick a range —</option>
-        <option value="T1">1,000 – 5,000 (Nano)</option>
-        <option value="T2">5,000 – 15,000 (Micro)</option>
-        <option value="T3">15,000 – 30,000 (Mid-Micro)</option>
-        <option value="T4">30,000 – 60,000 (Upper-Micro)</option>
-        <option value="T5">60,000 – 100,000 (Macro-Micro)</option>
-        <option value="T6">100,000 – 250,000 (Edge-Macro)</option>
-        <option value="T7">250,000 + (Macro)</option>
+        <option value="T1">5,000 – 10,000</option>
+        <option value="T2">10,000 – 15,000</option>
+        <option value="T3">15,000 – 25,000</option>
+        <option value="T4">25,000 – 50,000</option>
+        <option value="T5">50,000 – 75,000</option>
+        <option value="T6">75,000 – 100,000</option>
+        <option value="T7">100,000+</option>
       </select>
-      <div class="field-helper">Each range has its own pre-defined invitation. <a href="/creators/#tier-grid" target="_blank">See the full breakdown</a>.</div>
+      <div class="field-helper">Your exact handle is still reviewed before approval.</div>
+    </div>
+    <div class="offer-card" id="offer-card" aria-live="polite">
+      <div class="offer-kicker">Your selected invitation</div>
+      <div class="offer-value">
+        <strong id="offer-value">₹0</strong>
+        <span id="offer-label">creator table value</span>
+      </div>
+      <div class="offer-list" id="offer-list"></div>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" data-back="2">← Back</button>
@@ -385,24 +535,32 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
        ═══════════════════════════════════════════════════════════════ -->
   <div class="step" data-step="4">
     <div class="eyebrow">Step 3 of 7</div>
-    <h1>Who <em>follows you</em>, mostly?</h1>
-    <p class="sub">Tap all that apply. This helps us host you with the right table — whether you bring your kids, your parents, your work crew, or your fellow food obsessives.</p>
+    <h1>What kind of <em>food story</em> can you tell?</h1>
+    <p class="sub">Pick the one angle you can make most believable. We brief each confirmed creator around one eater, one proof, one action.</p>
     <div class="field">
-      <div class="chips" id="audience-chips">
-        <button type="button" class="chip" data-aud="Foodies">Foodies / Food obsessives</button>
-        <button type="button" class="chip" data-aud="Bangaloreans">Bangaloreans</button>
-        <button type="button" class="chip" data-aud="Pan-India">Pan-India</button>
-        <button type="button" class="chip" data-aud="Families">Families</button>
-        <button type="button" class="chip" data-aud="Students">Students</button>
-        <button type="button" class="chip" data-aud="Working pros">Working professionals</button>
-        <button type="button" class="chip" data-aud="Muslims">Muslim community</button>
-        <button type="button" class="chip" data-aud="Heritage food fans">Heritage food fans</button>
-        <button type="button" class="chip" data-aud="Couples">Couples</button>
-        <button type="button" class="chip" data-aud="Travellers">Travellers / Visitors</button>
-        <button type="button" class="chip" data-aud="Halal-conscious">Halal-conscious</button>
-        <button type="button" class="chip" data-aud="Cafe-hoppers">Cafe & restaurant hoppers</button>
+      <div class="mission-grid" id="mission-grid">
+        <button type="button" class="mission-card" data-mission="legacy">
+          <strong>Hamza loyalist / local memory</strong>
+          <span>For people who know the Hamza name and need to understand the new Express face.</span>
+        </button>
+        <button type="button" class="mission-card" data-mission="night">
+          <strong>Late-night heavy non-veg</strong>
+          <span>For serious kabab, biryani, brain dry, ghee rice, and night-food followers.</span>
+        </button>
+        <button type="button" class="mission-card" data-mission="family">
+          <strong>Family comfort meal</strong>
+          <span>For families, couples, and weekend diners who want HKP Road food with easier seating.</span>
+        </button>
+        <button type="button" class="mission-card" data-mission="explorer">
+          <strong>Shivajinagar food explorer</strong>
+          <span>For Bangalore foodies who save real local stops near HKP Road, Commercial Street, and MG Road.</span>
+        </button>
+        <button type="button" class="mission-card" data-mission="parcel">
+          <strong>Fast parcel / pickup crowd</strong>
+          <span>For nearby workers, shop staff, and locals who care about quick parcel and clear ordering.</span>
+        </button>
       </div>
-      <div class="field-helper">Pick up to four. We read this personally — it shapes how we host you.</div>
+      <div class="field-helper">This shapes your reel brief after approval. You can still tell it in your own voice.</div>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" data-back="3">← Back</button>
@@ -415,8 +573,8 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
        ═══════════════════════════════════════════════════════════════ -->
   <div class="step" data-step="5">
     <div class="eyebrow">Step 4 of 7</div>
-    <h1>Pick your <em>slot.</em></h1>
-    <p class="sub"><strong>Only five seats per evening.</strong> Five windows · one creator per slot. <em>Eid week (May 27) fills first.</em> Faded cells are already taken — pick another.</p>
+    <h1>Choose your <em>preferred window.</em></h1>
+    <p class="sub">This is a preference, not a confirmed booking. If approved, we confirm the final time on WhatsApp.</p>
     <div class="cal-wrap" id="cal-wrap">
       <div class="cal-toolbar">
         <div class="cal-month" id="cal-month">Loading…</div>
@@ -426,6 +584,7 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
         </div>
       </div>
       <div class="cal-loading" id="cal-loading">Loading available slots…</div>
+      <div class="slot-list" id="slot-list"></div>
       <div class="cal-grid" id="cal-grid" style="display:none"></div>
       <div class="cal-legend">
         <span>Available</span>
@@ -445,16 +604,16 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   <div class="step" data-step="6">
     <div class="eyebrow">Step 5 of 7</div>
     <h1>How do we <em>reach you?</em></h1>
-    <p class="sub">Confirmation lands on WhatsApp from <strong>+91 80080 02049</strong> — that's our restaurant line. Save it now so messages reach you, not your spam folder.</p>
+    <p class="sub">Application receipt and approval updates come from <strong>+91 80080 02049</strong>, our restaurant WhatsApp line.</p>
     <div class="field">
       <label class="field-label" for="phone-input">WhatsApp number <span class="req">*</span></label>
       <input type="tel" id="phone-input" placeholder="+91 9876543210" autocomplete="tel">
-      <div class="field-helper" id="phone-helper">Required. We send the booking confirmation here.</div>
+      <div class="field-helper" id="phone-helper">Required. We send the receipt and final confirmation here.</div>
     </div>
     <div class="field">
       <label class="field-label" for="email-input">Email <span class="req">*</span></label>
       <input type="email" id="email-input" placeholder="you@example.com" autocomplete="email">
-      <div class="field-helper" id="email-helper">Required. Our HTML invitation card lands here from <strong>nihaf@hnhotels.in</strong>.</div>
+      <div class="field-helper" id="email-helper">Required. The branded invitation card lands here from <strong>nihaf@hnhotels.in</strong>.</div>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" data-back="5">← Back</button>
@@ -468,11 +627,11 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   <div class="step" data-step="7">
     <div class="eyebrow">Step 6 of 7</div>
     <h1>Anything we should <em>know?</em></h1>
-    <p class="sub">A special request, a guest preference, a dietary thing, something about how you tell food stories — anything you'd like us to consider personally. Optional, but we read every one.</p>
+    <p class="sub">Guest preference, content format, or a commercial structure you want us to review — write it here. Optional, but we read every one.</p>
     <div class="field">
       <label class="field-label" for="note-input">Personal note (optional)</label>
-      <textarea id="note-input" placeholder="Anything that helps us host you better…" maxlength="500"></textarea>
-      <div class="field-helper">Max 500 characters. Whatever you write here goes straight to Nihaf.</div>
+      <textarea id="note-input" placeholder="Example: I usually bring one guest, can create a reel + carousel, and my commercial is..." maxlength="500"></textarea>
+      <div class="field-helper">If you usually work with commercials, mention your format, deliverables, and expected commercial here.</div>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" data-back="6">← Back</button>
@@ -486,7 +645,7 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
   <div class="step" data-step="8">
     <div class="eyebrow">Step 7 of 7 · Review</div>
     <h1>All set, <em><span id="rev-name">friend</span>?</em></h1>
-    <p class="sub">Take one quiet moment to review. Tap back to edit any line.</p>
+    <p class="sub">Review the invite value, creator expectation, and preferred visit window.</p>
     <div class="review-card" id="review-card"></div>
     <div class="actions">
       <button class="btn btn-ghost" data-back="7">← Back</button>
@@ -502,8 +661,8 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
       <img src="/assets/Icon.svg" alt="Hamza Express">
       <div class="stamp">Application Received</div>
       <h1>Thank you, <span id="conf-name">friend</span>.</h1>
-      <p>Your application is in our hands. We'll personally review it and respond within twenty-four hours via WhatsApp on <strong>+91 80080 02049</strong> and email from <strong>nihaf@hnhotels.in</strong>.</p>
-      <p style="font-style:italic;color:var(--ink-mute);font-size:16px">Save the WhatsApp number now so the reply reaches you, not your spam.</p>
+      <p>Your request has reached the Hamza Express team. We will review it personally and respond within twenty-four hours on WhatsApp and email.</p>
+      <p style="font-style:italic;color:var(--ink-mute);font-size:16px">Save <strong>+91 80080 02049</strong> now so the reply reaches you, not your spam.</p>
       <p style="margin-top:32px"><a href="/creators/">← Back to the invitation</a></p>
     </div>
   </div>
@@ -515,8 +674,75 @@ select{appearance:none;-webkit-appearance:none;background:var(--offwhite) url("d
 const API = '/api/creator-application';
 const SLOTS_API = 'https://hnhotels.in/api/influencer-bookings?action=slots';
 
+const OFFER_MATRIX = {
+  T1: {
+    label: '5K-10K creator invite',
+    value: 1180,
+    covers: 2,
+    allowance: '1 biryani/rice category + 1 full starter/kabab category',
+    expected: '1 reel + 3 stories',
+    note: 'Best for micro food creators with a tight local audience.',
+  },
+  T2: {
+    label: '10K-15K creator invite',
+    value: 2260,
+    covers: 2,
+    allowance: '1 biryani/rice + 1 full starter + 1 main gravy + breads',
+    expected: '1 reel + 3 stories',
+    note: 'A fuller two-person table for creators who can move local food intent.',
+  },
+  T3: {
+    label: '15K-25K creator invite',
+    value: 2600,
+    covers: 2,
+    allowance: 'premium cover for 2 with one extra biryani/rice or add-on',
+    expected: '1 reel + 3 stories',
+    note: 'For stronger creator fit before we move into larger table formats.',
+  },
+  T4: {
+    label: '25K-50K creator invite',
+    value: 3540,
+    covers: 4,
+    allowance: '2 biryani/rice + 2 full starters + 1 main gravy + breads',
+    expected: '1 reel + 3 stories',
+    note: 'If your format needs commercials or fewer covers, mention it in the note.',
+  },
+  T5: {
+    label: '50K-75K creator invite',
+    value: 4520,
+    covers: 4,
+    allowance: '2 biryani/rice + 2 starters + 2 mains + breads',
+    expected: '1 reel + 3 stories',
+    note: 'Commercial formats can be reviewed separately for selected creators.',
+  },
+  T6: {
+    label: '75K-100K creator invite',
+    value: 5800,
+    covers: 6,
+    allowance: '3 biryani/rice + 3 starters + 2 mains + breads',
+    expected: '1 reel + 3 stories',
+    note: 'For larger creator pages, we review the full collaboration structure by hand.',
+  },
+  T7: {
+    label: '100K+ creator review',
+    value: 5800,
+    covers: 6,
+    allowance: 'premium hosted table plus manual collaboration review',
+    expected: '1 reel + 3 stories, unless a different format is agreed',
+    note: 'Please mention your commercial, deliverables, and expected output in the note.',
+  },
+};
+
+const MISSION_LABELS = {
+  legacy: 'Hamza loyalist / local memory',
+  night: 'Late-night heavy non-veg',
+  family: 'Family comfort meal',
+  explorer: 'Shivajinagar food explorer',
+  parcel: 'Fast parcel / pickup crowd',
+};
+
 const STATE = {
-  handle: '', range: '', audience: [],
+  handle: '', range: '', mission: '', audience: [],
   slotId: null, slotDate: null, windowCode: null, windowLabel: null,
   phone: '', email: '', note: '',
 };
@@ -581,6 +807,7 @@ const rangeInput = $('range-input');
 const btnStep3 = $('btn-step3-next');
 function validateRange() {
   btnStep3.disabled = !rangeInput.value;
+  renderOffer();
 }
 ['input','change','blur'].forEach(ev => rangeInput.addEventListener(ev, () => setTimeout(validateRange, 0)));
 validateRange();
@@ -589,23 +816,37 @@ btnStep3.addEventListener('click', () => {
   showStep(4);
 });
 
-// ── Step 4: audience chips
+function formatInr(n) {
+  return '₹' + Number(n || 0).toLocaleString('en-IN');
+}
+
+function renderOffer() {
+  const offer = OFFER_MATRIX[rangeInput.value];
+  const card = $('offer-card');
+  if (!offer) {
+    card.classList.remove('show');
+    return;
+  }
+  $('offer-value').textContent = formatInr(offer.value);
+  $('offer-label').textContent = 'highest menu value in this invite';
+  $('offer-list').innerHTML = [
+    `<div><b>Hosted for:</b> ${offer.covers} ${offer.covers === 1 ? 'person' : 'people'}</div>`,
+    `<div><b>Food categories:</b> ${offer.allowance}</div>`,
+    `<div><b>Expected:</b> ${offer.expected}</div>`,
+    `<div><b>Note:</b> ${offer.note}</div>`,
+  ].join('');
+  card.classList.add('show');
+}
+
+// ── Step 4: creator mission
 const btnStep4 = $('btn-step4-next');
-const MAX_AUDIENCE = 4;
-document.querySelectorAll('#audience-chips .chip').forEach(c => {
+document.querySelectorAll('#mission-grid .mission-card').forEach(c => {
   c.addEventListener('click', () => {
-    const tag = c.dataset.aud;
-    const idx = STATE.audience.indexOf(tag);
-    if (idx >= 0) {
-      STATE.audience.splice(idx, 1);
-      c.classList.remove('on');
-    } else if (STATE.audience.length < MAX_AUDIENCE) {
-      STATE.audience.push(tag);
-      c.classList.add('on');
-    } else {
-      toast('Up to four — pick the most representative.', true);
-    }
-    btnStep4.disabled = STATE.audience.length === 0;
+    document.querySelectorAll('#mission-grid .mission-card').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    STATE.mission = c.dataset.mission;
+    STATE.audience = [MISSION_LABELS[STATE.mission] || STATE.mission];
+    btnStep4.disabled = !STATE.mission;
   });
 });
 btnStep4.addEventListener('click', () => showStep(5));
@@ -613,7 +854,7 @@ btnStep4.addEventListener('click', () => showStep(5));
 // ── Step 5: Calendly slot picker
 let SLOTS_CACHE = [];
 let SLOT_VIEW_OFFSET = 0;       // start day offset
-const DAYS_PER_VIEW = window.innerWidth < 680 ? 4 : 7;
+const DAYS_PER_VIEW = window.innerWidth < 680 ? 2 : 7;
 const btnStep5 = $('btn-step5-next');
 
 const WINDOW_ORDER = ['AFTERNOON','GOLDEN','PRIME','LATE','MIDNIGHT'];
@@ -653,7 +894,10 @@ function renderCal() {
   if (!days.length) return;
   $('cal-loading').style.display = 'none';
   const grid = $('cal-grid');
-  grid.style.display = 'grid';
+  const list = $('slot-list');
+  const isMobile = window.innerWidth < 680;
+  grid.style.display = isMobile ? 'none' : 'grid';
+  list.style.display = isMobile ? 'block' : 'none';
   grid.style.setProperty('--days', days.length);
 
   // month label
@@ -665,6 +909,11 @@ function renderCal() {
     : `${fmt(first)} – ${fmt(last)} ${last.getFullYear()}`;
   $('cal-prev').disabled = SLOT_VIEW_OFFSET === 0;
   $('cal-next').disabled = SLOT_VIEW_OFFSET + DAYS_PER_VIEW >= 21;
+
+  if (isMobile) {
+    renderSlotList(days);
+    return;
+  }
 
   // build grid
   const todayStr = new Date().toISOString().slice(0,10);
@@ -695,8 +944,34 @@ function renderCal() {
   });
 }
 
+function renderSlotList(days) {
+  const list = $('slot-list');
+  let html = '';
+  for (const day of days) {
+    const d = new Date(day + 'T00:00:00+05:30');
+    html += `<div class="slot-day"><div class="slot-day-title">${d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' })}</div><div class="slot-cards">`;
+    for (const win of WINDOW_ORDER) {
+      const meta = WINDOW_LABELS[win];
+      const slot = SLOTS_CACHE.find(s => s.slot_date === day && s.window_code === win);
+      if (!slot) {
+        html += `<button type="button" class="slot-card blocked" disabled><strong>${meta.time}</strong><span>Not open</span></button>`;
+      } else if (slot.booked_count >= slot.capacity) {
+        html += `<button type="button" class="slot-card taken" disabled><strong>${meta.time}</strong><span>Taken</span></button>`;
+      } else {
+        const sel = STATE.slotId === slot.id ? ' selected' : '';
+        html += `<button type="button" class="slot-card${sel}" data-slot-id="${slot.id}" data-date="${slot.slot_date}" data-window="${slot.window_code}" data-label="${meta.label} · ${meta.time}"><strong>${meta.time}</strong><span>${meta.label}</span></button>`;
+      }
+    }
+    html += `</div></div>`;
+  }
+  list.innerHTML = html;
+  list.querySelectorAll('.slot-card:not(.taken):not(.blocked)').forEach(c => {
+    c.addEventListener('click', () => selectSlot(c));
+  });
+}
+
 function selectSlot(cell) {
-  document.querySelectorAll('.cal-slot.selected').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.cal-slot.selected,.slot-card.selected').forEach(c => c.classList.remove('selected'));
   cell.classList.add('selected');
   STATE.slotId = parseInt(cell.dataset.slotId);
   STATE.slotDate = cell.dataset.date;
@@ -724,9 +999,9 @@ function validateContact() {
   const phoneOk = p.length >= 10;
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
   btnStep6.disabled = !(phoneOk && emailOk);
-  $('phone-helper').textContent = p && !phoneOk ? 'Enter at least 10 digits.' : 'Required. We send the booking confirmation here.';
+  $('phone-helper').textContent = p && !phoneOk ? 'Enter at least 10 digits.' : 'Required. We send the receipt and final confirmation here.';
   $('phone-helper').className = !p || phoneOk ? 'field-helper' : 'field-helper error';
-  $('email-helper').textContent = e && !emailOk ? 'Enter a valid email address.' : 'Required. Our HTML invitation card lands here from nihaf@hnhotels.in.';
+  $('email-helper').textContent = e && !emailOk ? 'Enter a valid email address.' : 'Required. The branded invitation card lands here from nihaf@hnhotels.in.';
   $('email-helper').className = !e || emailOk ? 'field-helper' : 'field-helper error';
 }
 ['input','change','blur','paste'].forEach(ev => {
@@ -750,17 +1025,20 @@ $('btn-step7-next').addEventListener('click', () => {
 // ── Step 8: review
 function renderReview() {
   const RANGE_LABELS = {
-    T1: '1K–5K (Nano)', T2: '5K–15K (Micro)', T3: '15K–30K (Mid-Micro)',
-    T4: '30K–60K (Upper-Micro)', T5: '60K–100K (Macro-Micro)',
-    T6: '100K–250K (Edge-Macro)', T7: '250K+ (Macro)',
+    T1: '5K-10K', T2: '10K-15K', T3: '15K-25K',
+    T4: '25K-50K', T5: '50K-75K', T6: '75K-100K', T7: '100K+',
   };
+  const offer = OFFER_MATRIX[STATE.range] || {};
   $('rev-name').textContent = '@' + STATE.handle;
   const card = $('review-card');
   let html = '';
   html += `<div class="review-row"><div class="review-label">Handle</div><div class="review-val">@${STATE.handle}</div></div>`;
   html += `<div class="review-row"><div class="review-label">Reach</div><div class="review-val">${RANGE_LABELS[STATE.range] || STATE.range}</div></div>`;
-  html += `<div class="review-row"><div class="review-label">Audience</div><div class="review-val">${STATE.audience.join(' · ') || '—'}</div></div>`;
-  html += `<div class="review-row"><div class="review-label">Slot</div><div class="review-val">${STATE.windowLabel} · ${new Date(STATE.slotDate).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric', weekday:'long' })}</div></div>`;
+  html += `<div class="review-row"><div class="review-label">Invite value</div><div class="review-val">${offer.value ? formatInr(offer.value) : '—'} · ${offer.covers || '—'} covers</div></div>`;
+  html += `<div class="review-row"><div class="review-label">Food categories</div><div class="review-val">${offer.allowance || '—'}</div></div>`;
+  html += `<div class="review-row"><div class="review-label">Expected</div><div class="review-val">${offer.expected || '1 reel + 3 stories'}</div></div>`;
+  html += `<div class="review-row"><div class="review-label">Reel mission</div><div class="review-val">${MISSION_LABELS[STATE.mission] || '—'}</div></div>`;
+  html += `<div class="review-row"><div class="review-label">Preferred visit</div><div class="review-val">${STATE.windowLabel} · ${new Date(STATE.slotDate).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric', weekday:'long' })}</div></div>`;
   html += `<div class="review-row"><div class="review-label">WhatsApp</div><div class="review-val">${STATE.phone}</div></div>`;
   html += `<div class="review-row"><div class="review-label">Email</div><div class="review-val">${STATE.email}</div></div>`;
   if (STATE.note) html += `<div class="review-row"><div class="review-label">Your note</div><div class="review-val" style="font-style:italic;font-weight:500">"${STATE.note.replace(/[<>]/g,'')}"</div></div>`;
@@ -782,7 +1060,10 @@ $('btn-submit').addEventListener('click', async () => {
         contact_phone: STATE.phone,
         contact_email: STATE.email,
         preferred_slot_id: STATE.slotId,
-        why_us_text: STATE.note || null,
+        why_us_text: [
+          STATE.note || '',
+          STATE.mission ? `Creator mission: ${MISSION_LABELS[STATE.mission]}` : '',
+        ].filter(Boolean).join('\n\n') || null,
         application_source: 'self_serve',
       }),
     });
