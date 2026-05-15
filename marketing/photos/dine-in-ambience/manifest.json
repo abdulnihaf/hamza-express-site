@@ -1,5 +1,5 @@
 {
-  "generatedAtIst": "2026-05-15T08:49:00+05:30",
+  "generatedAtIst": "2026-05-15T09:30:00+05:30",
   "pagePath": "/marketing/photos/dine-in-ambience/",
   "targetUrlAfterDeploy": "https://hamzaexpress.in/marketing/photos/dine-in-ambience/",
   "primaryRefineFirst": "recommended-01",
@@ -605,7 +605,33 @@
         "06",
         "08"
       ]
+    },
+    {
+      "id": "04E-V3",
+      "sourceId": "04",
+      "title": "Gemini enhanced IMG 0501 - v3 brighter warm entrance",
+      "kind": "facade-enhancement-test",
+      "decision": "V3_REVIEW_BRIGHTER",
+      "platform": "Internal review for GMB, EazyDiner, Zomato Dining, Swiggy Dineout",
+      "analysis": "Controlled local grade from V2. Entrance, counter, and interior are brighter while keeping the warm Hamza ambience and original portrait composition. Best current review candidate if brightness is the priority.",
+      "group": "enhancement-test",
+      "sourcePath": "/Users/nihaf/Desktop/HE_Facade_Prompt_Pack_2026-05-15/00_PROMPT_READY/01_new_raw_facade_from_zip/IMG_0501.JPG",
+      "full": "media/full/enhanced-04-img-0501-v3-brighter.jpg",
+      "thumb": "media/thumb/enhanced-04-img-0501-v3-brighter.jpg",
+      "missing": false,
+      "hash": "3ceb2ff241b05fe71d6d97f02f1cf20348f09d1184793446512932291671cc29",
+      "width": 848,
+      "height": 1264,
+      "bytes_original": null,
+      "bytes_full": 284867,
+      "model": "local-pil-grade-from-gemini-v2",
+      "promptVersion": "v3-brighter-warm-entrance-local-grade",
+      "references": [
+        "04E-V2",
+        "06",
+        "08"
+      ]
     }
   ],
-  "enhancementComparisonSheet": "enhancement-04-comparison-v2.jpg"
+  "enhancementComparisonSheet": "enhancement-04-comparison-v3.jpg"
 }
