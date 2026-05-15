@@ -4,17 +4,20 @@
 
 const GOOGLE_ADS_API = 'https://googleads.googleapis.com/v23';
 const CUSTOMER_ID = '3681710084';
+const MAPS_SITELINK_FIX_CONFIRM = 'FIX_ACTIVE_MAPS_SITELINKS_DESTINATION';
+const MAPS_SITELINK_BASE_URL = 'https://hamzaexpress.in/go/maps';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export async function onRequest(context) {
   const { request, env } = context;
   if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  if (request.method !== 'GET') return json({ error: 'GET only' }, 405);
+  if (request.method === 'POST') return fixActiveMapsSitelinks(request, env);
+  if (request.method !== 'GET') return json({ error: 'GET or POST only' }, 405);
 
   try {
     const url = new URL(request.url);
@@ -193,6 +196,87 @@ export async function onRequest(context) {
   }
 }
 
+async function fixActiveMapsSitelinks(request, env) {
+  const body = await request.json().catch(() => ({}));
+  if (body.confirm !== MAPS_SITELINK_FIX_CONFIRM) {
+    return json({
+      success: false,
+      error: 'confirmation_required',
+      required: MAPS_SITELINK_FIX_CONFIRM,
+      note: 'Exact scoped mutation: updates ENABLED campaign Get Directions sitelink assets still using /go/maps so Google re-reviews them against the now-clean Hamza-owned landing page.',
+    }, 409);
+  }
+
+  const accessToken = await getAccessToken(env);
+  const linkRows = await runQuery(accessToken, env, 'active_maps_sitelinks', `
+    SELECT
+      campaign.id,
+      campaign.name,
+      campaign.status,
+      campaign.advertising_channel_type,
+      campaign_asset.asset,
+      campaign_asset.field_type,
+      campaign_asset.status,
+      asset.id,
+      asset.final_urls,
+      asset.sitelink_asset.link_text
+    FROM campaign_asset
+    WHERE campaign.status = 'ENABLED'
+      AND campaign_asset.status = 'ENABLED'
+      AND campaign_asset.field_type = 'SITELINK'
+  `);
+  if (!linkRows.ok) return json({ success: false, error: linkRows.error }, 500);
+
+  const targets = [];
+  const seen = new Set();
+  for (const row of linkRows.rows) {
+    const asset = row.asset || {};
+    const assetId = asset.id || assetIdFromResource(row.campaignAsset?.asset);
+    const linkText = asset.sitelinkAsset?.linkText || '';
+    const finalUrls = asset.finalUrls || [];
+    if (!assetId || seen.has(assetId)) continue;
+    if (linkText !== 'Get Directions') continue;
+    if (!finalUrls.includes(MAPS_SITELINK_BASE_URL)) continue;
+    seen.add(assetId);
+    targets.push({
+      assetId,
+      assetResource: row.campaignAsset?.asset || `customers/${CUSTOMER_ID}/assets/${assetId}`,
+      campaignId: row.campaign?.id,
+      campaignName: row.campaign?.name,
+      currentFinalUrls: finalUrls,
+      fixedFinalUrl: `${MAPS_SITELINK_BASE_URL}?src=google_ads_sitelink&asset=${assetId}`,
+    });
+  }
+
+  const attempts = [];
+  for (const target of targets) {
+    const result = await mutateResource(accessToken, env, 'assets', [{
+      update: {
+        resourceName: target.assetResource,
+        finalUrls: [target.fixedFinalUrl],
+      },
+      updateMask: 'finalUrls',
+    }]);
+    attempts.push({
+      assetId: target.assetId,
+      campaignId: target.campaignId,
+      campaignName: target.campaignName,
+      from: target.currentFinalUrls,
+      to: target.fixedFinalUrl,
+      ok: result.ok,
+      error: result.error || null,
+      results: result.results || [],
+    });
+  }
+
+  return json({
+    success: attempts.every(a => a.ok),
+    targetCount: targets.length,
+    targets,
+    attempts,
+  }, attempts.every(a => a.ok) ? 200 : 500);
+}
+
 async function getAccessToken(env) {
   const resp = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -226,6 +310,25 @@ async function runQuery(accessToken, env, name, query) {
     return { name, ok: true, rows: data.results || [] };
   } catch (err) {
     return { name, ok: false, rows: [], error: err.message };
+  }
+}
+
+async function mutateResource(accessToken, env, resource, operations) {
+  try {
+    const resp = await fetch(`${GOOGLE_ADS_API}/customers/${CUSTOMER_ID}/${resource}:mutate`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'developer-token': env.GOOGLE_ADS_DEV_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ operations }),
+    });
+    if (!resp.ok) return { ok: false, error: await resp.text() };
+    const data = await resp.json();
+    return { ok: true, results: data.results || [] };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 }
 
