@@ -13,12 +13,12 @@ const LEGACY_SEARCH_CAMPAIGN_ID = '23748431244';
 const LATE_NIGHT_SEARCH_CAMPAIGN_NAME = 'HE — Late Night Maps Footfall Search — v1';
 const LATE_NIGHT_SEARCH_CONFIRM = 'RESET_LATE_NIGHT_SEARCH_V1';
 const LATE_NIGHT_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-night';
-const LATE_NIGHT_SEARCH_BUDGET_INR = 300;
+const LATE_NIGHT_SEARCH_BUDGET_INR = 250;
 const LATE_NIGHT_SEARCH_RADIUS_KM = 7;
 const DINNER_SEARCH_CAMPAIGN_NAME = 'HE — Dinner Dish-Led Non-Veg Search — v1';
 const DINNER_SEARCH_CONFIRM = 'CREATE_DINNER_SEARCH_V1';
 const DINNER_SEARCH_FINAL_URL = 'https://hamzaexpress.in/go/google-dinner-search';
-const DINNER_SEARCH_BUDGET_INR = 300;
+const DINNER_SEARCH_BUDGET_INR = 175;
 const DINNER_SEARCH_RADIUS_KM = 3;
 const HE_WALK_IN_NEGATIVE_SET_ID = '12074853990';
 const ADS_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -878,7 +878,9 @@ function validateLateNightSearchSpec(spec) {
     }
   }
   if (spec.geo.radiusKm !== 7) issues.push(`Expected 7km radius, got ${spec.geo.radiusKm}`);
-  if (spec.budgetINR !== 300) issues.push(`Expected ₹300/day, got ₹${spec.budgetINR}`);
+  if (spec.budgetINR !== LATE_NIGHT_SEARCH_BUDGET_INR) {
+    issues.push(`Expected ₹${LATE_NIGHT_SEARCH_BUDGET_INR}/day, got ₹${spec.budgetINR}`);
+  }
   if (spec.createStatus !== 'PAUSED') issues.push('New campaign must be created PAUSED');
   return issues;
 }
@@ -1419,7 +1421,9 @@ function validateDinnerSearchSpec(spec) {
     }
   }
   if (spec.geo.radiusKm !== 3) issues.push(`Expected 3km radius, got ${spec.geo.radiusKm}`);
-  if (spec.budgetINR !== 300) issues.push(`Expected ₹300/day, got ₹${spec.budgetINR}`);
+  if (spec.budgetINR !== DINNER_SEARCH_BUDGET_INR) {
+    issues.push(`Expected ₹${DINNER_SEARCH_BUDGET_INR}/day, got ₹${spec.budgetINR}`);
+  }
   if (spec.createStatus !== 'PAUSED') issues.push('New campaign must be created PAUSED');
   if (spec.finalUrl !== DINNER_SEARCH_FINAL_URL) issues.push(`Unexpected final URL: ${spec.finalUrl}`);
   if ((spec.schedule?.apiShape || []).length !== 7) issues.push('Expected 7 daily schedule blocks');
