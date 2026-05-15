@@ -326,8 +326,8 @@ async function loadJsonConfig(db, key) {
       ORDER BY config_key
     `).bind(chunkPrefix, chunkPrefix + '\uffff').all();
     const text = (rows.results || []).map(r => r.config_value || '').join('');
-    if (meta.length && text.length !== meta.length) {
-      throw new Error(`campaign config ${key} incomplete: expected ${meta.length}, got ${text.length}`);
+    if (meta.chunks && (rows.results || []).length !== meta.chunks) {
+      throw new Error(`campaign config ${key} incomplete: expected ${meta.chunks} chunks, got ${(rows.results || []).length}`);
     }
     return JSON.parse(text);
   }
