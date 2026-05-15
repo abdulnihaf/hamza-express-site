@@ -51,6 +51,10 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 .tmpl-help{font-size:11px;color:var(--mute);margin-top:8px;line-height:1.5}
 .tmpl-help code{background:var(--card2);padding:1px 6px;border-radius:3px;color:var(--tan);font-family:'JetBrains Mono',monospace;font-size:10px}
 .test-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+.campaign-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.campaign-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:12px}
+.campaign-kpis .stat{background:var(--card2);border:1px solid var(--line);border-left:2px solid var(--tan);border-radius:6px}
+.mode-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--line);border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
 @media (max-width:900px){.tmpl-grid{grid-template-columns:1fr}}
 @media (max-width:900px){.test-grid{grid-template-columns:1fr}}
 
@@ -193,6 +197,23 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
     <div id="test-status" style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;word-break:break-all"></div>
   </details>
 
+  <details class="tmpl-panel" open>
+    <summary>🎯 Campaign mode — May 15 prepared 56 + manual review pool, loaded from key-gated D1</summary>
+    <div class="tmpl-help">
+      Use <strong style="color:var(--tan)">Load May 15 Campaign</strong> for today's 56 personalized creators. Bulk email/WABA then uses the prepared campaign copy instead of the generic template. Use <strong style="color:var(--tan)">Load Manual Review</strong> for the 513-row review pool and next-campaign selection.
+    </div>
+    <div class="campaign-actions">
+      <button class="btn" id="btn-load-campaign" style="background:var(--gold)">Load May 15 Campaign</button>
+      <button class="btn btn-ghost" id="btn-load-review">Load Manual Review</button>
+      <button class="btn btn-ghost" id="btn-load-live">Back to Live D1 Candidates</button>
+      <button class="btn btn-ghost" id="btn-copy-visible-ig">Copy Visible IG DMs</button>
+      <button class="btn btn-ghost" id="btn-copy-approved-review">Copy Approved Review Handles</button>
+      <span class="mode-pill" id="mode-pill">mode: live</span>
+      <span id="campaign-status" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);min-height:18px;flex:1"></span>
+    </div>
+    <div class="campaign-kpis" id="campaign-kpis"></div>
+  </details>
+
   <div class="filter">
     <label>Min</label>
     <input type="number" id="filterMin" value="5000" step="1000" style="width:80px">
@@ -222,6 +243,12 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 
 <script>
 const API = '/api/creator-outreach';
+const REVIEW_STORE = 'he_creator_review_may15_v1';
+let MODE = 'live';
+let CAMPAIGN_META = null;
+let REVIEW_ROWS = [];
+let VISIBLE = [];
+let REVIEW_STATE = loadReviewState();
 
 // ── Templates persistence (D1 via API; legacy localStorage seeds first paint)
 let LOADED_TEMPLATE = { body: '', subject: 'An invitation from Hamza Hotel — est. 1918, Shivajinagar' };
@@ -283,6 +310,11 @@ function bindTemplates() {
   if (testEmailBtn) testEmailBtn.addEventListener('click', testEmail);
   if (testWaBtn)    testWaBtn.addEventListener('click', testWhatsApp);
   if (testIgBtn)    testIgBtn.addEventListener('click', testInstagram);
+  document.getElementById('btn-load-campaign')?.addEventListener('click', () => loadCampaign(false));
+  document.getElementById('btn-load-review')?.addEventListener('click', () => loadCampaign(true));
+  document.getElementById('btn-load-live')?.addEventListener('click', loadLiveMode);
+  document.getElementById('btn-copy-visible-ig')?.addEventListener('click', copyVisibleIgMessages);
+  document.getElementById('btn-copy-approved-review')?.addEventListener('click', copyApprovedReviewHandles);
 }
 
 // ── Test send: same template, single recipient, no log write
@@ -389,16 +421,145 @@ async function testInstagram() {
   }
 }
 
+function setMode(mode) {
+  MODE = mode;
+  const pill = document.getElementById('mode-pill');
+  if (pill) pill.textContent = 'mode: ' + mode;
+}
+
+function campaignStatus(msg, isError) {
+  const el = document.getElementById('campaign-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = isError ? 'var(--red)' : 'var(--mute)';
+}
+
+async function loadLiveMode() {
+  setMode('live');
+  CAMPAIGN_META = null;
+  REVIEW_ROWS = [];
+  renderCampaignKpis();
+  await loadList();
+}
+
+async function loadCampaign(includeReview) {
+  const btn = document.getElementById(includeReview ? 'btn-load-review' : 'btn-load-campaign');
+  const orig = btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = includeReview ? 'Loading review…' : 'Loading campaign…';
+  }
+  campaignStatus(includeReview ? 'Loading May 15 campaign + review pool…' : 'Loading May 15 campaign…');
+  try {
+    const r = await fetch(API + '?action=campaign' + (includeReview ? '&include_review=1' : ''), {
+      headers: { 'X-Dashboard-Key': getKey(), 'Cache-Control': 'no-cache' },
+    });
+    const d = await r.json();
+    if (!r.ok || !d.success) throw new Error(d.error || 'campaign load failed');
+    CAMPAIGN_META = d.meta || null;
+    REVIEW_ROWS = Array.isArray(d.review_master) ? d.review_master : [];
+    setMode(includeReview ? 'review' : 'campaign');
+    CURRENT = includeReview ? normalizeReviewRows(REVIEW_ROWS) : (d.creators || []);
+    renderCampaignKpis(d);
+    renderCurrentList();
+    campaignStatus(includeReview
+      ? `Loaded ${d.count || 0} campaign creators + ${REVIEW_ROWS.length} review rows.`
+      : `Loaded ${d.count || 0} prepared campaign creators.`);
+  } catch (e) {
+    campaignStatus('Campaign load failed: ' + (e.message || e), true);
+    toast('Campaign load failed: ' + (e.message || e), true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+}
+
+function normalizeReviewRows(rows) {
+  return (rows || []).map(r => {
+    const handle = String(r.username || '').replace(/^@/, '').toLowerCase();
+    const followers = Number(r.followers || 0);
+    return {
+      handle,
+      full_name: r.full_name || '',
+      first_name: handle.split(/[._]/)[0] || handle,
+      followers_count: followers,
+      engagement_rate: null,
+      profile_pic_url: '',
+      biography: [r.location_evidence, r.bio, r.post_location_names].filter(Boolean).join(' · '),
+      category_name: r.bucket_label || '',
+      tier: tierLabelOf(followers),
+      campaign_rank: Number(r.rank || 0),
+      campaign_priority: r.manual_review_priority || '',
+      campaign_bucket: r.bucket || '',
+      campaign_bucket_label: r.bucket_label || '',
+      contact_route: r.contact_route || '',
+      route_instruction: r.manual_checklist || '',
+      tomorrow_slot: r.location_status || '',
+      external_url: r.external_url || '',
+      instagram_url: r.instagram_url || (handle ? `https://www.instagram.com/${handle}` : ''),
+      instagram_dm_url: handle ? `https://ig.me/m/${handle}` : '',
+      contact: { email: firstCsvValue(r.emails), phone: cleanPhone(r.phones), whatsapp: cleanPhone(r.phones) },
+      messages: { instagram_dm: '', email_subject: '', email_body: '', waba_body: '' },
+      sent: { ig: null, wa: null, email: null },
+      reply_state: reviewDecision(handle),
+      review_mode: true,
+      raw_review: r,
+    };
+  });
+}
+
+function renderCampaignKpis(data) {
+  const el = document.getElementById('campaign-kpis');
+  if (!el) return;
+  if (!CAMPAIGN_META && MODE === 'live') {
+    el.innerHTML = '';
+    return;
+  }
+  const rows = CURRENT || [];
+  const email = rows.filter(c => c.contact?.email && !c.review_mode).length;
+  const wa = rows.filter(c => c.contact?.whatsapp && !c.review_mode).length;
+  const ig = rows.filter(c => !c.review_mode).length;
+  const reviewApproved = Object.values(REVIEW_STATE || {}).filter(v => v === 'approve_for_outreach').length;
+  const meta = CAMPAIGN_META || {};
+  el.innerHTML = `
+    <div class="stat"><div class="num">${meta.creator_count || ig || rows.length}</div><div class="lbl">Campaign creators</div></div>
+    <div class="stat"><div class="num">${email}</div><div class="lbl">Email-ready</div></div>
+    <div class="stat"><div class="num">${wa}</div><div class="lbl">WABA-ready</div></div>
+    <div class="stat"><div class="num">${ig}</div><div class="lbl">IG DMs</div></div>
+    <div class="stat"><div class="num">${REVIEW_ROWS.length || meta.review_master_count || 0}</div><div class="lbl">Review pool</div></div>
+    <div class="stat"><div class="num">${reviewApproved}</div><div class="lbl">Approved review</div></div>
+  `;
+}
+
+async function copyVisibleIgMessages() {
+  const rows = (VISIBLE.length ? VISIBLE : CURRENT).filter(c => !c.review_mode);
+  if (!rows.length) return toast('No visible campaign rows to copy', true);
+  await copyToClipboard(rows.map(c => `@${c.handle}\n${messageFor(c, 'ig')}`).join('\n\n---\n\n'));
+  toast(`Copied ${rows.length} visible IG messages`);
+}
+
+async function copyApprovedReviewHandles() {
+  const handles = Object.entries(REVIEW_STATE || {})
+    .filter(([, decision]) => decision === 'approve_for_outreach')
+    .map(([handle]) => '@' + handle);
+  if (!handles.length) return toast('No approved review handles yet', true);
+  await copyToClipboard(handles.join('\n'));
+  toast(`Copied ${handles.length} approved review handles`);
+}
+
 // ── Bulk WhatsApp — Meta-approved Marketing template
 async function bulkWhatsApp() {
   const status = document.getElementById('bulk-status');
   const btn = document.getElementById('btn-bulk-wa');
-  const eligible = (CURRENT || []).filter(c => c.contact && c.contact.whatsapp && !c.sent.wa);
+  const rows = VISIBLE.length ? VISIBLE : CURRENT;
+  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.whatsapp && !c.sent.wa);
   if (!eligible.length) {
     toast('No eligible creators (need WhatsApp number + not-yet-sent)', true);
     return;
   }
-  const ok = confirm(`Send the Marketing-template WhatsApp to ${eligible.length} creators?\n\nFrom: +91 80080 02049 (Hamza Express WABA)\nTemplate: creator_outreach_invitation_v1\nButton: "View my invitation"\n\nThis cannot be undone.`);
+  const ok = confirm(`Send the Marketing-template WhatsApp to ${eligible.length} visible eligible creators?\n\nFrom: +91 80080 02049 (Hamza Express WABA)\nMode: ${MODE}\nTemplate: creator_outreach_invitation_v1\nButton: "View my invitation"\n\nThis cannot be undone.`);
   if (!ok) return;
 
   btn.disabled = true;
@@ -406,7 +567,8 @@ async function bulkWhatsApp() {
   status.textContent = `Sending WhatsApp template to ${eligible.length} creators…`;
 
   try {
-    const r = await fetch(API + '?action=send-bulk-whatsapp', {
+    const action = MODE === 'campaign' ? 'send-campaign-whatsapp' : 'send-bulk-whatsapp';
+    const r = await fetch(API + '?action=' + action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
       body: JSON.stringify({ handles: eligible.map(c => c.handle) }),
@@ -442,17 +604,18 @@ async function bulkEmail() {
   const status = document.getElementById('bulk-status');
   const btn = document.getElementById('btn-bulk-email');
   // Pre-flight: ensure template + subject are saved
-  if (!LOADED_TEMPLATE.body) {
+  if (MODE !== 'campaign' && !LOADED_TEMPLATE.body) {
     toast('Save the template first', true);
     return;
   }
   // Build handle list — use creators currently visible AND with email AND not-yet-emailed
-  const eligible = (CURRENT || []).filter(c => c.contact && c.contact.email && !c.sent.email);
+  const rows = VISIBLE.length ? VISIBLE : CURRENT;
+  const eligible = (rows || []).filter(c => !c.review_mode && c.contact && c.contact.email && !c.sent.email);
   if (!eligible.length) {
     toast('No eligible creators (need email + not-yet-sent)', true);
     return;
   }
-  const ok = confirm(`Send the outreach email to ${eligible.length} creators via Gmail API?\n\nFrom: nihaf@hnhotels.in\nSubject: ${LOADED_TEMPLATE.subject}\n\nThis cannot be undone.`);
+  const ok = confirm(`Send the outreach email to ${eligible.length} visible eligible creators via Gmail API?\n\nFrom: nihaf@hnhotels.in\nMode: ${MODE}\nSubject: ${MODE === 'campaign' ? 'prepared per-creator subjects' : LOADED_TEMPLATE.subject}\n\nThis cannot be undone.`);
   if (!ok) return;
 
   btn.disabled = true;
@@ -460,7 +623,8 @@ async function bulkEmail() {
   status.textContent = `Sending to ${eligible.length} creators…`;
 
   try {
-    const r = await fetch(API + '?action=send-bulk-email', {
+    const action = MODE === 'campaign' ? 'send-campaign-email' : 'send-bulk-email';
+    const r = await fetch(API + '?action=' + action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Dashboard-Key': getKey() },
       body: JSON.stringify({ handles: eligible.map(c => c.handle) }),
@@ -506,7 +670,10 @@ document.getElementById('btnLogout').addEventListener('click', () => {
   location.reload();
 });
 document.getElementById('btnRefresh').addEventListener('click', refreshAll);
-document.getElementById('btnApply').addEventListener('click', () => loadList());
+document.getElementById('btnApply').addEventListener('click', () => {
+  if (MODE === 'live') loadList();
+  else renderCurrentList();
+});
 
 // Auto-unlock if key is in session
 if (getKey()) {
@@ -531,6 +698,53 @@ function render(template, vars) {
     s = s.replaceAll('{' + k + '}', vars[k] || '');
   }
   return s;
+}
+
+function loadReviewState() {
+  try { return JSON.parse(localStorage.getItem(REVIEW_STORE)) || {}; }
+  catch { return {}; }
+}
+
+function saveReviewState() {
+  localStorage.setItem(REVIEW_STORE, JSON.stringify(REVIEW_STATE || {}));
+}
+
+function reviewDecision(handle) {
+  return (REVIEW_STATE || {})[String(handle || '').toLowerCase()] || 'unreviewed';
+}
+
+function setReviewDecision(handle, decision) {
+  REVIEW_STATE[String(handle || '').toLowerCase()] = decision;
+  saveReviewState();
+  renderCampaignKpis();
+  renderCurrentList();
+  toast(`@${handle} marked ${decision}`);
+}
+
+function firstCsvValue(v) {
+  return String(v || '').split(/[;,]/).map(s => s.trim()).filter(Boolean)[0] || null;
+}
+
+function cleanPhone(v) {
+  const raw = firstCsvValue(v);
+  if (!raw) return null;
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10) return '91' + digits;
+  if (digits.length === 12 && digits.startsWith('91')) return digits;
+  if (digits.length === 11 && digits.startsWith('0')) return '91' + digits.slice(1);
+  return digits.length >= 10 ? digits : null;
+}
+
+function tierLabelOf(followers) {
+  const f = Number(followers || 0);
+  if (f < 1000) return 'T0';
+  if (f < 5000) return 'T1';
+  if (f < 15000) return 'T2';
+  if (f < 30000) return 'T3';
+  if (f < 60000) return 'T4';
+  if (f < 100000) return 'T5';
+  if (f < 250000) return 'T6';
+  return 'T7';
 }
 
 function cleanInstagramHandle(input) {
@@ -603,10 +817,9 @@ async function loadStats() {
 
 let CURRENT = [];
 async function loadList() {
+  setMode('live');
   const min = parseInt(document.getElementById('filterMin').value) || 5000;
   const max = parseInt(document.getElementById('filterMax').value) || 100000;
-  const sentFilter = document.getElementById('filterSent').value;
-  const tierFilter = document.getElementById('filterTier').value;
 
   document.getElementById('list').innerHTML = '<div class="muted-msg">Loading…</div>';
   const r = await fetch(API + `?action=list&min_followers=${min}&max_followers=${max}&limit=100`, {
@@ -618,7 +831,13 @@ async function loadList() {
   }
   const d = await r.json();
   CURRENT = d.creators || [];
+  renderCampaignKpis();
+  renderCurrentList((d.excluded_brands || []).length);
+}
 
+function renderCurrentList(excludedCount = 0) {
+  const sentFilter = document.getElementById('filterSent').value;
+  const tierFilter = document.getElementById('filterTier').value;
   // Apply client-side filters
   let visible = CURRENT;
   if (tierFilter) visible = visible.filter(c => c.tier === tierFilter);
@@ -627,9 +846,13 @@ async function loadList() {
   } else if (sentFilter === 'never-sent') {
     visible = visible.filter(c => !(c.sent.ig || c.sent.wa || c.sent.email));
   }
+  VISIBLE = visible;
 
+  const modeLabel = MODE === 'campaign' ? 'May 15 campaign'
+    : MODE === 'review' ? 'manual review'
+    : 'live D1 window';
   document.getElementById('resultCount').textContent =
-    `${visible.length} shown · ${CURRENT.length} total in window · ${(d.excluded_brands || []).length} restaurant/brand auto-excluded`;
+    `${visible.length} shown · ${CURRENT.length} total · ${modeLabel}${excludedCount ? ' · ' + excludedCount + ' restaurant/brand auto-excluded' : ''}`;
 
   if (visible.length === 0) {
     document.getElementById('list').innerHTML = '<div class="muted-msg">No creators match the filters.</div>';
@@ -643,14 +866,35 @@ function rowHTML(c) {
   const handle = c.handle;
   const safeName = (c.full_name || '').replace(/[<>]/g, '');
   const fullySent = c.sent.ig && c.sent.wa && c.sent.email;
-  const replyCls = c.reply_state === 'replied' ? 'replied' : c.reply_state === 'applied' ? 'applied' : '';
+  const decision = c.review_mode ? reviewDecision(handle) : c.reply_state;
+  const replyCls = decision === 'replied' ? 'replied' : decision === 'applied' || decision === 'approve_for_outreach' ? 'applied' : '';
   const cls = `row${fullySent ? ' fully-sent' : ''}${replyCls ? ' ' + replyCls : ''}`;
-  const replyPill = c.reply_state && c.reply_state !== 'none'
-    ? `<span class="reply-pill ${c.reply_state}">${c.reply_state}</span>`
+  const replyPill = decision && decision !== 'none' && decision !== 'unreviewed'
+    ? `<span class="reply-pill ${decision}">${decision}</span>`
     : '';
   const avatar = c.profile_pic_url
     ? `<img class="avatar" src="${c.profile_pic_url}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`
     : `<div class="avatar"></div>`;
+
+  if (c.review_mode) {
+    return `
+      <div class="${cls}" data-handle="${handle}">
+        ${avatar}
+        <div class="who">
+          <div class="handle"><a href="${instagramProfileUrl(handle)}" target="_blank" rel="noopener" title="Open Instagram profile">${handle}</a></div>
+          <div class="name">${safeName}${replyPill ? ' ' + replyPill : ''}</div>
+        </div>
+        <div class="followers">${fmt(c.followers_count)}<small>followers</small></div>
+        <div class="tier">${c.campaign_priority || c.tier}</div>
+        <div class="bio">${(c.biography || '').replace(/[<>]/g,'').slice(0,220)}</div>
+        <div class="actions">
+          <a class="action-btn" href="${instagramProfileUrl(handle)}" target="_blank" rel="noopener">Profile</a>
+          <button class="action-btn" data-act="review-approve" data-handle="${handle}">Approve</button>
+          <button class="action-btn" data-act="review-reject" data-handle="${handle}">Reject</button>
+        </div>
+      </div>
+    `;
+  }
 
   // Channel button states
   const igBtn = `<button class="action-btn ig${c.sent.ig ? ' sent' : ''}" data-act="ig" data-handle="${handle}">📷 DM${c.sent.ig ? ' <span class="check">✓</span>' : ''}</button>`;
@@ -669,8 +913,8 @@ function rowHTML(c) {
         <div class="name">${safeName}${replyPill ? ' ' + replyPill : ''}</div>
       </div>
       <div class="followers">${fmt(c.followers_count)}<small>followers</small></div>
-      <div class="tier">${c.tier}</div>
-      <div class="bio">${(c.biography || '').replace(/[<>]/g,'').slice(0,160)}</div>
+      <div class="tier">${c.campaign_priority || c.tier}</div>
+      <div class="bio">${([c.tomorrow_slot, c.campaign_bucket_label, c.biography].filter(Boolean).join(' · ') || '').replace(/[<>]/g,'').slice(0,180)}</div>
       <div class="actions">
         ${igBtn}
         ${waBtn}
@@ -683,6 +927,15 @@ function rowHTML(c) {
 function bindRow(c) {
   const row = document.querySelector(`.row[data-handle="${c.handle}"]`);
   if (!row) return;
+  if (c.review_mode) {
+    row.querySelector('[data-act="review-approve"]')?.addEventListener('click', () => {
+      setReviewDecision(c.handle, 'approve_for_outreach');
+    });
+    row.querySelector('[data-act="review-reject"]')?.addEventListener('click', () => {
+      setReviewDecision(c.handle, 'reject_not_food_relevant');
+    });
+    return;
+  }
   const t = loadTemplates();
   const vars = {
     first_name: c.first_name || c.full_name || c.handle,
@@ -697,7 +950,7 @@ function bindRow(c) {
   if (igBtn && !igBtn.classList.contains('disabled')) {
     igBtn.addEventListener('click', async (e) => {
       e.preventDefault();
-      const text = render(t.ig || '(IG template not set — paste it in the Templates panel above)', vars);
+      const text = messageFor(c, 'ig', t, vars);
       const ok = await copyToClipboard(text);
       window.open(instagramDmUrl(c.handle), '_blank', 'noopener');
       await logSend(c.handle, 'ig', text, c.handle);
@@ -710,7 +963,7 @@ function bindRow(c) {
   const waBtn = row.querySelector('[data-act="wa"]');
   if (waBtn) {
     waBtn.addEventListener('click', async () => {
-      const text = render(t.wa || '(WA template not set — paste it in the Templates panel above)', vars);
+      const text = messageFor(c, 'wa', t, vars);
       const phone = waBtn.dataset.phone;
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
       waBtn.href = url;  // ensure href is current
@@ -724,8 +977,8 @@ function bindRow(c) {
   const emBtn = row.querySelector('[data-act="email"]');
   if (emBtn) {
     emBtn.addEventListener('click', async () => {
-      const subj = render(t.email_subj || 'An invitation from Hamza Hotel', vars);
-      const body = render(t.email || '(Email template not set — paste it in the Templates panel above)', vars);
+      const subj = c.messages?.email_subject || render(t.email_subj || 'An invitation from Hamza Hotel', vars);
+      const body = messageFor(c, 'email', t, vars);
       const email = emBtn.dataset.email;
       const url = `mailto:${email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
       emBtn.href = url;
@@ -734,6 +987,18 @@ function bindRow(c) {
       setTimeout(loadList, 600);
     });
   }
+}
+
+function messageFor(c, channel, templates = loadTemplates(), vars = {}) {
+  if (channel === 'ig' && c.messages?.instagram_dm) return c.messages.instagram_dm;
+  if (channel === 'wa' && (c.messages?.waba_body || c.messages?.instagram_dm)) {
+    return c.messages.waba_body || c.messages.instagram_dm;
+  }
+  if (channel === 'email' && (c.messages?.email_body || c.messages?.instagram_dm)) {
+    return c.messages.email_body || c.messages.instagram_dm;
+  }
+  const key = channel === 'email' ? 'email' : channel;
+  return render(templates[key] || `(${channel.toUpperCase()} template not set — paste it in the Templates panel above)`, vars);
 }
 
 async function logSend(handle, channel, snapshot, contactValue) {
