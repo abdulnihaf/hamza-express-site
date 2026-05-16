@@ -65,6 +65,7 @@
     .channel-row{display:flex;gap:12px}
     .channel-card{flex:1;background:var(--bg2);border-radius:8px;padding:12px;border-left:3px solid var(--blue)}
     .channel-card.captain{border-left-color:var(--purple)}
+    .channel-card.waba{border-left-color:var(--orange)}
     .channel-card.ground{border-left-color:var(--green)}
     .channel-card .name{font-size:12px;color:var(--text2);margin-bottom:4px}
     .channel-card .amount{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
@@ -152,6 +153,7 @@
         <div class="channel-row">
           <div class="channel-card"><div class="name">Cash Counter</div><div class="amount" id="counterAmt">--</div><div class="pct" id="counterPct">0% · 0 orders</div></div>
           <div class="channel-card captain"><div class="name">Captain (Dine-in)</div><div class="amount" id="captainAmt">--</div><div class="pct" id="captainPct">0% · 0 orders</div></div>
+          <div class="channel-card waba"><div class="name">WhatsApp WABA</div><div class="amount" id="wabaAmt">--</div><div class="pct" id="wabaPct">0% · 0 orders</div></div>
           <div class="channel-card ground"><div class="name">Ground Floor (Non-AC)</div><div class="amount" id="groundAmt">--</div><div class="pct" id="groundPct">0% · 0 orders</div></div>
         </div>
       </div>
@@ -261,6 +263,9 @@
       $('counterPct').textContent=d.channels.cashCounter.percentage+'% · '+d.channels.cashCounter.orders+' orders';
       $('captainAmt').textContent=fmt(d.channels.captain.amount);
       $('captainPct').textContent=d.channels.captain.percentage+'% · '+d.channels.captain.orders+' orders';
+      const wa=d.channels.waba||{amount:0,orders:0,percentage:0};
+      $('wabaAmt').textContent=fmt(wa.amount);
+      $('wabaPct').textContent=wa.percentage+'% · '+wa.orders+' orders';
       const gf=d.channels.groundFloor||{amount:0,orders:0,percentage:0};
       $('groundAmt').textContent=fmt(gf.amount);
       $('groundPct').textContent=gf.percentage+'% · '+gf.orders+' orders';

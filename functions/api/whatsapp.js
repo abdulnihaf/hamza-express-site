@@ -690,6 +690,19 @@ const COUNTER_MENUS = {
 };
 
 const OUTDOOR_BOGO_START_IST = '2026-05-17';
+const OUTDOOR_OFFER_ITEMS = ['HE-BOGO-CHICKEN-SHAWARMA', 'HE-BOGO-KATHI-ROLL'];
+
+function envFlag(value, defaultValue = false) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (!normalized) return defaultValue;
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return defaultValue;
+}
+
+function isWabaOfferOnly(env) {
+  return envFlag(env?.WABA_OFFER_ONLY, true);
+}
 
 function istDateString(date = new Date()) {
   const ist = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
@@ -700,6 +713,7 @@ function isOutdoorBogoActive(env) {
   const override = String(env?.OUTDOOR_BOGO_ACTIVE || '').trim().toLowerCase();
   if (['1', 'true', 'yes', 'on'].includes(override)) return true;
   if (['0', 'false', 'no', 'off'].includes(override)) return false;
+  if (isWabaOfferOnly(env)) return true;
   return istDateString() >= OUTDOOR_BOGO_START_IST;
 }
 
@@ -715,9 +729,9 @@ function getOutdoorShawarmaMenu(env) {
       : 'Pick your roll, pay UPI in WhatsApp, collect here.',
     footerText: 'UPI only • Collect at Shawarma counter',
     sections: offerActive ? [
-      { title: 'Buy 1 Get 1', items: ['HE-BOGO-CHICKEN-SHAWARMA','HE-BOGO-KATHI-ROLL','HE-BOGO-TIKKA-ROLL','HE-BOGO-SHEEKH-ROLL'] },
+      { title: 'Buy 1 Get 1', items: OUTDOOR_OFFER_ITEMS },
     ] : [
-      { title: 'Rolls', items: ['HE-SHAWARMA-ROLL','HE-CHICKEN-KATHI-ROLL','HE-CHICKEN-TIKKA-ROLL','HE-SHEEKH-ROLL'] },
+      { title: 'Rolls', items: ['HE-SHAWARMA-ROLL', 'HE-CHICKEN-KATHI-ROLL'] },
     ],
   };
 }
@@ -735,6 +749,7 @@ const OUTDOOR_GRILL_MENU = {
 };
 
 function getCounterMenu(counterKey, env) {
+  if (isWabaOfferOnly(env)) return getOutdoorShawarmaMenu(env);
   if (counterKey === 'shawarma_counter') return getOutdoorShawarmaMenu(env);
   if (counterKey === 'grill_counter') return OUTDOOR_GRILL_MENU;
   return COUNTER_MENUS[counterKey];
@@ -1900,6 +1915,9 @@ async function handleMetaAdFlow(context, user, waId, phoneId, token, db) {
 }
 
 async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
   // Send ONLY the combo MPM (one MPM per tap — no back-to-back)
   const comboSections = COMBO_MPM.sections.map(s => ({
     title: s.title,
@@ -1941,6 +1959,9 @@ async function handleMetaAdCombos(context, user, waId, phoneId, token, db) {
 }
 
 async function handleComboList(context, user, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
   // Send native catalog MPM with 5 combo groups (each has 3 serving sizes)
   try {
     const sections = COMBO_MPM.sections.map(s => ({
@@ -2345,6 +2366,9 @@ const BESTSELLERS_MPM = {
 };
 
 async function handleShowMenu(context, user, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
   // Primary menu: ONE MPM with 30 bestsellers across 8 categories.
   // Covers a typical customer's full meal in a single view.
   // Followed by a "browse more" list for customers who want the full 150+ items.
@@ -2394,6 +2418,9 @@ async function handleShowMenu(context, user, waId, phoneId, token, db) {
 }
 
 async function handleShowMenuList(context, user, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
   // Fallback: Send WhatsApp List message with 5 meal-intent options
   // Used when catalog_message fails or when triggered via keyword "menu list"
   const tier = getCustomerTier(user.total_orders || 0);
@@ -2441,6 +2468,9 @@ async function handleShowMenuList(context, user, waId, phoneId, token, db) {
 }
 
 async function handleShowFullMenu(context, user, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
   // Original 9-category list — accessible via "Full Menu" option
   // Customer taps a category → receives a focused MPM (≤30 items) for that category
   const tier = getCustomerTier(user.total_orders || 0);
@@ -2482,6 +2512,10 @@ async function handleShowFullMenu(context, user, waId, phoneId, token, db) {
 }
 
 async function handleCategorySelection(context, user, categoryKey, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
+
   const category = MENU_CATEGORIES[categoryKey];
   if (!category) {
     // Unknown category — fall back to category picker
@@ -2529,6 +2563,10 @@ async function handleCategorySelection(context, user, categoryKey, waId, phoneId
 }
 
 async function handleMealIntent(context, user, intentKey, waId, phoneId, token, db) {
+  if (isWabaOfferOnly(context.env)) {
+    return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+  }
+
   const intent = MEAL_INTENT_CATEGORIES[intentKey];
   if (!intent) {
     return handleShowMenu(context, user, waId, phoneId, token, db);
@@ -2703,11 +2741,26 @@ async function handleOrderMessage(context, session, user, msg, waId, phoneId, to
 
   let isStationOrder = !!session.counter_source;
 
+  if (isWabaOfferOnly(context.env)) {
+    const invalidItems = orderItems.filter(item => !OUTDOOR_OFFER_ITEMS.includes(item.retailer_id));
+    if (invalidItems.length > 0) {
+      await sendWhatsApp(phoneId, token, buildText(waId,
+        'Only today\'s Shawarma + Kathi Roll offer is live on WhatsApp right now.'));
+      await updateSession(db, waId, 'awaiting_menu', '[]', 0, 'shawarma_counter');
+      return handleCounterMenu(context, user, 'shawarma_counter', waId, phoneId, token, db, true);
+    }
+  }
+
   const cart = buildCartFromItems(orderItems);
   if (cart.items.length === 0) {
     await sendWhatsApp(phoneId, token, buildText(waId,
       'Some items couldn\'t be added. Say *"menu"* to start fresh.'));
     return;
+  }
+
+  if (isWabaOfferOnly(context.env)) {
+    session.counter_source = 'shawarma_counter';
+    isStationOrder = true;
   }
 
   // If station order, verify all cart items belong to this station's menu
