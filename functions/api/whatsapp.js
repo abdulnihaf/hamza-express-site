@@ -1203,8 +1203,11 @@ async function processWebhook(context, body) {
   // the Zoya alert is queued, do not let the food-ordering bot answer them.
   if (context.env.HIRING_DB) {
     try {
-      const match = await findCreatorByWaPhone(context.env.HIRING_DB, normalizeWaPhone(waId).slice(-10));
-      if (match.app || match.outreach) return;
+      const creatorPhone = normalizeWaPhone(waId).slice(-10);
+      if (!HIRING_FILTER_EXCLUDED.has(creatorPhone)) {
+        const match = await findCreatorByWaPhone(context.env.HIRING_DB, creatorPhone);
+        if (match.app || match.outreach) return;
+      }
     } catch (e) {
       console.warn('creator bot-skip check failed:', e.message);
     }
