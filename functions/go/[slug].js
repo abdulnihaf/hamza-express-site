@@ -34,9 +34,11 @@ export async function onRequest(context) {
       return Response.redirect(`https://wa.me/${PHONE}`, 302);
     }
 
-    // Track the tap (swallow errors — redirect must always succeed)
-    db.prepare('UPDATE source_links SET clicks = clicks + 1 WHERE slug = ?')
-      .bind(slug).run().catch(() => {});
+    // Track the tap after the redirect response is scheduled.
+    context.waitUntil(
+      db.prepare('UPDATE source_links SET clicks = clicks + 1 WHERE slug = ?')
+        .bind(slug).run().catch(() => {})
+    );
 
     // External redirect takes precedence (used for Swiggy, Zomato, Maps links)
     if (row.redirect_url) {
