@@ -334,6 +334,9 @@ const STAGE_COUNTER_MAP = {
   50: 'Bain Marie Counter',   // KDS 17 Bain Marie → Ready
   53: 'Shawarma Counter',     // KDS 18 Shawarma → Ready
   56: 'Grill Counter',        // KDS 19 Grill → Ready
+  // COMPLETED stages
+  54: 'Shawarma Counter',     // KDS 18 Shawarma → Completed
+  57: 'Grill Counter',        // KDS 19 Grill → Completed
 };
 
 // ── Prep timeline for customer messages ──
@@ -342,6 +345,14 @@ function formatPrepTimeline(createdAt) {
   if (elapsed <= 1) return 'Ready in under a minute';
   if (elapsed <= 3) return `Ready in just ${elapsed} minutes`;
   return `Ready in ${elapsed} minutes`;
+}
+
+function formatWabaOrderItems(items) {
+  return (items || []).map(item => `${item.qty || 1}x ${item.name}`).join('\n');
+}
+
+function formatTokenLine(trackingNumber) {
+  return trackingNumber ? `Token: *${trackingNumber}*\n` : '';
 }
 
 // ── Customer tier based on order history ──
@@ -3301,6 +3312,12 @@ const READY_STAGES = new Set([
   56,   // KDS 19 Grill → Ready
 ]);
 
+// Stage IDs that trigger "collected" WhatsApp notification
+const COMPLETED_STAGES = new Set([
+  54,   // KDS 18 Shawarma → Completed
+  57,   // KDS 19 Grill → Completed
+]);
+
 async function handleKdsWebhook(context, url, corsHeaders) {
   // Debug log BEFORE auth check (temporary)
   const db = context.env.DB;
@@ -3446,10 +3463,11 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
   }
   const isPreparing = PREPARING_STAGES.has(stage_id);
   const isReady = READY_STAGES.has(stage_id);
-  if (!isPreparing && !isReady) {
+  const isCompleted = COMPLETED_STAGES.has(stage_id);
+  if (!isPreparing && !isReady && !isCompleted) {
     return new Response(JSON.stringify({ ok: true, skipped: 'irrelevant stage' }), { headers: corsHeaders });
   }
-  const notificationType = isReady ? 'ready' : 'preparing';
+  const notificationType = isCompleted ? 'collected' : (isReady ? 'ready' : 'preparing');
 
   const db = context.env.DB;
   const waOrder = await db.prepare('SELECT * FROM wa_orders WHERE odoo_order_id = ? AND payment_status = ?')
@@ -3466,8 +3484,9 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
   const counterKey = counterName.replace(/\s+/g, '_').toLowerCase();
   const notifKey = `${notificationType}_${counterKey}`;
   const now = new Date().toISOString();
-  const newStatus = notificationType === 'ready' ? 'ready' :
-    (waOrder.status === 'ready' ? 'ready' : 'preparing');
+  const newStatus = notificationType === 'collected' ? 'delivered' :
+    (notificationType === 'ready' ? 'ready' :
+    (waOrder.status === 'ready' ? 'ready' : 'preparing'));
 
   const claimResult = await db.prepare(`
     UPDATE wa_orders
@@ -3501,17 +3520,17 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
     expectedCounters.add(cn.replace(/\s+/g, '_').toLowerCase());
   }
   const isStationOrder = expectedCounters.size === 1 && COUNTER_CATS[items[0]?.catId];
+  const itemLines = formatWabaOrderItems(items);
+  const tokenLine = formatTokenLine(trackingNumber);
 
   if (notificationType === 'preparing') {
     if (isStationOrder) {
-      // Station QR — customer is standing right at the counter watching the staff
-      if (tier === 'regular') {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `*${waOrder.order_code}* — being prepared now`));
-      } else {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `Your *${waOrder.order_code}* is being prepared right now.`));
-      }
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*Preparation started*\n\n` +
+        `Order ID: *${waOrder.order_code}*\n` +
+        tokenLine +
+        `${itemLines}\n\n` +
+        `Your order is being prepared at *${counterName}*.`));
     } else {
       // General order — customer needs counter context
       if (tier === 'regular') {
@@ -3527,17 +3546,13 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
     const elapsedText = elapsed <= 1 ? 'under a minute' : `${elapsed} min`;
 
     if (isStationOrder) {
-      // Station QR — customer is right there, keep it direct
-      if (tier === 'regular') {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `*${waOrder.order_code}* — ready!` +
-          (trackingNumber ? ` Token ${trackingNumber}` : '') +
-          ` | ${elapsedText}`));
-      } else {
-        await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
-          `*${waOrder.order_code}* is ready — pick it up!` +
-          (trackingNumber ? `\nToken *${trackingNumber}*` : '')));
-      }
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*Ready to collect*\n\n` +
+        `Order ID: *${waOrder.order_code}*\n` +
+        tokenLine +
+        `${itemLines}\n\n` +
+        `Collect from: *${counterName}*.\n` +
+        `Show this message at the counter.`));
     } else {
       // General order — customer needs directions
       if (tier === 'regular') {
@@ -3567,6 +3582,18 @@ async function handleKdsWebhookWABA(context, corsHeaders, data) {
             (trackingNumber ? ` — Token *${trackingNumber}*` : '')));
         }
       }
+    }
+  } else if (notificationType === 'collected') {
+    if (isStationOrder) {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*Order collected*\n\n` +
+        `Order ID: *${waOrder.order_code}*\n` +
+        tokenLine +
+        `${itemLines}\n\n` +
+        `Hope you enjoy this offer. Thank you for ordering from Hamza Express.`));
+    } else {
+      await sendWhatsApp(phoneId, token, buildText(waOrder.wa_id,
+        `*${waOrder.order_code}* has been collected.\n\nHope you enjoy your order from Hamza Express.`));
     }
   }
 
@@ -6023,6 +6050,7 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   const collection = determineCollectionPoints(cart);
   const isSingleCounter = collection.points.length === 1;
   const counterName = isSingleCounter ? collection.points[0].counter : null;
+  const itemLines = cart.map(c => `${c.qty}x ${c.name}`).join('\n');
 
   // Station QR orders (single counter) — customer is physically at the counter
   // General/multi-counter orders — customer needs collection guidance
@@ -6030,14 +6058,17 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   let confirmMsg;
   if (isSingleCounter) {
     if (isStationQR) {
-      // Station QR — customer is right there watching
-      if (tier === 'new') {
-        confirmMsg = `*Paid!* Token *${trackingNum}*\nYour order is being prepared — we'll message you when it's ready.`;
-      } else if (tier === 'regular') {
-        confirmMsg = `*${trackingNum}* \u2713`;
-      } else {
-        confirmMsg = `*Paid!* Token *${trackingNum}*\nWe'll message you when it's ready.`;
-      }
+      // Station QR — always send a full receipt-style confirmation.
+      const posLine = odooResult?.name ? `POS order: *${odooResult.name}*\n` : '';
+      confirmMsg =
+        `*Payment received - WhatsApp order confirmed*\n\n` +
+        `Order ID: *${order.order_code}*\n` +
+        posLine +
+        `Token: *${trackingNum}*\n` +
+        `Total paid: *Rs.${order.total}*\n\n` +
+        `${itemLines}\n\n` +
+        `Collect from: *${counterName}*.\n` +
+        `Show this message at the counter. We will message you when it is ready.`;
     } else {
       // Single counter but general order (e.g. only ordered kitchen items)
       if (tier === 'new') {
@@ -6051,13 +6082,13 @@ async function confirmOrder(context, order, razorpayPaymentId, phoneId, token, d
   } else {
     // Multi-counter order — needs collection guidance
     if (tier === 'new') {
-      const itemLines = cart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
+      const pricedItemLines = cart.map(c => `${c.qty}x ${c.name} — Rs.${c.price * c.qty}`).join('\n');
       const lines = collection.points.map(p =>
         `\u2022 *${p.counter}* — ${p.items.map(i => i.replace(/^\d+x\s*/, '')).join(', ')}`
       ).join('\n');
 
       confirmMsg = `*Order confirmed!* Token *${trackingNum}*\n\n` +
-        `${itemLines}\n\n` +
+        `${pricedItemLines}\n\n` +
         `*Collect from:*\n${lines}\n\n` +
         `Each counter will prepare your items.\nWe'll message you as each one is ready.`;
     } else if (tier === 'regular') {
@@ -6428,7 +6459,7 @@ function buildOrderDetailsPayment(to, orderCode, cart, total, counterName, tier)
   let footerText;
   if (counterName) {
     // Station order — customer is physically present
-    bodyText = `${orderCode} | UPI-only QR offer\nReview and pay below.\nCollect at ${counterName}.\n\nReply "cancel" to cancel.`;
+    bodyText = `${orderCode} | UPI-only QR offer\nPay in WhatsApp to confirm.\nCollect at ${counterName} after payment.\n\nReply "cancel" to cancel.`;
     footerText = 'Hamza Express • UPI only';
   } else {
     // Full menu order
