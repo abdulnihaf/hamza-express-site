@@ -1166,15 +1166,18 @@ async function processWebhook(context, body) {
     new Date().toISOString()
   ).run().catch(() => {});
 
-  context.waitUntil(
-    notifyCreatorOpsForInboundReply(context.env, {
-      waId,
-      messageId: message.id || null,
-      content: inContent,
-      msgType: msgType.type,
-      profileName: value.contacts?.[0]?.profile?.name || '',
-    }).catch((e) => console.error('creator-ops-inbound-alert error:', e.message))
-  );
+  const waPhone10 = normalizeWaPhone(waId).slice(-10);
+  if (!HIRING_FILTER_EXCLUDED.has(waPhone10)) {
+    context.waitUntil(
+      notifyCreatorOpsForInboundReply(context.env, {
+        waId,
+        messageId: message.id || null,
+        content: inContent,
+        msgType: msgType.type,
+        profileName: value.contacts?.[0]?.profile?.name || '',
+      }).catch((e) => console.error('creator-ops-inbound-alert error:', e.message))
+    );
+  }
 
   // ── Phase 2 media vault: download Meta media → R2 before URL expires ──
   // The pre-signed URL from Meta dies in ~5 minutes. waitUntil lets the
@@ -1203,7 +1206,7 @@ async function processWebhook(context, body) {
   // the Zoya alert is queued, do not let the food-ordering bot answer them.
   if (context.env.HIRING_DB) {
     try {
-      const creatorPhone = normalizeWaPhone(waId).slice(-10);
+      const creatorPhone = waPhone10;
       if (!HIRING_FILTER_EXCLUDED.has(creatorPhone)) {
         const match = await findCreatorByWaPhone(context.env.HIRING_DB, creatorPhone);
         if (match.app || match.outreach) return;
